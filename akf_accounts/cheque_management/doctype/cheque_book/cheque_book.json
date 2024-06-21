@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-06-10 15:53:22.107498",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "cheque_book",
+  "company",
+  "bank_account",
+  "account_number",
+  "bank_name",
+  "branch",
+  "column_break_jumv",
+  "issue_date",
+  "first_cheque_no",
+  "number_of_leafs",
+  "last_cheque_no"
+ ],
+ "fields": [
+  {
+   "fieldname": "cheque_book",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Cheque Book"
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Bank Account",
+   "options": "Bank Account"
+  },
+  {
+   "fetch_from": "bank_account.bank_account_no",
+   "fieldname": "account_number",
+   "fieldtype": "Data",
+   "label": "Account Number",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "bank_account.bank",
+   "fieldname": "bank_name",
+   "fieldtype": "Link",
+   "label": "Bank Name",
+   "options": "Bank",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "bank_account.branch_code",
+   "fieldname": "branch",
+   "fieldtype": "Data",
+   "label": "Branch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_jumv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "first_cheque_no",
+   "fieldtype": "Int",
+   "label": "First Cheque No"
+  },
+  {
+   "default": "0",
+   "fieldname": "number_of_leafs",
+   "fieldtype": "Int",
+   "label": "Number of Leafs"
+  },
+  {
+   "fieldname": "last_cheque_no",
+   "fieldtype": "Int",
+   "label": "Last Cheque No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-06-12 12:05:46.546642",
+ "modified_by": "Administrator",
+ "module": "Cheque Management",
+ "name": "Cheque Book",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

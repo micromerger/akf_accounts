@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-05-29 16:31:52.102597",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "deduction_details_section",
+  "company",
+  "income_type",
+  "account",
+  "percentage",
+  "min_percent",
+  "max_percent"
+ ],
+ "fields": [
+  {
+   "fieldname": "income_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Income Type",
+   "options": "Income Type"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "Account"
+  },
+  {
+   "default": "0.00",
+   "fieldname": "percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Percentage"
+  },
+  {
+   "fieldname": "deduction_details_section",
+   "fieldtype": "Section Break",
+   "label": "Deduction Details"
+  },
+  {
+   "default": "0.00",
+   "fieldname": "min_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Min %"
+  },
+  {
+   "default": "0.00",
+   "fieldname": "max_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Max %"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-06-10 15:58:51.262871",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Deduction Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

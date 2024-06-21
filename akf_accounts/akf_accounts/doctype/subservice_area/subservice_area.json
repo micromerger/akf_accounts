@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:subservice_area",
+ "creation": "2024-05-27 17:44:42.618566",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "service_area",
+  "subservice_area"
+ ],
+ "fields": [
+  {
+   "fieldname": "service_area",
+   "fieldtype": "Link",
+   "label": "Service Area",
+   "options": "Program"
+  },
+  {
+   "fieldname": "subservice_area",
+   "fieldtype": "Data",
+   "label": "Subservice Area",
+   "unique": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-05-27 17:47:26.852159",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Subservice Area",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

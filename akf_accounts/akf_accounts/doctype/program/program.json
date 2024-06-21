@@ -6,23 +6,50 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "program_name"
+  "program_name",
+  "section_break_hrld",
+  "deduction_details",
+  "section_break_kkol",
+  "accounts_default"
  ],
  "fields": [
   {
    "fieldname": "program_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Program Name",
+   "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "deduction_details",
+   "fieldtype": "Table",
+   "label": "Deduction Details",
+   "options": "Deduction Details"
+  },
+  {
+   "fieldname": "section_break_hrld",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_kkol",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "accounts_default",
+   "fieldtype": "Table",
+   "label": "Accounts Default",
+   "options": "Accounts Default"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-22 14:15:43.991007",
+ "modified": "2024-06-11 13:03:23.904734",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program",
  "naming_rule": "By fieldname",
+ "nsm_parent_field": "parent_program",
  "owner": "Administrator",
  "permissions": [
   {

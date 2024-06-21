@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-05-30 14:30:46.804912",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "income_type",
+  "account",
+  "percentage",
+  "min_percent",
+  "max_percent",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "income_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Income Type",
+   "options": "Income Type"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Percentage"
+  },
+  {
+   "default": "0",
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount"
+  },
+  {
+   "fieldname": "min_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Min Percent"
+  },
+  {
+   "fieldname": "max_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Max Percent"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-06-10 19:01:05.051310",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Deduction Breakeven",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

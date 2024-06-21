@@ -1,0 +1,45 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"OE5lEAG4TX\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Cheque Management</span>\",\"col\":12}},{\"id\":\"-nP3zwQ3_x\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cheque Book\",\"col\":3}},{\"id\":\"OmYfSY59Fp\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cheque Leaf\",\"col\":3}}]",
+ "creation": "2024-06-12 10:17:39.925160",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "clipboard",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Cheque Management",
+ "links": [],
+ "modified": "2024-06-12 10:20:58.310285",
+ "modified_by": "Administrator",
+ "module": "Cheque Management",
+ "name": "Cheque Management",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 6.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cheque Book",
+   "link_to": "Cheque Book",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cheque Leaf",
+   "link_to": "Cheque Leaf",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
+ "title": "Cheque Management"
+}

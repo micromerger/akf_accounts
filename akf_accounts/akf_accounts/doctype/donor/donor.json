@@ -1,21 +1,27 @@
 {
  "actions": [],
- "allow_rename": 1,
- "autoname": "field:email",
+ "autoname": "naming_series:",
  "creation": "2017-09-19 16:20:27.510196",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "donor_name",
+  "department",
   "column_break_5",
   "donor_type",
   "email",
   "image",
+  "address",
+  "contact_no",
+  "city",
+  "country",
   "address_contacts",
   "address_html",
   "column_break_9",
-  "contact_html"
+  "contact_html",
+  "amended_from"
  ],
  "fields": [
   {
@@ -23,7 +29,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Donor Name",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "column_break_5",
@@ -73,6 +80,55 @@
    "fieldname": "contact_html",
    "fieldtype": "HTML",
    "label": "Contact HTML"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "bold": 1,
+   "default": "DONOR-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "no_copy": 1,
+   "options": "DONOR-.YYYY.-",
+   "print_hide": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Donor",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "label": "Address"
+  },
+  {
+   "fieldname": "contact_no",
+   "fieldtype": "Data",
+   "label": "Contact No"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
   }
  ],
  "image_field": "image",
@@ -82,7 +138,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2021-02-17 16:36:33.470731",
+ "modified": "2024-05-31 16:45:15.008595",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
@@ -104,6 +160,7 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "donor_name",
  "track_changes": 1
 }
