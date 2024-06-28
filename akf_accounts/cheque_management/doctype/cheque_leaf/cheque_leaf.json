@@ -54,9 +54,8 @@
   },
   {
    "fieldname": "branch",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Branch",
-   "options": "Branch",
    "read_only": 1
   },
   {
@@ -135,7 +134,7 @@
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks",
-   "read_only": 1
+   "mandatory_depends_on": "eval:doc.status==\"Cancelled\""
   },
   {
    "fieldname": "cheque_no",
@@ -148,7 +147,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-13 13:23:23.667300",
+ "modified": "2024-06-27 17:31:31.322149",
  "modified_by": "Administrator",
  "module": "Cheque Management",
  "name": "Cheque Leaf",

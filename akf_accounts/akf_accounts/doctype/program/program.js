@@ -44,6 +44,14 @@ function set_queries(frm){
             }
         };
     });
+    frm.fields_dict['deduction_details'].grid.get_field('project').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                company: row.company
+            }
+        };
+    };
     frm.fields_dict['deduction_details'].grid.get_field('account').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {

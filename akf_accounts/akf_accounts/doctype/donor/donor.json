@@ -16,7 +16,6 @@
   "address",
   "contact_no",
   "city",
-  "country",
   "address_contacts",
   "address_html",
   "column_break_9",
@@ -123,12 +122,6 @@
    "fieldname": "city",
    "fieldtype": "Data",
    "label": "City"
-  },
-  {
-   "fieldname": "country",
-   "fieldtype": "Link",
-   "label": "Country",
-   "options": "Country"
   }
  ],
  "image_field": "image",
@@ -138,10 +131,11 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-05-31 16:45:15.008595",
+ "modified": "2024-06-28 15:30:20.625547",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

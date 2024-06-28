@@ -712,7 +712,7 @@ class XPaymentEntry(AccountsController):
         if(self.custom_cheque_leaf):
             frappe.db.sql(f""" Update `tabCheque Leaf`
                     Set status="On Hand", voucher_type="", voucher_no="", 
-                    voucher_status="", party_type="", party="", cheque_date="", amount=0, remarks=""
+                    voucher_status="", party_type="", party="", cheque_date=null, amount=0, remarks=""
                     Where name = "{self.custom_cheque_leaf}"
                 """)
 
@@ -2085,7 +2085,7 @@ def get_outstanding_on_journal_entry(name):
     ).run(as_dict=True)
 
     outstanding_amount = res[0].get("outstanding_amount", 0) if res else 0
-
+    
     return outstanding_amount
 
 
@@ -2103,7 +2103,7 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
         exchange_rate = 1
 
     elif reference_doctype == "Donation" and ref_doc.docstatus == 1:
-        total_amount = ref_doc.get("donation_amount")
+        total_amount = ref_doc.get("outstanding_amount")
         if hasattr(ref_doc, "multi_currency"):
             exchange_rate = get_exchange_rate(
                 party_account_currency, company_currency, ref_doc.posting_date

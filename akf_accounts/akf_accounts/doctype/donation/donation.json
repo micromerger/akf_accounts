@@ -10,8 +10,10 @@
   "naming_series",
   "donor_identity",
   "contribution_type",
-  "company",
+  "donation_type",
+  "donation_receiving_method",
   "column_break_gxmk",
+  "company",
   "posting_date",
   "posting_time",
   "edit_posting_date_time",
@@ -20,58 +22,48 @@
   "donor",
   "donor_name",
   "donor_type",
+  "reverse_donor",
   "column_break_m9r8",
   "donor_contact_no",
   "donor_address",
   "email",
-  "column_break_9mow",
   "city",
-  "section_break_eupx",
-  "service_area",
-  "donation_amount",
+  "column_break_9mow",
+  "co_name",
+  "co_contact_no",
+  "co_email",
+  "co_address",
+  "payment_details_section",
+  "payment_detail",
+  "section_break_otbq",
   "deduction_breakeven",
-  "deduction_amount",
+  "section_break_wznb",
+  "total_donation",
+  "column_break_rqzn",
+  "total_deduction",
   "donor_details_tab",
   "donation_details_section",
   "receipt_number",
   "receipt_issued_by",
   "receipt_date",
-  "donation_receiving_method",
   "column_break_yqek",
   "transaction_no_cheque_no",
   "cheque_leaf",
-  "management_fund",
-  "paid_amount",
   "column_break_tinq",
-  "donation_type",
-  "due_date",
   "section_break_ikpj",
   "instructions_internal",
   "accounts_detail_tab",
   "accounts_detail_section",
   "receivable_account",
   "amount_receivable",
-  "outstanding_amount",
   "column_break_cnin",
-  "fund_class",
   "net_amount",
-  "accounting_dimension_section",
-  "project",
-  "cost_center",
-  "column_break_hxbb",
-  "product",
-  "subservice_area",
+  "outstanding_amount",
   "care_details_tab",
-  "care_of_details_section",
-  "co_name",
-  "column_break_rjgo",
-  "co_contact_no",
-  "column_break_3t8t",
-  "co_email",
-  "co_address",
   "more_info_tab",
   "status",
-  "amended_from"
+  "amended_from",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -101,6 +93,7 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Company",
    "options": "Company",
    "reqd": 1
@@ -135,11 +128,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "care_of_details_section",
-   "fieldtype": "Section Break",
-   "label": "Care of Details"
-  },
-  {
    "fieldname": "co_name",
    "fieldtype": "Data",
    "label": "C/O Name"
@@ -147,17 +135,17 @@
   {
    "fieldname": "co_contact_no",
    "fieldtype": "Data",
-   "label": "C/O Contact No"
+   "label": "C/O Contact No."
   },
   {
    "fieldname": "co_email",
    "fieldtype": "Data",
-   "label": "C/O Email"
+   "label": "C/O Email."
   },
   {
    "fieldname": "co_address",
    "fieldtype": "Data",
-   "label": "C/O Address"
+   "label": "C/O Address."
   },
   {
    "fieldname": "donation_details_section",
@@ -179,6 +167,7 @@
    "label": "Receipt Date"
   },
   {
+   "depends_on": "eval:doc.contribution_type==\"Donation\"",
    "fieldname": "donation_receiving_method",
    "fieldtype": "Link",
    "label": "Donation Receiving Method",
@@ -195,26 +184,7 @@
    "label": "Transaction No/ Cheque No"
   },
   {
-   "fieldname": "service_area",
-   "fieldtype": "Link",
-   "label": "Service Area",
-   "options": "Program",
-   "reqd": 1
-  },
-  {
-   "fieldname": "subservice_area",
-   "fieldtype": "Link",
-   "label": "Subservice Area",
-   "options": "Subservice Area"
-  },
-  {
-   "fieldname": "product",
-   "fieldtype": "Link",
-   "label": "Product",
-   "options": "Product"
-  },
-  {
-   "depends_on": "eval:doc.donor_identity==\"Known\"",
+   "collapsible": 1,
    "fieldname": "donor_details_section",
    "fieldtype": "Section Break",
    "label": "Donor Details"
@@ -230,17 +200,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "due_date",
-   "fieldtype": "Date",
-   "label": "Due Date"
-  },
-  {
-   "fieldname": "management_fund",
-   "fieldtype": "Link",
-   "label": "Management Fund",
-   "options": "Mode of Payment"
-  },
-  {
    "fieldname": "donor",
    "fieldtype": "Link",
    "label": "Donor",
@@ -251,7 +210,7 @@
    "fieldname": "donor_identity",
    "fieldtype": "Select",
    "label": "Donor Identity",
-   "options": "\nKnown\nUnknown"
+   "options": "\nKnown\nUnknown\nMerchant"
   },
   {
    "fieldname": "general_information_section",
@@ -316,10 +275,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "column_break_3t8t",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "column_break_9mow",
    "fieldtype": "Column Break"
   },
@@ -333,32 +288,6 @@
    "fieldname": "instructions_internal",
    "fieldtype": "Small Text",
    "label": "Instructions Internal"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "accounting_dimension_section",
-   "fieldtype": "Section Break",
-   "label": "Accounting Dimension"
-  },
-  {
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "label": "Cost Center",
-   "options": "Cost Center"
-  },
-  {
-   "fieldname": "project",
-   "fieldtype": "Link",
-   "label": "Project",
-   "options": "Project"
-  },
-  {
-   "fieldname": "column_break_hxbb",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_rjgo",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "column_break_gxmk",
@@ -381,6 +310,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Today",
    "fieldname": "received_date",
    "fieldtype": "Date",
    "label": "Received Date"
@@ -411,12 +341,6 @@
    "options": "Account"
   },
   {
-   "fieldname": "fund_class",
-   "fieldtype": "Link",
-   "label": "Fund Class",
-   "options": "Account"
-  },
-  {
    "default": "0",
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
@@ -424,28 +348,9 @@
    "read_only": 1
   },
   {
-   "bold": 1,
-   "fieldname": "section_break_eupx",
-   "fieldtype": "Section Break",
-   "label": "Service Area Details"
-  },
-  {
-   "default": "0",
-   "fieldname": "donation_amount",
-   "fieldtype": "Currency",
-   "label": "Donation Amount"
-  },
-  {
    "fieldname": "deduction_breakeven",
    "fieldtype": "Table",
-   "label": "Deduction Breakeven",
    "options": "Deduction Breakeven"
-  },
-  {
-   "default": "0",
-   "fieldname": "deduction_amount",
-   "fieldtype": "Currency",
-   "label": "Deduction Amount"
   },
   {
    "depends_on": "eval: doc.donation_receiving_method==\"bank\"",
@@ -455,16 +360,62 @@
    "options": "Cheque Leaf"
   },
   {
+   "fieldname": "section_break_otbq",
+   "fieldtype": "Section Break",
+   "label": "Deduction Breakeven"
+  },
+  {
+   "fieldname": "payment_details_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Details"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "payment_detail",
+   "fieldtype": "Table",
+   "options": "Payment Detail"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  },
+  {
+   "fieldname": "section_break_wznb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "bold": 1,
    "default": "0",
-   "fieldname": "paid_amount",
+   "fieldname": "total_donation",
    "fieldtype": "Currency",
-   "label": "Paid Amount"
+   "label": "Total Donation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rqzn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "default": "0",
+   "fieldname": "total_deduction",
+   "fieldtype": "Currency",
+   "label": "Total Deduction",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reverse_donor",
+   "fieldtype": "Link",
+   "label": "Reverse Donor",
+   "options": "Reverse Donor"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-20 19:01:30.270400",
+ "modified": "2024-06-28 16:37:41.097818",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
@@ -489,7 +440,12 @@
  "search_fields": "donor_name, email",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Blue",
+   "title": "donor_name"
+  }
+ ],
  "title_field": "donor_name",
  "track_changes": 1
 }

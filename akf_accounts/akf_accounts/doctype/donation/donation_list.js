@@ -22,3 +22,10 @@ frappe.listview_settings['Donation'] = {
 	},
 	right_column: "net_total",
 };
+
+frappe.listview_settings['Donation'].formatters = {
+	// donor_name(value){
+	// 	console.log(typeof(value), value);
+	// 	// return `<b style='font-weight: 400px; color: blue !important;'>${value}</b>`
+	// }
+}

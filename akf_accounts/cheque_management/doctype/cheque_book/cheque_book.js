@@ -39,7 +39,10 @@ frappe.ui.form.on("Cheque Book", {
   },
 
   company: function (frm) {
-    frm.trigger("set_reports_to_query");
+    if (frm.doc.company) {
+      frm.set_value("bank_account", "");
+      frm.trigger("set_reports_to_query");
+    }
     if (!frm.doc.company) {
       frm.set_value("bank_account", "");
     }

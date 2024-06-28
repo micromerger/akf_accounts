@@ -51,6 +51,8 @@ frappe.ui.form.on('Payment Entry', {
 			return {
 			  filters: {
 				status: "On Hand",
+				bank_account: frm.doc.paid_to
+
 			  },
 			};
 		});
