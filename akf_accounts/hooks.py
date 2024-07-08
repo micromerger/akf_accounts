@@ -231,4 +231,5 @@ override_doctype_class = {
 
 accounting_dimension_doctypes = [
 	"Payment Detail",
+	"Deduction Breakeven"
 ]

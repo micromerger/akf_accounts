@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestTransactionType(FrappeTestCase):
+class TestInterBranchTrasfer(FrappeTestCase):
 	pass

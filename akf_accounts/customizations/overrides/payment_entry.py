@@ -533,6 +533,7 @@ class XPaymentEntry(AccountsController):
         elif self.party_type == "Employee":
             return ("Journal Entry",)
 
+
     def validate_paid_invoices(self):
         no_oustanding_refs = {}
 
@@ -718,9 +719,9 @@ class XPaymentEntry(AccountsController):
 
     # custom changes for donation
     def update_status(self):
-        if(self.party_type!="Donor"): return
+        # if(self.party_type!="Donor"): return
         for row in self.references:
-            if(row.outstanding_amount>=0):
+            if(row.reference_doctype=="Donation" and row.outstanding_amount>=0):
                 status = "Partly Paid"
                 if(row.outstanding_amount==0): status = "Paid"
                 frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
@@ -2103,7 +2104,7 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
         exchange_rate = 1
 
     elif reference_doctype == "Donation" and ref_doc.docstatus == 1:
-        total_amount = ref_doc.get("outstanding_amount")
+        total_amount = ref_doc.get("total_donation")
         if hasattr(ref_doc, "multi_currency"):
             exchange_rate = get_exchange_rate(
                 party_account_currency, company_currency, ref_doc.posting_date

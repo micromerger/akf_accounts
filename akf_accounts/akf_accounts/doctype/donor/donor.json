@@ -1,5 +1,16 @@
 {
- "actions": [],
+ "actions": [
+  {
+   "action": "akf_accounts.akf_accounts.doctype.donor.donor.donor_html",
+   "action_type": "Server Action",
+   "label": "Donor List"
+  },
+  {
+   "action": "akf_accounts.akf_accounts.doctype.donor.donor.create_gl_entries",
+   "action_type": "Server Action",
+   "label": "Create GL Entries"
+  }
+ ],
  "autoname": "naming_series:",
  "creation": "2017-09-19 16:20:27.510196",
  "doctype": "DocType",
@@ -9,6 +20,9 @@
   "naming_series",
   "donor_name",
   "department",
+  "branch",
+  "identification_type",
+  "cnic",
   "column_break_5",
   "donor_type",
   "email",
@@ -16,11 +30,15 @@
   "address",
   "contact_no",
   "city",
+  "contact_person",
+  "contact_number",
   "address_contacts",
   "address_html",
   "column_break_9",
   "contact_html",
-  "amended_from"
+  "amended_from",
+  "section_break_huvh",
+  "donor_list"
  ],
  "fields": [
   {
@@ -88,12 +106,12 @@
   },
   {
    "bold": 1,
-   "default": "DONOR-.YYYY.-",
+   "default": "DONOR-.{branch}.-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
    "no_copy": 1,
-   "options": "DONOR-.YYYY.-",
+   "options": "DONOR-.{branch}.-.YYYY.-",
    "print_hide": 1,
    "reqd": 1,
    "set_only_once": 1
@@ -122,6 +140,46 @@
    "fieldname": "city",
    "fieldtype": "Data",
    "label": "City"
+  },
+  {
+   "fieldname": "cnic",
+   "fieldtype": "Data",
+   "label": "CNIC"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Cost Center"
+  },
+  {
+   "default": "CNIC",
+   "fieldname": "identification_type",
+   "fieldtype": "Select",
+   "label": "Identification Type",
+   "options": "\nCNIC\nNTN\nPassport"
+  },
+  {
+   "depends_on": "eval: doc.donor_type==\"Organizational\" || doc.donor_type==\"Institutional\"",
+   "fieldname": "contact_person",
+   "fieldtype": "Data",
+   "label": "Contact Person"
+  },
+  {
+   "depends_on": "eval: doc.donor_type==\"Organizational\" || doc.donor_type==\"Institutional\"",
+   "fieldname": "contact_number",
+   "fieldtype": "Select",
+   "label": "Contact Number"
+  },
+  {
+   "fieldname": "section_break_huvh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "donor_list",
+   "fieldtype": "HTML Editor",
+   "hidden": 1,
+   "label": "Donor List"
   }
  ],
  "image_field": "image",
@@ -131,7 +189,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-06-28 15:30:20.625547",
+ "modified": "2024-07-05 15:43:36.410652",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

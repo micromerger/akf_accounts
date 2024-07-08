@@ -11,6 +11,7 @@ class ChequeBook(Document):
 
 @frappe.whitelist()
 def create_cheque_leaf(
+    company,
     cheque_book,
     bank_account,
     account_number,
@@ -22,6 +23,7 @@ def create_cheque_leaf(
 ):
     args = {
         "doctype": "Cheque Leaf",
+        "company": company,
         "cheque_book_no": cheque_book,
         "bank_account": bank_account,
         "account_number": account_number,

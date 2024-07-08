@@ -14,6 +14,7 @@ frappe.ui.form.on("Cheque Book", {
           method:
             "akf_accounts.cheque_management.doctype.cheque_book.cheque_book.create_cheque_leaf",
           args: {
+            company: frm.doc.company,
             cheque_book: frm.doc.cheque_book,
             bank_account: frm.doc.bank_account,
             account_number: frm.doc.account_number,
@@ -36,16 +37,14 @@ frappe.ui.form.on("Cheque Book", {
       },
       __("Create")
     );
+    frm.trigger("set_reports_to_query");
   },
 
   company: function (frm) {
-    if (frm.doc.company) {
-      frm.set_value("bank_account", "");
-      frm.trigger("set_reports_to_query");
-    }
-    if (!frm.doc.company) {
+    if (frm.doc.company==undefined || frm.doc.company=="") {
       frm.set_value("bank_account", "");
     }
+    frm.trigger("set_reports_to_query");
   },
   set_reports_to_query: function (frm) {
     var company = frm.doc.company;

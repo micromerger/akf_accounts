@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "company",
   "cheque_book_no",
   "bank_account",
   "account_number",
@@ -143,11 +144,17 @@
    "read_only": 1,
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-27 17:31:31.322149",
+ "modified": "2024-07-02 16:09:32.705286",
  "modified_by": "Administrator",
  "module": "Cheque Management",
  "name": "Cheque Leaf",

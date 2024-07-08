@@ -6,17 +6,46 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "donor_details_section",
   "payment_detail_id",
+  "donor_id",
+  "donor_name",
+  "cnic",
+  "donor_type",
+  "column_break_uwow",
+  "contact_no",
+  "email",
+  "city",
+  "address",
+  "care_of_details_column",
+  "co_name",
+  "co_contact_no",
+  "co_email",
+  "co_address",
+  "section_break_iela",
   "pay_service_area",
-  "pay_subservice_area",
   "pay_product",
-  "account",
+  "column_break_ibfu",
+  "pay_subservice_area",
+  "receipt_details_section",
+  "receipt_number",
+  "column_break_airg",
+  "receipt_issued_by",
+  "receipt_date",
+  "accounts_detail_section",
+  "equity_account",
+  "mode_of_payment",
+  "account_paid_to",
+  "column_break_wlkz",
+  "receivable_account",
+  "transaction_no_cheque_no",
   "accounting_dimensions_section",
   "dimension_col_break",
   "column_break_sezm",
   "donation_amount",
   "deduction_amount",
-  "outstanding_amount"
+  "outstanding_amount",
+  "paid"
  ],
  "fields": [
   {
@@ -24,28 +53,33 @@
    "fieldname": "donation_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Donation Amount"
+   "label": "Donation Amount",
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "fieldname": "pay_service_area",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Service Area",
-   "options": "Program"
+   "options": "Program",
+   "reqd": 1
   },
   {
    "fieldname": "pay_subservice_area",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Subservice Area",
-   "options": "Subservice Area"
+   "options": "Subservice Area",
+   "reqd": 1
   },
   {
    "fieldname": "pay_product",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Product",
-   "options": "Product"
+   "options": "Product",
+   "reqd": 1
   },
   {
    "fieldname": "accounting_dimensions_section",
@@ -63,16 +97,10 @@
   {
    "fieldname": "payment_detail_id",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Payment Detail ID",
    "read_only": 1
-  },
-  {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Account",
-   "options": "Account"
   },
   {
    "default": "0",
@@ -87,12 +115,188 @@
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_iela",
+   "fieldtype": "Section Break",
+   "label": "Service Details"
+  },
+  {
+   "fieldname": "column_break_ibfu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "equity_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Equity Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "receivable_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Receivable Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "donor_details_section",
+   "fieldtype": "Section Break",
+   "label": "Donor Details"
+  },
+  {
+   "fetch_from": "donor_id.donor_name",
+   "fieldname": "donor_name",
+   "fieldtype": "Data",
+   "label": "Donor Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "donor_id.donor_type",
+   "fieldname": "donor_type",
+   "fieldtype": "Link",
+   "label": "Donor Type",
+   "options": "Donor Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_uwow",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "donor_id.contact_no",
+   "fieldname": "contact_no",
+   "fieldtype": "Data",
+   "label": "Contact No",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "donor_id.email",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "donor_id.city",
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "donor_id.address",
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "co_name",
+   "fieldtype": "Data",
+   "label": "C/O Name"
+  },
+  {
+   "fieldname": "co_contact_no",
+   "fieldtype": "Data",
+   "label": "C/O Contact No"
+  },
+  {
+   "fieldname": "co_email",
+   "fieldtype": "Data",
+   "label": "C/O Email"
+  },
+  {
+   "fieldname": "co_address",
+   "fieldtype": "Data",
+   "label": "C/O Address"
+  },
+  {
+   "fieldname": "accounts_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Accounts Detail"
+  },
+  {
+   "fieldname": "column_break_wlkz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Mode of Payment",
+   "options": "Mode of Payment"
+  },
+  {
+   "fieldname": "transaction_no_cheque_no",
+   "fieldtype": "Data",
+   "label": "Transaction No/ Cheque No",
+   "mandatory_depends_on": "eval: doc.mode_of_payment == \"bank\" || doc.mode_of_payment == \"Cheque\" || doc.mode_of_payment == \"Bank Draft\" "
+  },
+  {
+   "fieldname": "donor_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Donor ID",
+   "options": "Donor",
+   "reqd": 1
+  },
+  {
+   "fieldname": "care_of_details_column",
+   "fieldtype": "Column Break",
+   "label": "Care Of Details"
+  },
+  {
+   "fetch_from": "donor_id.cnic",
+   "fieldname": "cnic",
+   "fieldtype": "Data",
+   "label": "CNIC",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receipt_details_section",
+   "fieldtype": "Section Break",
+   "label": "Receipt Details"
+  },
+  {
+   "fieldname": "receipt_number",
+   "fieldtype": "Data",
+   "label": "Receipt Number"
+  },
+  {
+   "fieldname": "column_break_airg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "receipt_issued_by",
+   "fieldtype": "Data",
+   "label": "Receipt Issued By"
+  },
+  {
+   "fieldname": "receipt_date",
+   "fieldtype": "Date",
+   "label": "Receipt Date"
+  },
+  {
+   "fieldname": "account_paid_to",
+   "fieldtype": "Link",
+   "label": "Account Paid To",
+   "mandatory_depends_on": "eval: doc.mode_of_payment == \"bank\" || doc.mode_of_payment == \"Cheque\" || doc.mode_of_payment == \"Bank Draft\" ",
+   "options": "Account"
+  },
+  {
+   "default": "0",
+   "fieldname": "paid",
+   "fieldtype": "Check",
+   "label": "Paid",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-06-27 18:15:02.490259",
+ "modified": "2024-07-05 13:38:23.979300",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

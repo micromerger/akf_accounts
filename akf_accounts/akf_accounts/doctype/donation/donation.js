@@ -16,17 +16,19 @@ frappe.ui.form.on('Donation', {
         set_custom_btns(frm);
     },
     donor_identity: function(frm){
-        frm.trigger("unknown_donor");
-    },
-    unknown_donor: function(frm){
-        if(DI_LIST.find(x=> x===frm.doc.donor_identity)){
+        if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant"){
             frm.set_value("contribution_type", "Donation");
-            frm.set_value("donor", "DONOR-2024-00004");
-            frm.set_df_property("contribution_type", "read_only", 1);
+            frm.set_df_property("contribution_type", "read_only", 1)
         }else{
-            frm.set_df_property("contribution_type", "read_only", 0);
-            frm.set_value("donor", null);
+            frm.set_value("contribution_type", "");
+            frm.set_df_property("contribution_type", "read_only", 0)
         }
+    },
+    contribution_type: function(frm){
+        frm.call("set_deduction_breakeven");
+    },
+    donation_type: function(frm){
+        frm.call("set_deduction_breakeven");
     },
     company: function (frm) {
         // erpnext.accounts.dimensions.update_dimension(frm, frm.doctype);
@@ -38,11 +40,15 @@ frappe.ui.form.on('Donation', {
 });
 
 frappe.ui.form.on('Payment Detail', {
+    donor_id: function (frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        row.donor =  row.donor_id;
+        // frm.call("set_deduction_breakeven");        
+    },
     pay_service_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         row.program = row.pay_service_area;
-        row.donor =  frm.doc.donor
-        frm.call("set_deduction_breakeven");        
+        // frm.call("set_deduction_breakeven");        
     },
     pay_subservice_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
@@ -59,8 +65,31 @@ frappe.ui.form.on('Payment Detail', {
             frm.call("set_deduction_breakeven");
         }
     },
+    mode_of_payment: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        // console.log(frm.doc.mode_of_payment);
+        // console.log(frm.doc.mode_of_payment!=undefined);
+        if(frm.doc.mode_of_payment!=undefined){
+            erpnext.accounts.pos.get_payment_mode_account(frm, row.mode_of_payment, function(account){
+                row.account_paid_to = account;
+            });
+        }else{
+            row.transaction_no_cheque_no = '';
+            row.account_paid_to = null;
+        }
+        frm.refresh_field("payment_detail");
+	},
     donation_amount: function (frm, cdt, cdn) {
         frm.call("set_deduction_breakeven");
+    },
+    payment_detail_add: function(frm, cdt ,cdn){
+        let row = locals[cdt][cdn];
+        if(frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant"){
+            row.donor_id = "DONOR-2024-00004";
+        }else {
+            row.donor_id = null;
+        }
+        frm.refresh_field("payment_detail");
     },
     payment_detail_remove: function(frm){
         frm.call("set_deduction_breakeven");
@@ -83,7 +112,7 @@ frappe.ui.form.on('Deduction Breakeven', {
 function set_custom_btns(frm) {
 
     if(frm.doc.docstatus==1){ 
-        if(frm.doc.donor_identity == "Merchant" && frm.doc.contribution_type==="Donation" && (frm.doc.reverse_donor==undefined)){
+        if(frm.doc.donor_identity == "Unknown" && frm.doc.contribution_type==="Donation"){
             frm.add_custom_button(__('Reverse Donor'), function () {
                 let d = new frappe.ui.Dialog({
                     title: 'Known donor detail',
@@ -92,7 +121,15 @@ function set_custom_btns(frm) {
                             label: 'Donor',
                             fieldname: 'donor',
                             fieldtype: 'Link',
-                            options: "Donor"
+                            options: "Donor",
+                            reqd: 1
+                        },
+                        {
+                            label: 'Transaction No/ Cheque No',
+                            fieldname: 'transaction_no_cheque_no',
+                            fieldtype: 'Data',
+                            options: "",
+                            reqd: 1
                         }
                     ],
                     size: 'small', // small, large, extra-large 
@@ -123,10 +160,126 @@ function set_custom_btns(frm) {
         if(frm.doc.status!="Paid"){
             if(frm.doc.contribution_type == "Pledge"){
                 frm.add_custom_button(__('Payment Entry'), function () {
-                    frappe.model.open_mapped_doc({
-                        method: "akf_accounts.akf_accounts.doctype.donation.donation._make_payment_entry",
-                        frm: cur_frm
-                    })
+                    let donors_list = []
+                    frappe.call({
+                        method: "akf_accounts.akf_accounts.doctype.donation.donation.get_donors_list",
+                        async: false,
+                        args:{
+                            donation_id: frm.doc.name,
+                        },
+                        callback: function(r){
+                            // console.log(r.message)
+                            donors_list = r.message;
+                        }
+                    });
+
+                    let d = new frappe.ui.Dialog({
+                        title: 'Donors List',
+                        fields: [
+                            {
+                                label: 'Donor ID',
+                                fieldname: 'donor_id',
+                                fieldtype: 'Select',
+                                options: donors_list,
+                                reqd: 1
+                            },
+                            {
+                                label: 'Accounts Detail',
+                                fieldname: 'accounts_section',
+                                fieldtype: 'Section Break',
+                                options: "",
+                                reqd: 0
+                            },
+                            {
+                                label: 'Mode of Payment',
+                                fieldname: 'mode_of_payment',
+                                fieldtype: 'Link',
+                                options: "Mode of Payment",
+                                reqd: 1,
+                                onchange: function(value){
+                                    // console.log(d.fields_dict)
+                                    d.fields_dict.cheque_reference_no.refresh();
+                                    let mode_of_payment = d.fields_dict.mode_of_payment.value;
+                                    if(mode_of_payment=="Cash"){
+                                        d.fields_dict.cheque_reference_no.value = ""
+                                        d.fields_dict.cheque_reference_date.value = ""
+                                        d.fields_dict.cheque_reference_no.df.reqd = 0;
+                                        d.fields_dict.cheque_reference_date.df.reqd = 0;
+                                    }else{
+                                        d.fields_dict.cheque_reference_no.df.reqd = 1;
+                                        d.fields_dict.cheque_reference_date.df.reqd = 1;
+                                    }
+                                    
+                                    d.fields_dict.cheque_reference_no.refresh();
+                                    d.fields_dict.cheque_reference_date.refresh();
+
+                                    if(mode_of_payment==""){
+                                        d.fields_dict.account_paid_to.value = null;
+                                        d.fields_dict.account_paid_to.refresh();
+                                    }
+                                }
+                            },
+                            {
+                                label: 'Account Paid To',
+                                fieldname: 'account_paid_to',
+                                fieldtype: 'Link',
+                                options: "Account",
+                                reqd: 1,
+                                get_query(){
+                                    let mode_of_payment = d.fields_dict.mode_of_payment.value;
+                                    let account_type = mode_of_payment=="Cash"? "Cash": "Bank";
+                                    return{
+                                        filters: {
+                                            is_group: 0,
+                                            company: frm.doc.company,
+                                            account_type: account_type
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                label: 'Transaction Detail',
+                                fieldname: 'transaction_section',
+                                fieldtype: 'Section Break',
+                                options: "",
+                                reqd: 0
+                            },
+                            {
+                                label: 'Cheque/Reference No',
+                                fieldname: 'cheque_reference_no',
+                                fieldtype: 'Data',
+                                options: "",
+                                reqd: 1
+                            },
+                            {
+                                label: 'Cheque/Reference Date',
+                                fieldname: 'cheque_reference_date',
+                                fieldtype: 'Date',
+                                options: "",
+                                default: "",
+                                reqd: 1
+                            },
+                        ],
+                        size: 'small', // small, large, extra-large 
+                        primary_action_label: 'Create Payment Entry',
+                        primary_action(values) {
+                            if(values){
+                                frappe.call({
+                                    method: "akf_accounts.akf_accounts.doctype.donation.donation.pledge_payment_entry",
+                                    args:{
+                                        doc: frm.doc,
+                                        values: values
+                                    },
+                                    callback: function(r){
+                                        d.hide();
+                                        frappe.set_route("Form", "Payment Entry", r.message);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    d.show();
+
                 }, __("Create"));
             }
         }
@@ -155,16 +308,6 @@ function set_queries(frm) {
         };
     });
 
-    frm.set_query('receivable_account', function () {
-        return {
-            filters: {
-                account_type: 'Receivable',
-                company: frm.doc.company,
-                is_group: 0
-            }
-        };
-    });
-
     frm.set_query('fund_class', function () {
         return {
             filters: {
@@ -182,12 +325,34 @@ function set_queries(frm) {
             }
         };
     });
+    set_queries_payment_details(frm);
+}
+
+function set_queries_payment_details(frm){
+    set_query_donor_id(frm);
     set_query_subservice_area(frm);
     set_query_product(frm);
     set_query_account(frm);
     set_query_project(frm);
+    set_query_equity_account(frm);
+    set_query_receivable_account(frm);
+    set_query_account_paid_to(frm);
+    set_query_mode_of_payment(frm);
 }
-
+function set_query_donor_id(frm){
+    frm.fields_dict['payment_detail'].grid.get_field('donor_id').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        let dlist = ["not in", "DONOR-2024-00004"];
+        if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant"){
+            dlist = ["in", "DONOR-2024-00004"]
+        }
+        return {
+            filters: {
+                name: dlist,
+            }
+        };
+    };
+}
 function set_query_subservice_area(frm){
     frm.fields_dict['payment_detail'].grid.get_field('pay_subservice_area').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
@@ -232,8 +397,59 @@ function set_query_project(frm){
         var row = locals[cdt][cdn];
         return {
             filters: {
+                company: frm.doc.company,
                 custom_program: ["!=", ""],
                 custom_program: row.pay_service_area,
+                
+            }
+        };
+    };
+}
+
+function set_query_equity_account(frm){
+    frm.fields_dict['payment_detail'].grid.get_field('equity_account').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                company: ["!=", ""],
+                company: frm.doc.company,
+                root_type: "Equity",
+            }
+        };
+    };
+}
+
+function set_query_receivable_account(frm){
+    frm.fields_dict['payment_detail'].grid.get_field('receivable_account').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                company: ["!=", ""],
+                company: frm.doc.company,
+                account_type: "Receivable",
+            }
+        };
+    };
+}
+
+function set_query_account_paid_to(frm){
+    frm.fields_dict['payment_detail'].grid.get_field('account_paid_to').get_query = function(doc, cdt, cdn) {
+        var account_types = in_list(["Receive", "Internal Transfer"], "Receive") ?
+				["Bank", "Cash"] : [frappe.boot.party_account_types["Donor"]];
+			return {
+				filters: {
+					"account_type": ["in", account_types],
+					"is_group": 0,
+					"company": frm.doc.company
+				}
+			}
+    };
+}
+function set_query_mode_of_payment(frm){
+    frm.fields_dict['payment_detail'].grid.get_field('mode_of_payment').get_query = function(doc, cdt, cdn) {
+        return {
+            filters: {
+                enabled: 1,
             }
         };
     };

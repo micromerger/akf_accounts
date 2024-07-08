@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-07-01 10:13:47.925589",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "date",
+  "equity_account_disaster_management_fund_dmf_01",
+  "bank_from",
+  "equity_account_disaster_managementt_fund_dmf_01",
+  "branch_account_inter_branch_transfer_account_ibtf",
+  "cheque_no",
+  "branch_account_branch_transfer_account_ibtf",
+  "donor",
+  "bank_to",
+  "amount_rs",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "equity_account_disaster_management_fund_dmf_01",
+   "fieldtype": "Select",
+   "label": "Equity Account DISASTER MANAGEMENT FUND (DMF 01)"
+  },
+  {
+   "fieldname": "bank_from",
+   "fieldtype": "Link",
+   "label": "Bank From",
+   "options": "Bank Account"
+  },
+  {
+   "fieldname": "equity_account_disaster_managementt_fund_dmf_01",
+   "fieldtype": "Select",
+   "label": "Equity Account DISASTER MANAGEMENT FUND (DMF 01)"
+  },
+  {
+   "fieldname": "branch_account_inter_branch_transfer_account_ibtf",
+   "fieldtype": "Select",
+   "label": "Branch Account INTER BRANCH TRANSFER ACCOUNT (IBTF)"
+  },
+  {
+   "fieldname": "cheque_no",
+   "fieldtype": "Select",
+   "label": "Cheque No"
+  },
+  {
+   "fieldname": "branch_account_branch_transfer_account_ibtf",
+   "fieldtype": "Select",
+   "label": "Branch Account BRANCH TRANSFER ACCOUNT (IBTF)"
+  },
+  {
+   "fieldname": "donor",
+   "fieldtype": "Link",
+   "label": "Donor",
+   "options": "Donor"
+  },
+  {
+   "fieldname": "bank_to",
+   "fieldtype": "Select",
+   "label": "Bank To"
+  },
+  {
+   "fieldname": "amount_rs",
+   "fieldtype": "Currency",
+   "label": "Amount Rs."
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-07-01 10:46:18.480582",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Inter Branch Trasfer",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

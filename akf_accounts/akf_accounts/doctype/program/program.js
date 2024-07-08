@@ -28,22 +28,6 @@ frappe.ui.form.on('Program', {
 
 
 function set_queries(frm){
-    frm.set_query('receivable_account', function() {
-        return {
-            filters: {
-                account_type: 'Receivable'
-            }
-        };
-    });
-    frm.set_query('fund_class', function() {
-        return {
-            filters: {
-                root_type: 'Equity',
-                is_group: 0,
-                company:frm.doc.company
-            }
-        };
-    });
     frm.fields_dict['deduction_details'].grid.get_field('project').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
@@ -74,7 +58,7 @@ function set_queries(frm){
         };
     };
 
-    frm.fields_dict['accounts_default'].grid.get_field('fund_class').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['accounts_default'].grid.get_field('equity_account').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
