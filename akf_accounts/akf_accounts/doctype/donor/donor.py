@@ -18,9 +18,9 @@ class Donor(Document):
 		from frappe.utils import validate_email_address
 		if self.email:
 			validate_email_address(self.email.strip(), True)
-		frappe.msgprint("Balance from Donor!")
-		party_balance = get_balance_on(party_type="Donor", party="DONOR-2024-00012", cost_center="Rawalpindi Branch - AKFP")
-		frappe.msgprint(frappe.as_json(party_balance))
+		# frappe.msgprint("Balance from Donor!")
+		# party_balance = get_balance_on(party_type="Donor", party="DONOR-2024-00012", cost_center="Rawalpindi Branch - AKFP")
+		# frappe.msgprint(frappe.as_json(party_balance))
         
 
 	def verify_cnic(self):

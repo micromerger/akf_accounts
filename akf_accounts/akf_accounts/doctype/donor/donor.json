@@ -21,6 +21,7 @@
   "donor_name",
   "department",
   "branch",
+  "branch_abbreviation",
   "identification_type",
   "cnic",
   "column_break_5",
@@ -106,12 +107,12 @@
   },
   {
    "bold": 1,
-   "default": "DONOR-.{branch}.-.YYYY.-",
+   "default": "DONOR-.{branch_abbreviation}.-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
    "no_copy": 1,
-   "options": "DONOR-.{branch}.-.YYYY.-",
+   "options": "DONOR-.{branch_abbreviation}.-.YYYY.-",
    "print_hide": 1,
    "reqd": 1,
    "set_only_once": 1
@@ -150,7 +151,8 @@
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Cost Center"
+   "options": "Cost Center",
+   "reqd": 1
   },
   {
    "default": "CNIC",
@@ -180,6 +182,13 @@
    "fieldtype": "HTML Editor",
    "hidden": 1,
    "label": "Donor List"
+  },
+  {
+   "fetch_from": "branch.custom_abbreviation",
+   "fieldname": "branch_abbreviation",
+   "fieldtype": "Data",
+   "label": "Branch Abbreviation",
+   "read_only": 1
   }
  ],
  "image_field": "image",
@@ -189,7 +198,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-07-05 15:43:36.410652",
+ "modified": "2024-07-09 15:45:13.750027",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

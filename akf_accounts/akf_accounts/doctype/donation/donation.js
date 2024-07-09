@@ -82,7 +82,7 @@ frappe.ui.form.on('Payment Detail', {
     donation_amount: function (frm, cdt, cdn) {
         frm.call("set_deduction_breakeven");
     },
-    payment_detail_add: function(frm, cdt ,cdn){
+    /* payment_detail_add: function(frm, cdt ,cdn){
         let row = locals[cdt][cdn];
         if(frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant"){
             row.donor_id = "DONOR-2024-00004";
@@ -90,7 +90,7 @@ frappe.ui.form.on('Payment Detail', {
             row.donor_id = null;
         }
         frm.refresh_field("payment_detail");
-    },
+    }, */
     payment_detail_remove: function(frm){
         frm.call("set_deduction_breakeven");
     }
@@ -342,13 +342,13 @@ function set_queries_payment_details(frm){
 function set_query_donor_id(frm){
     frm.fields_dict['payment_detail'].grid.get_field('donor_id').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
-        let dlist = ["not in", "DONOR-2024-00004"];
+        let dlist = ["not in", "Unknown Donor"];
         if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant"){
-            dlist = ["in", "DONOR-2024-00004"]
+            dlist = ["in", "Unknown Donor"]
         }
         return {
             filters: {
-                name: dlist,
+                donor_name: dlist,
             }
         };
     };

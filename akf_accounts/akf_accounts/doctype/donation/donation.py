@@ -50,12 +50,12 @@ class Donation(Document):
 
     @frappe.whitelist()
     def set_deduction_breakeven(self):
-        def set_unknown_donor(row):
+        """ def set_unknown_donor(row):
             if(self.donor_identity in ["Unknown", "Merchant"]): 
                 row.donor_id = "DONOR-2024-00004"
             elif(self.donor_identity in ["Known", ""]):
                 if(row.donor_id == "DONOR-2024-00004"):
-                    row.donor_id = None
+                    row.donor_id = None """
         
         def reset_mode_of_payment(row):
             if(self.contribution_type == "Pledge"):
@@ -82,7 +82,7 @@ class Donation(Document):
         total_donation=0
         
         for row in self.payment_detail:
-            set_unknown_donor(row)
+            # set_unknown_donor(row)
             reset_mode_of_payment(row)
             total_donation+= row.donation_amount
             # Setup Deduction Breakeven
@@ -303,6 +303,7 @@ class Donation(Document):
                 "cost_center" : row.cost_center,
                 "paid_amount" : row.donation_amount,
                 "received_amount" : row.donation_amount,
+                "donor": row.donor_id,
                 "program" : row.pay_service_area,
                 "subservice_area" : row.pay_subservice_area,
                 "product" : row.pay_product,
