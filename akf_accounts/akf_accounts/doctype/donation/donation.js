@@ -16,7 +16,7 @@ frappe.ui.form.on('Donation', {
         set_custom_btns(frm);
     },
     donor_identity: function(frm){
-        if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant"){
+        if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant" || frm.doc.donor_identity=="Merchant - Known"){
             frm.set_value("contribution_type", "Donation");
             frm.set_df_property("contribution_type", "read_only", 1)
         }else{
