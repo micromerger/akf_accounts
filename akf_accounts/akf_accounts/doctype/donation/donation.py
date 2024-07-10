@@ -283,7 +283,7 @@ class Donation(Document):
             frappe.get_doc(args).submit()
 
     def make_payment_entry(self):
-        if(self.contribution_type!="Donation"): return
+        # if(self.contribution_type!="Donation"): return
         for row in self.payment_detail:
             args = frappe._dict({
                 "doctype": "Payment Entry",
@@ -298,7 +298,7 @@ class Donation(Document):
                 "source_exchange_rate" : 0.3,
                 "target_exchange_rate": 1,
                 "paid_from" : row.receivable_account,
-                "paid_to" : row.equity_account,
+                "paid_to" : row.account_paid_to,
                 "reference_date" : self.due_date,
                 "cost_center" : row.cost_center,
                 "paid_amount" : row.donation_amount,
