@@ -342,15 +342,23 @@ function set_queries_payment_details(frm){
 function set_query_donor_id(frm){
     frm.fields_dict['payment_detail'].grid.get_field('donor_id').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
-        let dlist = ["not in", "Unknown Donor"];
+        
         if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant"){
-            dlist = ["in", "Unknown Donor"]
+            let dlist = ["in", "Unknown Donor"];
+            return {
+                filters: {
+                    donor_name: dlist,
+                }
+            };
+        }else if(frm.doc.donor_identity=="Known"){
+            let dlist = ["not in", "Unknown Donor"];
+            return {
+                filters: {
+                    donor_name: dlist,
+                }
+            };
         }
-        return {
-            filters: {
-                donor_name: dlist,
-            }
-        };
+        
     };
 }
 function set_query_subservice_area(frm){
