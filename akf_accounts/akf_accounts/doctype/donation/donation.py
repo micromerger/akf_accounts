@@ -202,7 +202,9 @@ class Donation(Document):
                 "debit_in_account_currency": 0,
                 "credit_in_account_currency": row.outstanding_amount,
             })
-            frappe.get_doc(args).submit()
+            doc = frappe.get_doc(args)
+            doc.save(ignore_permissions=True)
+            doc.submit()
             # debit
             args.update({
                 "party_type": "Donor",
@@ -213,7 +215,9 @@ class Donation(Document):
                 "debit_in_account_currency": row.donation_amount,
                 "credit_in_account_currency": 0,
             })
-            frappe.get_doc(args).submit()
+            doc = frappe.get_doc(args)
+            doc.save(ignore_permissions=True)
+            doc.submit()
 
     def make_deduction_gl_entries(self):
         args = self.get_gl_entry_dict()
@@ -232,7 +236,9 @@ class Donation(Document):
                 "subservice_area": row.subservice_area,
                 "product": row.product,
             })
-            frappe.get_doc(args).submit()
+            doc = frappe.get_doc(args)
+            doc.save(ignore_permissions=True)
+            doc.submit()
 
     def make_fund_class_gl_entry(self):
         if(not self.fund_class): frappe.throw("Please select `Fund Class` account in accounts detail.")
@@ -244,7 +250,9 @@ class Donation(Document):
             "debit_in_account_currency": 0,
             "credit_in_account_currency": self.net_amount
         })
-        frappe.get_doc(args).submit()
+        doc = frappe.get_doc(args)
+        doc.save(ignore_permissions=True)
+        doc.submit()
 
     def make_receivable_gl_entry(self):
         if(not self.receivable_account): frappe.throw("Please select `Receivable Account` account in accounts detail.")
@@ -258,7 +266,9 @@ class Donation(Document):
             "debit_in_account_currency": self.outstanding_amount,
             "credit_in_account_currency": 0
         })
-        frappe.get_doc(args).submit()
+        doc = frappe.get_doc(args)
+        doc.save(ignore_permissions=True)
+        doc.submit()
 
     def make_payment_ledger_entry(self):
         # if(self.contribution_type!="Donation"): return
@@ -280,7 +290,9 @@ class Donation(Document):
                 "amount_in_account_currency": row.donation_amount,
                 # 'remarks': self.instructions_internal,
             })
-            frappe.get_doc(args).submit()
+            doc = frappe.get_doc(args)
+            doc.save(ignore_permissions=True)
+            doc.submit()
 
     def make_payment_entry(self):
         # if(self.contribution_type!="Donation"): return
@@ -318,7 +330,9 @@ class Donation(Document):
                         "allocated_amount" : row.donation_amount,
                 }]
             })
-            doc = frappe.get_doc(args).submit()
+            doc = frappe.get_doc(args)
+            doc.save(ignore_permissions=True)
+            doc.submit()
 
     def before_cancel(self):
         self.del_gl_entries()
