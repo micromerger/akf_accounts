@@ -217,7 +217,7 @@ class XPaymentEntry(AccountsController):
         if self.payment_type == "Internal Transfer":
             return
 
-        if self.party_type in ("Donor", "Customer", "Supplier"):
+        if self.party_type in ("Customer", "Supplier"):
             self.validate_allocated_amount_with_latest_data()
         else:
             fail_message = _("Row #{0}: Allocated Amount cannot be greater than outstanding amount.")

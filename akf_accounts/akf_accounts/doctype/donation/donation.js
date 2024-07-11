@@ -357,6 +357,13 @@ function set_query_donor_id(frm){
                     donor_name: dlist,
                 }
             };
+        }else if(frm.doc.donor_identity == "Merchant - Known"){
+            let dlist = ["in", "Merchant Known"];
+            return {
+                filters: {
+                    donor_name: dlist,
+                }
+            };
         }
         
     };

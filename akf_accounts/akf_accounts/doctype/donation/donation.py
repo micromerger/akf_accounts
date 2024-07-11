@@ -146,24 +146,14 @@ class Donation(Document):
             self.cost_center = ""
 
     def on_submit(self):
-        # Credit GL Entry
+        # Credit Debit, GL Entry
         self.make_payment_detail_gl_entry()
         self.make_deduction_gl_entries()
-        # self.make_fund_class_gl_entry()
-        # # Debit GL Entry
-        # self.make_receivable_gl_entry()
-        # # It will make against receivable account
         self.make_payment_ledger_entry()
-        # # It will make donation payment entry
         if(self.contribution_type=="Donation"):
             self.make_payment_entry()
         self.update_status()
     
-    def update_status(self):
-        status = "Paid" if(self.contribution_type == "Donation") else "Unpaid"
-        self.db_set("status", status)
-        self.reload()
-
     def get_gl_entry_dict(self):
         return frappe._dict({
             'doctype': 'GL Entry',
@@ -185,6 +175,7 @@ class Donation(Document):
     
     def make_payment_detail_gl_entry(self):
         args = self.get_gl_entry_dict()
+        
         for row in self.payment_detail:
             # credit
             args.update({
@@ -214,6 +205,17 @@ class Donation(Document):
                 "credit": 0,
                 "debit_in_account_currency": row.donation_amount,
                 "credit_in_account_currency": 0,
+            })
+            if(self.donor_identity == "Merchant - Known"): pass
+            else:
+                doc = frappe.get_doc(args)
+                doc.save(ignore_permissions=True)
+                doc.submit()
+        
+        if(self.donor_identity == "Merchant - Known"):
+            args.update({
+                "debit": self.total_donation,
+                "debit_in_account_currency": self.total_donation
             })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
@@ -271,7 +273,7 @@ class Donation(Document):
         doc.submit()
 
     def make_payment_ledger_entry(self):
-        # if(self.contribution_type!="Donation"): return
+        args = {}
         for row in self.payment_detail:
             args = frappe._dict({
                 "doctype": "Payment Ledger Entry",
@@ -290,12 +292,24 @@ class Donation(Document):
                 "amount_in_account_currency": row.donation_amount,
                 # 'remarks': self.instructions_internal,
             })
+            if(self.donor_identity == "Merchant - Known"):
+                pass
+            else:
+                doc = frappe.get_doc(args)
+                doc.save(ignore_permissions=True)
+                doc.submit()
+        if(self.donor_identity == "Merchant - Known"):
+            args.update({
+                "amount": self.total_donation,
+                "amount_in_account_currency": self.total_donation
+            })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
             doc.submit()
 
     def make_payment_entry(self):
         # if(self.contribution_type!="Donation"): return
+        args = {}
         for row in self.payment_detail:
             args = frappe._dict({
                 "doctype": "Payment Entry",
@@ -330,9 +344,26 @@ class Donation(Document):
                         "allocated_amount" : row.donation_amount,
                 }]
             })
+            if(self.donor_identity == "Merchant - Known"):
+                pass
+            else:
+                doc = frappe.get_doc(args)
+                doc.save(ignore_permissions=True)
+                doc.submit()
+
+        if(self.donor_identity == "Merchant - Known"):
+            args.update({
+                "paid_amount" : self.total_donation,
+                "received_amount" : self.total_donation,
+            })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
             doc.submit()
+
+    def update_status(self):
+        status = "Paid" if(self.contribution_type == "Donation") else "Unpaid"
+        self.db_set("status", status)
+        self.reload()
 
     def before_cancel(self):
         self.del_gl_entries()
