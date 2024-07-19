@@ -22,13 +22,16 @@ frappe.ui.form.on('Donor', {
 		apply_mask_on_id_number(frm);
 	},
     identification_type: function(frm){
-        if(frm.doc.identification_type){
+        if(frm.doc.identification_type!="Others"){
             apply_mask_on_id_number(frm);
-            frm.set_value("cnic", "");
+            
         }
+        frm.set_value("cnic", "");
+        frm.set_value("others", "");
     },
 	cnic: function(frm) {
-        if (frm.doc.cnic) {
+        console.log(frm.doc.cnic)
+        if (frm.doc.cnic && frm.doc.identification_type != "Other") {
             const labelName = __(frm.fields_dict['cnic'].df.label);
             if (!internationalIdNumberValidation(frm.doc.cnic, frm.doc.identification_type)) {
                 // frm.set_value('cnic', '');
@@ -45,7 +48,7 @@ frappe.ui.form.on('Donor', {
 
 
 function apply_mask_on_id_number(frm) {
-    let maskValue = cnic;
+    let maskValue = "";
     frm.set_df_property("cnic", "label", frm.doc.identification_type);
     if(frm.doc.identification_type==="CNIC"){
         maskValue = cnic;
@@ -54,8 +57,10 @@ function apply_mask_on_id_number(frm) {
     }else if(frm.doc.identification_type==="Passport"){
         maskValue = passport;
     }
+    
     frm.fields_dict["cnic"].$input.mask(maskValue);
     frm.fields_dict["cnic"].$input.attr("placeholder", maskValue);
+    
 }
 
 function internationalIdNumberValidation(cnicNo, identification_type) {

@@ -18,12 +18,14 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "nationality_type",
   "donor_name",
   "department",
   "branch",
   "branch_abbreviation",
   "identification_type",
   "cnic",
+  "others",
   "column_break_5",
   "donor_type",
   "email",
@@ -47,8 +49,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Donor Name",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "column_break_5",
@@ -66,9 +67,7 @@
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Email",
-   "reqd": 1,
-   "unique": 1
+   "label": "Email"
   },
   {
    "fieldname": "image",
@@ -139,10 +138,12 @@
   },
   {
    "fieldname": "city",
-   "fieldtype": "Data",
-   "label": "City"
+   "fieldtype": "Link",
+   "label": "City",
+   "options": "City"
   },
   {
+   "depends_on": "eval: doc.identification_type!=\"Others\"",
    "fieldname": "cnic",
    "fieldtype": "Data",
    "label": "CNIC"
@@ -159,7 +160,7 @@
    "fieldname": "identification_type",
    "fieldtype": "Select",
    "label": "Identification Type",
-   "options": "\nCNIC\nNTN\nPassport"
+   "options": "CNIC\nNTN\nPassport\nOthers"
   },
   {
    "depends_on": "eval: doc.donor_type==\"Organizational\" || doc.donor_type==\"Institutional\"",
@@ -189,6 +190,19 @@
    "fieldtype": "Data",
    "label": "Branch Abbreviation",
    "read_only": 1
+  },
+  {
+   "fieldname": "nationality_type",
+   "fieldtype": "Select",
+   "label": "Nationality Type",
+   "options": "\nLocal\nForeign",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.identification_type==\"Others\"",
+   "fieldname": "others",
+   "fieldtype": "Data",
+   "label": "Others"
   }
  ],
  "image_field": "image",
@@ -198,7 +212,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-07-09 15:45:13.750027",
+ "modified": "2024-07-18 13:23:32.035019",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

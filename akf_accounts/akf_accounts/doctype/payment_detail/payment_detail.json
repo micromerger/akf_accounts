@@ -39,11 +39,14 @@
   "column_break_wlkz",
   "receivable_account",
   "transaction_no_cheque_no",
+  "remarks",
   "accounting_dimensions_section",
   "dimension_col_break",
   "column_break_sezm",
+  "currency",
   "donation_amount",
   "deduction_amount",
+  "net_amount",
   "outstanding_amount",
   "paid"
  ],
@@ -61,6 +64,7 @@
    "fieldname": "pay_service_area",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Service Area",
    "options": "Program",
    "reqd": 1
@@ -78,8 +82,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Product",
-   "options": "Product",
-   "reqd": 1
+   "options": "Product"
   },
   {
    "fieldname": "accounting_dimensions_section",
@@ -231,6 +234,7 @@
   {
    "fieldname": "transaction_no_cheque_no",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Transaction No/ Cheque No",
    "mandatory_depends_on": "eval: doc.mode_of_payment == \"bank\" || doc.mode_of_payment == \"Cheque\" || doc.mode_of_payment == \"Bank Draft\" "
   },
@@ -238,6 +242,7 @@
    "fieldname": "donor_id",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Donor ID",
    "options": "Donor",
    "reqd": 1
@@ -291,12 +296,31 @@
    "fieldtype": "Check",
    "label": "Paid",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "net_amount",
+   "fieldtype": "Currency",
+   "label": "Net Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-05 13:38:23.979300",
+ "modified": "2024-07-18 13:36:03.278831",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

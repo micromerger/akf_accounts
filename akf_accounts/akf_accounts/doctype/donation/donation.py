@@ -1,4 +1,4 @@
-import frappe
+import frappe, ast
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 from erpnext.accounts.utils import get_balance_on
@@ -110,7 +110,8 @@ class Donation(Document):
                 self.append("deduction_breakeven", args)
 
             row.deduction_amount = temp_deduction_amount    
-            row.outstanding_amount = (row.donation_amount-row.deduction_amount)
+            row.net_amount = (row.donation_amount-row.deduction_amount)
+            row.outstanding_amount = row.donation_amount
             deduction_amount += temp_deduction_amount
             
         # calculate total
@@ -192,6 +193,7 @@ class Donation(Document):
                 "credit": row.outstanding_amount,
                 "debit_in_account_currency": 0,
                 "credit_in_account_currency": row.outstanding_amount,
+                "voucher_detail_no": row.name,
             })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
@@ -237,40 +239,12 @@ class Donation(Document):
                 "program": row.program,
                 "subservice_area": row.subservice_area,
                 "product": row.product,
+
+                "voucher_detail_no": row.name,
             })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
             doc.submit()
-
-    def make_fund_class_gl_entry(self):
-        if(not self.fund_class): frappe.throw("Please select `Fund Class` account in accounts detail.")
-        args = self.get_gl_entry_dict()
-        args.update({
-            "account": self.fund_class,
-            "debit": 0,
-            "credit": self.net_amount,
-            "debit_in_account_currency": 0,
-            "credit_in_account_currency": self.net_amount
-        })
-        doc = frappe.get_doc(args)
-        doc.save(ignore_permissions=True)
-        doc.submit()
-
-    def make_receivable_gl_entry(self):
-        if(not self.receivable_account): frappe.throw("Please select `Receivable Account` account in accounts detail.")
-        args = self.get_gl_entry_dict()
-        args.update({
-            "account": self.receivable_account,
-            'party_type' : "Donor",
-            'party' : self.donor,
-            "debit": self.outstanding_amount,
-            "credit": 0,
-            "debit_in_account_currency": self.outstanding_amount,
-            "credit_in_account_currency": 0
-        })
-        doc = frappe.get_doc(args)
-        doc.save(ignore_permissions=True)
-        doc.submit()
 
     def make_payment_ledger_entry(self):
         args = {}
@@ -291,6 +265,7 @@ class Donation(Document):
                 "amount": row.donation_amount,
                 "amount_in_account_currency": row.donation_amount,
                 # 'remarks': self.instructions_internal,
+                "voucher_detail_no": row.name,
             })
             if(self.donor_identity == "Merchant - Known"):
                 pass
@@ -403,19 +378,32 @@ class Donation(Document):
 
 @frappe.whitelist()
 def get_donors_list(donation_id):
-    donors_list = frappe.db.sql(f""" select donor_id from `tabPayment Detail` where paid = 0 and parent='{donation_id}' """, as_dict=0)
-    return [d[0] for d in donors_list] if(donors_list) else []
+    result = frappe.db.sql(f""" select donor_id, idx from `tabPayment Detail` where paid = 0 and parent='{donation_id}' """, as_dict=0)
+    donors_list = {d[0] for d in result} if(result) else []
+    idx_list = {}
+    for donor in donors_list:
+        idx_list[donor] = sorted([r[1] for r in result if(r[0]==donor)])
+    return {
+        "donors_list": sorted(list(donors_list)) if(donors_list) else [],
+        "idx_list": idx_list if(idx_list) else {},
+    }
+
+@frappe.whitelist()
+def get_outstanding(filters):
+    filters = ast.literal_eval(filters)
+    return frappe.db.sql(""" select outstanding_amount from `tabPayment Detail` 
+        where docstatus=1
+        and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)[0][0]
 
 @frappe.whitelist()
 def pledge_payment_entry(doc, values):
-    import ast
     from frappe.utils import getdate
     curdate = getdate()
-
+    
     doc = frappe._dict(ast.literal_eval(doc))
     values = frappe._dict(ast.literal_eval(values))
-    row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor_id': values.donor_id}, ['*'], as_dict=1)
-
+    row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor_id': values.donor_id, "donation_amount": [">=", values.paid_amount]}, ['*'], as_dict=1)
+    if(not row): frappe.throw(f"You're paying more than donation amount.")
     args = frappe._dict({
         "doctype": "Payment Entry",
         "payment_type" : "Receive",
@@ -432,8 +420,8 @@ def pledge_payment_entry(doc, values):
         "paid_to" : values.account_paid_to,
         "reference_date" : curdate,
         "cost_center" : row.cost_center,
-        "paid_amount" : row.donation_amount,
-        "received_amount" : row.donation_amount,
+        "paid_amount" : values.paid_amount,
+        "received_amount" : values.paid_amount,
         "program" : row.pay_service_area,
         "subservice_area" : row.pay_subservice_area,
         "product" : row.pay_product,
@@ -445,12 +433,12 @@ def pledge_payment_entry(doc, values):
                 "reference_name" : doc.name,
                 "due_date" : curdate,
                 "total_amount" : doc.total_donation,
-                "outstanding_amount" : row.donation_amount,
-                "allocated_amount" : row.donation_amount,
+                "outstanding_amount" : values.paid_amount,
+                "allocated_amount" : values.paid_amount,
         }]
     })
     doc = frappe.get_doc(args).save()
-    frappe.db.set_value("Payment Detail", row.name, "paid", 1)
+    # frappe.db.set_value("Payment Detail", row.name, "paid", 1)
     return doc.name
 
 @frappe.whitelist()
@@ -466,7 +454,7 @@ def get_min_max_percentage(program, account):
         return None, None
 
 @frappe.whitelist()
-def set_unknown_to_known(name, donor):
+def set_unknown_to_known(name, values):
     
     """  
     => Update donor information in these doctypes.
@@ -476,78 +464,119 @@ def set_unknown_to_known(name, donor):
         Payment Ledger Entry
         Payment Entry
     """ 
-    if(not donor): frappe.throw("Please donor.")
+    import ast
+    values = frappe._dict(ast.literal_eval(values))
+    pid = frappe.db.get_value("Payment Detail", {"parent": name, "transaction_no_cheque_no": values.transaction_no_cheque_no}, ["name", "idx"], as_dict=1) 
+    if(not pid): frappe.throw(f"Tansaction No/ Cheque No: {values.transaction_no_cheque_no}", title="Not Found")
+    info = frappe.db.get_value("Donor", values.donor, "*", as_dict=1)
 
-    info = frappe.db.get_value("Donor", donor, "*", as_dict=1)
-
-    frappe.db.sql(f""" 
-        Update 
-            `tabDonation`
-        Set 
-            reverse_donor = 'Unknown To Known', 
-            donor = '{donor}', donor_name='{info.donor_name}', donor_type='{info.donor_type}', 
-            donor_contact_no='{info.contact_no}',  donor_address= '{info.address}', email='{info.email}',
-            city = '{info.city}'
-        Where 
-            docstatus=1
-            and name = '{name}'
-    """)
-
+    # Update Payment Details
     frappe.db.sql(f""" 
         Update 
             `tabPayment Detail`
         Set 
             reverse_donor = 'Unknown To Known', 
-            donor = '{donor}'
+            donor_id = '{info.name}', donor_name='{info.donor_name}',
+            donor = '{info.name}',
+            donor_type='{info.donor_type if (info.donor_type) else ""}', 
+            contact_no='{info.contact_no if (info.contact_no) else "" }',  
+            address= '{info.address if (info.address) else "" }', 
+            email='{info.email if (info.email) else ""}',
+            city = '{info.city if(info.city) else ""}'
         Where 
             docstatus=1
             and parent = '{name}'
+            and name = '{pid.name}'
      """)
 
+    # Update gl entry for debit
     frappe.db.sql(f""" 
     Update 
         `tabGL Entry`
     Set 
-        party = '{donor}',
-        donor = '{donor}',
+        party = '{info.name}',
+        donor = '{info.name}',
         reverse_donor = 'Unknown To Known'
     Where 
         docstatus=1
         and ifnull(party, "")!=""
         and voucher_no = '{name}'
+        and voucher_detail_no = '{pid.name}'
+    """)
+
+    # Update gl entry for credit
+    frappe.db.sql(f""" 
+    Update 
+        `tabGL Entry`
+    Set 
+        donor = '{info.name}',
+        reverse_donor = 'Unknown To Known'
+    Where 
+        docstatus=1
+        and voucher_no = '{name}'
+        and voucher_detail_no = '{pid.name}'
+    """)
+
+    frappe.db.sql(f""" 
+    Update 
+        `tabDeduction Breakeven`
+    Set
+        donor = '{info.name}',
+        reverse_donor = 'Unknown To Known'
+    Where 
+        docstatus=1
+        and payment_detail_id = '{pid.idx}'
     """)
 
     frappe.db.sql(f""" 
     Update 
         `tabGL Entry`
     Set 
-        donor = '{donor}',
+        donor = '{info.name}',
         reverse_donor = 'Unknown To Known'
     Where 
         docstatus=1
-        and ifnull(party, "")=""
         and voucher_no = '{name}'
+        and voucher_detail_no in (select name from `tabDeduction Breakeven` where docstatus=1 and payment_detail_id = '{pid.idx}')
     """)
 
     frappe.db.sql(f""" 
     Update 
         `tabPayment Ledger Entry`
     Set 
-        donor = '{donor}', reverse_donor = 'Unknown To Known'
+        donor = '{info.name}', party = '{info.name}', reverse_donor = 'Unknown To Known'
     Where 
         docstatus=1
         and voucher_no = '{name}'
+        and voucher_detail_no = '{pid.name}'
     """)
 
     frappe.db.sql(f""" 
     Update 
         `tabPayment Entry`
     Set 
-        party = '{donor}', party_name= '{info.donor_name}', reverse_donor = 'Unknown To Known'
+        party = '{info.name}', party_name= '{info.donor_name}', donor='{info.name}', reverse_donor = 'Unknown To Known'
     Where 
         docstatus=1
         and name in  (select parent from `tabPayment Entry Reference` where reference_name ='{name}')
+        and reference_no = '{values.transaction_no_cheque_no}'
     """)
 
-    frappe.msgprint("Donor detail updated in all accounting dimensions.", alert=1)
+    frappe.db.sql(f""" 
+    Update 
+        `tabGL Entry`
+    Set 
+        party = '{info.name}', donor='{info.name}', reverse_donor = 'Unknown To Known'
+    Where 
+        docstatus=1
+        and voucher_no in  (
+            select name from `tabPayment Entry` 
+                where name in (select parent from `tabPayment Entry Reference` where reference_name ='{name}')
+                and reference_no = '{values.transaction_no_cheque_no}'
+            )
+    """)
+
+
+    frappe.msgprint("Donor id, updated in [<b>Payment Detail, Deduction Breakeven, GL Entry, Payment Entry, Payment Ledger Entry</b>] accounting dimensions/doctypes.", alert=1)
+
 

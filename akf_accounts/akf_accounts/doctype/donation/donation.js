@@ -122,7 +122,14 @@ function set_custom_btns(frm) {
                             fieldname: 'donor',
                             fieldtype: 'Link',
                             options: "Donor",
-                            reqd: 1
+                            reqd: 1,
+                            get_query(){
+                                return{
+                                    filters:{
+                                        donor_name: ["not in", ["Unknown Donor", "Merchant Known"]]
+                                    }
+                                }
+                            }
                         },
                         {
                             label: 'Transaction No/ Cheque No',
@@ -141,7 +148,7 @@ function set_custom_btns(frm) {
                                 method: "akf_accounts.akf_accounts.doctype.donation.donation.set_unknown_to_known",
                                 args:{
                                     name: frm.doc.name,
-                                    donor: values.donor
+                                    values: values
                                 },
                                 callback: function(r){
                                     d.hide();
@@ -161,6 +168,7 @@ function set_custom_btns(frm) {
             if(frm.doc.contribution_type == "Pledge"){
                 frm.add_custom_button(__('Payment Entry'), function () {
                     let donors_list = []
+                    let idx_list;
                     frappe.call({
                         method: "akf_accounts.akf_accounts.doctype.donation.donation.get_donors_list",
                         async: false,
@@ -168,20 +176,113 @@ function set_custom_btns(frm) {
                             donation_id: frm.doc.name,
                         },
                         callback: function(r){
-                            // console.log(r.message)
-                            donors_list = r.message;
+                            /* 
+                                return {
+                                    "donors_list": donors_list,
+                                    "idx_list": idx_list,
+                                }
+                            */
+                            let data = r.message;
+                            console.log(data);
+                            donors_list = data['donors_list'];
+                            idx_list = data['idx_list'];
                         }
                     });
 
                     let d = new frappe.ui.Dialog({
-                        title: 'Donors List',
+                        title: 'Payment Details',
                         fields: [
                             {
                                 label: 'Donor ID',
                                 fieldname: 'donor_id',
                                 fieldtype: 'Select',
                                 options: donors_list,
-                                reqd: 1
+                                reqd: 1,
+                                onchange: function(val){
+                                    let donor_id = d.fields_dict.donor_id.value;
+                                    
+                                    if(donor_id in idx_list){
+                                        d.fields_dict.serial_no.df.options = idx_list[donor_id];
+                                        d.fields_dict.serial_no.refresh();
+                                    }
+                                    let serial_no = d.fields_dict.serial_no.value;
+                                    /* console.log(serial_no)
+                                    if(serial_no!=null){
+                                        frappe.call({
+                                            method: "akf_accounts.akf_accounts.doctype.donation.donation.get_outstanding",
+                                            args: {
+                                                filters: {"name": frm.doc.name, "donor_id": donor_id, "idx": serial_no},
+                                            },
+                                            callback: function(r){
+                                                console.log(r.message);
+                                                d.fields_dict.outstanding_amount.value = r.message;
+                                                d.fields_dict.outstanding_amount.refresh();
+                                            }
+                                        })
+                                    } */
+                                    
+                                
+                                }
+                            },
+                            {
+                                label: 'Outstanding Amount.',
+                                fieldname: 'outstanding_amount',
+                                fieldtype: 'Currency',
+                                options: "",
+                                default: 0,
+                                reqd: 0,
+                                read_only: 1,
+                                onchange: function(val){
+                                    let donor_id = d.fields_dict.donor_id.value;
+                                    console.log(donor_id)
+                                }
+                            },
+                            {
+                                label: '',
+                                fieldname: 'col_break',
+                                fieldtype: 'Column Break',
+                                options: "",
+                                reqd: 0
+                            },
+                            {
+                                label: 'Serial No.',
+                                fieldname: 'serial_no',
+                                fieldtype: 'Select',
+                                options: "",
+                                reqd: 1,
+                                onchange: function(val){
+                                    let donor_id = d.fields_dict.donor_id.value;
+                                    let serial_no = d.fields_dict.serial_no.value;
+                                    if(donor_id!=null && serial_no!=null){
+                                        frappe.call({
+                                            method: "akf_accounts.akf_accounts.doctype.donation.donation.get_outstanding",
+                                            args: {
+                                                filters: {"name": frm.doc.name, "donor_id": donor_id, "idx": serial_no},
+                                            },
+                                            callback: function(r){
+                                                console.log(r.message);
+                                                d.fields_dict.outstanding_amount.value = r.message;
+                                                d.fields_dict.outstanding_amount.refresh();
+                                            }
+                                        })
+                                    }
+                                }
+                            },
+                            
+                            {
+                                label: 'Paid Amount',
+                                fieldname: 'paid_amount',
+                                fieldtype: 'Currency',
+                                options: "",
+                                default: 0,
+                                reqd: 1,
+                                onchange: function(val){
+                                    let outstanding_amount = d.fields_dict.outstanding_amount.value;
+                                    let paid_amount = d.fields_dict.paid_amount.value;
+                                    if(paid_amount>outstanding_amount){
+                                        frappe.msgprint("Paid amount must be less than or equal to outstanding amount!")
+                                    }
+                                }
                             },
                             {
                                 label: 'Accounts Detail',
@@ -237,6 +338,7 @@ function set_custom_btns(frm) {
                                     }
                                 }
                             },
+                            
                             {
                                 label: 'Transaction Detail',
                                 fieldname: 'transaction_section',
@@ -263,7 +365,10 @@ function set_custom_btns(frm) {
                         size: 'small', // small, large, extra-large 
                         primary_action_label: 'Create Payment Entry',
                         primary_action(values) {
-                            if(values){
+                            if(values.paid_amount>values.outstanding_amount){
+                                frappe.msgprint("Paid amount must be less than or equal to outstanding amount!")
+                            }
+                            else if(values){
                                 frappe.call({
                                     method: "akf_accounts.akf_accounts.doctype.donation.donation.pledge_payment_entry",
                                     args:{
