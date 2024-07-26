@@ -58,6 +58,7 @@ frappe.ui.form.on('Payment Detail', {
     pay_product: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         row.product = row.pay_product;
+        frm.refresh_field("payment_detail")
     },
     project: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
@@ -195,9 +196,18 @@ function set_custom_btns(frm) {
                             {
                                 label: 'Donor ID',
                                 fieldname: 'donor_id',
-                                fieldtype: 'Select',
-                                options: donors_list,
+                                fieldtype: 'Link',
+                                options: "Donor",
                                 reqd: 1,
+                                get_query(){
+                                    // let mode_of_payment = d.fields_dict.mode_of_payment.value;
+                                    // let account_type = mode_of_payment=="Cash"? "Cash": "Bank";
+                                    return{
+                                        filters: {
+                                            name: ["in", donors_list],
+                                        }
+                                    }
+                                },
                                 onchange: function(val){
                                     let donor_id = d.fields_dict.donor_id.value;
                                     
@@ -369,6 +379,10 @@ function set_custom_btns(frm) {
                                 frappe.msgprint("Paid amount must be less than or equal to outstanding amount!")
                             }
                             else if(values){
+                                let paid = values.paid_amount==values.outstanding_amount?1: 0;
+                                let outstanding_amount = values.paid_amount<=values.outstanding_amount? (values.outstanding_amount-values.paid_amount): 0;
+                                values['paid'] = paid;
+                                values['outstanding_amount'] = outstanding_amount;
                                 frappe.call({
                                     method: "akf_accounts.akf_accounts.doctype.donation.donation.pledge_payment_entry",
                                     args:{
@@ -377,7 +391,8 @@ function set_custom_btns(frm) {
                                     },
                                     callback: function(r){
                                         d.hide();
-                                        frappe.set_route("Form", "Payment Entry", r.message);
+                                        frm.refresh_field("payment_detail");
+                                        // frappe.set_route("Form", "Payment Entry", r.message);
                                     }
                                 });
                             }
@@ -409,6 +424,16 @@ function set_queries(frm) {
         return {
             filters: {
                 status: 'On Hand'
+            }
+        };
+    });
+
+    frm.set_query('donation_cost_center', function () {
+        return {
+            filters: {
+                is_group: 0,
+                disabled: 0,
+                company: frm.doc.company,
             }
         };
     });

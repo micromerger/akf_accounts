@@ -104,14 +104,15 @@ class Donation(Document):
                     "amount": percentage_amount,
                     "service_area": row.program,
                     "project": row.project,
-                    "cost_center": row.cost_center,
+                    # "cost_center": row.cost_center,
+                    "cost_center": self.donation_cost_center,
                     "payment_detail_id": row.idx
                     })
                 self.append("deduction_breakeven", args)
-
+            row.cost_center = self.donation_cost_center
             row.deduction_amount = temp_deduction_amount    
             row.net_amount = (row.donation_amount-row.deduction_amount)
-            row.outstanding_amount = row.donation_amount
+            row.outstanding_amount = row.donation_amount if(self.contribution_type=="Pledge") else row.net_amount
             deduction_amount += temp_deduction_amount
             
         # calculate total
@@ -185,7 +186,7 @@ class Donation(Document):
                 "donor": row.donor_id,
                 "program": row.pay_service_area,
                 "subservice_area": row.subservice_area,
-                "product": row.pay_product,
+                "product": row.pay_product if(row.pay_product) else row.product,
                 "project": row.project,
                 "cost_center": row.cost_center,
                 "account": row.equity_account,
@@ -307,7 +308,7 @@ class Donation(Document):
                 "donor": row.donor_id,
                 "program" : row.pay_service_area,
                 "subservice_area" : row.pay_subservice_area,
-                "product" : row.pay_product,
+                "product": row.pay_product if(row.pay_product) else row.product,
                 "project" : row.project,
                 "cost_center" : row.cost_center,
                 "references": [{
@@ -402,7 +403,8 @@ def pledge_payment_entry(doc, values):
     
     doc = frappe._dict(ast.literal_eval(doc))
     values = frappe._dict(ast.literal_eval(values))
-    row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor_id': values.donor_id, "donation_amount": [">=", values.paid_amount]}, ['*'], as_dict=1)
+    row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor_id': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
+    
     if(not row): frappe.throw(f"You're paying more than donation amount.")
     args = frappe._dict({
         "doctype": "Payment Entry",
@@ -437,8 +439,14 @@ def pledge_payment_entry(doc, values):
                 "allocated_amount" : values.paid_amount,
         }]
     })
-    doc = frappe.get_doc(args).save()
-    # frappe.db.set_value("Payment Detail", row.name, "paid", 1)
+    doc = frappe.get_doc(args)
+    doc.save(ignore_permissions=True)
+    doc.submit()
+    # frappe.throw(f"{row}")
+    frappe.db.set_value("Payment Detail", row.name, "paid", values.paid)
+    frappe.db.set_value("Payment Detail", row.name, "outstanding_amount", values.outstanding_amount)
+    pe_link = get_link_to_form("Payment Entry", doc.name, "Payment Entry")
+    frappe.msgprint(f"{pe_link} has been paid successfully!", alert=True)
     return doc.name
 
 @frappe.whitelist()

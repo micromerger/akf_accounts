@@ -29,8 +29,9 @@ app_license = "mit"
 
 # include js in doctype views
 doctype_js = {
-	"Payment Entry" : "public/js/customizations/payment_entry.js"
-	}
+	"Payment Entry" : "public/js/customizations/payment_entry.js",
+	"Purchase Receipt" : "public/js/customizations/purchase_receipt.js"
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -116,10 +117,12 @@ doctype_js = {
 # ---------------
 # Override standard doctype classes
 
+# /home/frappe/frappe-bench/apps/akf_accounts/akf_accounts/customizations/extends/XAssetInvenPurchase.py
 override_doctype_class = {
-	"Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry"
+	"Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
+	"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
+	"Purchase Receipt" : "akf_accounts.customizations.extends.XAssetInvenPurchase.XAssetInvenPurchase",
 }
-
 # Document Events
 # ---------------
 # Hook on document methods and events

@@ -18,6 +18,7 @@
   "edit_posting_date_time",
   "due_date",
   "payment_details_section",
+  "donation_cost_center",
   "payment_detail",
   "section_break_otbq",
   "deduction_breakeven",
@@ -147,6 +148,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "donation_cost_center",
    "fieldname": "deduction_breakeven",
    "fieldtype": "Table",
    "options": "Deduction Breakeven"
@@ -163,6 +165,7 @@
   },
   {
    "allow_bulk_edit": 1,
+   "depends_on": "donation_cost_center",
    "fieldname": "payment_detail",
    "fieldtype": "Table",
    "options": "Payment Detail"
@@ -204,12 +207,18 @@
    "fieldtype": "Date",
    "label": "Due Date",
    "reqd": 1
+  },
+  {
+   "fieldname": "donation_cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-18 13:32:40.576584",
+ "modified": "2024-07-24 12:47:14.574814",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
