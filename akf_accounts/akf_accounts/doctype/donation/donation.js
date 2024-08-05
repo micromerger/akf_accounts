@@ -42,7 +42,7 @@ frappe.ui.form.on('Donation', {
 frappe.ui.form.on('Payment Detail', {
     donor_id: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        row.donor =  row.donor_id;
+        row.donor_id =  row.donor_id;
         // frm.call("set_deduction_breakeven");        
     },
     pay_service_area: function (frm, cdt, cdn) {
@@ -500,7 +500,10 @@ function set_query_donor_id(frm){
 }
 function set_query_subservice_area(frm){
     frm.fields_dict['payment_detail'].grid.get_field('pay_subservice_area').get_query = function(doc, cdt, cdn) {
+        console.log(("pay_subservice_area"));
+
         var row = locals[cdt][cdn];
+        console.log(("row"));
         return {
             filters: {
                 service_area: ["!=", ""],

@@ -6,7 +6,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "income_type"
+  "income_type",
+  "project"
  ],
  "fields": [
   {
@@ -14,11 +15,17 @@
    "fieldtype": "Data",
    "label": "Income Type",
    "unique": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-10 16:02:17.827934",
+ "modified": "2024-07-31 18:41:13.427462",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Income Type",

@@ -67,9 +67,11 @@ class Donation(Document):
             if(self.donation_type=="Zakat"): return []
             return frappe.db.sql(f"""
                     SELECT 
-                        company, income_type, account, percentage, min_percent, max_percent
+                        company, income_type,
+                        (select project from `tabIncome Type` where name = dd.income_type) as project, 
+                        account, percentage, min_percent, max_percent
                     FROM 
-                        `tabDeduction Details`
+                        `tabDeduction Details` dd
                     WHERE 
                         ifnull(account, "")!=""
                         and company = '{self.company}'
@@ -93,6 +95,7 @@ class Donation(Document):
                 if(row.donation_amount>0):
                     percentage_amount = row.donation_amount*(args.percentage/100)
                     temp_deduction_amount += percentage_amount
+                
                 args.update({
                     "donor": row.donor_id,
                     "program": row.pay_service_area,
@@ -103,7 +106,7 @@ class Donation(Document):
                     "donation_amount": row.donation_amount,
                     "amount": percentage_amount,
                     "service_area": row.program,
-                    "project": row.project,
+                    "project": args.project if(args.project) else row.project,
                     # "cost_center": row.cost_center,
                     "cost_center": self.donation_cost_center,
                     "payment_detail_id": row.idx
@@ -240,7 +243,7 @@ class Donation(Document):
                 "program": row.program,
                 "subservice_area": row.subservice_area,
                 "product": row.product,
-
+                "project": row.project,
                 "voucher_detail_no": row.name,
             })
             doc = frappe.get_doc(args)
