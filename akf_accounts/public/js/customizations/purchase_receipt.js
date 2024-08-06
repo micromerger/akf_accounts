@@ -23,7 +23,7 @@ function get_html(frm) {
     $("#table_render").empty();
 
     frappe.call({
-        method: "akf_accounts.customizations.extends.XAssetInvenPurchase.donor_list_data",
+        method: "akf_accounts.customizations.extends.xpurchase_receipt.donor_list_data",
         args: {
             doc: frm.doc,
         },
@@ -190,6 +190,7 @@ function set_query_cost_center(frm){
         };
     };
 }
+
 function set_query_product(frm){
     frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
@@ -217,4 +218,21 @@ function set_query_project(frm){
 }
 
 
+frappe.ui.form.on("Purchase Receipt Item", {
+    custom_new: function(frm, cdt, cdn){
+        let row = locals[cdt][cdn];
+        if(row.custom_new){
+            row.custom_used = 0;
+        }
+        frm.refresh_field("items")
+    },
+    custom_used: function(frm, cdt, cdn){
+        let row = locals[cdt][cdn];
+        if(row.custom_used){
+            row.custom_new = 0;
+        }
+        frm.refresh_field("items")
+    }
 
+    
+});

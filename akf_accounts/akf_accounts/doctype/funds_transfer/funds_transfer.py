@@ -19,119 +19,50 @@ class FundsTransfer(Document):
     def create_gl_entries_for_inter_funds_transfer(self):
         donor_list_data = self.donor_list_for_purchase_receipt()
         donor_list = donor_list_data['donor_list']
+        
+        previous_dimensions = []
+        new_dimensions = []
+        total_balance = 0.0
 
         for d in donor_list:
-            donor = d.get('donor')
-            cost_center = d.get('cost_center')
-            project = d.get('project')
-            program = d.get('service_area')  
-            subservice_area = d.get('subservice_area')
-            product = d.get('product')
-            amount = d.get('balance', 0.0)  
-            account = d.get('account')
-            company = d.get('company')
+            prev_donor = d.get('donor')
+            prev_cost_center = d.get('cost_center')
+            prev_project = d.get('project')
+            prev_program = d.get('service_area')  
+            prev_subservice_area = d.get('subservice_area')
+            prev_product = d.get('product')
+            prev_amount = float(d.get('balance', 0.0))  
+            prev_account = d.get('account')
+            prev_company = d.get('company')
 
-            if not frappe.db.exists('Funds Transfer', self.name):
-                frappe.throw(f"Funds Transfer document {self.name} does not exist.")
-
-            frappe.msgprint(f"Creating GL Entry for Funds Transfer: {self.name}")
-            frappe.msgprint(frappe.as_json(d))
-
-            # gl_entry_for_previous_dimension = frappe.get_doc({
-            #     'doctype': 'GL Entry',
-            #     'posting_date': self.custom_posting_date,
-            #     'transaction_date': self.custom_posting_date,
-            #     'account': account,
-            #     'against_voucher_type': 'Funds Transfer',
-            #     'against_voucher': self.name,
-            #     'cost_center': cost_center,
-            #     'debit': amount,
-            #     'credit': 0.0,
-            #     'account_currency': 'PKR',
-            #     'debit_in_account_currency': amount,
-            #     'credit_in_account_currency': 0.0,
-            #     'against': "Capital Stock - AKFP",
-            #     'voucher_type': 'Funds Transfer',
-            #     'voucher_no': self.name,
-            #     'remarks': 'Funds Transfered',
-            #     'is_opening': 'No',
-            #     'is_advance': 'No',
-            #     'fiscal_year': '2024-2025',
-            #     'company': company,
-            #     'transaction_currency': 'PKR',
-            #     'debit_in_transaction_currency': amount,
-            #     'credit_in_transaction_currency': 0.0,
-            #     'transaction_exchange_rate': 1,
-            #     'project': project,
-            #     'program': program,
-            #     'party_type': 'Donor',
-            #     'party': donor,
-            #     'subservice_area': subservice_area,
-            #     'donor': donor,
-            #     'inventory_flag': 'Purchased',
-            #     'product': product
-            # })
-
-            # frappe.msgprint(frappe.as_json(gl_entry_for_previous_dimension.as_dict()))
-
-            # gl_entry_for_previous_dimension.insert()
-            # gl_entry_for_previous_dimension.submit()
-
-        
+            frappe.msgprint(frappe.as_json("amount of previous dimension"))
+            frappe.msgprint(frappe.as_json(prev_amount))
+       
         new_dimensions_list = self.get_new_dimensions(donor_list)
-        frappe.msgprint(frappe.as_json("new_dimensions_list"))
-        frappe.msgprint(frappe.as_json(new_dimensions_list))
+        
+        for f in new_dimensions_list:
+            returned_fields = f.get('fields')
 
-        for new in new_dimensions_list:
-            donor = new.get('donor')
-            cost_center = new.get('cost_center')
-            project = new.get('project')
-            program = new.get('service_area') 
-            subservice_area = new.get('subservice_area')
-            product = new.get('product')
-            amount = new.get('amount', 0.0)  
-            account = new.get('account')
-            company = new.get('company')
-            frappe.msgprint(frappe.as_json("amount for new dimension"))
-            frappe.msgprint(frappe.as_json(amount))
+            for new in returned_fields:
+                new_donor = new.get('donor')
+                new_cost_center = new.get('cost_center')
+                new_project = new.get('project')
+                new_program = new.get('service_area') 
+                new_subservice_area = new.get('subservice_area')
+                new_product = new.get('product')
+                new_amount = float(new.get('amount', 0.0))  
+                new_account = new.get('account')
+                new_company = new.get('company')
 
-            # gl_entry_for_new_dimension = frappe.get_doc({
-            #     'doctype': 'GL Entry',
-            #     'posting_date': self.custom_posting_date,
-            #     'transaction_date': self.custom_posting_date,
-            #     'account': account,
-            #     'against_voucher_type': 'Funds Transfer',
-            #     'against_voucher': self.name,
-            #     'cost_center': cost_center,
-            #     'debit': 0.0,
-            #     'credit': amount,
-            #     'account_currency': 'PKR',
-            #     'debit_in_account_currency': 0.0,
-            #     'credit_in_account_currency': amount,
-            #     'against': "Capital Stock - AKFP",
-            #     'voucher_type': 'Purchase Receipt',
-            #     'voucher_no': self.name,
-            #     'remarks': 'Donation for item',
-            #     'is_opening': 'No',
-            #     'is_advance': 'No',
-            #     'fiscal_year': '2024-2025',
-            #     'company': company,
-            #     'transaction_currency': 'PKR',
-            #     'debit_in_transaction_currency': 0.0,
-            #     'credit_in_transaction_currency': amount,
-            #     'transaction_exchange_rate': 1,
-            #     'project': project,
-            #     'program': program,
-            #     'party_type': 'Donor',
-            #     'party': donor,
-            #     'subservice_area': subservice_area,
-            #     'donor': donor,
-            #     'inventory_flag': 'Purchased',
-            #     'product': product
-            # })
+                if new_amount > 0:  
+                    frappe.msgprint(frappe.as_json("amount of new dimension"))
+                    frappe.msgprint(frappe.as_json(new_amount))
+                  
+                else:
+                    frappe.msgprint(f"Not enough balance to transfer for donor {new_donor}.")
+                    
+                     
 
-            # gl_entry_for_new_dimension.insert()
-            # gl_entry_for_new_dimension.submit()
 
     def donor_list_for_purchase_receipt(self):
         donor_list = []
@@ -258,8 +189,8 @@ class FundsTransfer(Document):
        
         for donor in donor_list:
             ff_donor = donor.get('donor')
-            frappe.msgprint(frappe.as_json("Inside Loop donor"))
-            frappe.msgprint(frappe.as_json(donor))
+            # frappe.msgprint(frappe.as_json("Inside Loop donor"))
+            # frappe.msgprint(frappe.as_json(donor))
             
             match_found = []
         
@@ -267,6 +198,7 @@ class FundsTransfer(Document):
             for f in self.funds_transfer_to:
                 if f.get('ft_donor') == ff_donor:
                     match_found.append({
+                        "donor": f.get('ft_donor'),
                         "company": f.get('ft_company'),
                         "account":f.get('ft_account'),
                         "cost_center":f.get('ft_cost_center'),
@@ -279,15 +211,15 @@ class FundsTransfer(Document):
                     })
 
                 if match_found:
-                    frappe.msgprint(frappe.as_json("match_found"))
-                    frappe.msgprint(frappe.as_json(match_found))
+                    # frappe.msgprint(frappe.as_json("match_found"))
+                    # frappe.msgprint(frappe.as_json(match_found))
                     new_dimensions_list.append({
                         'fields': match_found
 
                     })
                 
-                frappe.msgprint(frappe.as_json("new_dimensions_list"))
-                frappe.msgprint(frappe.as_json(new_dimensions_list))
+                # frappe.msgprint(frappe.as_json("new_dimensions_list"))
+                # frappe.msgprint(frappe.as_json(new_dimensions_list))
                
 
         return new_dimensions_list

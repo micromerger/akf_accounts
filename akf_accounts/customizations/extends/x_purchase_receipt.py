@@ -1,10 +1,12 @@
 import frappe
-from erpnext.stock.doctype.purchase_receipt.purchase_receipt import PurchaseReceipt
+# from erpnext.stock.doctype.purchase_receipt.purchase_receipt import PurchaseReceipt
 import json
 
-class XAssetInvenPurchase(PurchaseReceipt):
-    def validate(self):
-        super().validate()
+from akf_stock.customization.extends.custom_purchase_receipt import XPurchaseReceipt
+class XAssetInvenPurchase(XPurchaseReceipt):
+    # def validate(self):
+        # frappe.msgprint('accounts')
+        # super().validate()
         # frappe.msgprint("This is extended code. ")
         # self.create_donor_gl_entries_from_purchase_receipt_aq()
         # self.populate_childtable()
