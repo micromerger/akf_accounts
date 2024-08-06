@@ -500,27 +500,26 @@ function set_query_donor_id(frm){
 }
 function set_query_subservice_area(frm){
     frm.fields_dict['payment_detail'].grid.get_field('pay_subservice_area').get_query = function(doc, cdt, cdn) {
-        console.log(("pay_subservice_area"));
-
         var row = locals[cdt][cdn];
-        console.log(("row"));
+        let ffilters = row.pay_service_area==undefined? {service_area: ["!=", undefined]}: {service_area: row.pay_service_area};
         return {
-            filters: {
-                service_area: ["!=", ""],
-                service_area: row.pay_service_area,
-            }
+            filters: ffilters
         };
+        // return {
+        //     filters: {
+        //         service_area: ["!=", ""],
+        //         service_area: row.pay_service_area,
+        //     }
+        // };
     };
 }
 // Payment Detail
 function set_query_product(frm){
     frm.fields_dict['payment_detail'].grid.get_field('pay_product').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
+        let ffilters = row.pay_subservice_area==undefined? {subservice_area: ["!=", undefined]}: {subservice_area: row.pay_subservice_area};
         return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.pay_subservice_area,
-            }
+            filters: ffilters
         };
     };
 }

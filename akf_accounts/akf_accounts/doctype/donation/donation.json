@@ -212,13 +212,14 @@
    "fieldname": "donation_cost_center",
    "fieldtype": "Link",
    "label": "Cost Center",
-   "options": "Cost Center"
+   "options": "Cost Center",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-24 12:47:14.574814",
+ "modified": "2024-08-06 13:03:30.385195",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

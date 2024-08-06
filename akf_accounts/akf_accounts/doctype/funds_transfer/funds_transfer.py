@@ -252,31 +252,44 @@ class FundsTransfer(Document):
 
     def get_new_dimensions(self, donor_list):
         new_dimensions_list = []
-        frappe.msgprint(frappe.as_json("donor_list in New Dimension"))
+        # frappe.msgprint(frappe.as_json("donor_list in New Dimension"))
 
-        frappe.msgprint(frappe.as_json(donor_list))
+        # frappe.msgprint(frappe.as_json(donor_list))
        
         for donor in donor_list:
             ff_donor = donor.get('donor')
             frappe.msgprint(frappe.as_json("Inside Loop donor"))
             frappe.msgprint(frappe.as_json(donor))
+            
+            match_found = []
         
 
-            for f in funds_transfer_to:
-                condition = [f"ft_donor = '{ff_donor}'"]
+            for f in self.funds_transfer_to:
+                if f.get('ft_donor') == ff_donor:
+                    match_found.append({
+                        "company": f.get('ft_company'),
+                        "account":f.get('ft_account'),
+                        "cost_center":f.get('ft_cost_center'),
+                        "service_area": f.get('ft_service_area'),
+                        "subservice_area": f.get('ft_subservice_area'),
+                        "product":f.get('ft_product'),
+                        "project":f.get('ft_project'),
+                        "amount": f.get('ft_amount')
+                            
+                    })
 
-        for donor in donor_list:
-            new_dimensions_list.append({
-                'donor': donor['donor'],
-                'service_area': 'New Service Area',
-                'subservice_area': 'New Subservice Area',
-                'project': 'New Project',
-                'cost_center': 'New Cost Center',
-                'product': 'New Product',
-                'amount': donor['balance'],
-                'account': 'New Account',
-                'company': 'New Company'
-            })
+                if match_found:
+                    frappe.msgprint(frappe.as_json("match_found"))
+                    frappe.msgprint(frappe.as_json(match_found))
+                    new_dimensions_list.append({
+                        'fields': match_found
+
+                    })
+                
+                frappe.msgprint(frappe.as_json("new_dimensions_list"))
+                frappe.msgprint(frappe.as_json(new_dimensions_list))
+               
+
         return new_dimensions_list
 
 
