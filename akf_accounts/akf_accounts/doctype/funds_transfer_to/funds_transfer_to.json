@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-08-05 15:44:27.283022",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "ft_company",
+  "ft_account",
+  "ft_cost_center",
+  "ft_service_area",
+  "ft_subservice_area",
+  "ft_product",
+  "ft_project",
+  "ft_donor",
+  "ft_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "ft_cost_center",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "ft_service_area",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Area",
+   "options": "Program"
+  },
+  {
+   "fieldname": "ft_subservice_area",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subservice Area",
+   "options": "Subservice Area"
+  },
+  {
+   "fieldname": "ft_product",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Product",
+   "options": "Product"
+  },
+  {
+   "fieldname": "ft_project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "ft_donor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Donor",
+   "options": "Donor"
+  },
+  {
+   "fieldname": "ft_company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "ft_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "ft_amount",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Amount"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-08-05 17:57:31.920670",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Funds Transfer To",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
