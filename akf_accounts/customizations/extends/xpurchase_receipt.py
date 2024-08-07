@@ -51,7 +51,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
             'credit_in_account_currency': 0
         })
         debit_gl = frappe.get_doc(debit_entry)
-        debit_gl.insert()
+        debit_gl.insert(ignore_permissions=True)
         debit_gl.submit()
 
         # Create the GL entry for the credit account and update
@@ -64,7 +64,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
             'credit_in_account_currency': self.grand_total
         })
         credit_gl = frappe.get_doc(credit_entry)
-        credit_gl.insert()
+        credit_gl.insert(ignore_permissions=True)
         credit_gl.submit()
 
     def get_gl_entry_dict(self):
