@@ -22,7 +22,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Cost Center",
-   "options": "Cost Center"
+   "options": "Cost Center",
+   "reqd": 1
   },
   {
    "fieldname": "ff_service_area",
@@ -57,27 +58,30 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Donor",
-   "options": "Donor"
+   "options": "Donor",
+   "reqd": 1
   },
   {
    "fieldname": "ff_account",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Account",
-   "options": "Account"
+   "options": "Account",
+   "reqd": 1
   },
   {
    "fieldname": "ff_company",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-05 17:29:17.569314",
+ "modified": "2024-08-07 12:57:13.995222",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer From",

@@ -13,7 +13,7 @@ frappe.ui.form.on('Purchase Receipt', {
 
 	onload: function(frm) {
 		$("#table_render").empty();
-		$("#total_amount").empty();
+		$("#total_balance").empty();
 		$("#previous").empty();
 		$("#next").empty();
     }

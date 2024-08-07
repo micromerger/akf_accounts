@@ -1,26 +1,47 @@
-// Copyright (c) 2024, Nabeel Saleem and contributors
-// For license information, please see license.txt
+// Developer Aqsa Abbasi
 
 frappe.ui.form.on("Funds Transfer", {
+    onload_post_render: function(frm) {
+        frm.get_field("funds_transfer_from").grid.set_multiple_add("ff_service_area");
+        frm.refresh_field('funds_transfer_from');
+
+
+        frm.get_field("funds_transfer_to").grid.set_multiple_add("ft_service_area");
+        frm.refresh_field('funds_transfer_to');
+    },
+   
     refresh: function(frm) {
         set_queries_funds_transfer_to(frm);
         set_queries_funds_transfer_from(frm);
-        console.log("Refreshed triggered");
+        console.log("Refresh triggereddddddd");
+        console.log(!frm.is_new());
+        console.log(!frm.doc.__islocal);
         if (!frm.is_new() && !frm.doc.__islocal) {
             get_html(frm);
+        } 
+
+        if (frm.doc.docstatus === 1) {  
+            set_custom_btns(frm);
         }
-        get_html(frm);
-        },
-        onload: function(frm) {
-            $("#table_render").empty();
-            $("#total_amount").empty();
-            $("#previous").empty();
-            $("#next").empty();
-            get_html(frm);
-        }
+      
+
+    },
+
+    onload: function(frm) {
+        $("#table_render").empty();
+        $("#total_balance").empty();
+        $("#previous").empty();
+        $("#next").empty();
+    }
+
 });
 
 
+function set_custom_btns(frm) {
+    frm.add_custom_button(__('Accounting Ledger'), function () {
+        frappe.set_route("query-report", "General Ledger", {"voucher_no": frm.doc.name});
+    }, __("View"));
+}
 
 function set_queries_funds_transfer_from(frm){
     set_query_subservice_area(frm);
@@ -90,9 +111,6 @@ function set_query_project(frm){
         };
     };
 }
-
-
-
 
 function set_queries_funds_transfer_to(frm){
     set_query_subservice_area(frm);
@@ -168,7 +186,7 @@ function set_query_project(frm){
 
 
 function get_html(frm) {
-    $("#table_render").empty();
+    // $("#table_render").empty();
 
     frappe.call({
         method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.donor_list_data",
@@ -193,7 +211,7 @@ function get_html(frm) {
                     $("#total_balance").empty();
                     $("#previous").empty();
                     $("#next").empty();
-                    frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
+                    frm.set_df_property('donor_list_html', 'options', 'No donor records found.');
                 } else if (donorList && donorList.length > 0) {
                     console.log("donorList111", donorList);
 
@@ -213,7 +231,7 @@ function get_html(frm) {
                                         <th class="text-left" style="border: 1px solid black;">Donor ID</th>
                                         <th class="text-left" style="border: 1px solid black;">Cost Center</th>
                                         <th class="text-left" style="border: 1px solid black;">Product</th>
-                                        ${docstatus == 1 ? '<th class="text-left" style="border: 1px solid black;">Donated Amount</th>' : '<th class="text-left" style="border: 1px solid black;">Balance</th>'}
+                                        ${docstatus == 1 ? '<th class="text-left" style="border: 1px solid black;">Transferred Amount</th>' : '<th class="text-left" style="border: 1px solid black;">Balance</th>'}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -250,9 +268,11 @@ function get_html(frm) {
 
                         if (totalPages > 1) {
                             completeTable += generatePaginationControls();
+                            console.log("Completeee Tableee")
+                            console.log(completeTable)
                         }
 
-                        frm.set_df_property('custom_donor_list_html', 'options', completeTable);
+                        frm.set_df_property('donor_list_html', 'options', completeTable);
                     }
 
                     function generatePaginationControls() {
@@ -286,7 +306,7 @@ function get_html(frm) {
                 $("#total_balance").empty();
                 $("#previous").empty();
                 $("#next").empty();
-                frm.set_df_property('custom_donor_list_html', 'options', '');
+                frm.set_df_property('donor_list_html', 'options', '');
                 frappe.msgprint("No data received.");
             }
         }

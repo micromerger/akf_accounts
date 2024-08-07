@@ -7,6 +7,7 @@ class XStockEntry(StockEntry):
     def validate(self):
         super(XStockEntry, self).validate()
         self.validate_difference_account()
+        self.validate_warehouse_cost_centers()
 
     def on_submit(self):
         super(XStockEntry, self).on_submit()
@@ -182,16 +183,13 @@ class XStockEntry(StockEntry):
             )
 
     def update_stock_ledger_entry(self):
-        if self.stock_entry_type != "Donation":
-            return
         for row in self.items:
-            if hasattr(row, "custom_new") and hasattr(row, "custom_used"):
+            if hasattr(row, "custom_new") or hasattr(row, "custom_used"):
                 if frappe.db.exists(
                     "Stock Ledger Entry",
                     {
                         "docstatus": 1,
-                        "item_code": row.item_code,
-                        "warehouse": row.t_warehouse,
+                        "voucher_no": self.name,
                     },
                 ):
                     frappe.db.sql(
@@ -200,12 +198,11 @@ class XStockEntry(StockEntry):
                             set custom_new = {row.custom_new}, custom_used = {row.custom_used}, program='{row.program}', subservice_area='{row.subservice_area}', product='{row.product}', project='{row.project}', inventory_flag='{row.inventory_flag}'
                             where docstatus=1 
                                 and voucher_detail_no = '{row.name}'
-                                and item_code = '{row.item_code}'
-                                and warehouse = '{row.t_warehouse}'
+                                and voucher_no = '{self.name}'
                         """
                     )
 
-        if self.custom_donor_ids:
+        if self.custom_donor_id:
             # Initialize an empty list to store child values
             child_values = []
 
@@ -290,22 +287,77 @@ class XStockEntry(StockEntry):
         for d in self.get("items"):
             d.expense_account = company.custom_default_inventory_fund_account
 
+    def validate_qty(self):
+        if (
+            self.stock_entry_type == "Donated Inventory Consumption"
+            or self.stock_entry_type == "Donated Inventory Transfer"
+        ):
+            for item in self.items:
+                condition_parts = [
+                    (
+                        f"(warehouse = '{item.s_warehouse}' OR (warehouse IS NULL AND '{item.s_warehouse}' = '') OR warehouse = '')"
+                        if item.s_warehouse
+                        else "1=1"
+                    ),
+                    (
+                        f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
+                        if item.inventory_flag
+                        else "1=1"
+                    ),
+                    (
+                        f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
+                        if item.program
+                        else "1=1"
+                    ),
+                    (
+                        f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
+                        if item.subservice_area
+                        else "1=1"
+                    ),
+                    (
+                        f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
+                        if item.product
+                        else "1=1"
+                    ),
+                    (
+                        f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
+                        if item.project
+                        else "1=1"
+                    ),
+                ]
+                condition = " AND ".join(condition_parts)
+
+                try:
+                    donated_invetory = frappe.db.sql(
+                        f"""
+                        SELECT ifnull(SUM(actual_qty),0) as donated_qty,
+                            item_code
+                        FROM `tabStock Ledger Entry`
+                        WHERE
+                            item_code='{item.item_code}'
+                            {f'AND {condition}' if condition else ''}
+                    """,
+                        as_dict=True,
+                    )
+                except Exception as e:
+                    frappe.throw(f"Error executing query: {e}")
+
+                for di in donated_invetory:
+                    if di.donated_qty > item.qty:
+                        pass
+                    else:
+                        frappe.throw(
+                            f"{item.item_code} quantity doesn't exist against condtions {condition}"
+                        )
+        else:
+            super(XStockEntry, self).validate_qty()
+
     def create_gl_entries_for_stock_entry(self):
         debit_account, credit_account = "", ""
-        for item in self.items:
-            source_warehouse = item.s_warehouse
-            target_warehouse = item.t_warehouse
-        source_cost_center = frappe.db.get_value(
-            "Warehouse", source_warehouse, "custom_cost_center"
-        )
-        target_cost_center = frappe.db.get_value(
-            "Warehouse", target_warehouse, "custom_cost_center"
-        )
 
         company = frappe.get_doc("Company", self.company)
         if self.stock_entry_type == "Donation":
-            for item in self.items:
-                item.cost_center = target_cost_center
+            pass
 
         elif self.stock_entry_type == "Donated Inventory Consumption":
             debit_account = company.custom_default_inventory_expense_account
@@ -314,16 +366,12 @@ class XStockEntry(StockEntry):
             if not debit_account or not credit_account:
                 frappe.throw("Required accounts not found in the company")
 
-            for item in self.items:
-                item.cost_center = source_cost_center
-
             # Create the GL entry for the debit account and update
             debit_entry = self.get_gl_entry_dict()
             debit_entry.update(
                 {
                     "account": debit_account,
                     "debit": self.total_outgoing_value,
-                    "cost_center": source_cost_center,
                     "credit": 0,
                     "debit_in_account_currency": self.total_outgoing_value,
                     "credit_in_account_currency": 0,
@@ -338,7 +386,6 @@ class XStockEntry(StockEntry):
                 {
                     "account": credit_account,
                     "debit": 0,
-                    "cost_center": source_cost_center,
                     "credit": self.total_outgoing_value,
                     "debit_in_account_currency": 0,
                     "credit_in_account_currency": self.total_outgoing_value,
@@ -351,6 +398,18 @@ class XStockEntry(StockEntry):
         elif self.stock_entry_type == "Donated Inventory Transfer":
             debit_account = company.default_inventory_account
             credit_account = company.custom_default_inventory_fund_account
+
+            source_cost_center, target_cost_center = "", ""
+            for item in self.items:
+                source_warehouse = item.s_warehouse
+                source_cost_center = frappe.db.get_value(
+                    "Warehouse", source_warehouse, "custom_cost_center"
+                )
+
+                target_warehouse = item.t_warehouse
+                target_cost_center = frappe.db.get_value(
+                    "Warehouse", target_warehouse, "custom_cost_center"
+                )
 
             if not debit_account or not credit_account:
                 frappe.throw("Required accounts not found in the company")
@@ -444,3 +503,19 @@ class XStockEntry(StockEntry):
                 "program": self.program,
             }
         )
+
+    def validate_warehouse_cost_centers(self):
+        for item in self.items:
+            source_cost_center, target_cost_center = "", ""
+            if self.stock_entry_type == "Donation":
+                target_warehouse = item.t_warehouse
+                target_cost_center = frappe.db.get_value(
+                    "Warehouse", target_warehouse, "custom_cost_center"
+                )
+                item.cost_center = target_cost_center
+            elif self.stock_entry_type == "Donated Inventory Consumption":
+                source_warehouse = item.s_warehouse
+                source_cost_center = frappe.db.get_value(
+                    "Warehouse", source_warehouse, "custom_cost_center"
+                )
+                item.cost_center = source_cost_center

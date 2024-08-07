@@ -8,6 +8,9 @@
   "section_break_iqv8",
   "amended_from",
   "transaction_type",
+  "posting_date",
+  "section_break_oxfb",
+  "donor_list_html",
   "section_break_eguw",
   "funds_transfer_from",
   "section_break_owiq",
@@ -39,6 +42,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "funds_transfer_from",
    "fieldtype": "Table",
    "label": "Funds Transfer From",
@@ -49,16 +53,31 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "funds_transfer_to",
    "fieldtype": "Table",
    "label": "Funds Transfer To",
    "options": "Funds Transfer To"
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
+  },
+  {
+   "fieldname": "section_break_oxfb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "donor_list_html",
+   "fieldtype": "HTML",
+   "label": "Donor List HTML"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-05 15:50:02.323260",
+ "modified": "2024-08-07 15:47:56.623908",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",
