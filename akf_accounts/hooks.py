@@ -26,11 +26,13 @@ app_license = "mit"
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
-
+# /home/frappe/frappe-bench/sites/assets/akf_accounts/js/customizations/purchase_invoice.js
 # include js in doctype views
 doctype_js = {
 	"Payment Entry" : "public/js/customizations/payment_entry.js",
-	"Purchase Receipt" : "public/js/customizations/purchase_receipt.js"
+	"Purchase Receipt" : "public/js/customizations/purchase_receipt.js",
+    "Purchase Invoice" : "public/js/customizations/purchase_invoice.js",
+	
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -117,11 +119,12 @@ doctype_js = {
 # ---------------
 # Override standard doctype classes
 
-
+# /home/frappe/frappe-bench/apps/akf_accounts/akf_accounts/customizations/extends/xpurchase_invoice.py
 override_doctype_class = {
 	"Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
 	"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
 	"Purchase Receipt" : "akf_accounts.customizations.extends.x_purchase_receipt.XAssetInvenPurchase",
+    "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
 }
 # Document Events
 # ---------------
@@ -234,5 +237,6 @@ override_doctype_class = {
 
 accounting_dimension_doctypes = [
 	"Payment Detail",
-	"Deduction Breakeven"
+	"Deduction Breakeven",
+    "Stock Ledger Entry"
 ]

@@ -1,16 +1,8 @@
-# Developer Aqsa Abbasi
-
 import frappe
 from frappe.model.document import Document
 import json
 
 class FundsTransfer(Document):
-    # def on_submit(self):
-    #     transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Company']
-    #     if self.transaction_type in transaction_types:
-    #         self.create_gl_entries_for_inter_funds_transfer()
-    
-
     def validate(self):
         transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Company']
         if self.transaction_type in transaction_types:
@@ -58,8 +50,11 @@ class FundsTransfer(Document):
                     frappe.msgprint(frappe.as_json("amount of new dimension"))
                     frappe.msgprint(frappe.as_json(new_amount))
                   
+                if new_amount <= prev_amount:
+                    frappe.msgprint(f"New amount {new_amount} is less than or equal to the previous amount {prev_amount}. Donation is allowed.")
+                    
                 else:
-                    frappe.msgprint(f"Not enough balance to transfer for donor {new_donor}.")
+                    frappe.msgprint(f"New amount {new_amount} is greater than the previous amount {prev_amount}. Not enough amount to donate.")
                     
                      
 

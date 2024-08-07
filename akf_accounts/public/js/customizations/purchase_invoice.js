@@ -1,177 +1,28 @@
-// Copyright (c) 2024, Nabeel Saleem and contributors
-// For license information, please see license.txt
-
-frappe.ui.form.on("Funds Transfer", {
+frappe.ui.form.on('Purchase Invoice', {
+    onload_post_render: function(frm) {
+        // frm.get_field("custom_program_details").grid.set_multiple_add("service_area");
+        // frm.refresh_field('custom_program_details');
+    },
     refresh: function(frm) {
-        set_queries_funds_transfer_to(frm);
-        set_queries_funds_transfer_from(frm);
+        set_queries_payment_details(frm);
         console.log("Refreshed triggered");
         if (!frm.is_new() && !frm.doc.__islocal) {
             get_html(frm);
         }
-        get_html(frm);
         },
-        onload: function(frm) {
-            $("#table_render").empty();
-            $("#total_amount").empty();
-            $("#previous").empty();
-            $("#next").empty();
-            get_html(frm);
-        }
+
+	onload: function(frm) {
+		$("#table_render").empty();
+		$("#total_amount").empty();
+		$("#previous").empty();
+		$("#next").empty();
+    }
 });
-
-
-
-function set_queries_funds_transfer_from(frm){
-    set_query_subservice_area(frm);
-    set_query_cost_center(frm);
-    set_query_product(frm);
-    set_query_project(frm);
- 
-}
-
-function set_query_service_area(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.subservice_area,
-            }
-        };
-    };
-}
-
-function set_query_subservice_area(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_subservice_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                service_area: ["!=", ""],
-                service_area: row.ff_service_area,
-            }
-        };
-    };
-}
-
-function set_query_cost_center(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_cost_center').get_query = function(doc, cdt, cdn) {
-        return {
-            filters: {
-                is_group: 0,
-                disabled: 0,
-                company: frm.doc.company,
-            }
-        };
-    };
-}
-function set_query_product(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_product').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.ff_subservice_area,
-            }
-        };
-    };
-}
-
-function set_query_project(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_project').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                company: frm.doc.company,
-                custom_program: ["!=", ""],
-                custom_program: row.ff_service_area,
-                
-            }
-        };
-    };
-}
-
-
-
-
-function set_queries_funds_transfer_to(frm){
-    set_query_subservice_area(frm);
-    set_query_cost_center(frm);
-    set_query_product(frm);
-    set_query_project(frm);
- 
-}
-
-function set_query_service_area(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.subservice_area,
-            }
-        };
-    };
-}
-
-function set_query_subservice_area(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_subservice_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                service_area: ["!=", ""],
-                service_area: row.ft_service_area,
-            }
-        };
-    };
-}
-
-function set_query_cost_center(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_cost_center').get_query = function(doc, cdt, cdn) {
-        return {
-            filters: {
-                is_group: 0,
-                disabled: 0,
-                company: frm.doc.company,
-            }
-        };
-    };
-}
-function set_query_product(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_product').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.ft_subservice_area,
-            }
-        };
-    };
-}
-
-function set_query_project(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_project').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                company: frm.doc.company,
-                custom_program: ["!=", ""],
-                custom_program: row.ft_service_area,
-                
-            }
-        };
-    };
-}
-
-
-
-
-
 function get_html(frm) {
     $("#table_render").empty();
 
     frappe.call({
-        method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.donor_list_data",
+        method: "akf_accounts.customizations.extends.xpurchase_invoice.donor_list_data",
         args: {
             doc: frm.doc,
         },
@@ -295,3 +146,92 @@ function get_html(frm) {
 
 
 
+function set_queries_payment_details(frm){
+    set_query_subservice_area(frm);
+    set_query_cost_center(frm);
+    set_query_product(frm);
+    set_query_project(frm);
+ 
+}
+
+function set_query_service_area(frm){
+    frm.fields_dict['custom_program_details'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                subservice_area: ["!=", ""],
+                subservice_area: row.subservice_area,
+            }
+        };
+    };
+}
+
+function set_query_subservice_area(frm){
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_subservice_area').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                service_area: ["!=", ""],
+                service_area: row.pd_service_area,
+            }
+        };
+    };
+}
+
+function set_query_cost_center(frm){
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_cost_center').get_query = function(doc, cdt, cdn) {
+        return {
+            filters: {
+                is_group: 0,
+                disabled: 0,
+                company: frm.doc.company,
+            }
+        };
+    };
+}
+
+function set_query_product(frm){
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                subservice_area: ["!=", ""],
+                subservice_area: row.pd_subservice_area,
+            }
+        };
+    };
+}
+
+function set_query_project(frm){
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_project').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                company: frm.doc.company,
+                custom_program: ["!=", ""],
+                custom_program: row.pd_service_area,
+                
+            }
+        };
+    };
+}
+
+
+frappe.ui.form.on("Purchase Receipt Item", {
+    custom_new: function(frm, cdt, cdn){
+        let row = locals[cdt][cdn];
+        if(row.custom_new){
+            row.custom_used = 0;
+        }
+        frm.refresh_field("items")
+    },
+    custom_used: function(frm, cdt, cdn){
+        let row = locals[cdt][cdn];
+        if(row.custom_used){
+            row.custom_new = 0;
+        }
+        frm.refresh_field("items")
+    }
+
+    
+});

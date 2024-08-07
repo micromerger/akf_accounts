@@ -197,7 +197,7 @@ class XStockEntry(StockEntry):
                     frappe.db.sql(
                         f""" 
                             update `tabStock Ledger Entry`
-                            set custom_new = {row.custom_new}, custom_used = {row.custom_used}
+                            set custom_new = {row.custom_new}, custom_used = {row.custom_used}, program='{row.program}', subservice_area='{row.subservice_area}', product='{row.product}', project='{row.project}', inventory_flag='{row.inventory_flag}'
                             where docstatus=1 
                                 and voucher_detail_no = '{row.name}'
                                 and item_code = '{row.item_code}'

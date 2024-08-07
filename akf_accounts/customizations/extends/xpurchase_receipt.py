@@ -146,7 +146,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                     'product': product
                 })
 
-                gl_entry.insert()
+                gl_entry.insert(ignore_permissions=True)
                 gl_entry.submit()
 
                 gl_entry_inventory_fund = frappe.get_doc({
@@ -183,7 +183,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                     'inventory_flag': 'Purchased',
                     'product': product
                 })
-                gl_entry_inventory_fund.insert()
+                gl_entry_inventory_fund.insert(ignore_permissions=True)
                 gl_entry_inventory_fund.submit()
 
             frappe.msgprint("GL Entries created successfully for equal donated and total amounts.")
@@ -240,7 +240,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                     'product': product
                 })
 
-                gl_entry.insert()
+                gl_entry.insert(ignore_permissions=True)
                 gl_entry.submit()
 
                 gl_entry_inventory_fund = frappe.get_doc({
@@ -277,7 +277,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                     'inventory_flag': 'Purchased',
                     'product': product
                 })
-                gl_entry_inventory_fund.insert()
+                gl_entry_inventory_fund.insert(ignore_permissions=True)
                 gl_entry_inventory_fund.submit()
 
             else:
@@ -333,7 +333,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                         'product': product
                     })
 
-                    gl_entry.insert()
+                    gl_entry.insert(ignore_permissions=True)
                     gl_entry.submit()
 
                     gl_entry_inventory_fund = frappe.get_doc({
@@ -370,7 +370,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                     'inventory_flag': 'Purchased',
                     'product': product
                 })
-                    gl_entry_inventory_fund.insert()
+                    gl_entry_inventory_fund.insert(ignore_permissions=True)
                     gl_entry_inventory_fund.submit()
 
         elif remaining_amount < 0:
@@ -430,7 +430,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                         'inventory_flag': 'Purchased',
                         'product': product
                     })
-                    gl_entry_donation.insert()
+                    gl_entry_donation.insert(ignore_permissions=True)
                     gl_entry_donation.submit()
 
                     gl_entry_inventory_fund = frappe.get_doc({
@@ -467,7 +467,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                         'inventory_flag': 'Purchased',
                         'product': product
                     })
-                    gl_entry_inventory_fund.insert()
+                    gl_entry_inventory_fund.insert(ignore_permissions=True)
                     gl_entry_inventory_fund.submit()
 
                     required_amount_for_item -= amount_to_use
