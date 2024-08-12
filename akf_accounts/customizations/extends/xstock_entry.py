@@ -184,23 +184,22 @@ class XStockEntry(StockEntry):
 
     def update_stock_ledger_entry(self):
         for row in self.items:
-            if hasattr(row, "custom_new") or hasattr(row, "custom_used"):
-                if frappe.db.exists(
-                    "Stock Ledger Entry",
-                    {
-                        "docstatus": 1,
-                        "voucher_no": self.name,
-                    },
-                ):
-                    frappe.db.sql(
-                        f""" 
-                            update `tabStock Ledger Entry`
-                            set custom_new = {row.custom_new}, custom_used = {row.custom_used}, program='{row.program}', subservice_area='{row.subservice_area}', product='{row.product}', project='{row.project}', inventory_flag='{row.inventory_flag}'
-                            where docstatus=1 
-                                and voucher_detail_no = '{row.name}'
-                                and voucher_no = '{self.name}'
-                        """
-                    )
+            if frappe.db.exists(
+                "Stock Ledger Entry",
+                {
+                    "docstatus": 1,
+                    "voucher_no": self.name,
+                },
+            ):
+                frappe.db.sql(
+                    f""" 
+                        update `tabStock Ledger Entry`
+                        set custom_new = {row.custom_new}, custom_used = {row.custom_used}, program='{row.program}', subservice_area='{row.subservice_area}', product='{row.product}', project='{row.project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}'
+                        where docstatus=1 
+                            and voucher_detail_no = '{row.name}'
+                            and voucher_no = '{self.name}'
+                    """
+                )
 
         if self.custom_donor_ids:
             # Initialize an empty list to store child values
@@ -388,6 +387,7 @@ class XStockEntry(StockEntry):
                 }
             )
             debit_gl = frappe.get_doc(debit_entry)
+            debit_gl.flags.ignore_permissions = True
             debit_gl.insert()
             debit_gl.submit()
 
@@ -402,6 +402,7 @@ class XStockEntry(StockEntry):
                 }
             )
             credit_gl = frappe.get_doc(credit_entry)
+            credit_gl.flags.ignore_permissions = True
             credit_gl.insert()
             credit_gl.submit()
 
@@ -436,6 +437,7 @@ class XStockEntry(StockEntry):
                 }
             )
             debit_gl = frappe.get_doc(debit_entry)
+            debit_gl.flags.ignore_permissions = True
             debit_gl.insert()
             debit_gl.submit()
 
@@ -451,6 +453,7 @@ class XStockEntry(StockEntry):
                 }
             )
             credit_gl = frappe.get_doc(credit_entry)
+            credit_gl.flags.ignore_permissions = True
             credit_gl.insert()
             credit_gl.submit()
 
@@ -472,6 +475,7 @@ class XStockEntry(StockEntry):
                 }
             )
             debit_gl = frappe.get_doc(debit_entry)
+            debit_gl.flags.ignore_permissions = True
             debit_gl.insert()
             debit_gl.submit()
 
@@ -487,6 +491,7 @@ class XStockEntry(StockEntry):
                 }
             )
             credit_gl = frappe.get_doc(credit_entry)
+            credit_gl.flags.ignore_permissions = True
             credit_gl.insert()
             credit_gl.submit()
 
