@@ -134,7 +134,8 @@
   {
    "fieldname": "contact_no",
    "fieldtype": "Data",
-   "label": "Contact No"
+   "label": "Contact No",
+   "reqd": 1
   },
   {
    "fieldname": "city",
@@ -147,14 +148,14 @@
    "fieldname": "cnic",
    "fieldtype": "Data",
    "label": "CNIC",
+   "reqd": 1,
    "unique": 1
   },
   {
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Cost Center",
-   "reqd": 1
+   "options": "Cost Center"
   },
   {
    "default": "CNIC",
@@ -196,8 +197,7 @@
    "fieldname": "nationality_type",
    "fieldtype": "Select",
    "label": "Nationality Type",
-   "options": "\nLocal\nForeign",
-   "reqd": 1
+   "options": "\nLocal\nForeign"
   },
   {
    "depends_on": "eval: doc.identification_type==\"Others\"",
@@ -213,7 +213,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-07-22 10:18:32.236711",
+ "modified": "2024-08-08 17:19:46.498077",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

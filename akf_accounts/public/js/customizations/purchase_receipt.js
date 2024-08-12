@@ -191,14 +191,30 @@ function set_query_cost_center(frm){
     };
 }
 
-function set_query_product(frm){
+// function set_query_product(frm){
+//     frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
+//         var row = locals[cdt][cdn];
+//         return {
+//             filters: {
+//                 subservice_area: ["!=", ""],
+//                 subservice_area: row.pd_subservice_area,
+//             }
+//         };
+//     };
+// }
+
+
+function set_query_product(frm) {
     frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
+        console.log("pd_subservice_area:", row.pd_subservice_area);
+
+        let ffilters = row.pd_subservice_area === undefined
+            ? { subservice_area: ["!=", undefined] }
+            : { subservice_area: row.pd_subservice_area };
+
         return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.pd_subservice_area,
-            }
+            filters: ffilters
         };
     };
 }

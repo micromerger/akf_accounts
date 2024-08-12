@@ -1,42 +1,25 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2024-08-08 12:21:19.422092",
+ "creation": "2024-08-08 11:58:44.841035",
+ "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_jlrv",
-  "amended_from",
-  "test",
+  "section_break_iqv8",
   "transaction_type",
   "posting_date",
-  "section_break_lbjh",
+  "section_break_oxfb",
   "donor_list_html",
-  "section_break_jrzi",
+  "section_break_eguw",
   "funds_transfer_from",
-  "section_break_pwtm",
+  "section_break_owiq",
   "funds_transfer_to"
  ],
  "fields": [
   {
-   "fieldname": "section_break_jlrv",
+   "fieldname": "section_break_iqv8",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Funds Transfer",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "test",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Test"
   },
   {
    "fieldname": "transaction_type",
@@ -47,11 +30,10 @@
   {
    "fieldname": "posting_date",
    "fieldtype": "Date",
-   "label": "Posting Date",
-   "read_only": 1
+   "label": "Posting Date"
   },
   {
-   "fieldname": "section_break_lbjh",
+   "fieldname": "section_break_oxfb",
    "fieldtype": "Section Break"
   },
   {
@@ -60,20 +42,22 @@
    "label": "Donor List HTML"
   },
   {
-   "fieldname": "section_break_jrzi",
+   "fieldname": "section_break_eguw",
    "fieldtype": "Section Break"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "funds_transfer_from",
    "fieldtype": "Table",
    "label": "Funds Transfer From",
    "options": "Funds Transfer From"
   },
   {
-   "fieldname": "section_break_pwtm",
+   "fieldname": "section_break_owiq",
    "fieldtype": "Section Break"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "funds_transfer_to",
    "fieldtype": "Table",
    "label": "Funds Transfer To",
@@ -83,10 +67,10 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-09 10:57:21.129077",
+ "modified": "2024-08-08 12:02:40.222414",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
- "name": "Funds Transfer",
+ "name": "Inter Funds Transfer",
  "owner": "Administrator",
  "permissions": [
   {

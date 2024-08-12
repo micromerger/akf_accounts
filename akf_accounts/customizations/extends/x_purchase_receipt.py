@@ -24,12 +24,12 @@ class XAssetInvenPurchase(XPurchaseReceipt):
 
         
     def delete_all_gl_entries(self):
-        frappe.db.sql("DELETE FROM `tabGL Entry` WHERE purchase_receipt = %s", self.name)
+        frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
 
     def create_asset_inven_purchase_gl_entries(self):
         if self.custom_type_of_transaction == "Asset Purchase":
             self.create_gl_entries_for_asset_purchase()
-        elif self.custom_type_of_transaction == "Inventory Purchase":
+        elif self.custom_type_of_transaction == "Inventory Purchase Restricted":
             self.create_donor_gl_entries_from_purchase_receipt()
             # self.create_additional_gl_entries_for_purchase_receipt()
 
@@ -540,6 +540,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
             "total_amount": total_amount,
             "donor_list": donor_list  
         }
+    
 
 @frappe.whitelist()
 def donor_list_data(doc):
@@ -553,7 +554,24 @@ def donor_list_data(doc):
     unique_entries = set()
     docstatus = doc.docstatus
 
+    processed_entries = set()
+
     for p in doc.custom_program_details:
+        entry_key = (
+            p.pd_donor,
+            p.pd_service_area,
+            p.pd_subservice_area,
+            p.pd_project,
+            p.pd_cost_center,
+            p.pd_product,
+        )
+
+        if entry_key in processed_entries:
+            frappe.msgprint(f"Duplicate Entry detected for donor '<bold>{p.pd_donor}</bold>' with provided details.")
+            continue
+
+        processed_entries.add(entry_key)
+
         condition_parts = [
             f"(subservice_area = '{p.pd_subservice_area}' OR (subservice_area IS NULL AND '{p.pd_subservice_area}' = '') OR subservice_area = '')" if p.pd_subservice_area else "1=1",
             f"(donor = '{p.pd_donor}' OR (donor IS NULL AND '{p.pd_donor}' = '') OR donor = '')" if p.pd_donor else "1=1",
@@ -637,9 +655,113 @@ def donor_list_data(doc):
                     break
 
         if not match_found:
-            frappe.msgprint(f'No such entry exists for donor "<bold>{p.pd_donor}</bold>" with provided details.')
+            frappe.msgprint(f"No such entry exists for donor '<bold>{p.pd_donor}</bold>' with provided details.")
 
     return {
         "total_balance": total_balance,
         "donor_list": donor_list  
     }
+
+
+# @frappe.whitelist()
+# def donor_list_data(doc):
+#     try:
+#         doc = frappe.get_doc(json.loads(doc))
+#     except (json.JSONDecodeError, TypeError) as e:
+#         frappe.throw(f"Invalid input: {e}")
+
+#     donor_list = []
+#     total_balance = 0
+#     unique_entries = set()
+#     docstatus = doc.docstatus
+
+#     for p in doc.custom_program_details:
+#         condition_parts = [
+#             f"(subservice_area = '{p.pd_subservice_area}' OR (subservice_area IS NULL AND '{p.pd_subservice_area}' = '') OR subservice_area = '')" if p.pd_subservice_area else "1=1",
+#             f"(donor = '{p.pd_donor}' OR (donor IS NULL AND '{p.pd_donor}' = '') OR donor = '')" if p.pd_donor else "1=1",
+#             f"(project = '{p.pd_project}' OR (project IS NULL AND '{p.pd_project}' = '') OR project = '')" if p.pd_project else "1=1",
+#             f"(cost_center = '{p.pd_cost_center}' OR (cost_center IS NULL AND '{p.pd_cost_center}' = '') OR cost_center = '')" if p.pd_cost_center else "1=1",
+#             f"(product = '{p.pd_product}' OR (product IS NULL AND '{p.pd_product}' = '') OR product = '')" if p.pd_product else "1=1",
+#             f"(program = '{p.pd_service_area}' OR (program IS NULL AND '{p.pd_service_area}' = '') OR program = '')" if p.pd_service_area else "1=1"
+#         ]
+#         condition = " AND ".join(condition_parts)
+#         try:
+#             donor_entries = frappe.db.sql(f"""
+#                 SELECT SUM(credit - debit) as total_balance,
+#                        donor,
+#                        program,
+#                        subservice_area,
+#                        project,
+#                        cost_center,
+#                        product
+#                 FROM `tabGL Entry`
+#                 WHERE 
+#                     account = 'Capital Stock - AKFP'
+#                     {f'AND {condition}' if condition else ''}
+#                 GROUP BY donor, program, subservice_area, project, cost_center, product
+#                 HAVING total_balance >= -1000000
+#                 ORDER BY total_balance DESC
+#             """, as_dict=True)
+#         except Exception as e:
+#             frappe.throw(f"Error executing query: {e}")
+
+#         match_found = False
+
+#         for entry in donor_entries:
+#             if ((entry.get('program') == p.pd_service_area or (not entry.get('program') and not p.pd_service_area)) and
+#                 (entry.get('subservice_area') == p.pd_subservice_area or (not entry.get('subservice_area') and not p.pd_subservice_area)) and
+#                 (entry.get('project') == p.pd_project or (not entry.get('project') and not p.pd_project)) and
+#                 (entry.get('cost_center') == p.pd_cost_center or (not entry.get('cost_center') and not p.pd_cost_center)) and
+#                 (entry.get('product') == p.pd_product or (not entry.get('product') and not p.pd_product))):
+
+#                 entry_key = (
+#                     entry.get('donor'), 
+#                     entry.get('program'), 
+#                     entry.get('subservice_area'), 
+#                     entry.get('project'),
+#                     entry.get('cost_center'),
+#                     entry.get('product'),
+#                 )
+
+#                 if entry_key not in unique_entries:
+#                     unique_entries.add(entry_key)
+#                     balance = entry['total_balance']
+#                     used_amount = 0
+
+#                     if docstatus == 1:
+#                         try:
+#                             used_amount_data = frappe.db.sql(f"""
+#                                 SELECT SUM(debit) as used_amount
+#                                 FROM `tabGL Entry`
+#                                 WHERE 
+#                                     account = 'Capital Stock - AKFP'
+#                                     AND voucher_no = '{doc.name}'
+#                                     {f'AND {condition}' if condition else ''}
+#                             """, as_dict=True)
+#                             if used_amount_data:
+#                                 used_amount = used_amount_data[0].get('used_amount', 0)
+#                         except Exception as e:
+#                             frappe.throw(f"Error fetching used amount: {e}")
+
+#                     donor_list.append({
+#                         "donor": p.pd_donor,
+#                         "service_area": p.pd_service_area,
+#                         "subservice_area": p.pd_subservice_area,
+#                         "project": p.pd_project,
+#                         "cost_center": p.pd_cost_center,
+#                         "product": p.pd_product,
+#                         "balance": balance,
+#                         "used_amount": used_amount,
+#                     })
+
+#                     total_balance += balance
+#                     match_found = True
+#                     break
+
+#         if not match_found:
+#             frappe.msgprint(f'No such entry exists for donor "<bold>{p.pd_donor}</bold>" with provided details.')
+
+#     return {
+#         "total_balance": total_balance,
+#         "donor_list": donor_list  
+#     }

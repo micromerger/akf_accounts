@@ -123,7 +123,7 @@ doctype_js = {
 override_doctype_class = {
 	"Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
 	"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
-	"Purchase Receipt" : "akf_accounts.customizations.extends.x_purchase_receipt.XAssetInvenPurchase",
+	"Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
     "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
 }
 # Document Events
@@ -234,6 +234,8 @@ override_doctype_class = {
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
+
+# fixtures = ["Inventory Flag", "Inventory Scenario", "Accounting Dimension"]
 
 accounting_dimension_doctypes = [
 	"Payment Detail",

@@ -1,30 +1,39 @@
-// Developer Aqsa Abbasi
-
 frappe.ui.form.on("Funds Transfer", {
     onload_post_render: function(frm) {
         frm.get_field("funds_transfer_from").grid.set_multiple_add("ff_service_area");
         frm.refresh_field('funds_transfer_from');
 
-
         frm.get_field("funds_transfer_to").grid.set_multiple_add("ft_service_area");
         frm.refresh_field('funds_transfer_to');
     },
-   
+
     refresh: function(frm) {
+        set_query_service_area_transfer_from(frm);
+        set_query_service_area_transfer_to(frm);
         set_queries_funds_transfer_to(frm);
+        
         set_queries_funds_transfer_from(frm);
-        console.log("Refresh triggereddddddd");
         console.log(!frm.is_new());
         console.log(!frm.doc.__islocal);
         if (!frm.is_new() && !frm.doc.__islocal) {
             get_html(frm);
-        } 
+        }
 
         if (frm.doc.docstatus === 1) {  
             set_custom_btns(frm);
         }
-      
 
+       
+        // frappe.call({
+        //     method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
+        //     args: {
+        //         doc: frm.doc
+        //     },
+        //     callback: function(r) {
+        //         console.log("SERVICE AREA QUERY!!!");
+        //         console.log(r.message);
+        //     }
+        // });
     },
 
     onload: function(frm) {
@@ -32,10 +41,130 @@ frappe.ui.form.on("Funds Transfer", {
         $("#total_balance").empty();
         $("#previous").empty();
         $("#next").empty();
-    }
-
+    },
 });
 
+frappe.ui.form.on('Funds Transfer From', {
+    ff_company: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        let company = row.ff_company;
+
+        frappe.call({
+            method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
+            args: {
+                doc: frm.doc
+            },
+            callback: function(r) {
+                console.log("SERVICE AREA QUERY!!!");
+                console.log(r.message);  
+
+                frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
+                    var row = locals[cdt][cdn];
+                    var company = row.ff_company;
+
+                    if (!company) {
+                        return {
+                            filters: {
+                                service_area: ["!=", ""]
+                            }
+                        };
+                    }
+
+                    return {
+                        filters: {
+                            company: company,
+                            service_area: ["in", r.message]  
+                        }
+                    };
+                };
+
+                frm.fields_dict['funds_transfer_from'].grid.refresh_field('ff_service_area');
+            }
+        });
+    }
+});
+       
+function set_query_service_area_transfer_from(frm) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        var company = row.ff_company;
+
+        if (!company) {
+            return {
+                filters: {
+                    service_area: ["!=", ""]
+                }
+            };
+        }
+
+        return {
+            filters: {
+                company: company
+            }
+        };
+    };
+}
+
+frappe.ui.form.on('Funds Transfer To', {
+    ff_company: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        let company = row.ft_company;
+
+        frappe.call({
+            method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
+            args: {
+                doc: frm.doc
+            },
+            callback: function(r) {
+                console.log("SERVICE AREA QUERY!!!");
+                console.log(r.message);  
+
+                frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function(doc, cdt, cdn) {
+                    var row = locals[cdt][cdn];
+                    var company = row.ft_company;
+
+                    if (!company) {
+                        return {
+                            filters: {
+                                service_area: ["!=", ""]
+                            }
+                        };
+                    }
+
+                    return {
+                        filters: {
+                            company: company,
+                            service_area: ["in", r.message]  
+                        }
+                    };
+                };
+
+                frm.fields_dict['funds_transfer_from'].grid.refresh_field('ff_service_area');
+            }
+        });
+    }
+});
+
+function set_query_service_area_transfer_to(frm) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        var company = row.ft_company;
+
+        if (!company) {
+            return {
+                filters: {
+                    service_area: ["!=", ""]
+                }
+            };
+        }
+
+        return {
+            filters: {
+                company: company
+            }
+        };
+    };
+}
 
 function set_custom_btns(frm) {
     frm.add_custom_button(__('Accounting Ledger'), function () {
@@ -43,62 +172,62 @@ function set_custom_btns(frm) {
     }, __("View"));
 }
 
-function set_queries_funds_transfer_from(frm){
-    set_query_subservice_area(frm);
-    set_query_cost_center(frm);
-    set_query_product(frm);
-    set_query_project(frm);
- 
+function set_queries_funds_transfer_from(frm) {
+    set_query_cost_center_transfer_from(frm);
+    set_query_subservice_area_transfer_from(frm);
+    set_query_product_transfer_from(frm);
+    set_query_project_transfer_from(frm);
+    set_query_account_transfer_from(frm);
 }
 
-function set_query_service_area(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.subservice_area,
-            }
-        };
-    };
-}
-
-function set_query_subservice_area(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_subservice_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                service_area: ["!=", ""],
-                service_area: row.ff_service_area,
-            }
-        };
-    };
-}
-
-function set_query_cost_center(frm){
+function set_query_cost_center_transfer_from(frm) {
     frm.fields_dict['funds_transfer_from'].grid.get_field('ff_cost_center').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
         return {
             filters: {
                 is_group: 0,
                 disabled: 0,
-                company: frm.doc.company,
-            }
-        };
-    };
-}
-function set_query_product(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_product').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.ff_subservice_area,
+                company: row.ff_company
             }
         };
     };
 }
 
-function set_query_project(frm){
+function set_query_subservice_area_transfer_from(frm){
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_subservice_area').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        let ffilters = row.ff_service_area === undefined
+        ? { service_area: ["!=", undefined] }
+        : { service_area: row.ff_service_area };
+
+        return {
+            filters: ffilters
+        };
+        };
+    };
+
+
+
+    
+    
+
+
+
+
+function set_query_product_transfer_from(frm) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_product').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        let ffilters = row.ff_subservice_area === undefined
+            ? { subservice_area: ["!=", undefined] }
+            : { subservice_area: row.ff_subservice_area };
+
+        return {
+            filters: ffilters
+        };
+    };
+}
+
+function set_query_project_transfer_from(frm){
     frm.fields_dict['funds_transfer_from'].grid.get_field('ff_project').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
@@ -112,13 +241,41 @@ function set_query_project(frm){
     };
 }
 
+
+function set_query_account_transfer_from(frm){
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_account').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                company: row.ff_company,
+                
+                
+            }
+        };
+    };
+}
 function set_queries_funds_transfer_to(frm){
-    set_query_subservice_area(frm);
     set_query_cost_center(frm);
+    set_query_subservice_area(frm);
     set_query_product(frm);
     set_query_project(frm);
+    set_query_account(frm);
  
 }
+function set_query_cost_center(frm){
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_cost_center').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                is_group: 0,
+                disabled: 0,
+                company: row.ft_company
+
+            }
+        };
+    };
+}
+
 
 function set_query_service_area(frm){
     frm.fields_dict['funds_transfer_to'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
@@ -135,26 +292,16 @@ function set_query_service_area(frm){
 function set_query_subservice_area(frm){
     frm.fields_dict['funds_transfer_to'].grid.get_field('ft_subservice_area').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
-        return {
-            filters: {
-                service_area: ["!=", ""],
-                service_area: row.ft_service_area,
-            }
-        };
-    };
-}
+        let ffilters = row.ft_service_area === undefined
+        ? { service_area: ["!=", undefined] }
+        : { service_area: row.ft_service_area };
 
-function set_query_cost_center(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_cost_center').get_query = function(doc, cdt, cdn) {
         return {
-            filters: {
-                is_group: 0,
-                disabled: 0,
-                company: frm.doc.company,
-            }
+            filters: ffilters
+        };
         };
     };
-}
+
 function set_query_product(frm){
     frm.fields_dict['funds_transfer_to'].grid.get_field('ft_product').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
@@ -181,9 +328,18 @@ function set_query_project(frm){
     };
 }
 
-
-
-
+function set_query_account(frm){
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_account').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                company: row.ft_company,
+                
+                
+            }
+        };
+    };
+}
 
 function get_html(frm) {
     // $("#table_render").empty();
@@ -315,3 +471,45 @@ function get_html(frm) {
 
 
 
+
+
+
+  // frappe.call({
+        //     method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_area",
+        //     args: {
+        //         doc: frm.doc,
+        //     },
+        //     callback: function(r) {
+        //         console.log("SERVICE AREA QUERYYY!!!");
+        //         console.log(r.message);
+        //     }
+        // });
+    
+// function set_query_service_area_transfer_from(frm){
+//     frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
+//         var row = locals[cdt][cdn];
+//         return {
+//             filters: {
+//                 company: ["!=", ""],
+//                 // company: row.ff_company,
+//             }
+//         };
+//     };
+// }
+
+
+// function set_query_service_area_transfer_from(frm){
+//     frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
+//         var row = locals[cdt][cdn];
+//         console.log("Queryyyyyyyyyyy");
+        
+//         console.log("Query: akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_area");
+//         console.log("Company filter:", row.ff_company);
+//         return {
+//             query: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_area",
+//             filters: {
+//                 company: row.ff_company
+//             }
+//         };
+//     };
+// }

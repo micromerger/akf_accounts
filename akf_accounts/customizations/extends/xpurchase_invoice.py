@@ -7,9 +7,16 @@ from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseI
 class XPurchaseInvoice(PurchaseInvoice):
     def on_submit(self):
         super().on_submit()
-        # frappe.msgprint("This is on_submit extended code. ")
+        if self.update_stock == 1:
+            self.update_stock_ledger_entry()
         self.create_asset_inven_purchase_gl_entries()
-        # self.populate_childtab.le()
+        
+    
+    # def validate(self):
+    #     frappe.msgprint(frappe.as_json("Validate Worked!"))
+    #     super().validate()
+    #     self.update_stock_ledger_entry()
+    #     # self.populate_childtab.le()
         
     def on_cancel(self):
         super().on_cancel()
@@ -23,7 +30,7 @@ class XPurchaseInvoice(PurchaseInvoice):
     def create_asset_inven_purchase_gl_entries(self):
         if self.custom_type_of_transaction == "Asset Purchase":
             self.create_gl_entries_for_asset_purchase()
-        elif self.custom_type_of_transaction == "Inventory Purchase":
+        elif self.custom_type_of_transaction == "Inventory Purchase Restricted":
             self.create_donor_gl_entries_from_purchase_receipt()
             # self.create_additional_gl_entries_for_purchase_receipt()
 
@@ -184,189 +191,8 @@ class XPurchaseInvoice(PurchaseInvoice):
             return
 
         if remaining_amount > 0:
-            # frappe.msgprint("if remaining_amount > 0:")
-            # Handle case where total_amount is less than required_total
-            if len(donor_list) == 1:
-                donor_entry = donor_list[0]
-                donor = donor_entry.get('donor')
-                cost_center = donor_entry.get('cost_center')
-                project = donor_entry.get('project')
-                program = donor_entry.get('program')
-                subservice_area = donor_entry.get('subservice_area')
-                product = donor_entry.get('product')
-                amount = donor_entry.get('amount', 0.0)
-
-                amount += remaining_amount
-                frappe.msgprint(f"Donor {donor} is debited by an additional {remaining_amount} PKR.")
-
-                gl_entry = frappe.get_doc({
-                    'doctype': 'GL Entry',
-                    'posting_date': self.posting_date,
-                    'transaction_date': self.posting_date,
-                    'account': "Capital Stock - AKFP",
-                    'against_voucher_type': 'Purchase Invoice',
-                    'against_voucher': self.name,
-                    'cost_center': cost_center,
-                    'debit': amount,
-                    'credit': 0.0,
-                    'account_currency': 'PKR',
-                    'debit_in_account_currency': amount,
-                    'credit_in_account_currency': 0.0,
-                    'against': "Capital Stock - AKFP",
-                    'voucher_type': 'Purchase Invoice',
-                    'voucher_no': self.name,
-                    'remarks': 'Donation for item',
-                    'is_opening': 'No',
-                    'is_advance': 'No',
-                    'fiscal_year': '2024-2025',
-                    'company': self.company,
-                    'transaction_currency': 'PKR',
-                    'debit_in_transaction_currency': amount,
-                    'credit_in_transaction_currency': 0.0,
-                    'transaction_exchange_rate': 1,
-                    'project': project,
-                    'program': program,
-                    'party_type': 'Donor',
-                    'party': donor,
-                    'subservice_area': subservice_area,
-                    'donor': donor,
-                    'inventory_flag': 'Purchased',
-                    'product': product
-                })
-
-                gl_entry.insert(ignore_permissions=True)
-                gl_entry.submit()
-
-                gl_entry_inventory_fund = frappe.get_doc({
-                    'doctype': 'GL Entry',
-                    'posting_date': self.posting_date,
-                    'transaction_date': self.posting_date,
-                    'account': inventory_account,  
-                    'against_voucher_type': 'Purchase Invoice',
-                    'against_voucher': self.name,
-                    'cost_center': cost_center,
-                    'debit': 0.0,
-                    'credit': amount,
-                    'account_currency': 'PKR',
-                    'debit_in_account_currency': 0.0,
-                    'credit_in_account_currency': amount,
-                    'against': "Capital Stock - AKFP",
-                    'voucher_type': 'Purchase Invoice',
-                    'voucher_no': self.name,
-                    'remarks': 'Inventory fund for item',
-                    'is_opening': 'No',
-                    'is_advance': 'No',
-                    'fiscal_year': '2024-2025',
-                    'company': self.company,
-                    'transaction_currency': 'PKR',
-                    'debit_in_transaction_currency': 0.0,
-                    'credit_in_transaction_currency':amount,
-                    'transaction_exchange_rate': 1,
-                    'project': project,
-                    'program': program,
-                    'party_type': 'Donor',
-                    'party': donor,
-                    'subservice_area': subservice_area,
-                    'donor': donor,
-                    'inventory_flag': 'Purchased',
-                    'product': product
-                })
-                gl_entry_inventory_fund.insert(ignore_permissions=True)
-                gl_entry_inventory_fund.submit()
-
-            else:
-                # frappe.msgprint("Elseeee if remaining_amount > 0:")
-                for i, donor_entry in enumerate(donor_list):
-                    donor = donor_entry.get('donor')
-                    cost_center = donor_entry.get('cost_center')
-                    project = donor_entry.get('project')
-                    program = donor_entry.get('program')
-                    subservice_area = donor_entry.get('subservice_area')
-                    amount = donor_entry.get('amount', 0.0)
-                    product = donor_entry.get('product')
-
-                    if i == len(donor_list) - 1:
-                        amount += remaining_amount
-                        frappe.msgprint(f"Donor {donor} is debited by an additional {remaining_amount} PKR.")
-                    elif len(donor_list) == 1:
-                        amount
-                        frappe.msgprint(f"Donor {donor} is debited by an additional {remaining_amount} PKR.")
-
-                    gl_entry = frappe.get_doc({
-                        'doctype': 'GL Entry',
-                        'posting_date': self.posting_date,
-                        'transaction_date': self.posting_date,
-                        'account': "Capital Stock - AKFP",
-                        'against_voucher_type': 'Purchase Invoice',
-                        'against_voucher': self.name,
-                        'cost_center': cost_center,
-                        'debit': amount,
-                        'credit': 0.0,
-                        'account_currency': 'PKR',
-                        'debit_in_account_currency': amount,
-                        'credit_in_account_currency': 0.0,
-                        'against': "Capital Stock - AKFP",
-                        'voucher_type': 'Purchase Invoice',
-                        'voucher_no': self.name,
-                        'remarks': 'Donation for item',
-                        'is_opening': 'No',
-                        'is_advance': 'No',
-                        'fiscal_year': '2024-2025',
-                        'company': self.company,
-                        'transaction_currency': 'PKR',
-                        'debit_in_transaction_currency': amount,
-                        'credit_in_transaction_currency': 0.0,
-                        'transaction_exchange_rate': 1,
-                        'project': project,
-                        'program': program,
-                        'party_type': 'Donor',
-                        'party': donor,
-                        'subservice_area': subservice_area,
-                        'donor': donor,
-                        'inventory_flag': 'Purchased',
-                        'product': product
-                    })
-
-                    gl_entry.insert(ignore_permissions=True)
-                    gl_entry.submit()
-
-                    gl_entry_inventory_fund = frappe.get_doc({
-                    'doctype': 'GL Entry',
-                    'posting_date': self.posting_date,
-                    'transaction_date': self.posting_date,
-                    'account': inventory_account,  
-                    'against_voucher_type': 'Purchase Invoice',
-                    'against_voucher': self.name,
-                    'cost_center': cost_center,
-                    'debit': 0.0,
-                    'credit': amount,
-                    'account_currency': 'PKR',
-                    'debit_in_account_currency': 0.0,
-                    'credit_in_account_currency': amount,
-                    'against': "Capital Stock - AKFP",
-                    'voucher_type':'Purchase Invoice',
-                    'voucher_no': self.name,
-                    'remarks': 'Inventory fund for item',
-                    'is_opening': 'No',
-                    'is_advance': 'No',
-                    'fiscal_year': '2024-2025',
-                    'company': self.company,
-                    'transaction_currency': 'PKR',
-                    'debit_in_transaction_currency': 0.0,
-                    'credit_in_transaction_currency':amount,
-                    'transaction_exchange_rate': 1,
-                    'project': project,
-                    'program': program,
-                    'party_type': 'Donor',
-                    'party': donor,
-                    'subservice_area': subservice_area,
-                    'donor': donor,
-                    'inventory_flag': 'Purchased',
-                    'product': product
-                })
-                    gl_entry_inventory_fund.insert(ignore_permissions=True)
-                    gl_entry_inventory_fund.submit()
-
+            frappe.throw("Insufficient Balance: The donated amount is less than the required amount.")
+          
         elif remaining_amount < 0:
             # frappe.msgprint("remaining_amount < 0")
             # frappe.msgprint(frappe.as_json("required_amount"))
@@ -534,6 +360,92 @@ class XPurchaseInvoice(PurchaseInvoice):
             "total_amount": total_amount,
             "donor_list": donor_list  
         }
+    
+    def update_stock_ledger_entry(self):
+        # frappe.msgprint(frappe.as_json("update_stock_ledger_entry working!"))
+        final_list = []
+        all_donor_id = []
+
+        for row in self.items:
+            if hasattr(row, "custom_new") or hasattr(row, "custom_used"):
+                if frappe.db.exists(
+                    "Stock Ledger Entry",
+                    {
+                        "docstatus": 1,
+                        "voucher_no": self.name,
+                    },
+                ):
+                    frappe.db.sql(
+                        f""" 
+                            UPDATE `tabStock Ledger Entry`
+                            SET custom_new = {row.custom_new}, custom_used = {row.custom_used}
+                            WHERE docstatus = 1 
+                            AND voucher_detail_no = '{row.name}'
+                            AND voucher_no = '{self.name}'
+                        """
+                    )
+
+        donor_list_data = self.donor_list_data_from_purchase_receipt()
+        donor_list = donor_list_data.get("donor_list", [])
+
+        for d in donor_list:
+            all_donor_id.append(d.get('donor'))
+            # frappe.msgprint(f"Current donors list: {frappe.as_json(all_donor_id)}")
+
+        # Initialize variables with default values
+        cost_center = ''
+        program = ''
+        subservice_area = ''
+        product = ''
+        project = ''
+
+        if donor_list:
+            first_donor = donor_list[0]
+            cost_center = first_donor.get('cost_center', '')
+            program = first_donor.get('program', '')
+            subservice_area = first_donor.get('subservice_area', '')
+            product = first_donor.get('product', '')
+            project = first_donor.get('project', '')
+
+            final_output = {
+                "donors": ", ".join(all_donor_id),
+                "cost_center": cost_center,
+                "product": product,
+                "program": program,
+                "project": project,
+                "subservice_area": subservice_area,
+            }
+            # frappe.msgprint(frappe.as_json("final_output"))
+            # frappe.msgprint(frappe.as_json(final_output))
+
+            final_list.append(final_output)
+            # frappe.msgprint(f"Final output list: {frappe.as_json(final_list)}")
+
+        if frappe.db.exists(
+            "Stock Ledger Entry",
+            {
+                "docstatus": 1,
+                "voucher_no": self.name,
+            },
+        ):
+            all_donor_id_json = json.dumps(all_donor_id)
+            frappe.db.sql(
+                f""" 
+                    UPDATE 
+                        `tabStock Ledger Entry`
+                    SET 
+                        custom_donor_list = '{all_donor_id_json}',
+                        program = '{program}',
+                        subservice_area = '{subservice_area}',
+                        product = '{product}',
+                        project = '{project}',
+                        custom_cost_center = '{cost_center}',
+                        inventory_flag = "Purchased"
+                    WHERE 
+                        docstatus = 1 
+                        AND voucher_no = '{self.name}'
+                """
+            )
 
 @frappe.whitelist()
 def donor_list_data(doc):
@@ -566,7 +478,7 @@ def donor_list_data(doc):
                        project,
                        cost_center,
                        product
-                FROM `tabGL Entry`
+                FROM `tabGL Entry` 
                 WHERE 
                     account = 'Capital Stock - AKFP'
                     {f'AND {condition}' if condition else ''}
@@ -595,40 +507,43 @@ def donor_list_data(doc):
                     entry.get('product'),
                 )
 
-                if entry_key not in unique_entries:
-                    unique_entries.add(entry_key)
-                    balance = entry['total_balance']
-                    used_amount = 0
+                if entry_key in unique_entries:
+                    frappe.throw(f"Duplicate Entry for donor '{entry.get('donor')}' with provided details.")
+                    
 
-                    if docstatus == 1:
-                        try:
-                            used_amount_data = frappe.db.sql(f"""
-                                SELECT SUM(debit) as used_amount
-                                FROM `tabGL Entry`
-                                WHERE 
-                                    account = 'Capital Stock - AKFP'
-                                    AND voucher_no = '{doc.name}'
-                                    {f'AND {condition}' if condition else ''}
-                            """, as_dict=True)
-                            if used_amount_data:
-                                used_amount = used_amount_data[0].get('used_amount', 0)
-                        except Exception as e:
-                            frappe.throw(f"Error fetching used amount: {e}")
+                unique_entries.add(entry_key)
+                balance = entry['total_balance']
+                used_amount = 0
 
-                    donor_list.append({
-                        "donor": p.pd_donor,
-                        "service_area": p.pd_service_area,
-                        "subservice_area": p.pd_subservice_area,
-                        "project": p.pd_project,
-                        "cost_center": p.pd_cost_center,
-                        "product": p.pd_product,
-                        "balance": balance,
-                        "used_amount": used_amount,
-                    })
+                if docstatus == 1:
+                    try:
+                        used_amount_data = frappe.db.sql(f"""
+                            SELECT SUM(debit) as used_amount
+                            FROM `tabGL Entry`
+                            WHERE 
+                                account = 'Capital Stock - AKFP'
+                                AND voucher_no = '{doc.name}'
+                                {f'AND {condition}' if condition else ''}
+                        """, as_dict=True)
+                        if used_amount_data:
+                            used_amount = used_amount_data[0].get('used_amount', 0)
+                    except Exception as e:
+                        frappe.throw(f"Error fetching used amount: {e}")
 
-                    total_balance += balance
-                    match_found = True
-                    break
+                donor_list.append({
+                    "donor": p.pd_donor,
+                    "service_area": p.pd_service_area,
+                    "subservice_area": p.pd_subservice_area,
+                    "project": p.pd_project,
+                    "cost_center": p.pd_cost_center,
+                    "product": p.pd_product,
+                    "balance": balance,
+                    "used_amount": used_amount,
+                })
+
+                total_balance += balance
+                match_found = True
+                break
 
         if not match_found:
             frappe.msgprint(f'No such entry exists for donor "<bold>{p.pd_donor}</bold>" with provided details.')
@@ -637,3 +552,125 @@ def donor_list_data(doc):
         "total_balance": total_balance,
         "donor_list": donor_list  
     }
+
+# @frappe.whitelist()
+# def donor_list_data(doc):
+#     try:
+#         doc = frappe.get_doc(json.loads(doc))
+#     except (json.JSONDecodeError, TypeError) as e:
+#         frappe.throw(f"Invalid input: {e}")
+
+#     donor_list = []
+#     total_balance = 0
+#     unique_entries = set()
+#     docstatus = doc.docstatus
+
+#     processed_entries = set()
+
+#     for p in doc.custom_program_details:
+#         entry_key = (
+#             p.pd_donor,
+#             p.pd_service_area,
+#             p.pd_subservice_area,
+#             p.pd_project,
+#             p.pd_cost_center,
+#             p.pd_product,
+#         )
+
+#         if entry_key in processed_entries:
+#             frappe.msgprint(f"Duplicate Entry detected for donor '<bold>{p.pd_donor}</bold>' with provided details.")
+#             continue
+
+#         processed_entries.add(entry_key)
+
+#         condition_parts = [
+#             f"(subservice_area = '{p.pd_subservice_area}' OR (subservice_area IS NULL AND '{p.pd_subservice_area}' = '') OR subservice_area = '')" if p.pd_subservice_area else "1=1",
+#             f"(donor = '{p.pd_donor}' OR (donor IS NULL AND '{p.pd_donor}' = '') OR donor = '')" if p.pd_donor else "1=1",
+#             f"(project = '{p.pd_project}' OR (project IS NULL AND '{p.pd_project}' = '') OR project = '')" if p.pd_project else "1=1",
+#             f"(cost_center = '{p.pd_cost_center}' OR (cost_center IS NULL AND '{p.pd_cost_center}' = '') OR cost_center = '')" if p.pd_cost_center else "1=1",
+#             f"(product = '{p.pd_product}' OR (product IS NULL AND '{p.pd_product}' = '') OR product = '')" if p.pd_product else "1=1",
+#             f"(program = '{p.pd_service_area}' OR (program IS NULL AND '{p.pd_service_area}' = '') OR program = '')" if p.pd_service_area else "1=1"
+#         ]
+#         condition = " AND ".join(condition_parts)
+#         try:
+#             donor_entries = frappe.db.sql(f"""
+#                 SELECT SUM(credit - debit) as total_balance,
+#                        donor,
+#                        program,
+#                        subservice_area,
+#                        project,
+#                        cost_center,
+#                        product
+#                 FROM `tabGL Entry`
+#                 WHERE 
+#                     account = 'Capital Stock - AKFP'
+#                     {f'AND {condition}' if condition else ''}
+#                 GROUP BY donor, program, subservice_area, project, cost_center, product
+#                 HAVING total_balance >= -1000000
+#                 ORDER BY total_balance DESC
+#             """, as_dict=True)
+#         except Exception as e:
+#             frappe.throw(f"Error executing query: {e}")
+
+#         match_found = False
+
+#         for entry in donor_entries:
+#             if ((entry.get('program') == p.pd_service_area or (not entry.get('program') and not p.pd_service_area)) and
+#                 (entry.get('subservice_area') == p.pd_subservice_area or (not entry.get('subservice_area') and not p.pd_subservice_area)) and
+#                 (entry.get('project') == p.pd_project or (not entry.get('project') and not p.pd_project)) and
+#                 (entry.get('cost_center') == p.pd_cost_center or (not entry.get('cost_center') and not p.pd_cost_center)) and
+#                 (entry.get('product') == p.pd_product or (not entry.get('product') and not p.pd_product))):
+
+#                 entry_key = (
+#                     entry.get('donor'), 
+#                     entry.get('program'), 
+#                     entry.get('subservice_area'), 
+#                     entry.get('project'),
+#                     entry.get('cost_center'),
+#                     entry.get('product'),
+#                 )
+
+#                 if entry_key not in unique_entries:
+#                     unique_entries.add(entry_key)
+#                     balance = entry['total_balance']
+#                     used_amount = 0
+
+#                     if docstatus == 1:
+#                         try:
+#                             used_amount_data = frappe.db.sql(f"""
+#                                 SELECT SUM(debit) as used_amount
+#                                 FROM `tabGL Entry`
+#                                 WHERE 
+#                                     account = 'Capital Stock - AKFP'
+#                                     AND voucher_no = '{doc.name}'
+#                                     {f'AND {condition}' if condition else ''}
+#                             """, as_dict=True)
+#                             if used_amount_data:
+#                                 used_amount = used_amount_data[0].get('used_amount', 0)
+#                         except Exception as e:
+#                             frappe.throw(f"Error fetching used amount: {e}")
+
+#                     donor_list.append({
+#                         "donor": p.pd_donor,
+#                         "service_area": p.pd_service_area,
+#                         "subservice_area": p.pd_subservice_area,
+#                         "project": p.pd_project,
+#                         "cost_center": p.pd_cost_center,
+#                         "product": p.pd_product,
+#                         "balance": balance,
+#                         "used_amount": used_amount,
+#                     })
+
+#                     total_balance += balance
+#                     match_found = True
+#                     break
+
+#         if not match_found:
+#             frappe.msgprint(f'No such entry exists for donor "<bold>{p.pd_donor}</bold>" with provided details.')
+
+#     return {
+#         "total_balance": total_balance,
+#         "donor_list": donor_list  
+#     }
+
+

@@ -190,18 +190,33 @@ function set_query_cost_center(frm){
     };
 }
 
-function set_query_product(frm){
+// function set_query_product(frm){
+//     frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
+//         var row = locals[cdt][cdn];
+//         return {
+//             filters: {
+//                 subservice_area: ["!=", ""],
+//                 subservice_area: row.pd_subservice_area,
+//             }
+//         };
+//     };
+// }
+
+
+function set_query_product(frm) {
     frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
+        console.log("pd_subservice_area:", row.pd_subservice_area);
+
+        let ffilters = row.pd_subservice_area === undefined
+            ? { subservice_area: ["!=", undefined] }
+            : { subservice_area: row.pd_subservice_area };
+
         return {
-            filters: {
-                subservice_area: ["!=", ""],
-                subservice_area: row.pd_subservice_area,
-            }
+            filters: ffilters
         };
     };
 }
-
 function set_query_project(frm){
     frm.fields_dict['custom_program_details'].grid.get_field('pd_project').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
@@ -218,6 +233,26 @@ function set_query_project(frm){
 
 
 frappe.ui.form.on("Purchase Receipt Item", {
+    custom_new: function(frm, cdt, cdn){
+        let row = locals[cdt][cdn];
+        if(row.custom_new){
+            row.custom_used = 0;
+        }
+        frm.refresh_field("items")
+    },
+    custom_used: function(frm, cdt, cdn){
+        let row = locals[cdt][cdn];
+        if(row.custom_used){
+            row.custom_new = 0;
+        }
+        frm.refresh_field("items")
+    }
+
+    
+});
+
+
+frappe.ui.form.on("Purchase Invoice Item", {
     custom_new: function(frm, cdt, cdn){
         let row = locals[cdt][cdn];
         if(row.custom_new){

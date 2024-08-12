@@ -202,7 +202,7 @@ class XStockEntry(StockEntry):
                         """
                     )
 
-        if self.custom_donor_id:
+        if self.custom_donor_ids:
             # Initialize an empty list to store child values
             child_values = []
 
@@ -289,11 +289,21 @@ class XStockEntry(StockEntry):
 
     def validate_qty(self):
         if (
-            self.stock_entry_type == "Donated Inventory Consumption"
-            or self.stock_entry_type == "Donated Inventory Transfer"
+            self.stock_entry_type == "Donated Inventory Consumption - Restricted"
+            or self.stock_entry_type == "Donated Inventory Transfer - Restricted"
         ):
             for item in self.items:
                 condition_parts = [
+                    (
+                        f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
+                        if item.custom_new
+                        else "1=1"
+                    ),
+                    (
+                        f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
+                        if item.custom_used
+                        else "1=1"
+                    ),
                     (
                         f"(warehouse = '{item.s_warehouse}' OR (warehouse IS NULL AND '{item.s_warehouse}' = '') OR warehouse = '')"
                         if item.s_warehouse
@@ -356,10 +366,10 @@ class XStockEntry(StockEntry):
         debit_account, credit_account = "", ""
 
         company = frappe.get_doc("Company", self.company)
-        if self.stock_entry_type == "Donation":
+        if self.stock_entry_type == "Donated Inventory Receive - Restricted":
             pass
 
-        elif self.stock_entry_type == "Donated Inventory Consumption":
+        elif self.stock_entry_type == "Donated Inventory Consumption - Restricted":
             debit_account = company.custom_default_inventory_expense_account
             credit_account = company.default_income_account
 
@@ -395,7 +405,7 @@ class XStockEntry(StockEntry):
             credit_gl.insert()
             credit_gl.submit()
 
-        elif self.stock_entry_type == "Donated Inventory Transfer":
+        elif self.stock_entry_type == "Donated Inventory Transfer - Restricted":
             debit_account = company.default_inventory_account
             credit_account = company.custom_default_inventory_fund_account
 
@@ -507,13 +517,13 @@ class XStockEntry(StockEntry):
     def validate_warehouse_cost_centers(self):
         for item in self.items:
             source_cost_center, target_cost_center = "", ""
-            if self.stock_entry_type == "Donation":
+            if self.stock_entry_type == "Donated Inventory Receive - Restricted":
                 target_warehouse = item.t_warehouse
                 target_cost_center = frappe.db.get_value(
                     "Warehouse", target_warehouse, "custom_cost_center"
                 )
                 item.cost_center = target_cost_center
-            elif self.stock_entry_type == "Donated Inventory Consumption":
+            elif self.stock_entry_type == "Donated Inventory Consumption - Restricted":
                 source_warehouse = item.s_warehouse
                 source_cost_center = frappe.db.get_value(
                     "Warehouse", source_warehouse, "custom_cost_center"

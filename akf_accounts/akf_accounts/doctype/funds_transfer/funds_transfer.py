@@ -2,13 +2,18 @@
 import frappe
 from frappe.model.document import Document
 import json
+import datetime
+# from frappe import today
 
 class FundsTransfer(Document):
     # def validate(self):
     #     transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Company']
     #     if self.transaction_type in transaction_types:
     #         self.create_gl_entries_for_inter_funds_transfer()
-    
+    def validate(self):
+        today_date = datetime.datetime.now().today()
+        self.posting_date = today_date
+
 
     def on_submit(self):
         transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Company']
@@ -392,9 +397,42 @@ def donor_list_data(doc):
                     break
 
         if not match_found:
-            frappe.msgprint(f'No such entry exists for donor "<bold>{p.ff_donor}</bold>" with provided details.')
+            frappe.msgprint(f'FUNDS TRANSFER No such entry exists for donor "<bold>{p.ff_donor}</bold>" with provided details.')
 
     return {
         "total_balance": total_balance,
         "donor_list": donor_list  
     }
+
+
+# @frappe.whitelist()
+# def get_service_areas(doctype, txt, searchfield, start, page_len, filters):
+#     filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
+#     company = filters.get('company')
+#     service_area = filters.get('service_area')
+
+#     query = """
+#         SELECT name
+#         FROM `tabProgram` as p
+#         WHERE EXISTS (
+#             SELECT 1
+#             FROM `tabAccounts Default` as ad
+#             WHERE ad.parent = p.name AND company=%s
+#         ) 
+#     """
+
+#     return frappe.db.sql(query, (company))
+
+@frappe.whitelist()
+def get_service_areas(doc):
+    try:
+        doc = frappe.get_doc(json.loads(doc))
+    except (json.JSONDecodeError, TypeError) as e:
+        frappe.throw(f"Invalid input: {e}")
+    # frappe.msgprint(frappe.as_json(doc))
+
+    company = []
+    for f in doc.funds_transfer_from:
+        company.append(f.ff_company)
+    # frappe.msgprint(frappe.as_json(company))
+    return company

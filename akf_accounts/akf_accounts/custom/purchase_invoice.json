@@ -44,7 +44,7 @@
    "name": "Purchase Invoice-custom_type_of_transaction",
    "no_copy": 0,
    "non_negative": 0,
-   "options": "Normal\nAsset Purchase\nInventory Purchase",
+   "options": "Normal\nAsset Purchase\nInventory Purchase Restricted",
    "owner": "Administrator",
    "permlevel": 0,
    "precision": "",
