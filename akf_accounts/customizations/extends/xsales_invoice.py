@@ -25,16 +25,16 @@ class XSalesInvoice(SalesInvoice):
             'account': unrestricted_fund_account,
             'against_voucher_type': 'Sales Invoice',
             'against_voucher': self.name,
-            'cost_center': 'Main-AKFP',
+            'cost_center': 'Main - AKFP',
             'debit': 0.0,
             'credit': self.grand_total,
             'account_currency': 'PKR',
             'debit_in_account_currency': 0.0,
             'credit_in_account_currency': self.grand_total,
-            'against': "Capital Stock - AKFP",
-            'voucher_type': 'Purchase Invoice',
+            'against': unrestricted_fund_account,
+            'voucher_type': 'Sales Invoice',
             'voucher_no': self.name,
-            'remarks': 'Donation for item',
+            'remarks': 'Sold Item',
             'is_opening': 'No',
             'is_advance': 'No',
             'fiscal_year': '2024-2025',
@@ -43,54 +43,39 @@ class XSalesInvoice(SalesInvoice):
             'debit_in_transaction_currency': 0.0,
             'credit_in_transaction_currency': self.grand_total,
             'transaction_exchange_rate': 1,
-            # Uncomment and provide actual values for these fields if needed
-            # 'project': project,
-            # 'program': program,
-            # 'party_type': 'Donor',
-            # 'party': donor,
-            # 'subservice_area': subservice_area,
-            # 'donor': donor,
-            # 'inventory_flag': 'Purchased',
-            # 'product': product
         })
 
         gl_entry_unrestricted_fund_account.insert(ignore_permissions=True)
         gl_entry_unrestricted_fund_account.submit()
 
 
-                # gl_entry_inventory_fund = frappe.get_doc({
-                #     'doctype': 'GL Entry',
-                #     'posting_date': self.posting_date,
-                #     'transaction_date': self.posting_date,
-                #     'account': inventory_account,  
-                #     'against_voucher_type': 'Purchase Invoice',
-                #     'against_voucher': self.name,
-                #     'cost_center': cost_center,
-                #     'debit': 0.0,
-                #     'credit': amount,
-                #     'account_currency': 'PKR',
-                #     'debit_in_account_currency': 0.0,
-                #     'credit_in_account_currency': amount,
-                #     'against': "Capital Stock - AKFP",
-                #     'voucher_type': 'Purchase Invoice',
-                #     'voucher_no': self.name,
-                #     'remarks': 'Inventory fund for item',
-                #     'is_opening': 'No',
-                #     'is_advance': 'No',
-                #     'fiscal_year': '2024-2025',
-                #     'company': self.company,
-                #     'transaction_currency': 'PKR',
-                #     'debit_in_transaction_currency': 0.0,
-                #     'credit_in_transaction_currency':amount,
-                #     'transaction_exchange_rate': 1,
-                #     'project': project,
-                #     'program': program,
-                #     'party_type': 'Donor',
-                #     'party': donor,
-                #     'subservice_area': subservice_area,
-                #     'donor': donor,
-                #     'inventory_flag': 'Purchased',
-                #     'product': product
-                # })
-                # gl_entry_inventory_fund.insert(ignore_permissions=True)
-                # gl_entry_inventory_fund.submit()
+        gl_entry_inventory_account = frappe.get_doc({
+            'doctype': 'GL Entry',
+            'posting_date': self.posting_date,
+            'transaction_date': self.posting_date,
+            'account': inventory_account,
+            'against_voucher_type': 'Sales Invoice',
+            'against_voucher': self.name,
+            'cost_center': 'Main - AKFP',
+            'debit': self.grand_total,
+            'credit': 0.0,
+            'account_currency': 'PKR',
+            'debit_in_account_currency': self.grand_total,
+            'credit_in_account_currency':  0.0,
+            'against': unrestricted_fund_account,
+            'voucher_type': 'Sales Invoice',
+            'voucher_no': self.name,
+            'remarks': 'Sold Item',
+            'is_opening': 'No',
+            'is_advance': 'No',
+            'fiscal_year': '2024-2025',
+            'company': self.company,
+            'transaction_currency': 'PKR',
+            'debit_in_transaction_currency': self.grand_total,
+            'credit_in_transaction_currency':  0.0,
+            'transaction_exchange_rate': 1,
+        })
+
+        gl_entry_inventory_account.insert(ignore_permissions=True)
+        gl_entry_inventory_account.submit()
+
