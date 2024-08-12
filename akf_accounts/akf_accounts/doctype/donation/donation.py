@@ -330,6 +330,10 @@ class Donation(Document):
                 doc.save(ignore_permissions=True)
                 doc.submit()
 
+                if(self.donor_identity == "Unknown"):
+                    # set Payment Entry id in payment_detail child table.
+                    frappe.db.set_value("Payment Detail", row.name, "payment_entry", doc.name)
+
         if(self.donor_identity == "Merchant - Known"):
             args.update({
                 "paid_amount" : self.total_donation,
@@ -391,6 +395,12 @@ def get_donors_list(donation_id):
         "donors_list": sorted(list(donors_list)) if(donors_list) else [],
         "idx_list": idx_list if(idx_list) else {},
     }
+
+@frappe.whitelist()
+def get_idx_list_unknown(donation_id):
+    result = frappe.db.sql(f""" select idx from `tabPayment Detail` where paid = 0 and parent='{donation_id}' """, as_dict=0)
+    idx_list = sorted([r[0] for r in result])
+    return idx_list
 
 @frappe.whitelist()
 def get_outstanding(filters):
@@ -477,8 +487,12 @@ def set_unknown_to_known(name, values):
     """ 
     import ast
     values = frappe._dict(ast.literal_eval(values))
-    pid = frappe.db.get_value("Payment Detail", {"parent": name, "transaction_no_cheque_no": values.transaction_no_cheque_no}, ["name", "idx"], as_dict=1) 
-    if(not pid): frappe.throw(f"Tansaction No/ Cheque No: {values.transaction_no_cheque_no}", title="Not Found")
+    
+    pid = frappe.db.get_value("Payment Detail", 
+        {"parent": name, "idx": values.serial_no}, ["name", "payment_entry"], as_dict=1)
+
+    if(not pid): frappe.throw(f"Payment Detail Serial No: {values.serial_no}", title="Not Found")
+    
     info = frappe.db.get_value("Donor", values.donor, "*", as_dict=1)
 
     # Update Payment Details
@@ -536,7 +550,8 @@ def set_unknown_to_known(name, values):
         reverse_donor = 'Unknown To Known'
     Where 
         docstatus=1
-        and payment_detail_id = '{pid.idx}'
+        and parent = '{name}'
+        and payment_detail_id = '{values.serial_no}'
     """)
 
     frappe.db.sql(f""" 
@@ -548,7 +563,7 @@ def set_unknown_to_known(name, values):
     Where 
         docstatus=1
         and voucher_no = '{name}'
-        and voucher_detail_no in (select name from `tabDeduction Breakeven` where docstatus=1 and payment_detail_id = '{pid.idx}')
+        and voucher_detail_no in (select name from `tabDeduction Breakeven` where docstatus=1 and parent = '{name}' and payment_detail_id = '{values.serial_no}')
     """)
 
     frappe.db.sql(f""" 
@@ -558,8 +573,7 @@ def set_unknown_to_known(name, values):
         donor = '{info.name}', party = '{info.name}', reverse_donor = 'Unknown To Known'
     Where 
         docstatus=1
-        and voucher_no = '{name}'
-        and voucher_detail_no = '{pid.name}'
+        and against_voucher_no = '{name}'
     """)
 
     frappe.db.sql(f""" 
@@ -569,8 +583,7 @@ def set_unknown_to_known(name, values):
         party = '{info.name}', party_name= '{info.donor_name}', donor='{info.name}', reverse_donor = 'Unknown To Known'
     Where 
         docstatus=1
-        and name in  (select parent from `tabPayment Entry Reference` where reference_name ='{name}')
-        and reference_no = '{values.transaction_no_cheque_no}'
+        and name = '{pid.payment_entry}'
     """)
 
     frappe.db.sql(f""" 
@@ -580,11 +593,7 @@ def set_unknown_to_known(name, values):
         party = '{info.name}', donor='{info.name}', reverse_donor = 'Unknown To Known'
     Where 
         docstatus=1
-        and voucher_no in  (
-            select name from `tabPayment Entry` 
-                where name in (select parent from `tabPayment Entry Reference` where reference_name ='{name}')
-                and reference_no = '{values.transaction_no_cheque_no}'
-            )
+        and voucher_no = '{pid.payment_entry}'
     """)
 
 

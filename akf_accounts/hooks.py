@@ -119,12 +119,13 @@ doctype_js = {
 # ---------------
 # Override standard doctype classes
 
-# /home/frappe/frappe-bench/apps/akf_accounts/akf_accounts/customizations/extends/xpurchase_invoice.py
 override_doctype_class = {
 	"Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
 	"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
 	"Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
     "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
+     "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
+   
 }
 # Document Events
 # ---------------

@@ -115,6 +115,20 @@ function set_custom_btns(frm) {
     if(frm.doc.docstatus==1){ 
         if(frm.doc.donor_identity == "Unknown" && frm.doc.contribution_type==="Donation"){
             frm.add_custom_button(__('Reverse Donor'), function () {
+                // let donors_list = []
+                let idx_list;
+                frappe.call({
+                    method: "akf_accounts.akf_accounts.doctype.donation.donation.get_idx_list_unknown",
+                    async: false,
+                    args:{
+                        donation_id: frm.doc.name,
+                    },
+                    callback: function(r){
+                        let data = r.message;
+                        idx_list = data;
+                    }
+                });
+
                 let d = new frappe.ui.Dialog({
                     title: 'Known donor detail',
                     fields: [
@@ -132,11 +146,12 @@ function set_custom_btns(frm) {
                                 }
                             }
                         },
+
                         {
-                            label: 'Transaction No/ Cheque No',
-                            fieldname: 'transaction_no_cheque_no',
-                            fieldtype: 'Data',
-                            options: "",
+                            label: 'Payment Detail Serial No',
+                            fieldname: 'serial_no',
+                            fieldtype: 'Select',
+                            options: idx_list,
                             reqd: 1
                         }
                     ],
