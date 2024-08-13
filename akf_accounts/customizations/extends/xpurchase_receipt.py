@@ -16,7 +16,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
         
         self.update_stock_ledger_entry()
         self.create_asset_inven_purchase_gl_entries()
-        # donor_list_data_on_submit(self)
+        donor_list_data_on_submit(self)
         # self.populate_childtab.le()
         
     def on_cancel(self):

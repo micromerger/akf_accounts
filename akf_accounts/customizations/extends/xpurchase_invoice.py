@@ -1,29 +1,17 @@
 import frappe
-# from erpnext.stock.doctype.purchase_receipt.purchase_receipt import PurchaseReceipt
 import json
-
-# from akf_stock.customization.extends.xpurchase_invoice import XPurchaseInvoice
 from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseInvoice
 class XPurchaseInvoice(PurchaseInvoice):
     def on_submit(self):
         super().on_submit()
-        if self.custom_type_of_transaction == "Inventory Purchase Restricted":
-            # pass
-            for i in self.items:
-                if not i.purchase_receipt:
-                    if self.update_stock == 1:
-                        self.update_stock_ledger_entry()
-                    self.create_asset_inven_purchase_gl_entries()
-                    donor_list_data_on_submit(self)
-                else:
-                    pass
-        
+        self.create_asset_inven_purchase_gl_entries()
+        donor_list_data_on_submit(self)  
     
     # def validate(self):
     #     frappe.msgprint(frappe.as_json("Validate Worked!"))
     #     super().validate()
-    #     self.update_stock_ledger_entry()
-    #     # self.populate_childtab.le()
+    #     self.create_asset_inven_purchase_gl_entries()
+        # self.populate_childtab.le()
         
     def on_cancel(self):
         super().on_cancel()
@@ -38,7 +26,12 @@ class XPurchaseInvoice(PurchaseInvoice):
         if self.custom_type_of_transaction == "Asset Purchase":
             self.create_gl_entries_for_asset_purchase()
         elif self.custom_type_of_transaction == "Inventory Purchase Restricted":
-            self.create_donor_gl_entries_from_purchase_receipt()
+            # self.create_donor_gl_entries_from_purchase_receipt()
+            for i in self.items:
+                if not i.purchase_receipt:
+                    if self.update_stock == 1:
+                        self.update_stock_ledger_entry()
+                    self.create_donor_gl_entries_from_purchase_receipt()
             # self.create_additional_gl_entries_for_purchase_receipt()
 
     def create_gl_entries_for_asset_purchase(self):
@@ -93,12 +86,15 @@ class XPurchaseInvoice(PurchaseInvoice):
             'company': self.company,
         })
     def create_donor_gl_entries_from_purchase_receipt(self):
+        # frappe.msgprint(frappe.as_json("create_donor_gl_entries_from_purchase_receipt!"))
         inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")
         last_donor_not_fully_used = None
         # frappe.msgprint(frappe.as_json("create_donor_gl_entries_from_purchase_receipt_aq"))
 
         donor_list_data = self.donor_list_data_from_purchase_receipt()
         donor_list = donor_list_data.get("donor_list", [])
+        # frappe.msgprint(frappe.as_json("donor_list"))
+        # frappe.msgprint(frappe.as_json(donor_list))
 
         if not donor_list:
             frappe.msgprint("No donor list found.")
@@ -200,9 +196,17 @@ class XPurchaseInvoice(PurchaseInvoice):
            frappe.throw("Insufficient Balance: The donated amount is less than the required amount.")
 
            
-        elif remaining_amount < 0:
+        if remaining_amount < 0:
+            # frappe.msgprint(f"remaining_amount < 0")
+            # frappe.msgprint(f"Name of receipt: {self.name}")
+
+            # Debugging output
+            # frappe.msgprint(f"Voucher Type: Purchase Receipt")
+            # frappe.msgprint(f"Voucher Number: {self.name}")
+            
             required_amount_for_item = required_total
             last_donor_not_fully_used = None 
+
             for donor_entry in donor_list:
                 donor = donor_entry.get('donor')
                 cost_center = donor_entry.get('cost_center')
@@ -221,7 +225,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'posting_date': self.posting_date,
                         'transaction_date': self.posting_date,
                         'account': "Capital Stock - AKFP",
-                        'against_voucher_type': 'Purchase Receipt',
+                        'against_voucher_type': 'Purchase Invoice',
                         'against_voucher': self.name,
                         'cost_center': cost_center,
                         'debit': amount_to_use,
@@ -230,7 +234,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'debit_in_account_currency': amount_to_use,
                         'credit_in_account_currency': 0.0,
                         'against': "Capital Stock - AKFP",
-                        'voucher_type': 'Purchase Receipt',
+                        'voucher_type': 'Purchase Invoice',
                         'voucher_no': self.name,
                         'remarks': 'Donation for item',
                         'is_opening': 'No',
@@ -250,6 +254,10 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'inventory_flag': 'Purchased',
                         'product': product
                     })
+
+                    # Debugging output
+                    frappe.msgprint(f"Creating GL Entry Donation: {gl_entry_donation.as_dict()}")
+
                     gl_entry_donation.insert(ignore_permissions=True)
                     gl_entry_donation.submit()
 
@@ -258,7 +266,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'posting_date': self.posting_date,
                         'transaction_date': self.posting_date,
                         'account': inventory_account,  
-                        'against_voucher_type': 'Purchase Receipt',
+                        'against_voucher_type': 'Purchase Invoice',
                         'against_voucher': self.name,
                         'cost_center': cost_center,
                         'debit': 0.0,
@@ -267,7 +275,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'debit_in_account_currency': 0.0,
                         'credit_in_account_currency': amount_to_use,
                         'against': "Capital Stock - AKFP",
-                        'voucher_type': 'Purchase Receipt',
+                        'voucher_type': 'Purchase Invoice',
                         'voucher_no': self.name,
                         'remarks': 'Inventory fund for item',
                         'is_opening': 'No',
@@ -276,7 +284,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'company': self.company,
                         'transaction_currency': 'PKR',
                         'debit_in_transaction_currency': 0.0,
-                        'credit_in_transaction_currency':amount_to_use,
+                        'credit_in_transaction_currency': amount_to_use,
                         'transaction_exchange_rate': 1,
                         'project': project,
                         'program': program,
@@ -287,6 +295,10 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'inventory_flag': 'Purchased',
                         'product': product
                     })
+
+                    # Debugging output
+                    frappe.msgprint(f"Creating GL Entry Inventory Fund: {gl_entry_inventory_fund.as_dict()}")
+
                     gl_entry_inventory_fund.insert(ignore_permissions=True)
                     gl_entry_inventory_fund.submit()
 
@@ -300,6 +312,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                 frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
             frappe.msgprint("GL Entries created successfully.")
+
     def donor_list_data_from_purchase_receipt(self):
         donor_list = []
         total_amount = 0
