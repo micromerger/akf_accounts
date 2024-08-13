@@ -1,4 +1,9 @@
 frappe.ui.form.on('Purchase Receipt', {
+    // validate: function(frm) {
+    //     get_html(frm);
+    //     // frm.get_field("custom_program_details").grid.set_multiple_add("service_area");
+    //     // frm.refresh_field('custom_program_details');
+    // },
     onload_post_render: function(frm) {
         // frm.get_field("custom_program_details").grid.set_multiple_add("service_area");
         // frm.refresh_field('custom_program_details');
@@ -6,7 +11,7 @@ frappe.ui.form.on('Purchase Receipt', {
     refresh: function(frm) {
         set_queries_payment_details(frm);
         console.log("Refreshed triggered");
-        if (!frm.is_new() && !frm.doc.__islocal) {
+        if (!frm.is_new() && !frm.doc.__islocal && frm.doc.custom_type_of_transaction == "Inventory Purchase Restricted") {
             get_html(frm);
         }
         },
@@ -46,6 +51,7 @@ function get_html(frm) {
                     $("#previous").empty();
                     $("#next").empty();
                     frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
+                    frappe.throw("No such entry exists for donor with provided details.");
                 } else if (donorList && donorList.length > 0) {
                     console.log("donorList111", donorList);
 

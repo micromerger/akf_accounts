@@ -4,20 +4,40 @@ frappe.ui.form.on('Purchase Invoice', {
         // frm.refresh_field('custom_program_details');
     },
     refresh: function(frm) {
+        // toggle_custom_fields(frm);
         set_queries_payment_details(frm);
         console.log("Refreshed triggered");
-        if (!frm.is_new() && !frm.doc.__islocal) {
+        if (!frm.is_new() && !frm.doc.__islocal && frm.doc.custom_type_of_transaction == "Inventory Purchase Restricted"){
             get_html(frm);
         }
         },
 
+
 	onload: function(frm) {
+        // toggle_custom_fields(frm);
 		$("#table_render").empty();
 		$("#total_amount").empty();
 		$("#previous").empty();
 		$("#next").empty();
-    }
+        // if frm.
+    },
+   
 });
+
+function toggle_custom_fields(frm) {
+    let hide_fields = true;
+
+    // Loop through each row in the child table
+    frm.doc.items.forEach(row => {
+        if (row.purchase_receipt) {
+            hide_fields = false;
+        }
+    });
+
+    frm.set_df_property('custom_program_details', 'hidden', hide_fields ? 1 : 0);
+    frm.set_df_property('custom_donor_list_html', 'hidden', hide_fields ? 1 : 0);
+
+}
 function get_html(frm) {
     $("#table_render").empty();
 
@@ -45,6 +65,7 @@ function get_html(frm) {
                     $("#previous").empty();
                     $("#next").empty();
                     frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
+                    frappe.throw("No such entry exists for donor with provided details.");
                 } else if (donorList && donorList.length > 0) {
                     console.log("donorList111", donorList);
 

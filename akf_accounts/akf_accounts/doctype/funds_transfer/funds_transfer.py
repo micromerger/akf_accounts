@@ -27,6 +27,9 @@ class FundsTransfer(Document):
     
 
     def create_gl_entries_for_inter_funds_transfer(self):
+        if not self.funds_transfer_to:
+            frappe.throw("There is no information to transfer funds.")
+            return
         donor_list_data = self.donor_list_for_purchase_receipt()
         donor_list = donor_list_data['donor_list']
         # frappe.msgprint(frappe.as_json("donor_list"))
@@ -35,6 +38,17 @@ class FundsTransfer(Document):
         previous_dimensions = []
         new_dimensions = []
         total_balance = 0.0
+
+        # Extract donor IDs from funds_transfer_from
+        donor_ids_from = {p.ff_donor for p in self.funds_transfer_from if p.ff_donor}
+        # Extract donor IDs from funds_transfer_to
+        donor_ids_to = {n.ft_donor for n in self.funds_transfer_to if n.ft_donor}
+
+        # Check if any donor ID in funds_transfer_from is not in funds_transfer_to
+        missing_donor_ids = donor_ids_from - donor_ids_to
+        if missing_donor_ids:
+            missing_donors_message = ", ".join(missing_donor_ids)
+            frappe.throw(f"No details are provided for Donor(s): {missing_donors_message}")
 
         for d in donor_list:
             prev_donor = d.get('donor')

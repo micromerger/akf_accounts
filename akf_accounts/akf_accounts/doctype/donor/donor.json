@@ -67,6 +67,7 @@
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Email"
   },
   {
@@ -134,6 +135,7 @@
   {
    "fieldname": "contact_no",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Contact No",
    "reqd": 1
   },
@@ -147,6 +149,8 @@
    "depends_on": "eval: doc.identification_type!=\"Others\"",
    "fieldname": "cnic",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "CNIC",
    "reqd": 1,
    "unique": 1
@@ -213,7 +217,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-08-08 17:19:46.498077",
+ "modified": "2024-08-13 12:12:03.649479",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
