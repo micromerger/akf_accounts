@@ -411,7 +411,7 @@ def donor_list_data(doc):
                     break
 
         if not match_found:
-            frappe.msgprint(f'FUNDS TRANSFER No such entry exists for donor "<bold>{p.ff_donor}</bold>" with provided details.')
+            frappe.msgprint(f'No such entry exists for donor "<bold>{p.ff_donor}</bold>" with provided details.')
 
     return {
         "total_balance": total_balance,
@@ -450,3 +450,4 @@ def get_service_areas(doc):
         company.append(f.ff_company)
     # frappe.msgprint(frappe.as_json(company))
     return company
+

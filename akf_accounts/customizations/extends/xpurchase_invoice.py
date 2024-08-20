@@ -4,7 +4,7 @@ from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseI
 class XPurchaseInvoice(PurchaseInvoice):
     def on_submit(self):
         super().on_submit()
-        self.create_asset_inven_purchase_gl_entries()
+        self.create_asset_and_inventory_purchase_gl_entries()
         donor_list_data_on_submit(self)  
     
     # def validate(self):
@@ -22,7 +22,7 @@ class XPurchaseInvoice(PurchaseInvoice):
     def delete_all_gl_entries(self):
         frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
 
-    def create_asset_inven_purchase_gl_entries(self):
+    def create_asset_and_inventory_purchase_gl_entries(self):
         if self.custom_type_of_transaction == "Asset Purchase":
             self.create_gl_entries_for_asset_purchase()
         elif self.custom_type_of_transaction == "Inventory Purchase Restricted":
@@ -256,7 +256,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                     })
 
                     # Debugging output
-                    frappe.msgprint(f"Creating GL Entry Donation: {gl_entry_donation.as_dict()}")
+                    # frappe.msgprint(f"Creating GL Entry Donation: {gl_entry_donation.as_dict()}")
 
                     gl_entry_donation.insert(ignore_permissions=True)
                     gl_entry_donation.submit()
@@ -297,7 +297,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                     })
 
                     # Debugging output
-                    frappe.msgprint(f"Creating GL Entry Inventory Fund: {gl_entry_inventory_fund.as_dict()}")
+                    # frappe.msgprint(f"Creating GL Entry Inventory Fund: {gl_entry_inventory_fund.as_dict()}")
 
                     gl_entry_inventory_fund.insert(ignore_permissions=True)
                     gl_entry_inventory_fund.submit()

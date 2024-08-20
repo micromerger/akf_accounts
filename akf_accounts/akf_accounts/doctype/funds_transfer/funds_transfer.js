@@ -11,7 +11,6 @@ frappe.ui.form.on("Funds Transfer", {
         set_query_service_area_transfer_from(frm);
         set_query_service_area_transfer_to(frm);
         set_queries_funds_transfer_to(frm);
-        
         set_queries_funds_transfer_from(frm);
         console.log(!frm.is_new());
         console.log(!frm.doc.__islocal);
@@ -22,18 +21,6 @@ frappe.ui.form.on("Funds Transfer", {
         if (frm.doc.docstatus === 1) {  
             set_custom_btns(frm);
         }
-
-       
-        // frappe.call({
-        //     method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
-        //     args: {
-        //         doc: frm.doc
-        //     },
-        //     callback: function(r) {
-        //         console.log("SERVICE AREA QUERY!!!");
-        //         console.log(r.message);
-        //     }
-        // });
     },
 
     onload: function(frm) {
@@ -48,6 +35,14 @@ frappe.ui.form.on('Funds Transfer From', {
     ff_company: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         let company = row.ff_company;
+
+        frappe.model.set_value(cdt, cdn, 'ff_account', '');
+        frappe.model.set_value(cdt, cdn, 'ff_cost_center', '');
+        frappe.model.set_value(cdt, cdn, 'ff_service_area', '');
+        frappe.model.set_value(cdt, cdn, 'ff_subservice_area', '');
+        frappe.model.set_value(cdt, cdn, 'ff_product', '');
+        frappe.model.set_value(cdt, cdn, 'ff_project', '');
+       
 
         frappe.call({
             method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
@@ -78,12 +73,12 @@ frappe.ui.form.on('Funds Transfer From', {
                     };
                 };
 
-                frm.fields_dict['funds_transfer_from'].grid.refresh_field('ff_service_area');
+                frm.refresh_field('funds_transfer_from'); // Corrected method call
             }
         });
     }
 });
-       
+
 function set_query_service_area_transfer_from(frm) {
     frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
@@ -106,9 +101,17 @@ function set_query_service_area_transfer_from(frm) {
 }
 
 frappe.ui.form.on('Funds Transfer To', {
-    ff_company: function(frm, cdt, cdn) {
+    ft_company: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         let company = row.ft_company;
+
+        frappe.model.set_value(cdt, cdn, 'ft_account', '');
+        frappe.model.set_value(cdt, cdn, 'ft_cost_center', '');
+        frappe.model.set_value(cdt, cdn, 'ft_service_area', '');
+        frappe.model.set_value(cdt, cdn, 'ft_subservice_area', '');
+        frappe.model.set_value(cdt, cdn, 'ft_product', '');
+        frappe.model.set_value(cdt, cdn, 'ft_project', '');
+
 
         frappe.call({
             method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
@@ -165,6 +168,7 @@ function set_query_service_area_transfer_to(frm) {
         };
     };
 }
+
 
 function set_custom_btns(frm) {
     frm.add_custom_button(__('Accounting Ledger'), function () {

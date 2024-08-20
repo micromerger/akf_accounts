@@ -6,23 +6,33 @@ frappe.ui.form.on('Purchase Invoice', {
     refresh: function(frm) {
         // toggle_custom_fields(frm);
         set_queries_payment_details(frm);
-        console.log("Refreshed triggered");
-        if (!frm.is_new() && !frm.doc.__islocal && frm.doc.custom_type_of_transaction == "Inventory Purchase Restricted"){
+        console.log("Refresh triggered");
+        if (!frm.is_new() && !frm.doc.__islocal && frm.doc.custom_type_of_transaction == "Inventory Purchase Restricted") {
             get_html(frm);
         }
-        },
-
-
-	onload: function(frm) {
-        // toggle_custom_fields(frm);
-		$("#table_render").empty();
-		$("#total_amount").empty();
-		$("#previous").empty();
-		$("#next").empty();
-        // if frm.
     },
-   
+
+    onload: function(frm) {
+        if (frm.doc.__islocal) {
+            console.log("On load");
+            frm.doc.items.forEach(function(item) {
+                if (item.purchase_receipt) {
+                    frm.set_df_property("custom_program_details", "hidden", 1);
+                    frm.set_df_property("custom_donor_list_html", "hidden", 1);
+                    frm.set_df_property("update_stock", "hidden", 1);
+                }
+            });
+        }
+
+        $("#table_render").empty();
+        $("#total_amount").empty();
+        $("#previous").empty();
+        $("#next").empty();
+    },
 });
+
+
+
 
 function toggle_custom_fields(frm) {
     let hide_fields = true;
@@ -36,6 +46,7 @@ function toggle_custom_fields(frm) {
 
     frm.set_df_property('custom_program_details', 'hidden', hide_fields ? 1 : 0);
     frm.set_df_property('custom_donor_list_html', 'hidden', hide_fields ? 1 : 0);
+   
 
 }
 function get_html(frm) {
@@ -65,6 +76,7 @@ function get_html(frm) {
                     $("#previous").empty();
                     $("#next").empty();
                     frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
+
                     frappe.throw("No such entry exists for donor with provided details.");
                 } else if (donorList && donorList.length > 0) {
                     console.log("donorList111", donorList);

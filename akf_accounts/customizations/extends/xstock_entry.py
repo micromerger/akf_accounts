@@ -494,11 +494,59 @@ class XStockEntry(StockEntry):
             credit_gl.flags.ignore_permissions = True
             credit_gl.insert()
             credit_gl.submit()
+        
+        elif self.stock_entry_type == "Donated Inventory Disposal - Restricted":
+            debit_account = company.stock_adjustment_account
+            credit_account = company.default_inventory_account
+
+            if not debit_account or not credit_account:
+                frappe.throw("Required accounts not found in the company")
+
+            # Create the GL entry for the debit account and update
+            debit_entry = self.get_gl_entry_dict()
+            debit_entry.update(
+                {
+                    "account": debit_account,
+                    "debit": self.total_outgoing_value,
+                    "credit": 0,
+                    "debit_in_account_currency": self.total_outgoing_value,
+                    "credit_in_account_currency": 0,
+                }
+            )
+            debit_gl = frappe.get_doc(debit_entry)
+            debit_gl.flags.ignore_permissions = True
+            debit_gl.insert()
+            debit_gl.submit()
+
+            credit_entry = self.get_gl_entry_dict()
+            credit_entry.update(
+                {
+                    "account": credit_account,
+                    "debit": 0,
+                    "credit": self.total_outgoing_value,
+                    "debit_in_account_currency": 0,
+                    "credit_in_account_currency": self.total_outgoing_value,
+                }
+            )
+            credit_gl = frappe.get_doc(credit_entry)
+            credit_gl.flags.ignore_permissions = True
+            credit_gl.insert()
+            credit_gl.submit()
 
     def get_gl_entry_dict(self):
         cost_center = ""
+        service_area = ""
+        subservice_area = ""
+        product = ""
+        project = ""
+
         for item in self.items:
             cost_center = item.cost_center
+            service_area = item.program
+            subservice_area = item.subservice_area
+            product = item.product
+            project = item.project
+
         return frappe._dict(
             {
                 "doctype": "GL Entry",
@@ -506,16 +554,18 @@ class XStockEntry(StockEntry):
                 "transaction_date": self.posting_date,
                 "party_type": "Donor",
                 "party": self.donor,
-                "cost_center": cost_center,
                 "against": f"Stock Entry: {self.name}",
                 "against_voucher_type": "Stock Entry",
                 "against_voucher": self.name,
                 "voucher_type": "Stock Entry",
                 "voucher_subtype": self.stock_entry_type,
                 "voucher_no": self.name,
-                "project": self.project,
                 "company": self.company,
-                "program": self.program,
+                "cost_center": cost_center,
+                "program": service_area,
+                "subservice_area": subservice_area,
+                "product": product,
+                "project": project,
             }
         )
 
@@ -528,7 +578,7 @@ class XStockEntry(StockEntry):
                     "Warehouse", target_warehouse, "custom_cost_center"
                 )
                 item.cost_center = target_cost_center
-            elif self.stock_entry_type == "Donated Inventory Consumption - Restricted":
+            elif self.stock_entry_type == "Donated Inventory Consumption - Restricted" or self.stock_entry_type == "Donated Inventory Disposal - Restricted":
                 source_warehouse = item.s_warehouse
                 source_cost_center = frappe.db.get_value(
                     "Warehouse", source_warehouse, "custom_cost_center"
