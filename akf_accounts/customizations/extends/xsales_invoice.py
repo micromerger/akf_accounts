@@ -94,8 +94,8 @@ class XSalesInvoice(SalesInvoice):
         inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")
         unrestricted_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_unrestricted_fund_account")
         
-        frappe.msgprint(frappe.as_json(inventory_account))
-        frappe.msgprint(frappe.as_json(unrestricted_fund_account))
+        # frappe.msgprint(frappe.as_json(inventory_account))
+        # frappe.msgprint(frappe.as_json(unrestricted_fund_account))
         
         actual_item_price = frappe.db.sql("""
             SELECT sii.item_code, i.valuation_rate 
@@ -105,7 +105,7 @@ class XSalesInvoice(SalesInvoice):
             WHERE si.name = %s
         """, (self.name,), as_dict=True)
         
-        frappe.msgprint(frappe.as_json(actual_item_price))
+        # frappe.msgprint(frappe.as_json(actual_item_price))
 
         item_valuation_dict = {item['item_code']: item['valuation_rate'] for item in actual_item_price}
 
@@ -175,7 +175,7 @@ class XSalesInvoice(SalesInvoice):
             valuation_rate = item_valuation_dict.get(i.item_code)
             if valuation_rate:
                 if valuation_rate < i.rate:
-                    frappe.msgprint(f"Gain for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
+                    # frappe.msgprint(f"Gain for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
 
                     gl_entry_gain_account = frappe.get_doc({
                         'doctype': 'GL Entry',
@@ -212,7 +212,7 @@ class XSalesInvoice(SalesInvoice):
                     gl_entry_gain_account.submit()
 
                 elif valuation_rate > i.rate:
-                    frappe.msgprint(f"Loss for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
+                    # frappe.msgprint(f"Loss for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
 
                     gl_entry_loss_account = frappe.get_doc({
                         'doctype': 'GL Entry',
@@ -249,9 +249,11 @@ class XSalesInvoice(SalesInvoice):
                     gl_entry_loss_account.submit()
 
                 else:
-                    frappe.msgprint(f"No gain or loss for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
+                    pass
+                    # frappe.msgprint(f"No gain or loss for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
             else:
-                frappe.msgprint(f"No valuation rate found for item {i.item_code}")
+                pass
+                # frappe.msgprint(f"No valuation rate found for item {i.item_code}")
 
             gl_entry_inventory_account.insert(ignore_permissions=True)
             gl_entry_inventory_account.submit()

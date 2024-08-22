@@ -17,8 +17,12 @@
   "posting_time",
   "edit_posting_date_time",
   "due_date",
-  "payment_details_section",
+  "section_break_bezw",
   "donation_cost_center",
+  "column_break_gruy",
+  "currency",
+  "exchange_rate",
+  "payment_details_section",
   "payment_detail",
   "section_break_otbq",
   "deduction_breakeven",
@@ -214,12 +218,33 @@
    "label": "Cost Center",
    "options": "Cost Center",
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_bezw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_gruy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "exchange_rate",
+   "fieldtype": "Currency",
+   "label": "Exchange Rate",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-06 13:03:30.385195",
+ "modified": "2024-08-20 12:44:27.568889",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

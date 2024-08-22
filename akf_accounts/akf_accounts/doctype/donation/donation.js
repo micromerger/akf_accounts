@@ -36,13 +36,33 @@ frappe.ui.form.on('Donation', {
         // frm.clear_table('deduction_breakeven');
     },
     subservice_area: function(frm){
+    },
+    currency: function(frm){
+        let from_currency = frm.doc.currency;
+        let to_currency = "PKR";
+        frappe.call({
+			method: "erpnext.setup.utils.get_exchange_rate",
+			args: {
+				transaction_date: frm.doc.posting_date,
+				from_currency: from_currency,
+				to_currency: to_currency,
+			},
+			freeze: true,
+			freeze_message: __("Fetching exchange rates ..."),
+			callback: function(r) {
+                const rate = r.message;
+                frm.set_value("exchange_rate", rate);
+                frm.set_df_property("exchange_rate", "description", `1 ${from_currency} = [?] ${to_currency}`)
+				// callback(flt(r.message));
+			}
+		});
     }
 });
 
 frappe.ui.form.on('Payment Detail', {
     donor_id: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        row.donor_id =  row.donor_id;
+        row.donor =  row.donor_id;
         // frm.call("set_deduction_breakeven");        
     },
     pay_service_area: function (frm, cdt, cdn) {
@@ -484,6 +504,7 @@ function set_queries_payment_details(frm){
     set_query_account_paid_to(frm);
     set_query_mode_of_payment(frm);
 }
+
 function set_query_donor_id(frm){
     frm.fields_dict['payment_detail'].grid.get_field('donor_id').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
@@ -513,6 +534,7 @@ function set_query_donor_id(frm){
         
     };
 }
+
 function set_query_subservice_area(frm){
     frm.fields_dict['payment_detail'].grid.get_field('pay_subservice_area').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
