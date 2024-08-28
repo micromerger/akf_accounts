@@ -32,6 +32,7 @@ doctype_js = {
 	"Payment Entry" : "public/js/customizations/payment_entry.js",
 	"Purchase Receipt" : "public/js/customizations/purchase_receipt.js",
     "Purchase Invoice" : "public/js/customizations/purchase_invoice.js",
+    "Asset" : "public/js/customizations/asset.js",
 	
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -124,7 +125,9 @@ override_doctype_class = {
 	"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
 	"Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
     "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
-     "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
+    "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
+    "Asset": "akf_accounts.customizations.extends.XAsset.AssetExtendedClass",
+    "Asset Movement": "akf_accounts.customizations.extends.XAssetMovement.AssetMovementExtendedClass",
    
 }
 # Document Events
@@ -168,9 +171,11 @@ override_doctype_class = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "akf_accounts.event.get_events"
-# }
+# /home/frappe/frappe-bench/apps/akf_accounts/akf_accounts/customizations/extends/XAsset.py
+override_whitelisted_methods = {
+	# "frappe.desk.doctype.event.event.get_events": "akf_accounts.event.get_events"
+     "erpnext.assets.doctype.asset.depreciation.post_depreciation_entries": "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended"
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

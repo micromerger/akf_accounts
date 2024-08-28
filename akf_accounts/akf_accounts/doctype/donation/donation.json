@@ -16,6 +16,9 @@
   "posting_date",
   "posting_time",
   "edit_posting_date_time",
+  "column_break_qxif",
+  "cash_receipt_date_by_donor_desk",
+  "cash_received_in_finance",
   "due_date",
   "section_break_bezw",
   "donation_cost_center",
@@ -88,7 +91,7 @@
    "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
-   "label": "Posting Date",
+   "label": "Invoice Issuance Date",
    "no_copy": 1,
    "read_only_depends_on": "eval:doc.edit_posting_date_time==0",
    "search_index": 1
@@ -97,7 +100,7 @@
    "default": "Now",
    "fieldname": "posting_time",
    "fieldtype": "Time",
-   "label": "Posting Time",
+   "label": "Invoice Issuance Time",
    "no_copy": 1,
    "print_hide": 1,
    "read_only_depends_on": "eval:doc.edit_posting_date_time==0"
@@ -239,12 +242,26 @@
    "fieldtype": "Currency",
    "label": "Exchange Rate",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_qxif",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cash_receipt_date_by_donor_desk",
+   "fieldtype": "Date",
+   "label": "Cash Receipt Date By Donor Desk"
+  },
+  {
+   "fieldname": "cash_received_in_finance",
+   "fieldtype": "Date",
+   "label": "Cash Received In Finance"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-20 12:44:27.568889",
+ "modified": "2024-08-27 15:31:25.761448",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

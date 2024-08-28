@@ -1,28 +1,80 @@
 frappe.ui.form.on('Purchase Receipt', {
-    // validate: function(frm) {
-    //     get_html(frm);
-    //     // frm.get_field("custom_program_details").grid.set_multiple_add("service_area");
-    //     // frm.refresh_field('custom_program_details');
-    // },
+
+  
     onload_post_render: function(frm) {
-        // frm.get_field("custom_program_details").grid.set_multiple_add("service_area");
-        // frm.refresh_field('custom_program_details');
+      
+        set_query_for_item_code(frm);
+        
     },
     refresh: function(frm) {
         set_queries_payment_details(frm);
         console.log("Refreshed triggered");
-        if (!frm.is_new() && !frm.doc.__islocal && frm.doc.custom_type_of_transaction == "Inventory Purchase Restricted") {
+        if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase Restricted"].includes(frm.doc.custom_type_of_transaction)) {
             get_html(frm);
         }
+        
         },
+    on_submit: function(frm){
+            // if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase"].includes(frm.doc.custom_type_of_transaction)) {
+                get_html(frm);
+            // }
+            
+            },
+    
 
 	onload: function(frm) {
 		$("#table_render").empty();
 		$("#total_balance").empty();
 		$("#previous").empty();
 		$("#next").empty();
-    }
+    },
+
 });
+
+function set_query_for_item_code(frm) {
+    frm.fields_dict['items'].grid.get_field('item_code').get_query = function(doc, cdt, cdn) {
+        var asset_filters = {
+            disabled: 0,
+            has_variants: 0,
+            is_fixed_asset: 1 
+        };
+        var inventory_filters = {
+            disabled: 0,
+            has_variants: 0,
+            is_stock_item: 1
+        };
+        var normal_filters = {
+            disabled: 0
+        };
+        console.log("custom_type_of_transaction", frm.doc.custom_type_of_transaction)
+        console.log("inventory_filters" , inventory_filters);
+        console.log("asset_filters" , asset_filters);
+        console.log("normal_filters" , normal_filters);
+        
+        if (frm.doc.custom_type_of_transaction === "Asset Purchase Restricted") {
+            console.log("Inside Asset Purchase");
+            
+            return {
+                filters: asset_filters
+            };
+        } 
+        else if (frm.doc.custom_type_of_transaction === "Inventory Purchase Restricted") {
+            console.log("Inside Inventory Purchase Restricted");
+            console.log();
+            
+            return {
+                filters: inventory_filters
+            };
+        } 
+        else {
+            console.log("Inside Else");
+            return {
+                filters: normal_filters
+            };
+        }
+    };
+
+}
 
 function get_html(frm) {
     $("#table_render").empty();
@@ -60,10 +112,27 @@ function get_html(frm) {
                     var totalPages = Math.ceil(donorList.length / recordsPerPage);
 
                     function displayPage(page) {
+                        // Filter out rows where balance is 0 before slicing for pagination
+                        var filteredDonorList = donorList.filter(function(d) {
+                            var balance = parseFloat(d.balance) || 0;
+                            var usedAmount = parseFloat(d.used_amount) || 0;
+                        
+                            // Show the record if the balance is non-zero or the donated amount is greater than zero
+                            return balance !== 0 || (balance === 0 && usedAmount > 0);
+                        });
+                        
+                    
+                        // Check if there are any valid entries after filtering
+                        if (filteredDonorList.length === 0) {
+                            // No valid entries, so do not display headers and show a message
+                            frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
+                            return;
+                        }
+                    
                         var start = (page - 1) * recordsPerPage;
                         var end = start + recordsPerPage;
-                        var paginatedDonorList = donorList.slice(start, end);
-
+                        var paginatedDonorList = filteredDonorList.slice(start, end);
+                    
                         var tableHeader = `
                             <table class="table table-bordered" style="border: 2px solid black;" id="table_render">
                                 <thead style="background-color: #015aab; color: white; text-align: left;">
@@ -76,7 +145,7 @@ function get_html(frm) {
                                 </thead>
                                 <tbody>
                         `;
-
+                    
                         var donorListRows = "";
                         paginatedDonorList.forEach(function(d) {
                             var donorId = d.donor || '-';
@@ -84,9 +153,9 @@ function get_html(frm) {
                             var product = d.product || '-';
                             var balance = d.balance || '0';
                             var usedAmount = d.used_amount || '0';
-
-                            var backgroundColor = (parseFloat(balance) < 0 || parseFloat(usedAmount) < 0) ? '#EE4B2B' : '#d1d1d1'; 
-
+                    
+                            var backgroundColor = (parseFloat(balance) < 0 || parseFloat(usedAmount) < 0) ? '#EE4B2B' : '#d1d1d1';
+                    
                             var row = `
                                 <tr style="background-color: ${backgroundColor}; color: black; text-align: left;">
                                     <td class="text-left" style="border: 1px solid black;">${donorId}</td>
@@ -97,22 +166,22 @@ function get_html(frm) {
                             `;
                             donorListRows += row;
                         });
-
+                    
                         var completeTable = tableHeader + donorListRows + "</tbody></table><br>";
-
+                    
                         if (docstatus != 1 && totalBalance !== 0) {
                             completeTable += `
                                 <h5 style="text-align: right;" id="total_balance"><strong>Total Balance: Rs.${totalBalance}</strong></h5>
                             `;
                         }
-
+                    
                         if (totalPages > 1) {
                             completeTable += generatePaginationControls();
                         }
-
+                    
                         frm.set_df_property('custom_donor_list_html', 'options', completeTable);
                     }
-
+                    
                     function generatePaginationControls() {
                         var controls = `<div style="text-align: center; margin-top: 10px;">`;
 

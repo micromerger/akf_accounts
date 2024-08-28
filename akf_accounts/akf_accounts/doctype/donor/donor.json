@@ -1,16 +1,5 @@
 {
- "actions": [
-  {
-   "action": "akf_accounts.akf_accounts.doctype.donor.donor.donor_html",
-   "action_type": "Server Action",
-   "label": "Donor List"
-  },
-  {
-   "action": "akf_accounts.akf_accounts.doctype.donor.donor.create_gl_entries",
-   "action_type": "Server Action",
-   "label": "Create GL Entries"
-  }
- ],
+ "actions": [],
  "autoname": "naming_series:",
  "creation": "2017-09-19 16:20:27.510196",
  "doctype": "DocType",
@@ -41,7 +30,14 @@
   "contact_html",
   "amended_from",
   "section_break_huvh",
-  "donor_list"
+  "donor_list",
+  "care_of_details_tab",
+  "foa",
+  "co_name",
+  "co_contact_no",
+  "co_email",
+  "co_address",
+  "relationship_with_donor"
  ],
  "fields": [
   {
@@ -135,7 +131,6 @@
   {
    "fieldname": "contact_no",
    "fieldtype": "Data",
-   "in_standard_filter": 1,
    "label": "Contact No",
    "reqd": 1
   },
@@ -152,7 +147,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "CNIC",
-   "reqd": 1,
+   "mandatory_depends_on": "eval: doc.identification_type!=\"Others\"",
    "unique": 1
   },
   {
@@ -207,7 +202,50 @@
    "depends_on": "eval: doc.identification_type==\"Others\"",
    "fieldname": "others",
    "fieldtype": "Data",
-   "label": "Others"
+   "label": "Others",
+   "mandatory_depends_on": "eval: doc.identification_type==\"Others\""
+  },
+  {
+   "fieldname": "care_of_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Care Of Details"
+  },
+  {
+   "fieldname": "co_name",
+   "fieldtype": "Data",
+   "label": "C/O Name",
+   "mandatory_depends_on": "eval: doc.foa==1;"
+  },
+  {
+   "fieldname": "co_contact_no",
+   "fieldtype": "Data",
+   "label": "C/O Contact No",
+   "mandatory_depends_on": "eval: doc.foa==1;"
+  },
+  {
+   "fieldname": "co_email",
+   "fieldtype": "Data",
+   "label": "C/O Email",
+   "mandatory_depends_on": "eval: doc.foa==1;"
+  },
+  {
+   "fieldname": "co_address",
+   "fieldtype": "Data",
+   "label": "C/O Address",
+   "mandatory_depends_on": "eval: doc.foa==1;"
+  },
+  {
+   "fieldname": "relationship_with_donor",
+   "fieldtype": "Select",
+   "label": "Relationship With Donor",
+   "mandatory_depends_on": "eval: doc.foa==1;",
+   "options": "\nFriend\nBrother\nCousin"
+  },
+  {
+   "default": "0",
+   "fieldname": "foa",
+   "fieldtype": "Check",
+   "label": "FOA"
   }
  ],
  "image_field": "image",
@@ -217,7 +255,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-08-13 12:12:03.649479",
+ "modified": "2024-08-28 10:21:17.548191",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

@@ -1,40 +1,113 @@
+#Dev Aqsa Abbasi 
+#Currently Used Purchase Receipt in hooks
+
 import frappe
 import json
-from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseInvoice
-class XPurchaseInvoice(PurchaseInvoice):
+from erpnext.stock.doctype.purchase_receipt.purchase_receipt import PurchaseReceipt
+class XAssetInvenPurchase(PurchaseReceipt):
+    def validate(self):
+        # frappe.msgprint('accounts')
+        super().validate()
+
     def on_submit(self):
         super().on_submit()
-        for i in self.items:
-            if i.purchase_receipt:
-                pass
-                # frappe.throw("Purchase Receipt Exists")
+        self.update_stock_ledger_entry()
+        messages = self.empty_message()
+        if messages:
+            message_str = "\n".join(messages)
+            frappe.throw(f"Please adjust /entries: {message_str}" )
 
-            else:
-                # frappe.throw("No Purchase Receipt")
-                if self.update_stock == 1:
-                    self.update_stock_ledger_entry()
-                messages = self.empty_message()
-                if messages:
-                    message_str = "\n".join(messages)
-                    frappe.throw(f"Please adjust /entries: {message_str}" )
-                if self.custom_type_of_transaction in ("Asset Purchase Restricted", "Inventory Purchase Restricted" ):
-                    self.create_donor_gl_entries_from_purchase_receipt()
-                elif self.custom_type_of_transaction == "Normal":
-                    pass
-                break  
-
+        if self.custom_type_of_transaction in ("Asset Purchase", "Inventory Purchase Restricted" ):
+            self.create_donor_gl_entries_from_purchase_receipt()
+        elif self.custom_type_of_transaction == "Normal":
+            pass
+        # self.create_asset_inven_purchase_gl_entries()
+ 
     def on_cancel(self):
         super().on_cancel()
-        # frappe.msgprint("This is on_submit extended code. ")
         self.delete_all_gl_entries()
 
         
     def delete_all_gl_entries(self):
         frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
 
+    def create_asset_inven_purchase_gl_entries(self):
+        if self.custom_type_of_transaction in ("Asset Purchase", "Inventory Purchase Restricted" ):
+            self.create_donor_gl_entries_from_purchase_receipt()
+        elif self.custom_type_of_transaction == "Normal":
+            pass
+           
+    def create_gl_entries_for_asset_purchase(self):
+        company = frappe.get_doc("Company", self.company)
+        debit_account = company.custom_default_fund
+        credit_account = company.custom_default_designated_asset_fund_account
+
+        if not debit_account or not credit_account:
+            frappe.throw("Required accounts not found in the company")
+        for i in self.items:
+            project = i.get('project')
+            product = i.get('product')
+            program = i.get('program')
+            subservice_area = i.get('subservice_area')
+            cost_center = i.get('cost_center')
+            rate = i.get('rate')
+            # Create the GL entry for the debit account and update
+            debit_entry = self.get_gl_entry_dict()
+            debit_entry.update({
+                'account': debit_account,
+                'debit': rate,
+                'credit': 0,
+                'debit_in_account_currency':rate,
+                'credit_in_account_currency': 0,
+                'project': project,
+                'program': program,
+                'subservice_area': subservice_area,
+                'cost_center': cost_center,
+                'product': product
+
+            })
+            debit_gl = frappe.get_doc(debit_entry)
+            debit_gl.insert(ignore_permissions=True)
+            debit_gl.submit()
+
+
+            # Create the GL entry for the credit account and update
+            credit_entry = self.get_gl_entry_dict()
+            credit_entry.update({
+                'account': credit_account,
+                'debit': 0,
+                'credit': rate,
+                'debit_in_account_currency': 0,
+                'credit_in_account_currency': rate,
+                'project': project,
+                'program': program,
+                'subservice_area': subservice_area,
+                'cost_center': cost_center,
+                'product': product
+            })
+            credit_gl = frappe.get_doc(credit_entry)
+            credit_gl.insert(ignore_permissions=True)
+            credit_gl.submit()
+
+    def get_gl_entry_dict(self):
+        return frappe._dict({
+            'doctype': 'GL Entry',
+            'posting_date': self.posting_date,
+            'transaction_date': self.posting_date,
+            'party_type' : "Donor",
+            'party' : self.donor,
+            'cost_center' : self.cost_center,
+            'against': f"Purchase Receipt: {self.name}",
+            'against_voucher_type': 'Purchase Receipt',
+            'against_voucher' : self.name,
+            'voucher_type': 'Purchase Receipt',
+            'voucher_subtype': 'Receive',
+            'voucher_no': self.name,
+            'project': self.project,
+            'company': self.company,
+        })
     def create_donor_gl_entries_from_purchase_receipt(self):
         if self.custom_type_of_transaction == "Inventory Purchase Restricted":
-            # frappe.msgprint(frappe.as_json("INSIDE Inventory PURCHASE"))
             inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")
             last_donor_not_fully_used = None
             # frappe.msgprint(frappe.as_json("create_donor_gl_entries_from_purchase_receipt_aq"))
@@ -65,7 +138,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'posting_date': self.posting_date,
                         'transaction_date': self.posting_date,
                         'account': "Capital Stock - AKFP",
-                        'against_voucher_type': 'Purchase Invoice',
+                        'against_voucher_type': 'Purchase Receipt',
                         'against_voucher': self.name,
                         'cost_center': cost_center,
                         'debit': amount,
@@ -74,7 +147,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'debit_in_account_currency': amount,
                         'credit_in_account_currency': 0.0,
                         'against': "Capital Stock - AKFP",
-                        'voucher_type': 'Purchase Invoice',
+                        'voucher_type': 'Purchase Receipt',
                         'voucher_no': self.name,
                         'remarks': 'Donation for item',
                         'is_opening': 'No',
@@ -103,7 +176,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'posting_date': self.posting_date,
                         'transaction_date': self.posting_date,
                         'account': inventory_account,  
-                        'against_voucher_type':'Purchase Invoice',
+                        'against_voucher_type': 'Purchase Receipt',
                         'against_voucher': self.name,
                         'cost_center': cost_center,
                         'debit': 0.0,
@@ -112,7 +185,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'debit_in_account_currency': 0.0,
                         'credit_in_account_currency': amount,
                         'against': "Capital Stock - AKFP",
-                        'voucher_type': 'Purchase Invoice',
+                        'voucher_type': 'Purchase Receipt',
                         'voucher_no': self.name,
                         'remarks': 'Inventory fund for item',
                         'is_opening': 'No',
@@ -163,7 +236,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                             'posting_date': self.posting_date,
                             'transaction_date': self.posting_date,
                             'account': "Capital Stock - AKFP",
-                            'against_voucher_type': 'Purchase Invoice',
+                            'against_voucher_type': 'Purchase Receipt',
                             'against_voucher': self.name,
                             'cost_center': cost_center,
                             'debit': amount_to_use,
@@ -172,7 +245,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                             'debit_in_account_currency': amount_to_use,
                             'credit_in_account_currency': 0.0,
                             'against': "Capital Stock - AKFP",
-                            'voucher_type': 'Purchase Invoice',
+                            'voucher_type': 'Purchase Receipt',
                             'voucher_no': self.name,
                             'remarks': 'Donation for item',
                             'is_opening': 'No',
@@ -200,7 +273,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                             'posting_date': self.posting_date,
                             'transaction_date': self.posting_date,
                             'account': inventory_account,  
-                            'against_voucher_type': 'Purchase Invoice',
+                            'against_voucher_type': 'Purchase Receipt',
                             'against_voucher': self.name,
                             'cost_center': cost_center,
                             'debit': 0.0,
@@ -209,7 +282,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                             'debit_in_account_currency': 0.0,
                             'credit_in_account_currency': amount_to_use,
                             'against': "Capital Stock - AKFP",
-                            'voucher_type': 'Purchase Invoice',
+                            'voucher_type': 'Purchase Receipt',
                             'voucher_no': self.name,
                             'remarks': 'Inventory fund for item',
                             'is_opening': 'No',
@@ -242,8 +315,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                     frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
                 frappe.msgprint("GL Entries created successfully.")
-        elif self.custom_type_of_transaction == "Asset Purchase Restricted":
-            # frappe.msgprint(frappe.as_json("INSIDE ASSET PURCHASE"))
+        elif self.custom_type_of_transaction == "Asset Purchase":
             asset_debit_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_fund")
             asset_credit_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_designated_asset_fund_account")
         
@@ -275,8 +347,8 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'doctype': 'GL Entry',
                         'posting_date': self.posting_date,
                         'transaction_date': self.posting_date,
-                        'account': "Capital Stock - AKFP",
-                        'against_voucher_type': 'Purchase Invoice',
+                        'account': asset_debit_account,
+                        'against_voucher_type': 'Purchase Receipt',
                         'against_voucher': self.name,
                         'cost_center': cost_center,
                         'debit': amount,
@@ -285,7 +357,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'debit_in_account_currency': amount,
                         'credit_in_account_currency': 0.0,
                         'against': "Capital Stock - AKFP",
-                        'voucher_type': 'Purchase Invoice',
+                        'voucher_type': 'Purchase Receipt',
                         'voucher_no': self.name,
                         'remarks': 'Donation for item',
                         'is_opening': 'No',
@@ -314,7 +386,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'posting_date': self.posting_date,
                         'transaction_date': self.posting_date,
                         'account': asset_credit_account,  
-                        'against_voucher_type': 'Purchase Invoice',
+                        'against_voucher_type': 'Purchase Receipt',
                         'against_voucher': self.name,
                         'cost_center': cost_center,
                         'debit': 0.0,
@@ -323,7 +395,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                         'debit_in_account_currency': 0.0,
                         'credit_in_account_currency': amount,
                         'against': "Capital Stock - AKFP",
-                        'voucher_type': 'Purchase Invoice',
+                        'voucher_type': 'Purchase Receipt',
                         'voucher_no': self.name,
                         'remarks': 'Inventory fund for item',
                         'is_opening': 'No',
@@ -373,8 +445,8 @@ class XPurchaseInvoice(PurchaseInvoice):
                             'doctype': 'GL Entry',
                             'posting_date': self.posting_date,
                             'transaction_date': self.posting_date,
-                            'account': "Capital Stock - AKFP",
-                            'against_voucher_type': 'Purchase Invoice',
+                            'account': asset_debit_account,
+                            'against_voucher_type': 'Purchase Receipt',
                             'against_voucher': self.name,
                             'cost_center': cost_center,
                             'debit': amount_to_use,
@@ -383,7 +455,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                             'debit_in_account_currency': amount_to_use,
                             'credit_in_account_currency': 0.0,
                             'against': "Capital Stock - AKFP",
-                            'voucher_type': 'Purchase Invoice',
+                            'voucher_type': 'Purchase Receipt',
                             'voucher_no': self.name,
                             'remarks': 'Donation for item',
                             'is_opening': 'No',
@@ -411,7 +483,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                             'posting_date': self.posting_date,
                             'transaction_date': self.posting_date,
                             'account': asset_credit_account,  
-                            'against_voucher_type': 'Purchase Invoice',
+                            'against_voucher_type': 'Purchase Receipt',
                             'against_voucher': self.name,
                             'cost_center': cost_center,
                             'debit': 0.0,
@@ -420,7 +492,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                             'debit_in_account_currency': 0.0,
                             'credit_in_account_currency': amount_to_use,
                             'against': "Capital Stock - AKFP",
-                            'voucher_type': 'Purchase Invoice',
+                            'voucher_type': 'Purchase Receipt',
                             'voucher_no': self.name,
                             'remarks': 'Inventory fund for item',
                             'is_opening': 'No',
@@ -452,7 +524,10 @@ class XPurchaseInvoice(PurchaseInvoice):
                 if last_donor_not_fully_used:
                     frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
-                frappe.msgprint("GL Entries created successfully.") 
+                frappe.msgprint("GL Entries created successfully.")
+
+        
+        
 
     def update_stock_ledger_entry(self):
         # frappe.msgprint(frappe.as_json("update_stock_ledger_entry working!"))

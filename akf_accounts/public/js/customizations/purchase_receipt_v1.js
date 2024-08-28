@@ -1,40 +1,16 @@
 frappe.ui.form.on('Purchase Invoice', {
     onload_post_render: function(frm) {
-      
-        set_query_for_item_code(frm);
-        
+        // frm.get_field("custom_program_details").grid.set_multiple_add("service_area");
+        // frm.refresh_field('custom_program_details');
     },
     refresh: function(frm) {
         // toggle_custom_fields(frm);
         set_queries_payment_details(frm);
         console.log("Refresh triggered");
-
-        // Check if the form is not new, not local, and custom_type_of_transaction is "Inventory Purchase Restricted"
-        if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase Restricted"].includes(frm.doc.custom_type_of_transaction)) {
-            // Check if any item has an empty purchase_receipt
-            let empty_receipt = false;
-            frm.doc.items.forEach(function(item) {
-                if (!item.purchase_receipt) {
-                    empty_receipt = true;
-                }
-            });
-
-            if (empty_receipt) {
-                get_html(frm);
-            }
+        if (!frm.is_new() && !frm.doc.__islocal && frm.doc.custom_type_of_transaction == "Inventory Purchase Restricted") {
+            get_html(frm);
         }
     },
-    
-
-    //olddd
-    // refresh: function(frm) {
-    //     // toggle_custom_fields(frm);
-    //     set_queries_payment_details(frm);
-    //     console.log("Refresh triggered");
-    //     if (!frm.is_new() && !frm.doc.__islocal && frm.doc.custom_type_of_transaction == "Inventory Purchase Restricted") {
-    //         get_html(frm);
-    //     }
-    // },
 
     onload: function(frm) {
         if (frm.doc.__islocal) {
@@ -55,50 +31,6 @@ frappe.ui.form.on('Purchase Invoice', {
     },
 });
 
-function set_query_for_item_code(frm) {
-    frm.fields_dict['items'].grid.get_field('item_code').get_query = function(doc, cdt, cdn) {
-        var asset_filters = {
-            disabled: 0,
-            has_variants: 0,
-            is_fixed_asset: 1 
-        };
-        var inventory_filters = {
-            disabled: 0,
-            has_variants: 0,
-            is_stock_item: 1
-        };
-        var normal_filters = {
-            disabled: 0
-        };
-        console.log("custom_type_of_transaction", frm.doc.custom_type_of_transaction)
-        console.log("inventory_filters" , inventory_filters);
-        console.log("asset_filters" , asset_filters);
-        console.log("normal_filters" , normal_filters);
-        
-        if (frm.doc.custom_type_of_transaction === "Asset Purchase Restricted") {
-            console.log("Inside Asset Purchase");
-            
-            return {
-                filters: asset_filters
-            };
-        } 
-        else if (frm.doc.custom_type_of_transaction === "Inventory Purchase Restricted") {
-            console.log("Inside Inventory Purchase Restricted");
-            console.log();
-            
-            return {
-                filters: inventory_filters
-            };
-        } 
-        else {
-            console.log("Inside Else");
-            return {
-                filters: normal_filters
-            };
-        }
-    };
-
-}
 
 
 

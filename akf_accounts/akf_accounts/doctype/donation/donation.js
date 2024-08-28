@@ -14,6 +14,8 @@ frappe.ui.form.on('Donation', {
         set_queries(frm);
         set_query_subservice_area(frm);
         set_custom_btns(frm);
+        set_dynamic_labels(frm);
+        apply_exchange_rate(frm);
     },
     donor_identity: function(frm){
         if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant" || frm.doc.donor_identity=="Merchant - Known"){
@@ -80,8 +82,9 @@ frappe.ui.form.on('Payment Detail', {
         row.product = row.pay_product;
         frm.refresh_field("payment_detail")
     },
-    project: function (frm, cdt, cdn) {
+    project_id: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
+        row.project = row.project_id;
         if(row.pay_service_area!=undefined || row.pay_service_area!=""){
             frm.call("set_deduction_breakeven");
         }
@@ -577,13 +580,13 @@ function set_query_account(frm){
 }
 // Payment Detail
 function set_query_project(frm){
-    frm.fields_dict['payment_detail'].grid.get_field('project').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['payment_detail'].grid.get_field('project_id').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
+        let program = row.pay_service_area==undefined? ["!=", undefined]:row.pay_service_area;
         return {
             filters: {
                 company: frm.doc.company,
-                custom_program: ["!=", ""],
-                custom_program: row.pay_service_area,
+                custom_program: program,
                 
             }
         };
@@ -646,3 +649,19 @@ function set_query_mode_of_payment(frm){
     // } else {
     //     frm.page.set_indicator('Unpaid', 'red');
     // }
+
+function set_dynamic_labels(frm){
+    // $.each(frm.doc.payment_detail || [], function(i, d) {
+        // set_currency_labels(fields_list, currency, parentfield)
+        frm.set_currency_labels(["donation_amount"], "USD", "payment_detail")
+    // });
+}
+
+function apply_exchange_rate(frm){
+    $.each(frm.doc.payment_detail || [], function(i, d) {
+        // if(d.charge_type == "Actual") {
+            frappe.model.set_value(d.doctype, d.name, "donation_amount",
+                flt(d.donation_amount) / flt(frm.doc.exchange_rate));
+        // }
+    });
+}
