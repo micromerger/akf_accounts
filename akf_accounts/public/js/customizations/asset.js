@@ -1,5 +1,14 @@
 frappe.ui.form.on('Asset', {
     refresh: function (frm) {
+
+        
+        if (frm.doc.docstatus==1){
+        frm.add_custom_button(__('Accounting Ledger'), function () {
+            frappe.set_route('query-report', 'General Ledger',
+                { against_voucher_type: 'Asset', against_voucher: frm.doc.name, voucher_no: frm.doc.name });
+        }, __("View"));
+
+    }
         if(frm.doc.purchase_recipt)
         frm.call({
             method: 'akf_accounts.customizations.extends.XAsset.total_accumulated_depreciation',
@@ -12,7 +21,24 @@ frappe.ui.form.on('Asset', {
                 // frm.refresh_field("custom_current_asset_worth")
             }
         });
-    }
+
+        
+    },
+    custom_source_of_asset_acquistion: function(frm) {
+		if(frm.doc.custom_source_of_asset_acquistion == 'In Kind'){
+		frm.trigger("toggle_reference_doc");
+		frm.set_df_property('purchase_receipt', 'read_only', 1);
+		frm.set_df_property('purchase_invoice', 'read_only', 1);
+		frm.set_value('is_existing_asset', 1);
+		}
+		else{
+			frm.set_df_property('purchase_receipt', 'read_only', 0);
+			frm.set_df_property('purchase_invoice', 'read_only', 0);
+			frm.set_value('is_existing_asset', 0);
+		}
+		frm.refresh_field('purchase_receipt');
+		frm.refresh_field('purchase_invoice');
+	},
 });
 
 

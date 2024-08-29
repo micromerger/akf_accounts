@@ -58,6 +58,9 @@ frappe.ui.form.on('Donation', {
 				// callback(flt(r.message));
 			}
 		});
+    },
+    exchange_rate: function(frm){
+        set_dynamic_labels(frm);
     }
 });
 
@@ -653,8 +656,11 @@ function set_query_mode_of_payment(frm){
 function set_dynamic_labels(frm){
     // $.each(frm.doc.payment_detail || [], function(i, d) {
         // set_currency_labels(fields_list, currency, parentfield)
-        frm.set_currency_labels(["donation_amount"], "USD", "payment_detail")
-    // });
+        frm.set_currency_labels(["donation_amount", "deduction_amount", "net_amount", "outstanding_amount"], frm.doc.currency, "payment_detail");
+        frm.set_currency_labels(["donation_amount", "amount"], frm.doc.currency, "deduction_breakeven");
+        frm.refresh_field("payment_detail");
+        frm.refresh_field("deduction_breakeven");
+        // });
 }
 
 function apply_exchange_rate(frm){

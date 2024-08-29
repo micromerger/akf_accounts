@@ -8,15 +8,23 @@ class XSalesInvoice(SalesInvoice):
         super().validate()
         for i in self.items:
             if i.asset:
-                self.create_asset_gl_entries()
+                self.create_asset_gl_entries_for_asset_purchase()
+            else:
+                pass
+                # self.validate_qty()
 
     def on_submit(self):
         super().on_submit()
         for i in self.items:
             if i.asset:
-                self.create_asset_gl_entries()
+                self.create_asset_gl_entries_for_asset_purchase()
+            else:
+                pass
+                # self.make_gl_entries()
+                # self.gl_entries_inventory_purchase_disposal_sale_gain()
 
-    def create_asset_gl_entries(self):
+
+    def create_asset_gl_entries_for_asset_purchase(self):
         default_income = frappe.db.get_value("Company", {"name": self.company}, "custom_default_income")
         accumulated_depreciation_account = frappe.db.get_value("Company", {"name": self.company}, "accumulated_depreciation_account")
         custom_default_asset_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_asset_account")
@@ -139,7 +147,7 @@ class XSalesInvoice(SalesInvoice):
                 #     'transaction_exchange_rate': 1,
 
                 # })
-                # gl_entry_custom_default_asset_account_account.insert()
+                # gl_entry_custom_default_asset_account_account.insert(ignore_permissions=True)
                 # gl_entry_custom_default_asset_account_account.submit()
 
                 # gl_entry_gain_account = frappe.get_doc({
@@ -169,7 +177,7 @@ class XSalesInvoice(SalesInvoice):
                 #     'transaction_exchange_rate': 1,
 
                 # })
-                # gl_entry_gain_account.insert()
+                # gl_entry_gain_account.insert(ignore_permissions=True)
                 # gl_entry_gain_account.submit()
 
                 # gl_entry_designated_fund_account = frappe.get_doc({
@@ -502,7 +510,7 @@ class XSalesInvoice(SalesInvoice):
 
     def make_gl_entries(self):
         pass
-    def create_gl_entries_for_sales_disposal_sale_gain(self):
+    def gl_entries_inventory_purchase_disposal_sale_gain(self):
         inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")
         unrestricted_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_unrestricted_fund_account")
         

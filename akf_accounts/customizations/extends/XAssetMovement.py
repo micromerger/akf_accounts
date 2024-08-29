@@ -125,7 +125,7 @@ class AssetMovementExtendedClass(AssetMovement):
                     'credit_in_account_currency': 0
                 })
                 debit_gl2 = frappe.get_doc(debit_entry2)
-                debit_gl2.insert()
+                debit_gl2.insert(ignore_permissions=True)
                 debit_gl2.submit()
 
                 # Create Debit Entry 3 (Asset Worth to Asset NBV)
@@ -193,7 +193,7 @@ class AssetMovementExtendedClass(AssetMovement):
                     'credit_in_account_currency': 0
                 })
                 debit_gl2 = frappe.get_doc(debit_entry2)
-                debit_gl2.insert()
+                debit_gl2.insert(ignore_permissions=True)
                 debit_gl2.submit()
 
                 # Create Debit Entry 3 (Asset Worth to Asset NBV)

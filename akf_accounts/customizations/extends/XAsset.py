@@ -20,17 +20,153 @@ from erpnext.assets.doctype.asset.depreciation import (
     get_depreciation_accounts,
     get_credit_and_debit_accounts)
 
-
 class AssetExtendedClass(Asset):
-    def validate(self):
-        super().validate()
-        if self.custom_source_of_asset_acquistion == "In Kind":
-             pass
+    # def validate(self):
+    #     super().validate()
+    #     if self.custom_source_of_asset_acquistion == "In Kind":
+    #         self.create_asset_gl_entries_in_kind()
              
-        # frappe.msgprint("XAsset is working!")
     def on_submit(self):
-         super().on_submit()
-        #  self.create_asset_gl_entries_in_kind()
+        super().on_submit()
+        if self.custom_source_of_asset_acquistion == "In Kind":
+            self.create_asset_gl_entries_in_kind()
+        else:
+             pass
+
+    def create_asset_gl_entries_in_kind(self):
+        donation_in_kind = frappe.db.get_value("Company", {"name": self.company}, "custom_default_donation_in_kind_account")
+        designated_asset_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_designated_asset_fund_account")
+        asset_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_asset_account")
+
+
+        if not donation_in_kind or not designated_asset_fund_account:
+            frappe.throw("Please set accounts")
+            return
+        
+        current_date = today()
+
+        gl_entry_asset_account = frappe.get_doc({
+            'doctype': 'GL Entry',
+            'posting_date': current_date,
+            'transaction_date': current_date,
+            'account': asset_account,
+            'against_voucher_type': 'Asset',
+            'against_voucher': self.name,
+            'debit': self.gross_purchase_amount,
+            'credit': 0.0,
+            'account_currency': 'PKR',
+            'debit_in_account_currency': self.gross_purchase_amount,
+            'credit_in_account_currency': 0.0,
+            'against': "Donation In Kind",
+            'voucher_type': 'Asset',
+            'voucher_no': self.name,
+            'remarks': "Donation In Kind",
+            'is_opening': 'No',
+            'is_advance': 'No',
+            'fiscal_year': frappe.get_value("Fiscal Year", {"name": frappe.defaults.get_user_default("fiscal_year")}, "name"),
+            'company': self.company,
+            'transaction_currency': 'PKR',
+            'debit_in_transaction_currency': self.gross_purchase_amount,
+            'credit_in_transaction_currency': 0.0,
+            'transaction_exchange_rate': 1,
+          
+        })
+
+        gl_entry_asset_account.insert(ignore_permissions=True)
+        gl_entry_asset_account.submit()
+
+
+        gl_entry_designated_fund_account = frappe.get_doc({
+            'doctype': 'GL Entry',
+            'posting_date': current_date,
+            'transaction_date': current_date,
+            'account': designated_asset_fund_account,
+            'against_voucher_type': 'Asset',
+            'against_voucher': self.name,
+            'debit': 0.0,
+            'credit': self.gross_purchase_amount,
+            'account_currency': 'PKR',
+            'debit_in_account_currency': 0.0,
+            'credit_in_account_currency': self.gross_purchase_amount,
+            'against': "Donation In Kind",
+            'voucher_type': 'Asset',
+            'voucher_no': self.name,
+            'remarks': "Donation In Kind",
+            'is_opening': 'No',
+            'is_advance': 'No',
+            'fiscal_year': frappe.get_value("Fiscal Year", {"name": frappe.defaults.get_user_default("fiscal_year")}, "name"),
+            'company': self.company,
+            'transaction_currency': 'PKR',
+            'debit_in_transaction_currency': 0.0,
+            'credit_in_transaction_currency': self.gross_purchase_amount,
+            'transaction_exchange_rate': 1,
+        })
+
+        gl_entry_designated_fund_account.insert(ignore_permissions=True)
+        gl_entry_designated_fund_account.submit()
+
+
+        gl_entry_donation_in_kind_credit_account = frappe.get_doc({
+            'doctype': 'GL Entry',
+            'posting_date': current_date,
+            'transaction_date': current_date,
+            'account': donation_in_kind,
+            'against_voucher_type': 'Asset',
+            'against_voucher': self.name,
+            'debit': 0.0,
+            'credit': self.gross_purchase_amount,
+            'account_currency': 'PKR',
+            'debit_in_account_currency': 0.0,
+            'credit_in_account_currency': self.gross_purchase_amount,
+            'against': "Donation In Kind",
+            'voucher_type': 'Asset',
+            'voucher_no': self.name,
+            'remarks': "Donation In Kind",
+            'is_opening': 'No',
+            'is_advance': 'No',
+            'fiscal_year': frappe.get_value("Fiscal Year", {"name": frappe.defaults.get_user_default("fiscal_year")}, "name"),
+            'company': self.company,
+            'transaction_currency': 'PKR',
+            'debit_in_transaction_currency': 0.0,
+            'credit_in_transaction_currency': self.gross_purchase_amount,
+            'transaction_exchange_rate': 1,
+        })
+
+        gl_entry_donation_in_kind_credit_account.insert(ignore_permissions=True)
+        gl_entry_donation_in_kind_credit_account.submit()
+
+
+        gl_entry_donation_in_kind_debit_account = frappe.get_doc({
+            'doctype': 'GL Entry',
+            'posting_date': current_date,
+            'transaction_date': current_date,
+            'account': donation_in_kind,
+            'against_voucher_type': 'Asset',
+            'against_voucher': self.name,
+            'debit': self.gross_purchase_amount,
+            'credit': 0.0,
+            'account_currency': 'PKR',
+            'debit_in_account_currency': self.gross_purchase_amount,
+            'credit_in_account_currency': 0.0,
+            'against': "Donation In Kind",
+            'voucher_type': 'Asset',
+            'voucher_no': self.name,
+            'remarks': "Donation In Kind",
+            'is_opening': 'No',
+            'is_advance': 'No',
+            'fiscal_year': frappe.get_value("Fiscal Year", {"name": frappe.defaults.get_user_default("fiscal_year")}, "name"),
+            'company': self.company,
+            'transaction_currency': 'PKR',
+            'debit_in_transaction_currency': self.gross_purchase_amount,
+            'credit_in_transaction_currency': 0.0,
+            'transaction_exchange_rate': 1,
+        })
+
+        gl_entry_donation_in_kind_debit_account.insert(ignore_permissions=True)
+        gl_entry_donation_in_kind_debit_account.submit()
+
+        frappe.msgprint("GL Entries created successfully")
+
 
 
 @frappe.whitelist()
@@ -105,8 +241,8 @@ def post_depreciation_entries_extended(date=None):
 		return
 	
 	if not date:
-		date = today()
-		date = "2024-08-29"
+		# date = today()
+		date = "2024-08-30"
 		# print(date)
 
 	failed_asset_names = []
@@ -215,8 +351,8 @@ def make_depreciation_entry_extended(
     frappe.has_permission("Journal Entry", throw=True)
 
     if not date:
-        date = today()
-        # date = "2024-08-23"
+        # date = today()
+        date = "2024-08-30"
 
     asset_depr_schedule_doc = frappe.get_doc("Asset Depreciation Schedule", asset_depr_schedule_name)
     asset = frappe.get_doc("Asset", asset_depr_schedule_doc.asset)
@@ -294,7 +430,7 @@ def make_depreciation_entry_extended(
             "user_remark": f"Depreciation Entry for Asset: {asset.name}",
             "depreciation_entry": 1
         })
-        journal_entry.insert()
+        journal_entry.insert(ignore_permissions=True)
         journal_entry.submit()
 
         asset.db_set("depr_entry_posting_status", "Successful")
