@@ -148,10 +148,12 @@ def get_result(filters, account_details):
 	accounting_dimensions = []
 	if filters.get("include_dimensions"):
 		accounting_dimensions = get_accounting_dimensions()
+		
 
 	gl_entries = get_gl_entries(filters, accounting_dimensions)
 
 	data = get_data_with_opening_closing(filters, account_details, accounting_dimensions, gl_entries)
+
 
 	result = get_result_as_list(data, filters)
 
@@ -343,10 +345,11 @@ def get_accounts_with_children(accounts):
 
 def get_data_with_opening_closing(filters, account_details, accounting_dimensions, gl_entries):
 	data = []
-
+	# frappe.throw(f"{accounting_dimensions}")
 	gle_map = initialize_gle_map(gl_entries, filters)
 
 	totals, entries = get_accountwise_gle(filters, accounting_dimensions, gl_entries, gle_map)
+	
 
 	# Opening for filtered account
 	data.append(totals.opening)

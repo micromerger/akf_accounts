@@ -69,6 +69,12 @@ class AssetExtendedClass(Asset):
             'debit_in_transaction_currency': self.gross_purchase_amount,
             'credit_in_transaction_currency': 0.0,
             'transaction_exchange_rate': 1,
+            'program': self.program,
+            'party_type': 'Donor',
+            'party': self.donor,
+            'subservice_area': self.subservice_area,
+            'donor': self.donor,
+            'product': self.product
           
         })
 
@@ -100,6 +106,12 @@ class AssetExtendedClass(Asset):
             'debit_in_transaction_currency': 0.0,
             'credit_in_transaction_currency': self.gross_purchase_amount,
             'transaction_exchange_rate': 1,
+            'program': self.program,
+            'party_type': 'Donor',
+            'party': self.donor,
+            'subservice_area': self.subservice_area,
+            'donor': self.donor,
+            'product': self.product
         })
 
         gl_entry_designated_fund_account.insert(ignore_permissions=True)
@@ -130,6 +142,12 @@ class AssetExtendedClass(Asset):
             'debit_in_transaction_currency': 0.0,
             'credit_in_transaction_currency': self.gross_purchase_amount,
             'transaction_exchange_rate': 1,
+            'program': self.program,
+            'party_type': 'Donor',
+            'party': self.donor,
+            'subservice_area': self.subservice_area,
+            'donor': self.donor,
+            'product': self.product
         })
 
         gl_entry_donation_in_kind_credit_account.insert(ignore_permissions=True)
@@ -160,6 +178,12 @@ class AssetExtendedClass(Asset):
             'debit_in_transaction_currency': self.gross_purchase_amount,
             'credit_in_transaction_currency': 0.0,
             'transaction_exchange_rate': 1,
+            'program': self.program,
+            'party_type': 'Donor',
+            'party': self.donor,
+            'subservice_area': self.subservice_area,
+            'donor': self.donor,
+            'product': self.product
         })
 
         gl_entry_donation_in_kind_debit_account.insert(ignore_permissions=True)

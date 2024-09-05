@@ -21,8 +21,8 @@ class AssetMovementExtendedClass(AssetMovement):
     def create_gl_entries_for_asset_movement(self):
         company = frappe.get_doc("Company", self.company)
         credit_account1 = company.custom_default_asset_account                    #Asset cost credited
-        credit_account2 = company.custom_default_designated_asset_fund_account    #Asset worth credited
-        debit_account1 = company.custom_default_designated_asset_fund_account     #Asset worth debited
+        # credit_account2 = company.custom_default_designated_asset_fund_account    #Asset worth credited
+        debit_account1 = company.custom_default_regional_inventory_fund_account     #Asset worth debited
         debit_account2 = company.accumulated_depreciation_account                 #Asset worth debited
         debit_account3 = company.custom_default_asset_nbv_account                 #Asset worth debited
         # frappe.msgprint(frappe.as_json("credit_account1"))
@@ -36,7 +36,7 @@ class AssetMovementExtendedClass(AssetMovement):
         # frappe.msgprint(frappe.as_json("debit_account3"))
         # frappe.msgprint(frappe.as_json(debit_account3))
 
-        if not credit_account1 or not credit_account2 or not debit_account1 or not debit_account2 or not debit_account3:
+        if not credit_account1 or not debit_account1 or not debit_account2 or not debit_account3:
             frappe.throw(_("The company does not have the required accounts configured."))
 
         for item in self.assets:
@@ -89,27 +89,27 @@ class AssetMovementExtendedClass(AssetMovement):
                 credit_gl1.insert(ignore_permissions = True)
                 credit_gl1.submit()
 
-                # Create credit entry2
-                credit_entry2 = self.get_gl_entry_dict(item.custom_target_cost_center)
-                credit_entry2.update({
-                    'account': credit_account2,
-                    'debit': 0,
-                    'credit': asset_worth,
-                    'debit_in_account_currency': 0,
-                    'credit_in_account_currency': asset_worth
-                })  
-                credit_gl2 = frappe.get_doc(credit_entry2)
-                credit_gl2.insert(ignore_permissions = True)
-                credit_gl2.submit()
+                # # Create credit entry2
+                # credit_entry2 = self.get_gl_entry_dict(item.custom_target_cost_center)
+                # credit_entry2.update({
+                #     'account': credit_account2,
+                #     'debit': 0,
+                #     'credit': asset_worth,
+                #     'debit_in_account_currency': 0,
+                #     'credit_in_account_currency': asset_worth
+                # })  
+                # credit_gl2 = frappe.get_doc(credit_entry2)
+                # credit_gl2.insert(ignore_permissions = True)
+                # credit_gl2.submit()
 
                 # Create debit entry 1
                 debit_entry1 = self.get_gl_entry_dict(item.custom_source_cost_center)
                 debit_entry1.update({
                     'account': debit_account1,
-                    'debit': asset_worth,
-                    'credit': 0,
-                    'debit_in_account_currency': asset_worth,
-                    'credit_in_account_currency': 0
+                    'debit': 0,
+                    'credit': asset_worth,
+                    'debit_in_account_currency': 0,
+                    'credit_in_account_currency': asset_worth
                 })
                 debit_gl1 = frappe.get_doc(debit_entry1)
                 debit_gl1.insert(ignore_permissions = True)
@@ -158,26 +158,26 @@ class AssetMovementExtendedClass(AssetMovement):
                 credit_gl1.submit()
 
                 # Create credit entry2
-                credit_entry2 = self.get_gl_entry_dict(item.custom_target_cost_center)
-                credit_entry2.update({
-                    'account': credit_account2,
-                    'debit': 0,
-                    'credit': total_asset_cost,
-                    'debit_in_account_currency': 0,
-                    'credit_in_account_currency': total_asset_cost
-                })  
-                credit_gl2 = frappe.get_doc(credit_entry2)
-                credit_gl2.insert(ignore_permissions = True)
-                credit_gl2.submit()
+                # credit_entry2 = self.get_gl_entry_dict(item.custom_target_cost_center)
+                # credit_entry2.update({
+                #     'account': credit_account2,
+                #     'debit': 0,
+                #     'credit': total_asset_cost,
+                #     'debit_in_account_currency': 0,
+                #     'credit_in_account_currency': total_asset_cost
+                # })  
+                # credit_gl2 = frappe.get_doc(credit_entry2)
+                # credit_gl2.insert(ignore_permissions = True)
+                # credit_gl2.submit()
 
                 # Create debit entry 1
                 debit_entry1 = self.get_gl_entry_dict(item.custom_source_cost_center)
                 debit_entry1.update({
                     'account': debit_account1,
-                    'debit': total_asset_cost,
-                    'credit': 0,
-                    'debit_in_account_currency': total_asset_cost,
-                    'credit_in_account_currency': 0
+                    'debit': 0,
+                    'credit': total_asset_cost,
+                    'debit_in_account_currency': 0,
+                    'credit_in_account_currency': total_asset_cost
                 })
                 debit_gl1 = frappe.get_doc(debit_entry1)
                 debit_gl1.insert(ignore_permissions = True)

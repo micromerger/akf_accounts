@@ -9,9 +9,6 @@ class XAssetInvenPurchase(PurchaseReceipt):
        
         super().validate()
         # frappe.msgprint('accounts')
-      
-
-
     def on_submit(self):
         super().on_submit()
         

@@ -54,11 +54,12 @@
   "accounting_dimensions_section",
   "dimension_col_break",
   "column_break_sezm",
-  "currency",
   "donation_amount",
+  "base_donation_amount",
   "deduction_amount",
   "net_amount",
   "outstanding_amount",
+  "base_outstanding_amount",
   "paid",
   "other_info_section",
   "payment_entry"
@@ -71,6 +72,7 @@
    "in_list_view": 1,
    "label": "Donation Amount",
    "non_negative": 1,
+   "options": "currency",
    "reqd": 1
   },
   {
@@ -122,6 +124,7 @@
    "fieldname": "deduction_amount",
    "fieldtype": "Currency",
    "label": "Deduction Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -129,6 +132,7 @@
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -322,19 +326,13 @@
    "fieldname": "net_amount",
    "fieldtype": "Currency",
    "label": "Net Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks"
-  },
-  {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency",
-   "reqd": 1
   },
   {
    "fieldname": "other_info_section",
@@ -421,12 +419,25 @@
    "label": "Project ID",
    "options": "Project",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "base_donation_amount",
+   "fieldtype": "Currency",
+   "label": "Base Donation Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Base Outstanding Amount",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-28 10:19:24.150707",
+ "modified": "2024-09-04 12:20:23.040144",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

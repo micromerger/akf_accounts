@@ -9,13 +9,14 @@ frappe.ui.form.on('Donation', {
     },
     onload: function(frm) {
         erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
+       
+        // frm.refresh_field('payment_detail');
     },
     refresh: function (frm) {
         set_queries(frm);
         set_query_subservice_area(frm);
         set_custom_btns(frm);
-        set_dynamic_labels(frm);
-        apply_exchange_rate(frm);
+        set_exchange_rate_msg(frm);
     },
     donor_identity: function(frm){
         if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant" || frm.doc.donor_identity=="Merchant - Known"){
@@ -40,28 +41,26 @@ frappe.ui.form.on('Donation', {
     subservice_area: function(frm){
     },
     currency: function(frm){
-        let from_currency = frm.doc.currency;
-        let to_currency = "PKR";
         frappe.call({
 			method: "erpnext.setup.utils.get_exchange_rate",
 			args: {
 				transaction_date: frm.doc.posting_date,
-				from_currency: from_currency,
-				to_currency: to_currency,
+				from_currency: frm.doc.currency,
+				to_currency: frm.doc.to_currency,
 			},
 			freeze: true,
 			freeze_message: __("Fetching exchange rates ..."),
 			callback: function(r) {
                 const rate = r.message;
                 frm.set_value("exchange_rate", rate);
-                frm.set_df_property("exchange_rate", "description", `1 ${from_currency} = [?] ${to_currency}`)
-				// callback(flt(r.message));
+                set_exchange_rate_msg(frm);
 			}
 		});
     },
     exchange_rate: function(frm){
-        set_dynamic_labels(frm);
-    }
+        frm.call("set_deduction_breakeven");
+    },
+
 });
 
 frappe.ui.form.on('Payment Detail', {
@@ -432,7 +431,8 @@ function set_custom_btns(frm) {
                                     },
                                     callback: function(r){
                                         d.hide();
-                                        frm.refresh_field("payment_detail");
+                                        // frm.refresh_field("payment_detail");
+                                        frm.reload_doc();
                                         // frappe.set_route("Form", "Payment Entry", r.message);
                                     }
                                 });
@@ -645,29 +645,19 @@ function set_query_mode_of_payment(frm){
     };
 }
 /* END APPLYING SET QUERIES */
-
-
- // if (frm.doc.custom_payment_status === "Paid") {
-    //     frm.page.set_indicator('Paid', 'green');
-    // } else {
-    //     frm.page.set_indicator('Unpaid', 'red');
-    // }
-
-function set_dynamic_labels(frm){
-    // $.each(frm.doc.payment_detail || [], function(i, d) {
-        // set_currency_labels(fields_list, currency, parentfield)
-        frm.set_currency_labels(["donation_amount", "deduction_amount", "net_amount", "outstanding_amount"], frm.doc.currency, "payment_detail");
-        frm.set_currency_labels(["donation_amount", "amount"], frm.doc.currency, "deduction_breakeven");
-        frm.refresh_field("payment_detail");
-        frm.refresh_field("deduction_breakeven");
-        // });
+function set_exchange_rate_msg(frm){
+    if(frm.doc.currency==""){
+        frm.set_value("currency", frm.doc.to_currency);
+    }
+    frm.set_df_property("exchange_rate", "description", `1 ${(frm.doc.currency=="")?frm.doc.to_currency:frm.doc.currency} = [?] ${frm.doc.to_currency}`);
 }
 
+/* 
 function apply_exchange_rate(frm){
     $.each(frm.doc.payment_detail || [], function(i, d) {
-        // if(d.charge_type == "Actual") {
+            d.currency = frm.doc.currency;
             frappe.model.set_value(d.doctype, d.name, "donation_amount",
                 flt(d.donation_amount) / flt(frm.doc.exchange_rate));
-        // }
     });
-}
+    frm.refresh_field("payment_detail");
+} */

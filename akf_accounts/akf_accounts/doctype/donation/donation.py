@@ -8,11 +8,7 @@ class Donation(Document):
         self.validate_payment_details()
         self.validate_deduction_percentages()
         self.validate_pledge_contribution_type()
-        self.set_payment_detail_id()
-        # frappe.msgprint("Party Balance Triggered!")
-        # party_balance= get_balance_on(party_type="Donor", party="DONOR-2024-00006", cost_center="Main - AKFP")
-        # frappe.msgprint(frappe.as_json(party_balance))
-    
+         
     def validate_payment_details(self):
         if(len(self.payment_detail)<1):
             frappe.throw("Please provide, payment details to proceed further.")
@@ -39,24 +35,9 @@ class Donation(Document):
                     msg = f"<b>Row#{d.idx}:</b> {msg}"
                     frappe.throw(msg=f"{msg}", title="Payment Detail")
 
-    def set_payment_detail_id(self):
-        pass
-        # for row1 in self.payment_detail:
-        #     row1.payment_detail_id = row1.name
-        #     row1.donor = row1.donor_id
-        #     for row2 in self.deduction_breakeven:
-        #         if(row1.pay_service_area == row2.service_area and row1.project==row2.project):
-        #             row2.payment_detail_id = row1.name
-
     @frappe.whitelist()
     def set_deduction_breakeven(self):
-        """ def set_unknown_donor(row):
-            if(self.donor_identity in ["Unknown", "Merchant"]): 
-                row.donor_id = "DONOR-2024-00004"
-            elif(self.donor_identity in ["Known", ""]):
-                if(row.donor_id == "DONOR-2024-00004"):
-                    row.donor_id = None """
-        
+
         def reset_mode_of_payment(row):
             if(self.contribution_type == "Pledge"):
                 row.mode_of_payment = None
@@ -84,16 +65,18 @@ class Donation(Document):
         total_donation=0
         
         for row in self.payment_detail:
-            # set_unknown_donor(row)
             reset_mode_of_payment(row)
             total_donation+= row.donation_amount
+            row.base_donation_amount = self.apply_currecny_exchange(row.donation_amount)
             # Setup Deduction Breakeven
             temp_deduction_amount=0
             # Looping
             for args in get_deduction_details(row):
                 percentage_amount = 0
+                base_amount = 0
                 if(row.donation_amount>0):
                     percentage_amount = row.donation_amount*(args.percentage/100)
+                    base_amount = self.apply_currecny_exchange(percentage_amount)
                     temp_deduction_amount += percentage_amount
                 
                 args.update({
@@ -105,23 +88,35 @@ class Donation(Document):
 
                     "donation_amount": row.donation_amount,
                     "amount": percentage_amount,
+                    "base_amount": base_amount,
                     "service_area": row.program,
                     "project": args.project if(args.project) else row.project,
-                    # "cost_center": row.cost_center,
+
                     "cost_center": self.donation_cost_center,
-                    "payment_detail_id": row.idx
+                    "payment_detail_id": row.idx,
                     })
                 self.append("deduction_breakeven", args)
+
             row.cost_center = self.donation_cost_center
             row.deduction_amount = temp_deduction_amount    
             row.net_amount = (row.donation_amount-row.deduction_amount)
             row.outstanding_amount = row.donation_amount if(self.contribution_type=="Pledge") else row.net_amount
+            row.base_outstanding_amount = self.apply_currecny_exchange(row.outstanding_amount)
             deduction_amount += temp_deduction_amount
             
         # calculate total
-        self.total_donation = total_donation
-        self.calculate_total(deduction_amount)
+        self.calculate_total(total_donation, deduction_amount)
 
+    def apply_currecny_exchange(self, amount):
+        if(self.currency):
+            if(self.currency != self.to_currency):
+                if(self.exchange_rate and self.exchange_rate>0):
+                    return (amount * self.exchange_rate)
+                return (amount * 1)
+            else:
+                return amount
+        return amount
+         
     @frappe.whitelist()
     def calculate_percentage(self):
         deduction_amount = 0
@@ -129,27 +124,22 @@ class Donation(Document):
             amount = row.donation_amount*(row.percentage/100)
             row.amount = amount
             deduction_amount += amount
-        # calculate totals
+        # calculate totals...
         self.calculate_total(deduction_amount)
 
-    def calculate_total(self, deduction_amount):
+    def calculate_total(self, total_donation, deduction_amount):
+        # currency exchange calculation...
+        self.total_donation = total_donation
         self.total_deduction = deduction_amount
-        self.received_amount = self.total_donation
-        self.amount_receivable = self.total_donation 
         self.outstanding_amount = (self.total_donation - deduction_amount)
         self.net_amount = (self.total_donation - deduction_amount)
+        # base amount calculation...
+        self.base_total_donation  = self.apply_currecny_exchange(self.total_donation)
+        self.base_total_deduction = self.apply_currecny_exchange(self.total_deduction)
+        self.base_outstanding_amount = self.apply_currecny_exchange(self.outstanding_amount)
+        self.base_net_amount = self.apply_currecny_exchange(self.net_amount)
+        # ...!
     
-    def set_accounts_detail(self):
-        default = frappe.db.get_value("Accounts Default", {"parent": self.program}, ["receivable_account", "fund_class", "cost_center"], as_dict=1)
-        if(default):
-            self.receivable_account = default.receivable_account
-            self.fund_class = default.fund_class
-            self.cost_center = default.cost_center
-        else:
-            self.receivable_account = ""
-            self.fund_class = ""
-            self.cost_center = ""
-
     def on_submit(self):
         # Credit Debit, GL Entry
         self.make_payment_detail_gl_entry()
@@ -174,8 +164,8 @@ class Donation(Document):
             # 'is_opening': 'No',
             # 'is_advance': 'No',
             'company': self.company,
-            # 'transaction_currency': "PKR",
-            # 'transaction_exchange_rate': "1",
+            'transaction_currency': self.to_currency,
+            'transaction_exchange_rate': "1",
         })
     
     def make_payment_detail_gl_entry(self):
@@ -186,6 +176,7 @@ class Donation(Document):
             args.update({
                 "party_type": "",
                 "party": "",
+                "voucher_detail_no": row.name,
                 "donor": row.donor_id,
                 "program": row.pay_service_area,
                 "subservice_area": row.subservice_area,
@@ -194,10 +185,12 @@ class Donation(Document):
                 "cost_center": row.cost_center,
                 "account": row.equity_account,
                 "debit": 0,
-                "credit": row.outstanding_amount,
+                "credit": self.apply_currecny_exchange(row.net_amount),
                 "debit_in_account_currency": 0,
-                "credit_in_account_currency": row.outstanding_amount,
-                "voucher_detail_no": row.name,
+                "credit_in_account_currency": self.apply_currecny_exchange(row.net_amount),
+                "debit_in_transaction_currency": 0,
+                "credit_in_transaction_currency": self.apply_currecny_exchange(row.net_amount),
+                
             })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
@@ -207,10 +200,12 @@ class Donation(Document):
                 "party_type": "Donor",
                 "party": row.donor_id,
                 "account": row.receivable_account,
-                "debit":row.donation_amount,
+                "debit":row.base_donation_amount,
                 "credit": 0,
-                "debit_in_account_currency": row.donation_amount,
+                "debit_in_account_currency": row.base_donation_amount,
                 "credit_in_account_currency": 0,
+                "debit_in_transaction_currency": row.base_donation_amount,
+                "credit_in_transaction_currency": 0,
             })
             if(self.donor_identity == "Merchant - Known"): pass
             else:
@@ -221,7 +216,9 @@ class Donation(Document):
         if(self.donor_identity == "Merchant - Known"):
             args.update({
                 "debit": self.total_donation,
-                "debit_in_account_currency": self.total_donation
+                "debit_in_account_currency": self.base_total_donation,
+                "debit_in_transaction_currency": self.base_total_donation,
+                "credit_in_transaction_currency": 0,
             })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
@@ -235,9 +232,12 @@ class Donation(Document):
                 "account": row.account,
                 "cost_center": row.cost_center,
                 "debit": 0,
-                "credit": row.amount,
+                "credit": row.base_amount,
                 "debit_in_account_currency": 0,
-                "credit_in_account_currency": row.amount,
+                "credit_in_account_currency": row.base_amount,
+
+                "debit_in_transaction_currency": 0,
+                "credit_in_transaction_currency": row.base_amount,
                 
                 "donor": row.donor,
                 "program": row.program,
@@ -266,8 +266,8 @@ class Donation(Document):
                 "voucher_no": self.name,
                 "against_voucher_type": "Donation",
                 "against_voucher_no": self.name,
-                "amount": row.donation_amount,
-                "amount_in_account_currency": row.donation_amount,
+                "amount": row.base_donation_amount,
+                "amount_in_account_currency": row.base_donation_amount,
                 # 'remarks': self.instructions_internal,
                 "voucher_detail_no": row.name,
             })
@@ -279,8 +279,8 @@ class Donation(Document):
                 doc.submit()
         if(self.donor_identity == "Merchant - Known"):
             args.update({
-                "amount": self.total_donation,
-                "amount_in_account_currency": self.total_donation
+                "amount": self.base_total_donation,
+                "amount_in_account_currency": self.base_total_donation
             })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
@@ -306,8 +306,8 @@ class Donation(Document):
                 "paid_to" : row.account_paid_to,
                 "reference_date" : self.due_date,
                 "cost_center" : row.cost_center,
-                "paid_amount" : row.donation_amount,
-                "received_amount" : row.donation_amount,
+                "paid_amount" : row.base_donation_amount,
+                "received_amount" : row.base_donation_amount,
                 "donor": row.donor_id,
                 "program" : row.pay_service_area,
                 "subservice_area" : row.pay_subservice_area,
@@ -318,9 +318,9 @@ class Donation(Document):
                         "reference_doctype": "Donation",
                         "reference_name" : self.name,
                         "due_date" : self.posting_date,
-                        "total_amount" : self.total_donation,
-                        "outstanding_amount" : row.donation_amount,
-                        "allocated_amount" : row.donation_amount,
+                        "total_amount" : self.base_total_donation,
+                        "outstanding_amount" : row.base_donation_amount,
+                        "allocated_amount" : row.base_donation_amount,
                 }]
             })
             if(self.donor_identity == "Merchant - Known"):
@@ -336,8 +336,8 @@ class Donation(Document):
 
         if(self.donor_identity == "Merchant - Known"):
             args.update({
-                "paid_amount" : self.total_donation,
-                "received_amount" : self.total_donation,
+                "paid_amount" : self.base_total_donation,
+                "received_amount" : self.base_total_donation,
             })
             doc = frappe.get_doc(args)
             doc.save(ignore_permissions=True)
@@ -405,7 +405,7 @@ def get_idx_list_unknown(donation_id):
 @frappe.whitelist()
 def get_outstanding(filters):
     filters = ast.literal_eval(filters)
-    return frappe.db.sql(""" select outstanding_amount from `tabPayment Detail` 
+    return frappe.db.sql(""" select base_outstanding_amount from `tabPayment Detail` 
         where docstatus=1
         and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)[0][0]
 
@@ -447,7 +447,7 @@ def pledge_payment_entry(doc, values):
                 "reference_doctype": "Donation",
                 "reference_name" : doc.name,
                 "due_date" : curdate,
-                "total_amount" : doc.total_donation,
+                "total_amount" : doc.base_total_donation,
                 "outstanding_amount" : values.paid_amount,
                 "allocated_amount" : values.paid_amount,
         }]
@@ -457,7 +457,7 @@ def pledge_payment_entry(doc, values):
     doc.submit()
     # frappe.throw(f"{row}")
     frappe.db.set_value("Payment Detail", row.name, "paid", values.paid)
-    frappe.db.set_value("Payment Detail", row.name, "outstanding_amount", values.outstanding_amount)
+    frappe.db.set_value("Payment Detail", row.name, "base_outstanding_amount", values.outstanding_amount)
     pe_link = get_link_to_form("Payment Entry", doc.name, "Payment Entry")
     frappe.msgprint(f"{pe_link} has been paid successfully!", alert=True)
     return doc.name

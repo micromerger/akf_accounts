@@ -21,20 +21,26 @@
   "cash_received_in_finance",
   "due_date",
   "section_break_bezw",
-  "donation_cost_center",
-  "column_break_gruy",
+  "from_currency_column",
   "currency",
   "exchange_rate",
+  "column_break_gruy",
+  "to_currency",
   "payment_details_section",
+  "donation_cost_center",
   "payment_detail",
   "section_break_otbq",
   "deduction_breakeven",
   "section_break_wznb",
   "total_donation",
-  "outstanding_amount",
-  "column_break_rqzn",
   "total_deduction",
+  "outstanding_amount",
   "net_amount",
+  "column_break_rqzn",
+  "base_total_donation",
+  "base_total_deduction",
+  "base_outstanding_amount",
+  "base_net_amount",
   "more_info_tab",
   "status",
   "amended_from",
@@ -140,6 +146,7 @@
    "fieldname": "net_amount",
    "fieldtype": "Currency",
    "label": "Net Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -152,6 +159,7 @@
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -194,6 +202,7 @@
    "fieldname": "total_donation",
    "fieldtype": "Currency",
    "label": "Total Donation",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -206,6 +215,7 @@
    "fieldname": "total_deduction",
    "fieldtype": "Currency",
    "label": "Total Deduction",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -231,19 +241,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency",
-   "reqd": 1
-  },
-  {
-   "fieldname": "exchange_rate",
-   "fieldtype": "Currency",
-   "label": "Exchange Rate",
-   "reqd": 1
-  },
-  {
    "fieldname": "column_break_qxif",
    "fieldtype": "Column Break"
   },
@@ -256,12 +253,61 @@
    "fieldname": "cash_received_in_finance",
    "fieldtype": "Date",
    "label": "Cash Received In Finance"
+  },
+  {
+   "fieldname": "from_currency_column",
+   "fieldtype": "Column Break",
+   "label": "Currency Exchange"
+  },
+  {
+   "fetch_from": "company.default_currency",
+   "fieldname": "to_currency",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "To Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "default": "1.00",
+   "fieldname": "exchange_rate",
+   "fieldtype": "Currency",
+   "label": "Exchange Rate"
+  },
+  {
+   "fieldname": "base_total_donation",
+   "fieldtype": "Currency",
+   "label": "Base Total Donation ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_total_deduction",
+   "fieldtype": "Currency",
+   "label": "Base Total Deduction",
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_net_amount",
+   "fieldtype": "Currency",
+   "label": "Base Net Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Base Outstanding Amount",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-27 15:31:25.761448",
+ "modified": "2024-09-03 18:54:19.558054",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

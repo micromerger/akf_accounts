@@ -18,6 +18,7 @@
   "max_percent",
   "donation_amount",
   "amount",
+  "base_amount",
   "accounting_dimensions_section",
   "dimension_col_break",
   "column_break_kqxo",
@@ -49,7 +50,8 @@
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Amount"
+   "label": "Amount",
+   "options": "currency"
   },
   {
    "fieldname": "min_percent",
@@ -99,7 +101,8 @@
    "default": "0",
    "fieldname": "donation_amount",
    "fieldtype": "Currency",
-   "label": "Donation Amount"
+   "label": "Donation Amount",
+   "options": "currency"
   },
   {
    "fieldname": "cost_center",
@@ -119,12 +122,19 @@
   {
    "fieldname": "column_break_kqxo",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "base_amount",
+   "fieldtype": "Currency",
+   "label": "Base Amount",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-05 17:37:54.980460",
+ "modified": "2024-09-04 12:20:33.688500",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Deduction Breakeven",

@@ -725,7 +725,7 @@ class XPaymentEntry(AccountsController):
                 status = "Partly Paid"
                 if(row.outstanding_amount==0): status = "Paid"
                 frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
-                frappe.db.set_value(row.reference_doctype, row.reference_name, "outstanding_amount", row.outstanding_amount)
+                frappe.db.set_value(row.reference_doctype, row.reference_name, "base_outstanding_amount", row.outstanding_amount)
 
     def set_cheque_leaf_cleared(self):
         if(self.custom_cheque_leaf):
@@ -2104,7 +2104,7 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
         exchange_rate = 1
 
     elif reference_doctype == "Donation" and ref_doc.docstatus == 1:
-        total_amount = ref_doc.get("total_donation")
+        total_amount = ref_doc.get("base_total_donation")
         if hasattr(ref_doc, "multi_currency"):
             exchange_rate = get_exchange_rate(
                 party_account_currency, company_currency, ref_doc.posting_date

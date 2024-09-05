@@ -7,11 +7,11 @@ class XSalesInvoice(SalesInvoice):
     def validate(self):
         super().validate()
         for i in self.items:
-            if i.asset:
-                self.create_asset_gl_entries_for_asset_purchase()
+            if not i.asset:
+                self.validate_qty()
             else:
                 pass
-                # self.validate_qty()
+                
 
     def on_submit(self):
         super().on_submit()
@@ -19,9 +19,9 @@ class XSalesInvoice(SalesInvoice):
             if i.asset:
                 self.create_asset_gl_entries_for_asset_purchase()
             else:
-                pass
+                # pass
                 # self.make_gl_entries()
-                # self.gl_entries_inventory_purchase_disposal_sale_gain()
+                self.gl_entries_inventory_purchase_disposal_sale_gain()
 
 
     def create_asset_gl_entries_for_asset_purchase(self):
@@ -32,6 +32,14 @@ class XSalesInvoice(SalesInvoice):
         loss_account = 'Loss - AKFP'
         unrestricted_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_unrestricted_fund_account")
         designated_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_designated_asset_fund_account")
+        frappe.msgprint("designated_fund_account")
+        frappe.msgprint(designated_fund_account)
+        frappe.msgprint(default_income)
+        frappe.msgprint(accumulated_depreciation_account)
+        frappe.msgprint(custom_default_asset_account)
+        frappe.msgprint(gain_account)
+        frappe.msgprint(loss_account)
+        frappe.msgprint(unrestricted_fund_account)
 
         for i in self.items:
             actual_price_asset = frappe.db.sql("""
@@ -47,465 +55,480 @@ class XSalesInvoice(SalesInvoice):
             """, (i.asset,))
 
             # Convert the results to floats
-            purchasing_cost = float(actual_price_asset[0][0]) if actual_price_asset else 0.0
-            current_worth = float(actual_price_asset[0][1]) if actual_price_asset else 0.0
+            asset_purchase = float(actual_price_asset[0][0]) if actual_price_asset else 0.0
+            depreciation_charged = float(actual_price_asset[0][1]) if actual_price_asset else 0.0
+            current_worth = asset_purchase - depreciation_charged
+            frappe.msgprint(f"depreciation_amount: {depreciation_charged}")
+            frappe.msgprint(f"Purchasing Cost: {asset_purchase}")
+            frappe.msgprint(f"Purchasing Cost: {current_worth}")
 
-            frappe.msgprint(f"Current Worth: {current_worth}")
-            frappe.msgprint(f"Purchasing Cost: {purchasing_cost}")
+            if actual_price_asset:
+                asset_purchase = float(actual_price_asset[0][0])
+                current_worth = float(actual_price_asset[0][1]) if actual_price_asset[0][1] is not None else 0.0
+            else:
+                asset_purchase = 0.0
+                current_worth = 0.0
 
-            if float(i.rate) > current_worth:
+
+            if float(i.rate) > asset_purchase:
                 frappe.msgprint("Gain Entry")
-                net_total = float(i.rate) - purchasing_cost
-                frappe.msgprint(f"Net Total: {net_total}")
+                frappe.msgprint(f"Rate: {i.rate}")
+                gain = float(i.rate) - current_worth
+                frappe.msgprint(f"Difference: {gain}")
 
 
 
-                # gl_entry_default_income_account = frappe.get_doc({
-                #     'doctype': 'GL Entry',
-                #     'posting_date': self.posting_date,
-                #     'transaction_date': self.posting_date,
-                #     'account': default_income,
-                #     'against_voucher_type': 'Sales Invoice',
-                #     'against_voucher': self.name,
-                #     'cost_center': i.cost_center,
-                #     'debit': i.rate,
-                #     'credit': 0.0,
-                #     'account_currency': 'PKR',
-                #     'debit_in_account_currency': i.rate,
-                #     'credit_in_account_currency': 0.0,
-                #     'against': "Sales Invoice",
-                #     'voucher_type': 'Sales Invoice',
-                #     'voucher_no': self.name,
-                #     'remarks': 'Sold Item',
-                #     'is_opening': 'No',
-                #     'is_advance': 'No',
-                #     'fiscal_year': '2024-2025',
-                #     'company': self.company,
-                #     'transaction_currency': 'PKR',
-                #     'debit_in_transaction_currency': i.rate,
-                #     'credit_in_transaction_currency': 0.0,
-                #     'transaction_exchange_rate': 1,
+                gl_entry_default_income_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': default_income,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': i.rate,
+                    'credit': 0.0,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency': i.rate,
+                    'credit_in_account_currency': 0.0,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': i.rate,
+                    'credit_in_transaction_currency': 0.0,
+                    'transaction_exchange_rate': 1,
 
-                # })
-                # gl_entry_default_income_account.insert()
-                # gl_entry_default_income_account.submit()
+                })
+                gl_entry_default_income_account.insert(ignore_permissions=True)
+                gl_entry_default_income_account.submit()
 
-                # gl_entry_accumulated_depreciation_account = frappe.get_doc({
-                #     'doctype': 'GL Entry',
-                #     'posting_date': self.posting_date,
-                #     'transaction_date': self.posting_date,
-                #     'account': accumulated_depreciation_account,
-                #     'against_voucher_type': 'Sales Invoice',
-                #     'against_voucher': self.name,
-                #     'cost_center': i.cost_center,
-                #     'debit': current_worth,
-                #     'credit': 0.0,
-                #     'account_currency': 'PKR',
-                #     'debit_in_account_currency':  current_worth,
-                #     'credit_in_account_currency': 0.0,
-                #     'against': "Sales Invoice",
-                #     'voucher_type': 'Sales Invoice',
-                #     'voucher_no': self.name,
-                #     'remarks': 'Sold Item',
-                #     'is_opening': 'No',
-                #     'is_advance': 'No',
-                #     'fiscal_year': '2024-2025',
-                #     'company': self.company,
-                #     'transaction_currency': 'PKR',
-                #     'debit_in_transaction_currency':  current_worth,
-                #     'credit_in_transaction_currency': 0.0,
-                #     'transaction_exchange_rate': 1,
+                gl_entry_accumulated_depreciation_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': accumulated_depreciation_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': depreciation_charged,
+                    'credit': 0.0,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency':  depreciation_charged,
+                    'credit_in_account_currency': 0.0,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency':  depreciation_charged,
+                    'credit_in_transaction_currency': 0.0,
+                    'transaction_exchange_rate': 1,
 
-                # })
-                # gl_entry_accumulated_depreciation_account.insert()
-                # gl_entry_accumulated_depreciation_account.submit()
+                })
+                gl_entry_accumulated_depreciation_account.insert(ignore_permissions=True)
+                gl_entry_accumulated_depreciation_account.submit()
 
-                # gl_entry_custom_default_asset_account_account = frappe.get_doc({
-                #     'doctype': 'GL Entry',
-                #     'posting_date': self.posting_date,
-                #     'transaction_date': self.posting_date,
-                #     'account': custom_default_asset_account,
-                #     'against_voucher_type': 'Sales Invoice',
-                #     'against_voucher': self.name,
-                #     'cost_center': i.cost_center,
-                #     'debit': 0.0,
-                #     'credit': net_total,
-                #     'account_currency': 'PKR',
-                #     'debit_in_account_currency': 0.0,
-                #     'credit_in_account_currency':net_total,
-                #     'against': "Sales Invoice",
-                #     'voucher_type': 'Sales Invoice',
-                #     'voucher_no': self.name,
-                #     'remarks': 'Sold Item',
-                #     'is_opening': 'No',
-                #     'is_advance': 'No',
-                #     'fiscal_year': '2024-2025',
-                #     'company': self.company,
-                #     'transaction_currency': 'PKR',
-                #     'debit_in_transaction_currency': 0.0,
-                #     'credit_in_transaction_currency':net_total,
-                #     'transaction_exchange_rate': 1,
+                gl_entry_custom_default_asset_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': custom_default_asset_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': 0.0,
+                    'credit': asset_purchase,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency': 0.0,
+                    'credit_in_account_currency':asset_purchase,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': 0.0,
+                    'credit_in_transaction_currency':asset_purchase,
+                    'transaction_exchange_rate': 1,
 
-                # })
-                # gl_entry_custom_default_asset_account_account.insert(ignore_permissions=True)
-                # gl_entry_custom_default_asset_account_account.submit()
+                })
+                gl_entry_custom_default_asset_account.insert(ignore_permissions=True)
+                gl_entry_custom_default_asset_account.submit()
 
-                # gl_entry_gain_account = frappe.get_doc({
-                #     'doctype': 'GL Entry',
-                #     'posting_date': self.posting_date,
-                #     'transaction_date': self.posting_date,
-                #     'account': gain_account,
-                #     'against_voucher_type': 'Sales Invoice',
-                #     'against_voucher': self.name,
-                #     'cost_center': i.cost_center,
-                #     'debit': 0.0,
-                #     'credit': net_total,
-                #     'account_currency': 'PKR',
-                #     'debit_in_account_currency':0.0,
-                #     'credit_in_account_currency': net_total,
-                #     'against': "Sales Invoice",
-                #     'voucher_type': 'Sales Invoice',
-                #     'voucher_no': self.name,
-                #     'remarks': 'Sold Item',
-                #     'is_opening': 'No',
-                #     'is_advance': 'No',
-                #     'fiscal_year': '2024-2025',
-                #     'company': self.company,
-                #     'transaction_currency': 'PKR',
-                #     'debit_in_transaction_currency': 0.0,
-                #     'credit_in_transaction_currency':net_total,
-                #     'transaction_exchange_rate': 1,
+                gl_entry_gain_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': gain_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': 0.0,
+                    'credit': gain,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency':0.0,
+                    'credit_in_account_currency': gain,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': 0.0,
+                    'credit_in_transaction_currency':gain,
+                    'transaction_exchange_rate': 1,
 
-                # })
-                # gl_entry_gain_account.insert(ignore_permissions=True)
-                # gl_entry_gain_account.submit()
+                })
+                gl_entry_gain_account.insert(ignore_permissions=True)
+                gl_entry_gain_account.submit()
 
-                # gl_entry_designated_fund_account = frappe.get_doc({
-                #     'doctype': 'GL Entry',
-                #     'posting_date': self.posting_date,
-                #     'transaction_date': self.posting_date,
-                #     'account': designated_fund_account,
-                #     'against_voucher_type': 'Sales Invoice',
-                #     'against_voucher': self.name,
-                #     'cost_center': i.cost_center,
-                #     'debit': net_total,
-                #     'credit': 0.0,
-                #     'account_currency': 'PKR',
-                #     'debit_in_account_currency': net_total,
-                #     'credit_in_account_currency': 0.0,
-                #     'against': "Sales Invoice",
-                #     'voucher_type': 'Sales Invoice',
-                #     'voucher_no': self.name,
-                #     'remarks': 'Sold Item',
-                #     'is_opening': 'No',
-                #     'is_advance': 'No',
-                #     'fiscal_year': '2024-2025',
-                #     'company': self.company,
-                #     'transaction_currency': 'PKR',
-                #     'debit_in_transaction_currency': net_total,
-                #     'credit_in_transaction_currency': 0.0,
-                #     'transaction_exchange_rate': 1,
+                gl_entry_designated_fund_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': designated_fund_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': current_worth,
+                    'credit': 0.0,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency': current_worth,
+                    'credit_in_account_currency': 0.0,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': current_worth,
+                    'credit_in_transaction_currency': 0.0,
+                    'transaction_exchange_rate': 1,
 
-                # })
-                # gl_entry_designated_fund_account.insert()
-                # gl_entry_designated_fund_account.submit()
+                })
+                gl_entry_designated_fund_account.insert(ignore_permissions = True)
+                gl_entry_designated_fund_account.submit()
 
 
-                # gl_entry_unrestricted_fund_account = frappe.get_doc({
-                #     'doctype': 'GL Entry',
-                #     'posting_date': self.posting_date,
-                #     'transaction_date': self.posting_date,
-                #     'account': unrestricted_fund_account,
-                #     'against_voucher_type': 'Sales Invoice',
-                #     'against_voucher': self.name,
-                #     'cost_center': i.cost_center,
-                #     'debit': 0.0,
-                #     'credit': i.rate,
-                #     'account_currency': 'PKR',
-                #     'debit_in_account_currency':0.0,
-                #     'credit_in_account_currency': i.rate,
-                #     'against': "Sales Invoice",
-                #     'voucher_type': 'Sales Invoice',
-                #     'voucher_no': self.name,
-                #     'remarks': 'Sold Item',
-                #     'is_opening': 'No',
-                #     'is_advance': 'No',
-                #     'fiscal_year': '2024-2025',
-                #     'company': self.company,
-                #     'transaction_currency': 'PKR',
-                #     'debit_in_transaction_currency': 0.0,
-                #     'credit_in_transaction_currency':i.rate,
-                #     'transaction_exchange_rate': 1,
+                gl_entry_unrestricted_fund_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': unrestricted_fund_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': 0.0,
+                    'credit':current_worth,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency':0.0,
+                    'credit_in_account_currency': current_worth,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': 0.0,
+                    'credit_in_transaction_currency':current_worth,
+                    'transaction_exchange_rate': 1,
 
-                # })
-                # gl_entry_unrestricted_fund_account.insert()
-                # gl_entry_unrestricted_fund_account.submit()
+                })
+                gl_entry_unrestricted_fund_account.insert()
+                gl_entry_unrestricted_fund_account.submit()
 
-            elif float(i.rate) > float(actual_price_asset):
+            elif float(i.rate) < float(asset_purchase):
                 frappe.msgprint("Loss Entry")
-            #     gl_entry_loss_account = frappe.get_doc({
-            #         'doctype': 'GL Entry',
-            #         'posting_date': self.posting_date,
-            #         'transaction_date': self.posting_date,
-            #         'account': loss_account,
-            #         'against_voucher_type': 'Sales Invoice',
-            #         'against_voucher': self.name,
-            #         'cost_center': i.cost_center,
-            #         'debit': 0.0,
-            #         'credit': i.rate,
-            #         'account_currency': 'PKR',
-            #         'debit_in_account_currency':0.0,
-            #         'credit_in_account_currency': i.rate,
-            #         'against': "Sales Invoice",
-            #         'voucher_type': 'Sales Invoice',
-            #         'voucher_no': self.name,
-            #         'remarks': 'Sold Item',
-            #         'is_opening': 'No',
-            #         'is_advance': 'No',
-            #         'fiscal_year': '2024-2025',
-            #         'company': self.company,
-            #         'transaction_currency': 'PKR',
-            #         'debit_in_transaction_currency': 0.0,
-            #         'credit_in_transaction_currency':i.rate,
-            #         'transaction_exchange_rate': 1,
+                frappe.msgprint(f"Rate: {i.rate}")
+                loss = current_worth - float(i.rate)
+                frappe.msgprint(f"Difference: {loss}")
 
-            #     })
-            #     gl_entry_loss_account.insert()
-            #     gl_entry_loss_account.submit()
 
-            #     gl_entry_default_income_account = frappe.get_doc({
-            #         'doctype': 'GL Entry',
-            #         'posting_date': self.posting_date,
-            #         'transaction_date': self.posting_date,
-            #         'account': default_income,
-            #         'against_voucher_type': 'Sales Invoice',
-            #         'against_voucher': self.name,
-            #         'cost_center': i.cost_center,
-            #         'debit': i.rate,
-            #         'credit': 0.0,
-            #         'account_currency': 'PKR',
-            #         'debit_in_account_currency': i.rate,
-            #         'credit_in_account_currency': 0.0,
-            #         'against': "Sales Invoice",
-            #         'voucher_type': 'Sales Invoice',
-            #         'voucher_no': self.name,
-            #         'remarks': 'Sold Item',
-            #         'is_opening': 'No',
-            #         'is_advance': 'No',
-            #         'fiscal_year': '2024-2025',
-            #         'company': self.company,
-            #         'transaction_currency': 'PKR',
-            #         'debit_in_transaction_currency': i.rate,
-            #         'credit_in_transaction_currency': 0.0,
-            #         'transaction_exchange_rate': 1,
 
-            #     })
-            #     gl_entry_default_income_account.insert()
-            #     gl_entry_default_income_account.submit()
+                gl_entry_default_income_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': default_income,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': i.rate,
+                    'credit': 0.0,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency': i.rate,
+                    'credit_in_account_currency': 0.0,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': i.rate,
+                    'credit_in_transaction_currency': 0.0,
+                    'transaction_exchange_rate': 1,
 
-            #     gl_entry_accumulated_depreciation_account = frappe.get_doc({
-            #         'doctype': 'GL Entry',
-            #         'posting_date': self.posting_date,
-            #         'transaction_date': self.posting_date,
-            #         'account': accumulated_depreciation_account,
-            #         'against_voucher_type': 'Sales Invoice',
-            #         'against_voucher': self.name,
-            #         'cost_center': i.cost_center,
-            #         'debit': i.rate,
-            #         'credit': 0.0,
-            #         'account_currency': 'PKR',
-            #         'debit_in_account_currency': i.rate,
-            #         'credit_in_account_currency': 0.0,
-            #         'against': "Sales Invoice",
-            #         'voucher_type': 'Sales Invoice',
-            #         'voucher_no': self.name,
-            #         'remarks': 'Sold Item',
-            #         'is_opening': 'No',
-            #         'is_advance': 'No',
-            #         'fiscal_year': '2024-2025',
-            #         'company': self.company,
-            #         'transaction_currency': 'PKR',
-            #         'debit_in_transaction_currency': i.rate,
-            #         'credit_in_transaction_currency': 0.0,
-            #         'transaction_exchange_rate': 1,
+                })
+                gl_entry_default_income_account.insert(ignore_permissions=True)
+                gl_entry_default_income_account.submit()
 
-            #     })
-            #     gl_entry_accumulated_depreciation_account.insert()
-            #     gl_entry_accumulated_depreciation_account.submit()
+                gl_entry_accumulated_depreciation_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': accumulated_depreciation_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': depreciation_charged,
+                    'credit': 0.0,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency':  depreciation_charged,
+                    'credit_in_account_currency': 0.0,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency':  depreciation_charged,
+                    'credit_in_transaction_currency': 0.0,
+                    'transaction_exchange_rate': 1,
 
-            #     gl_entry_custom_default_asset_account_account = frappe.get_doc({
-            #         'doctype': 'GL Entry',
-            #         'posting_date': self.posting_date,
-            #         'transaction_date': self.posting_date,
-            #         'account': custom_default_asset_account,
-            #         'against_voucher_type': 'Sales Invoice',
-            #         'against_voucher': self.name,
-            #         'cost_center': i.cost_center,
-            #         'debit': 0.0,
-            #         'credit': i.rate,
-            #         'account_currency': 'PKR',
-            #         'debit_in_account_currency': 0.0,
-            #         'credit_in_account_currency':i.rate,
-            #         'against': "Sales Invoice",
-            #         'voucher_type': 'Sales Invoice',
-            #         'voucher_no': self.name,
-            #         'remarks': 'Sold Item',
-            #         'is_opening': 'No',
-            #         'is_advance': 'No',
-            #         'fiscal_year': '2024-2025',
-            #         'company': self.company,
-            #         'transaction_currency': 'PKR',
-            #         'debit_in_transaction_currency': 0.0,
-            #         'credit_in_transaction_currency': i.rate,
-            #         'transaction_exchange_rate': 1,
+                })
+                gl_entry_accumulated_depreciation_account.insert(ignore_permissions=True)
+                gl_entry_accumulated_depreciation_account.submit()
 
-            #     })
-            #     gl_entry_custom_default_asset_account_account.insert()
-            #     gl_entry_custom_default_asset_account_account.submit()
+                gl_entry_custom_default_asset_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': custom_default_asset_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': 0.0,
+                    'credit': asset_purchase,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency': 0.0,
+                    'credit_in_account_currency':asset_purchase,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': 0.0,
+                    'credit_in_transaction_currency':asset_purchase,
+                    'transaction_exchange_rate': 1,
 
-                
+                })
+                gl_entry_custom_default_asset_account.insert(ignore_permissions=True)
+                gl_entry_custom_default_asset_account.submit()
 
-            #     gl_entry_unrestricted_fund_account = frappe.get_doc({
-            #         'doctype': 'GL Entry',
-            #         'posting_date': self.posting_date,
-            #         'transaction_date': self.posting_date,
-            #         'account': unrestricted_fund_account,
-            #         'against_voucher_type': 'Sales Invoice',
-            #         'against_voucher': self.name,
-            #         'cost_center': i.cost_center,
-            #         'debit': 0.0,
-            #         'credit': i.rate,
-            #         'account_currency': 'PKR',
-            #         'debit_in_account_currency':0.0,
-            #         'credit_in_account_currency': i.rate,
-            #         'against': "Sales Invoice",
-            #         'voucher_type': 'Sales Invoice',
-            #         'voucher_no': self.name,
-            #         'remarks': 'Sold Item',
-            #         'is_opening': 'No',
-            #         'is_advance': 'No',
-            #         'fiscal_year': '2024-2025',
-            #         'company': self.company,
-            #         'transaction_currency': 'PKR',
-            #         'debit_in_transaction_currency': 0.0,
-            #         'credit_in_transaction_currency':i.rate,
-            #         'transaction_exchange_rate': 1,
+                gl_entry_loss_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': loss_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': 0.0,
+                    'credit': loss,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency':0.0,
+                    'credit_in_account_currency': loss,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': 0.0,
+                    'credit_in_transaction_currency':loss,
+                    'transaction_exchange_rate': 1,
 
-            #     })
-            #     gl_entry_unrestricted_fund_account.insert()
-            #     gl_entry_unrestricted_fund_account.submit()
+                })
+                gl_entry_loss_account.insert(ignore_permissions=True)
+                gl_entry_loss_account.submit()
 
-            #     gl_entry_designated_fund_account = frappe.get_doc({
-            #         'doctype': 'GL Entry',
-            #         'posting_date': self.posting_date,
-            #         'transaction_date': self.posting_date,
-            #         'account': designated_fund_account,
-            #         'against_voucher_type': 'Sales Invoice',
-            #         'against_voucher': self.name,
-            #         'cost_center': i.cost_center,
-            #         'debit': i.rate,
-            #         'credit': 0.0,
-            #         'account_currency': 'PKR',
-            #         'debit_in_account_currency': i.rate,
-            #         'credit_in_account_currency': 0.0,
-            #         'against': "Sales Invoice",
-            #         'voucher_type': 'Sales Invoice',
-            #         'voucher_no': self.name,
-            #         'remarks': 'Sold Item',
-            #         'is_opening': 'No',
-            #         'is_advance': 'No',
-            #         'fiscal_year': '2024-2025',
-            #         'company': self.company,
-            #         'transaction_currency': 'PKR',
-            #         'debit_in_transaction_currency': i.rate,
-            #         'credit_in_transaction_currency': 0.0,
-            #         'transaction_exchange_rate': 1,
+                gl_entry_designated_fund_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': designated_fund_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': current_worth,
+                    'credit': 0.0,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency': current_worth,
+                    'credit_in_account_currency': 0.0,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': current_worth,
+                    'credit_in_transaction_currency': 0.0,
+                    'transaction_exchange_rate': 1,
 
-            #     })
-            #     gl_entry_designated_fund_account.insert()
-            #     gl_entry_designated_fund_account.submit()
-            # else:
-            #     frappe.msgprint("No Loss/Profit")
+                })
+                gl_entry_designated_fund_account.insert(ignore_permissions=True)
+                gl_entry_designated_fund_account.submit()
+
+
+                gl_entry_unrestricted_fund_account = frappe.get_doc({
+                    'doctype': 'GL Entry',
+                    'posting_date': self.posting_date,
+                    'transaction_date': self.posting_date,
+                    'account': unrestricted_fund_account,
+                    'against_voucher_type': 'Sales Invoice',
+                    'against_voucher': self.name,
+                    'cost_center': i.cost_center,
+                    'debit': 0.0,
+                    'credit':current_worth,
+                    'account_currency': 'PKR',
+                    'debit_in_account_currency':0.0,
+                    'credit_in_account_currency': current_worth,
+                    'against': "Sales Invoice",
+                    'voucher_type': 'Sales Invoice',
+                    'voucher_no': self.name,
+                    'remarks': 'Sold Item',
+                    'is_opening': 'No',
+                    'is_advance': 'No',
+                    'fiscal_year': '2024-2025',
+                    'company': self.company,
+                    'transaction_currency': 'PKR',
+                    'debit_in_transaction_currency': 0.0,
+                    'credit_in_transaction_currency':current_worth,
+                    'transaction_exchange_rate': 1,
+
+                })
+                gl_entry_unrestricted_fund_account.insert(ignore_permissions=True)
+                gl_entry_unrestricted_fund_account.submit()
+            else:
+                frappe.msgprint("No Loss/Profit")
 
           
 
        
-    # def validate_qty(self):
-    #     # if (
-    #     #     self.stock_entry_type == "Donated Inventory Consumption - Restricted"
-    #     #     or self.stock_entry_type == "Donated Inventory Transfer - Restricted"
-    #     # ):
-    #         for item in self.items:
-    #             condition_parts = [
-    #                 (
-    #                     f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
-    #                     if item.custom_new
-    #                     else "1=1"
-    #                 ),
-    #                 (
-    #                     f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
-    #                     if item.custom_used
-    #                     else "1=1"
-    #                 ),
-    #                 (
-    #                     f"(warehouse = '{item.warehouse}' OR (warehouse IS NULL AND '{item.warehouse}' = '') OR warehouse = '')"
-    #                     if item.warehouse
-    #                     else "1=1"
-    #                 ),
-    #                 (
-    #                     f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
-    #                     if item.inventory_flag
-    #                     else "1=1"
-    #                 ),
-    #                 (
-    #                     f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
-    #                     if item.program
-    #                     else "1=1"
-    #                 ),
-    #                 (
-    #                     f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
-    #                     if item.subservice_area
-    #                     else "1=1"
-    #                 ),
-    #                 (
-    #                     f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
-    #                     if item.product
-    #                     else "1=1"
-    #                 ),
-    #                 (
-    #                     f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
-    #                     if item.project
-    #                     else "1=1"
-    #                 ),
-    #             ]
-    #             condition = " AND ".join(condition_parts)
-    #             # frappe.msgprint(frappe.as_json(condition))
+    def validate_qty(self):
+        # if (
+        #     self.stock_entry_type == "Donated Inventory Consumption - Restricted"
+        #     or self.stock_entry_type == "Donated Inventory Transfer - Restricted"
+        # ):
+            for item in self.items:
+                condition_parts = [
+                    (
+                        f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
+                        if item.custom_new
+                        else "1=1"
+                    ),
+                    (
+                        f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
+                        if item.custom_used
+                        else "1=1"
+                    ),
+                    (
+                        f"(warehouse = '{item.warehouse}' OR (warehouse IS NULL AND '{item.warehouse}' = '') OR warehouse = '')"
+                        if item.warehouse
+                        else "1=1"
+                    ),
+                    (
+                        f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
+                        if item.inventory_flag
+                        else "1=1"
+                    ),
+                    (
+                        f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
+                        if item.program
+                        else "1=1"
+                    ),
+                    (
+                        f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
+                        if item.subservice_area
+                        else "1=1"
+                    ),
+                    (
+                        f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
+                        if item.product
+                        else "1=1"
+                    ),
+                    (
+                        f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
+                        if item.project
+                        else "1=1"
+                    ),
+                ]
+                condition = " AND ".join(condition_parts)
+                # frappe.msgprint(frappe.as_json(condition))
 
-    #             try:
-    #                 donated_invetory = frappe.db.sql(
-    #                     f"""
-    #                     SELECT ifnull(SUM(actual_qty),0) as donated_qty,
-    #                         item_code
-    #                     FROM `tabStock Ledger Entry`
-    #                     WHERE
-    #                         item_code='{item.item_code}'
-    #                         {f'AND {condition}' if condition else ''}
-    #                 """,
-    #                     as_dict=True,
-    #                 )
+                try:
+                    donated_invetory = frappe.db.sql(
+                        f"""
+                        SELECT ifnull(SUM(actual_qty),0) as donated_qty,
+                            item_code
+                        FROM `tabStock Ledger Entry`
+                        WHERE
+                            item_code='{item.item_code}'
+                            {f'AND {condition}' if condition else ''}
+                    """,
+                        as_dict=True,
+                    )
 
-    #                 # frappe.msgprint(frappe.as_json(donated_invetory))
-    #             except Exception as e:
-    #                 frappe.throw(f"Error executing query: {e}")
+                    # frappe.msgprint(frappe.as_json(donated_invetory))
+                except Exception as e:
+                    frappe.throw(f"Error executing query: {e}")
 
-    #             for di in donated_invetory:
-    #                 if di.donated_qty > item.qty:
-    #                     pass
-    #                 else:
-    #                     frappe.throw(
-    #                         f"{item.item_code} quantity doesn't exist against condtions {condition}"
+                for di in donated_invetory:
+                    if di.donated_qty > item.qty:
+                        pass
+                    else:
+                        frappe.throw(
+                            f"{item.item_code} quantity doesn't exist against condtions {condition}"
                     
-    #                     )
+                        )
 
 
     def make_gl_entries(self):
@@ -630,6 +653,7 @@ class XSalesInvoice(SalesInvoice):
 
                     gl_entry_gain_account.insert(ignore_permissions=True)
                     gl_entry_gain_account.submit()
+                    frappe.msgprint("GL Entries created successfully")
 
                 elif valuation_rate > i.rate:
                     # frappe.msgprint(f"Loss for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
@@ -667,6 +691,7 @@ class XSalesInvoice(SalesInvoice):
 
                     gl_entry_loss_account.insert(ignore_permissions=True)
                     gl_entry_loss_account.submit()
+                    frappe.msgprint("GL Entries created successfully")
 
                 else:
                     pass

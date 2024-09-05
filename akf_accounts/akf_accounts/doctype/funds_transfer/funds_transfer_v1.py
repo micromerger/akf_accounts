@@ -9,11 +9,11 @@ class FundsTransfer(Document):
     # def validate(self):
     #     transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Company']
     #     if self.transaction_type in transaction_types:
-        #    self.create_gl_entries_for_inter_funds_transfer() 
+    #         self.create_gl_entries_for_inter_funds_transfer()
     def validate(self):
         today_date = datetime.datetime.now().today()
         self.posting_date = today_date
-        self.create_gl_entries_for_inter_funds_transfer()
+
 
     def on_submit(self):
         transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Company']
@@ -32,8 +32,8 @@ class FundsTransfer(Document):
             return
         donor_list_data = self.donor_list_for_purchase_receipt()
         donor_list = donor_list_data['donor_list']
-        frappe.msgprint(frappe.as_json("donor_list"))
-        frappe.msgprint(frappe.as_json(donor_list))
+        # frappe.msgprint(frappe.as_json("donor_list"))
+        # frappe.msgprint(frappe.as_json(donor_list))
         
         previous_dimensions = []
         new_dimensions = []
@@ -61,8 +61,8 @@ class FundsTransfer(Document):
             prev_account = d.get('account')
             prev_company = d.get('company')
 
-            frappe.msgprint(frappe.as_json("prev_amount"))
-            frappe.msgprint(frappe.as_json(prev_amount))
+            # frappe.msgprint(frappe.as_json("prev_program"))
+            # frappe.msgprint(frappe.as_json(prev_program))
        
         new_dimensions_list = self.get_new_dimensions(donor_list)
         
@@ -87,92 +87,91 @@ class FundsTransfer(Document):
                     if new_amount <= prev_amount:
                         # frappe.msgprint(f"New amount {new_amount} is less than or equal to the previous amount {prev_amount}. Donation is allowed.")
                         
-                        # #Creating GL entry for previous dimension (debit)
-                        # gl_entry_for_previous_dimension = frappe.get_doc({
-                        #     'doctype': 'GL Entry',
-                        #     'posting_date': self.posting_date,
-                        #     'transaction_date': self.posting_date,
-                        #     'account': prev_account,
-                        #     'against_voucher_type': 'Funds Transfer',
-                        #     'against_voucher': self.name,
-                        #     'cost_center': prev_cost_center,
-                        #     'debit': new_amount,
-                        #     'credit': 0.0,
-                        #     'account_currency': 'PKR',
-                        #     'debit_in_account_currency': new_amount,
-                        #     'credit_in_account_currency': 0.0,
-                        #     'against': "Capital Stock - AKFP",
-                        #     'voucher_type': 'Funds Transfer',
-                        #     'voucher_no': self.name,
-                        #     'remarks': 'Funds Transferred',
-                        #     'is_opening': 'No',
-                        #     'is_advance': 'No',
-                        #     'fiscal_year': '2024-2025',
-                        #     'company': prev_company,
-                        #     'transaction_currency': 'PKR',
-                        #     'debit_in_transaction_currency': new_amount,
-                        #     'credit_in_transaction_currency': 0.0,
-                        #     'transaction_exchange_rate': 1,
-                        #     'project': prev_project,
-                        #     'program': prev_program,
-                        #     'party_type': 'Donor',
-                        #     'party': prev_donor,
-                        #     'subservice_area': prev_subservice_area,
-                        #     'donor': prev_donor,
-                        #     'inventory_flag': 'Purchased',
-                        #     'product': prev_product
-                        # })
+                        #Creating GL entry for previous dimension (debit)
+                        gl_entry_for_previous_dimension = frappe.get_doc({
+                            'doctype': 'GL Entry',
+                            'posting_date': self.posting_date,
+                            'transaction_date': self.posting_date,
+                            'account': prev_account,
+                            'against_voucher_type': 'Funds Transfer',
+                            'against_voucher': self.name,
+                            'cost_center': prev_cost_center,
+                            'debit': new_amount,
+                            'credit': 0.0,
+                            'account_currency': 'PKR',
+                            'debit_in_account_currency': new_amount,
+                            'credit_in_account_currency': 0.0,
+                            'against': "Capital Stock - AKFP",
+                            'voucher_type': 'Funds Transfer',
+                            'voucher_no': self.name,
+                            'remarks': 'Funds Transferred',
+                            'is_opening': 'No',
+                            'is_advance': 'No',
+                            'fiscal_year': '2024-2025',
+                            'company': prev_company,
+                            'transaction_currency': 'PKR',
+                            'debit_in_transaction_currency': new_amount,
+                            'credit_in_transaction_currency': 0.0,
+                            'transaction_exchange_rate': 1,
+                            'project': prev_project,
+                            'program': prev_program,
+                            'party_type': 'Donor',
+                            'party': prev_donor,
+                            'subservice_area': prev_subservice_area,
+                            'donor': prev_donor,
+                            'inventory_flag': 'Purchased',
+                            'product': prev_product
+                        })
 
-                        # frappe.msgprint(frappe.as_json(gl_entry_for_previous_dimension.as_dict()))
+                        frappe.msgprint(frappe.as_json(gl_entry_for_previous_dimension.as_dict()))
 
-                        # gl_entry_for_previous_dimension.insert(ignore_permissions=True)
-                        # gl_entry_for_previous_dimension.submit()
+                        gl_entry_for_previous_dimension.insert(ignore_permissions=True)
+                        gl_entry_for_previous_dimension.submit()
                         
 
-                        # #Creating GL entry for new dimension (credit)
-                        # gl_entry_for_new_dimension = frappe.get_doc({
-                        #     'doctype': 'GL Entry',
-                        #     'posting_date': self.posting_date,
-                        #     'transaction_date': self.posting_date,
-                        #     'account': new_account,
-                        #     'against_voucher_type': 'Funds Transfer',
-                        #     'against_voucher': self.name,
-                        #     'cost_center': new_cost_center,
-                        #     'debit': 0.0,
-                        #     'credit': new_amount,
-                        #     'account_currency': 'PKR',
-                        #     'debit_in_account_currency': 0.0,
-                        #     'credit_in_account_currency': new_amount,
-                        #     'against': "Capital Stock - AKFP",
-                        #     'voucher_type': 'Funds Transfer',
-                        #     'voucher_no': self.name,
-                        #     'remarks': 'Funds Transferred',
-                        #     'is_opening': 'No',
-                        #     'is_advance': 'No',
-                        #     'fiscal_year': '2024-2025',
-                        #     'company': new_company,
-                        #     'transaction_currency': 'PKR',
-                        #     'debit_in_transaction_currency': 0.0,
-                        #     'credit_in_transaction_currency': new_amount,
-                        #     'transaction_exchange_rate': 1,
-                        #     'project': new_project,
-                        #     'program': new_program,
-                        #     'party_type': 'Donor',
-                        #     'party': new_donor,
-                        #     'subservice_area': new_subservice_area,
-                        #     'donor': new_donor,
-                        #     'inventory_flag': 'Purchased',
-                        #     'product': new_product
-                        # })
+                        #Creating GL entry for new dimension (credit)
+                        gl_entry_for_new_dimension = frappe.get_doc({
+                            'doctype': 'GL Entry',
+                            'posting_date': self.posting_date,
+                            'transaction_date': self.posting_date,
+                            'account': new_account,
+                            'against_voucher_type': 'Funds Transfer',
+                            'against_voucher': self.name,
+                            'cost_center': new_cost_center,
+                            'debit': 0.0,
+                            'credit': new_amount,
+                            'account_currency': 'PKR',
+                            'debit_in_account_currency': 0.0,
+                            'credit_in_account_currency': new_amount,
+                            'against': "Capital Stock - AKFP",
+                            'voucher_type': 'Funds Transfer',
+                            'voucher_no': self.name,
+                            'remarks': 'Funds Transferred',
+                            'is_opening': 'No',
+                            'is_advance': 'No',
+                            'fiscal_year': '2024-2025',
+                            'company': new_company,
+                            'transaction_currency': 'PKR',
+                            'debit_in_transaction_currency': 0.0,
+                            'credit_in_transaction_currency': new_amount,
+                            'transaction_exchange_rate': 1,
+                            'project': new_project,
+                            'program': new_program,
+                            'party_type': 'Donor',
+                            'party': new_donor,
+                            'subservice_area': new_subservice_area,
+                            'donor': new_donor,
+                            'inventory_flag': 'Purchased',
+                            'product': new_product
+                        })
 
-                        # frappe.msgprint(frappe.as_json(gl_entry_for_new_dimension.as_dict()))
+                        frappe.msgprint(frappe.as_json(gl_entry_for_new_dimension.as_dict()))
 
-                        # gl_entry_for_new_dimension.insert(ignore_permissions=True)
-                        # gl_entry_for_new_dimension.submit()
+                        gl_entry_for_new_dimension.insert(ignore_permissions=True)
+                        gl_entry_for_new_dimension.submit()
                         frappe.msgprint("GL Entries Created Successfully")
-                        
                     else:
-                        frappe.throw(f"New amount {new_amount} is greater than the previous amount {prev_amount}. Not enough amount to donate.")
+                        # frappe.throw(f"New amount {new_amount} is greater than the previous amount {prev_amount}. Not enough amount to donate.")
                         frappe.throw(f"Not enough amount to Transfer")
 
     def donor_list_for_purchase_receipt(self):
@@ -285,8 +284,8 @@ class FundsTransfer(Document):
         docstatus = self.docstatus
         for n in self.funds_transfer_to:
             for p in donor_list:
-                # if (n.ft_donor == p.get('donor') or n.ft_cost_center == p.get('cost_center') or
-                #     n.ft_service_area == p.get('program') or n.ft_subservice_area == p.get('subservice_area')):
+                if (n.ft_donor == p.get('donor') or n.ft_cost_center == p.get('cost_center') or
+                    n.ft_service_area == p.get('program') or n.ft_subservice_area == p.get('subservice_area')):
                     fields.append({
                         'donor': n.ft_donor,
                         'cost_center': n.ft_cost_center,
@@ -345,7 +344,7 @@ def donor_list_data(doc):
                 WHERE 
                     account = 'Capital Stock - AKFP'
                     {f'AND {condition}' if condition else ''}
-               
+                GROUP BY donor, program, subservice_area, project, cost_center, product, company, account
                 HAVING total_balance >= -1000000
                 ORDER BY total_balance DESC
             """, as_dict=True)
