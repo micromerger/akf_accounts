@@ -10,18 +10,8 @@ frappe.ui.form.on("Funds Transfer", {
         frm.get_field("funds_transfer_to").grid.set_multiple_add("ft_service_area");
         frm.refresh_field('funds_transfer_to');
     },
-    onload: function(frm){
-        var df = frappe.meta.get_docfield("Funds Transfer From","ff_cost_center", cur_frm.doc.name);
-        df.read_only = 1;
-        frm.refresh_field['funds_transfer_from']
-    },
 
     refresh: function(frm) {
-        set_query_service_area_transfer_from(frm);
-        set_query_service_area_transfer_to(frm);
-        set_queries_funds_transfer_to(frm);
-        set_queries_funds_transfer_from(frm);
-        set_queries_transaction_types(frm);
         console.log(!frm.is_new());
         console.log(!frm.doc.__islocal);
 
@@ -33,11 +23,13 @@ frappe.ui.form.on("Funds Transfer", {
             set_custom_btns(frm);
         }
 
-       
-        
-        
+        if (frm.doc.transaction_type === 'Inter Funds') {
+            frm.set_value('custom_to_cost_center', frm.doc.custom_from_cost_center);
+            frm.set_df_property('custom_to_cost_center', 'read_only', 1);  
+        } else {
+            frm.set_df_property('custom_to_cost_center', 'read_only', 0);  
+        }
     },
-    
 
     onload: function(frm) {
         $("#table_render").empty();
@@ -123,27 +115,6 @@ function update_ft_bank_account_in_children(frm) {
 }
 
 
-// frappe.ui.form.on("Funds Transfer From", {
-//     funds_transfer_from_add: function(frm, cdt, cdn) {
-//         const cost_center = frm.doc.custom_cost_center; 
-//         const bank_account = frm.doc.custom_from_bank_account;
-//         const from_costcenter = frm.doc.custom_from_cost_center;
-
-//         const row = frappe.get_doc(cdt, cdn);
-//         if (frm.doc.transaction_type === 'Inter Fund') {
-//             console.log("Funds Transfer From Inter Fund ");
-//             frappe.model.set_value(row.doctype, row.name, "ff_cost_center", cost_center);
-//             frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account); 
-            
-//         } else if (frm.doc.transaction_type === 'Inter Branch') {
-//             console.log("Funds Transfer From Inter Branch ");
-//             frappe.model.set_value(row.doctype, row.name, "ff_cost_center", from_costcenter);
-//             frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account); 
-//         }
-       
-//     }
-// });
-
 frappe.ui.form.on("Funds Transfer From", {
     funds_transfer_from_add: function(frm, cdt, cdn) {
         const cost_center = frm.doc.custom_cost_center; 
@@ -152,19 +123,16 @@ frappe.ui.form.on("Funds Transfer From", {
 
         const row = frappe.get_doc(cdt, cdn);
         if (frm.doc.transaction_type === 'Inter Fund') {
-            console.log("Funds Transfer From Inter Fund");
+            console.log("Funds Transfer From Inter Fund ");
             frappe.model.set_value(row.doctype, row.name, "ff_cost_center", cost_center);
-            frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account);
-            frm.fields_dict['funds_transfer_from'].grid.grid_rows_by_docname[cdn].toggle_editable('ff_cost_center', false);
+            frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account); 
+            
         } else if (frm.doc.transaction_type === 'Inter Branch') {
-            console.log("Funds Transfer From Inter Branch");
+            console.log("Funds Transfer From Inter Branch ");
             frappe.model.set_value(row.doctype, row.name, "ff_cost_center", from_costcenter);
-            frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account);
-            frm.fields_dict['funds_transfer_from'].grid.grid_rows_by_docname[cdn].toggle_editable('ff_cost_center', false);
+            frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account); 
         }
-
        
-        frm.refresh_field("funds_transfer_from");
     }
 });
 
@@ -375,77 +343,6 @@ function set_custom_btns(frm) {
         frappe.set_route("query-report", "General Ledger", {"voucher_no": frm.doc.name,"group_by": ""});
     }, __("View"));
 }
-
-function set_queries_transaction_types(frm) {
-    frm.set_query("custom_from_cost_center", function() {
-        return {
-            filters: {
-                is_group: 0,
-                disabled: 0,
-                company: frm.doc.custom_company  
-            }
-        };
-    });
-
-    frm.set_query("custom_to_cost_center", function() {
-        return {
-            filters: {
-                is_group: 0,
-                disabled: 0,
-                company: frm.doc.custom_company  
-            }
-        };
-    });
-
-    frm.set_query("custom_cost_center", function() {
-        return {
-            filters: {
-                is_group: 0,
-                disabled: 0,
-                company: frm.doc.custom_company  
-            }
-        };
-    });
-
-    frm.set_query("custom_to_bank_account", function() {
-        return {
-            filters: {
-              
-                company: frm.doc.custom_company  
-            }
-        };
-    });
-
-    frm.set_query("custom_from_bank_account", function() {
-        return {
-            filters: {
-              
-                company: frm.doc.custom_company  
-            }
-        };
-    });
-
-
-    frm.set_query("custom_from_bank", function() {
-        return {
-            filters: {
-                company: frm.doc.custom_company,
-                account_type: "Bank"
-            }
-        };
-    });
-    
-    frm.set_query("custom_to_bank", function() {
-        return {
-            filters: {
-                company: frm.doc.custom_company,
-                account_type: "Bank"
-            }
-        };
-    });
-    
-}
-
 
 function set_queries_funds_transfer_from(frm) {
     set_query_cost_center_transfer_from(frm);
@@ -748,51 +645,6 @@ function set_cost_center_in_children(child_table, cost_center_field, cost_center
     let transaction_controller = new erpnext.TransactionController();
     transaction_controller.autofill_warehouse(child_table, cost_center_field, cost_center);
 }
-
-function set_query_service_area_transfer_from(frm) {
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        var company = row.ff_company;
-
-        if (!company) {
-            return {
-                filters: {
-                    service_area: ["!=", ""]
-                }
-            };
-        }
-
-        return {
-            filters: {
-                company: company
-            }
-        };
-    };
-}
-
-
-function set_query_service_area_transfer_to(frm) {
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        var company = row.ft_company;
-
-        if (!company) {
-            return {
-                filters: {
-                    service_area: ["!=", ""]
-                }
-            };
-        }
-
-        return {
-            filters: {
-                company: company
-            }
-        };
-    };
-}
-
-
 
 //Backup Perfect Function Muavia
 // frappe.ui.form.on("Funds Transfer To", {

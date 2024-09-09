@@ -258,6 +258,7 @@ function set_query_account_transfer_from(frm){
         };
     };
 }
+
 function set_queries_funds_transfer_to(frm){
     set_query_cost_center(frm);
     set_query_subservice_area(frm);

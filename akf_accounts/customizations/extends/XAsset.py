@@ -199,7 +199,7 @@ def total_accumulated_depreciation(asset_name, gross_purchase_amount):
         SELECT ds.accumulated_depreciation_amount
         FROM `tabDepreciation Schedule` ds
         JOIN `tabAsset Depreciation Schedule` ads ON ds.parent = ads.name
-        WHERE ads.asset = %s 
+        WHERE ads.asset = %s ds.journal_entry IS NOT NULL
         ORDER BY ds.schedule_date ASC
         LIMIT 1;
     """
@@ -265,8 +265,8 @@ def post_depreciation_entries_extended(date=None):
 		return
 	
 	if not date:
-		# date = today()
-		date = "2024-08-30"
+		date = today()
+		# date = "2024-09-10"
 		# print(date)
 
 	failed_asset_names = []
@@ -375,8 +375,8 @@ def make_depreciation_entry_extended(
     frappe.has_permission("Journal Entry", throw=True)
 
     if not date:
-        # date = today()
-        date = "2024-08-30"
+        date = today()
+    #    date = "2024-09-10"
 
     asset_depr_schedule_doc = frappe.get_doc("Asset Depreciation Schedule", asset_depr_schedule_name)
     asset = frappe.get_doc("Asset", asset_depr_schedule_doc.asset)
