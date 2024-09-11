@@ -80,7 +80,7 @@ function get_html(frm) {
     $("#table_render").empty();
 
     frappe.call({
-        method: "akf_accounts.customizations.extends.xpurchase_receipt.donor_list_data",
+        method: "akf_accounts.customizations.extends.xpurchase_receipt.donor_list_data_purchsae_receipt",
         args: {
             doc: frm.doc,
         },

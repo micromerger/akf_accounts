@@ -3,6 +3,9 @@ import frappe
 from frappe.model.document import Document
 import json
 import datetime
+from erpnext.accounts.utils import get_fiscal_year
+from frappe.utils import today
+
 # from frappe import today
 
 class FundsTransfer(Document):
@@ -39,6 +42,8 @@ class FundsTransfer(Document):
                 frappe.throw("Banks cannot be same in Inter Branch Transfer")
     
     def create_gl_entries_for_inter_funds_transfer(self):
+        today_date = today()
+        fiscal_year = get_fiscal_year(today_date, company=self.custom_company)[0]
         if not self.funds_transfer_to:
             frappe.throw("There is no information to transfer funds.")
             return
@@ -85,49 +90,91 @@ class FundsTransfer(Document):
                     new_product = n.get('ft_product')
                     new_company = n.get('ft_company')
 
+
+                    if self.custom_from_bank:
+                                # Credit entry for new dimension
+                                gl_entry_for_bank_credit = frappe.get_doc({
+                                    'doctype': 'GL Entry',
+                                    'posting_date': self.posting_date,
+                                    'transaction_date': self.posting_date,
+                                    'account': self.custom_from_bank,
+                                    'against_voucher_type': 'Funds Transfer',
+                                    'against_voucher': self.name,
+                                    'cost_center': prev_cost_center,
+                                    'debit': 0.0,
+                                    'credit': new_amount,
+                                    'account_currency': 'PKR',
+                                    'debit_in_account_currency': 0.0,
+                                    'credit_in_account_currency': new_amount,
+                                    'against': new_account,
+                                    'voucher_type': 'Funds Transfer',
+                                    'voucher_no': self.name,
+                                    'remarks': 'Funds Transferred',
+                                    'is_opening': 'No',
+                                    'is_advance': 'No',
+                                    'fiscal_year': fiscal_year,
+                                    'company': new_company,
+                                    'transaction_currency': 'PKR',
+                                    'debit_in_transaction_currency': 0.0,
+                                    'credit_in_transaction_currency': new_amount,
+                                    'transaction_exchange_rate': 1,
+                                    'project': new_project,
+                                    'program': new_program,
+                                    'party_type': 'Donor',
+                                    'party': new_donor,
+                                    'subservice_area': new_subservice_area,
+                                    'donor': new_donor,
+                                    'inventory_flag': 'Purchased',
+                                    'product': new_product
+                                })
+
+                                gl_entry_for_bank_credit.insert(ignore_permissions=True)
+                                gl_entry_for_bank_credit.submit()
+                    if self.custom_to_bank:
+                                # Debit entry for previous dimension
+                                gl_entry_for_previous_bank = frappe.get_doc({
+                                    'doctype': 'GL Entry',
+                                    'posting_date': self.posting_date,
+                                    'transaction_date': self.posting_date,
+                                    'account': self.custom_to_bank,
+                                    'against_voucher_type': 'Funds Transfer',
+                                    'against_voucher': self.name,
+                                    'cost_center': new_cost_center,
+                                    'debit': new_amount,
+                                    'credit': 0.0,
+                                    'account_currency': 'PKR',
+                                    'debit_in_account_currency': new_amount,
+                                    'credit_in_account_currency': 0.0,
+                                    'against': prev_account,
+                                    'voucher_type': 'Funds Transfer',
+                                    'voucher_no': self.name,
+                                    'remarks': 'Funds Transferred',
+                                    'is_opening': 'No',
+                                    'is_advance': 'No',
+                                    'fiscal_year': fiscal_year,
+                                    'company': prev_company,
+                                    'transaction_currency': 'PKR',
+                                    'debit_in_transaction_currency': new_amount,
+                                    'credit_in_transaction_currency': 0.0,
+                                    'transaction_exchange_rate': 1,
+                                    'project': prev_project,
+                                    'program': prev_program,
+                                    'party_type': 'Donor',
+                                    'party': prev_donor,
+                                    'subservice_area': prev_subservice_area,
+                                    'donor': prev_donor,
+                                    'inventory_flag': 'Purchased',
+                                    'product': prev_product
+                                })
+
+                                gl_entry_for_previous_bank.insert(ignore_permissions=True)
+                                gl_entry_for_previous_bank.submit()
+
                     if prev_donor == new_donor:
                         if prev_amount >= new_amount:  # Sufficient balance for this transfer
                             # frappe.msgprint(f"Donor {prev_donor} has enough balance. Transferring {new_amount}.")
-
-                            # Credit entry for new dimension
-                            gl_entry_for_bank_credit = frappe.get_doc({
-                                'doctype': 'GL Entry',
-                                'posting_date': self.posting_date,
-                                'transaction_date': self.posting_date,
-                                'account': self.custom_from_bank,
-                                'against_voucher_type': 'Funds Transfer',
-                                'against_voucher': self.name,
-                                'cost_center': new_cost_center,
-                                'debit': 0.0,
-                                'credit': new_amount,
-                                'account_currency': 'PKR',
-                                'debit_in_account_currency': 0.0,
-                                'credit_in_account_currency': new_amount,
-                                'against': new_account,
-                                'voucher_type': 'Funds Transfer',
-                                'voucher_no': self.name,
-                                'remarks': 'Funds Transferred',
-                                'is_opening': 'No',
-                                'is_advance': 'No',
-                                'fiscal_year': '2024-2025',
-                                'company': new_company,
-                                'transaction_currency': 'PKR',
-                                'debit_in_transaction_currency': 0.0,
-                                'credit_in_transaction_currency': new_amount,
-                                'transaction_exchange_rate': 1,
-                                'project': new_project,
-                                'program': new_program,
-                                'party_type': 'Donor',
-                                'party': new_donor,
-                                'subservice_area': new_subservice_area,
-                                'donor': new_donor,
-                                'inventory_flag': 'Purchased',
-                                'product': new_product
-                            })
-
-                            gl_entry_for_bank_credit.insert(ignore_permissions=True)
-                            gl_entry_for_bank_credit.submit()
                             
+                                
                             # Debit entry for previous dimension
                             gl_entry_for_previous_dimension = frappe.get_doc({
                                 'doctype': 'GL Entry',
@@ -148,7 +195,7 @@ class FundsTransfer(Document):
                                 'remarks': 'Funds Transferred',
                                 'is_opening': 'No',
                                 'is_advance': 'No',
-                                'fiscal_year': '2024-2025',
+                                'fiscal_year': fiscal_year,
                                 'company': prev_company,
                                 'transaction_currency': 'PKR',
                                 'debit_in_transaction_currency': new_amount,
@@ -167,45 +214,7 @@ class FundsTransfer(Document):
                             gl_entry_for_previous_dimension.insert(ignore_permissions=True)
                             gl_entry_for_previous_dimension.submit()
 
-
-                            # Debit entry for previous dimension
-                            gl_entry_for_previous_bank = frappe.get_doc({
-                                'doctype': 'GL Entry',
-                                'posting_date': self.posting_date,
-                                'transaction_date': self.posting_date,
-                                'account': self.custom_to_bank,
-                                'against_voucher_type': 'Funds Transfer',
-                                'against_voucher': self.name,
-                                'cost_center': prev_cost_center,
-                                'debit': new_amount,
-                                'credit': 0.0,
-                                'account_currency': 'PKR',
-                                'debit_in_account_currency': new_amount,
-                                'credit_in_account_currency': 0.0,
-                                'against': prev_account,
-                                'voucher_type': 'Funds Transfer',
-                                'voucher_no': self.name,
-                                'remarks': 'Funds Transferred',
-                                'is_opening': 'No',
-                                'is_advance': 'No',
-                                'fiscal_year': '2024-2025',
-                                'company': prev_company,
-                                'transaction_currency': 'PKR',
-                                'debit_in_transaction_currency': new_amount,
-                                'credit_in_transaction_currency': 0.0,
-                                'transaction_exchange_rate': 1,
-                                'project': prev_project,
-                                'program': prev_program,
-                                'party_type': 'Donor',
-                                'party': prev_donor,
-                                'subservice_area': prev_subservice_area,
-                                'donor': prev_donor,
-                                'inventory_flag': 'Purchased',
-                                'product': prev_product
-                            })
-
-                            gl_entry_for_previous_bank.insert(ignore_permissions=True)
-                            gl_entry_for_previous_bank.submit()
+                            
 
                             # Credit entry for new dimension
                             gl_entry_for_new_dimension = frappe.get_doc({
@@ -227,7 +236,7 @@ class FundsTransfer(Document):
                                 'remarks': 'Funds Transferred',
                                 'is_opening': 'No',
                                 'is_advance': 'No',
-                                'fiscal_year': '2024-2025',
+                                'fiscal_year': fiscal_year,
                                 'company': new_company,
                                 'transaction_currency': 'PKR',
                                 'debit_in_transaction_currency': 0.0,
@@ -253,184 +262,7 @@ class FundsTransfer(Document):
                         else:
                             frappe.throw(f"Not enough amount to transfer for Donor {new_donor}")
 
-    
-
-
-           
-
-    
-
-    # def create_gl_entries_for_inter_funds_transfer(self):
-    #     if not self.funds_transfer_to:
-    #         frappe.throw("There is no information to transfer funds.")
-    #         return
-    #     donor_list_data = self.donor_list_for_purchase_receipt()
-    #     donor_list = donor_list_data['donor_list']
-    #     # frappe.msgprint(frappe.as_json("donor_list"))
-    #     # frappe.msgprint(frappe.as_json(donor_list))
-        
-    #     previous_dimensions = []
-    #     new_dimensions = []
-    #     total_balance = 0.0
-
-    #     # Extract donor IDs from funds_transfer_from
-    #     donor_ids_from = {p.ff_donor for p in self.funds_transfer_from if p.ff_donor}
-    #     # Extract donor IDs from funds_transfer_to
-    #     donor_ids_to = {n.ft_donor for n in self.funds_transfer_to if n.ft_donor}
-
-    #     # Check if any donor ID in funds_transfer_from is not in funds_transfer_to
-    #     missing_donor_ids = donor_ids_from - donor_ids_to
-    #     if missing_donor_ids:
-    #         missing_donors_message = ", ".join(missing_donor_ids)
-    #         frappe.throw(f"No details are provided for Donor(s): {missing_donors_message}")
-
-    #     if donor_list:
-    #         for d in donor_list:
-    #             prev_donor = d.get('donor')
-    #             prev_cost_center = d.get('cost_center')
-    #             prev_project = d.get('project')
-    #             prev_program = d.get('service_area')
-    #             prev_subservice_area = d.get('subservice_area')
-    #             prev_product = d.get('product')
-    #             prev_amount = float(d.get('balance', 0.0))
-    #             prev_account = d.get('account')
-    #             prev_company = d.get('company')
-
-    #             # Debugging messages
-    #             # frappe.msgprint(frappe.as_json("prev_amount"))
-    #             # frappe.msgprint(frappe.as_json(prev_amount))
-       
-            
-    #     #     if prev_program is None:
-    #     #         frappe.msgprint(f"Program for donor {prev_donor} is missing or not set.")
-    #     #     else:
-    #     #         frappe.msgprint(f"Program for donor {prev_donor} is {prev_program}.")
-    #     # else:
-    #     #     frappe.msgprint("Donor list is empty.")
-
-    #     new_dimensions_list = self.get_new_dimensions(donor_list)
-    #     for f in new_dimensions_list:
-    #         returned_fields = f.get('fields')
-
-    #         for new in returned_fields:
-    #             new_donor = new.get('donor')
-    #             new_cost_center = new.get('cost_center')
-    #             new_project = new.get('project')
-    #             new_program = new.get('service_area')
-    #             new_subservice_area = new.get('subservice_area')
-    #             new_product = new.get('product')
-    #             new_amount = float(new.get('amount', 0.0))
-    #             new_account = new.get('account')
-    #             new_company = new.get('company')
-    #             # frappe.msgprint(frappe.as_json("new_program"))
-    #             # frappe.msgprint(frappe.as_json(new_program))
-
-    #             if new_amount > 0:  
-    #                 # frappe.msgprint(frappe.as_json("new_amount > 0"))
-    #                 # frappe.msgprint(frappe.as_json(new_amount))
-                  
-    #                 if new_amount <= prev_amount:
-    #                     # frappe.msgprint(frappe.as_json("new_amount <= prev_amount:"))
-    #                     # frappe.msgprint(f"New amount {new_amount} is less than or equal to the previous amount {prev_amount}. Donation is allowed.")
-                        
-    #                     #Creating GL entry for previous dimension (debit)
-    #                     gl_entry_for_previous_dimension = frappe.get_doc({
-    #                         'doctype': 'GL Entry',
-    #                         'posting_date': self.posting_date,
-    #                         'transaction_date': self.posting_date,
-    #                         'account': prev_account,
-    #                         'against_voucher_type': 'Funds Transfer',
-    #                         'against_voucher': self.name,
-    #                         'cost_center': prev_cost_center,
-    #                         'debit': new_amount,
-    #                         'credit': 0.0,
-    #                         'account_currency': 'PKR',
-    #                         'debit_in_account_currency': new_amount,
-    #                         'credit_in_account_currency': 0.0,
-    #                         'against': prev_account,
-    #                         'voucher_type': 'Funds Transfer',
-    #                         'voucher_no': self.name,
-    #                         'remarks': 'Funds Transferred',
-    #                         'is_opening': 'No',
-    #                         'is_advance': 'No',
-    #                         'fiscal_year': '2024-2025',
-    #                         'company': prev_company,
-    #                         'transaction_currency': 'PKR',
-    #                         'debit_in_transaction_currency': new_amount,
-    #                         'credit_in_transaction_currency': 0.0,
-    #                         'transaction_exchange_rate': 1,
-    #                         'project': prev_project,
-    #                         'program': prev_program,
-    #                         'party_type': 'Donor',
-    #                         'party': prev_donor,
-    #                         'subservice_area': prev_subservice_area,
-    #                         'donor': prev_donor,
-    #                         'inventory_flag': 'Purchased',
-    #                         'product': prev_product
-    #                     })
-
-    #                     # frappe.msgprint(frappe.as_json(gl_entry_for_previous_dimension.as_dict()))
-
-    #                     gl_entry_for_previous_dimension.insert(ignore_permissions=True)
-    #                     gl_entry_for_previous_dimension.submit()
-                        
-
-    #                     #Creating GL entry for new dimension (credit)
-    #                     gl_entry_for_new_dimension = frappe.get_doc({
-    #                         'doctype': 'GL Entry',
-    #                         'posting_date': self.posting_date,
-    #                         'transaction_date': self.posting_date,
-    #                         'account': new_account,
-    #                         'against_voucher_type': 'Funds Transfer',
-    #                         'against_voucher': self.name,
-    #                         'cost_center': new_cost_center,
-    #                         'debit': 0.0,
-    #                         'credit': new_amount,
-    #                         'account_currency': 'PKR',
-    #                         'debit_in_account_currency': 0.0,
-    #                         'credit_in_account_currency': new_amount,
-    #                         'against': new_account,
-    #                         'voucher_type': 'Funds Transfer',
-    #                         'voucher_no': self.name,
-    #                         'remarks': 'Funds Transferred',
-    #                         'is_opening': 'No',
-    #                         'is_advance': 'No',
-    #                         'fiscal_year': '2024-2025',
-    #                         'company': new_company,
-    #                         'transaction_currency': 'PKR',
-    #                         'debit_in_transaction_currency': 0.0,
-    #                         'credit_in_transaction_currency': new_amount,
-    #                         'transaction_exchange_rate': 1,
-    #                         'project': new_project,
-    #                         'program': new_program,
-    #                         'party_type': 'Donor',
-    #                         'party': new_donor,
-    #                         'subservice_area': new_subservice_area,
-    #                         'donor': new_donor,
-    #                         'inventory_flag': 'Purchased',
-    #                         'product': new_product
-    #                     })
-
-    #                     # frappe.msgprint(frappe.as_json("new_program"))
-    #                     # frappe.msgprint(frappe.as_json(new_program))
-    #                     # frappe.msgprint(frappe.as_json(gl_entry_for_new_dimension.as_dict()))
-
-    #                     gl_entry_for_new_dimension.insert(ignore_permissions=True)
-    #                     gl_entry_for_new_dimension.submit()
-    #                     frappe.msgprint("GL Entries Created Successfully")
-    #                     break
-                        
-    #                 else:
-    #                     # Check if the donor exists in 'Funds Transfer From'
-    #                     donor_ids_from = {p.ff_donor for p in self.funds_transfer_from if p.ff_donor}
-                        
-    #                     if new_donor in donor_ids_from:
-    #                         frappe.throw(f"Not enough amount to Transfer for Donor {new_donor}")
-    #                     else:
-    #                         frappe.throw(f"Not enough amount to Transfer against Cost Center {prev_cost_center} and Bank Account {prev_account}")
-
-    #                     # frappe.throw(f"New amount {new_amount} is greater than the previous amount {prev_amount}. Not enough amount to donate.")
-                        
+                
 
     def donor_list_for_purchase_receipt(self):
         donor_list = []
@@ -510,6 +342,7 @@ class FundsTransfer(Document):
                     if entry_key not in unique_entries:
                         unique_entries.add(entry_key)
                         balance = entry['total_balance']
+                         
                         used_amount = 0
 
                         if docstatus == 1:
@@ -588,7 +421,7 @@ class FundsTransfer(Document):
 
 
 @frappe.whitelist()
-def donor_list_data(doc):
+def donor_list_data_funds_transfer(doc):
     try:
         doc = frappe.get_doc(json.loads(doc))
     except (json.JSONDecodeError, TypeError) as e:
@@ -676,7 +509,8 @@ def donor_list_data(doc):
                     used_amount = 0
 
                     # Check if the balance is 0
-                    if balance == 0:
+                    if balance == 0.0 and not doc.is_new() and docstatus == 0:
+                    # if balance <= 0:
                         if p.ff_donor:
                             frappe.msgprint(f"Insufficient balance for donor '{p.ff_donor}' with provided details.")
                         else: 

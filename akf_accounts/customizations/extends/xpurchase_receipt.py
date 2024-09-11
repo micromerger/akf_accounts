@@ -3,7 +3,9 @@
 
 import frappe
 import json
+from erpnext.accounts.utils import get_fiscal_year
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import PurchaseReceipt
+
 class XAssetInvenPurchase(PurchaseReceipt):
     def validate(self):
        
@@ -11,7 +13,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
         # frappe.msgprint('accounts')
     def on_submit(self):
         super().on_submit()
-        
+        self.make_gl_entries()
         self.update_stock_ledger_entry()
         messages = self.empty_message()
         # frappe.throw(f"{messages}")
@@ -22,20 +24,31 @@ class XAssetInvenPurchase(PurchaseReceipt):
         if self.custom_type_of_transaction in ("Asset Purchase Restricted", "Inventory Purchase Restricted" ):
             self.create_donor_gl_entries_from_purchase_receipt()
         elif self.custom_type_of_transaction == "Normal":
+            frappe.msgrpint("This one is normal")
             pass
         # self.create_asset_inven_purchase_gl_entries()
  
     def on_cancel(self):
         super().on_cancel()
         self.delete_all_gl_entries()
-
+    
         
     def delete_all_gl_entries(self):
         frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
+    def make_gl_entries(self):
+        pass
 
     def create_donor_gl_entries_from_purchase_receipt(self):
+
+         # Get the current fiscal year based on the posting date
+        fiscal_year = get_fiscal_year(self.posting_date, company=self.company)[0]
+        core_debit = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_asset_account")
+        core_credit = frappe.db.get_value("Company", {"name": self.company}, "custom_stock_received_not_billed")
+        donation_account = frappe.db.get_value("Company", {"name": self.company}, "custom_donation_account") 
         if self.custom_type_of_transaction == "Inventory Purchase Restricted":
             inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")
+          
+          
             last_donor_not_fully_used = None
             # frappe.msgprint(frappe.as_json("create_donor_gl_entries_from_purchase_receipt_aq"))
 
@@ -60,11 +73,88 @@ class XAssetInvenPurchase(PurchaseReceipt):
                     product = donor_entry.get('product')
                     amount = donor_entry.get('amount', 0.0)
 
+
+
+                    gl_entry_core_debit = frappe.get_doc({
+                            'doctype': 'GL Entry',
+                            'posting_date': self.posting_date,
+                            'transaction_date': self.posting_date,
+                            'account': core_debit,
+                            'against_voucher_type': 'Purchase Receipt',
+                            'against_voucher': self.name,
+                            'cost_center': cost_center,
+                            'debit': amount_to_use,
+                            'credit': 0.0,
+                            'account_currency': 'PKR',
+                            'debit_in_account_currency': amount_to_use,
+                            'credit_in_account_currency': 0.0,
+                            'against':core_debit,
+                            'voucher_type': 'Purchase Receipt',
+                            'voucher_no': self.name,
+                            'remarks': 'Donation for item',
+                            'is_opening': 'No',
+                            'is_advance': 'No',
+                            'fiscal_year': fiscal_year,
+                            'company': self.company,
+                            'transaction_currency': 'PKR',
+                            'debit_in_transaction_currency': amount_to_use,
+                            'credit_in_transaction_currency': 0.0,
+                            'transaction_exchange_rate': 1,
+                            'project': project,
+                            'program': program,
+                            'party_type': 'Donor',
+                            'party': donor,
+                            'subservice_area': subservice_area,
+                            'donor': donor,
+                            'inventory_flag': 'Purchased',
+                            'product': product
+                        })
+                    gl_entry_core_debit.insert(ignore_permissions=True)
+                    gl_entry_core_debit.submit()
+
+
+                    gl_entry_core_credit = frappe.get_doc({
+                            'doctype': 'GL Entry',
+                            'posting_date': self.posting_date,
+                            'transaction_date': self.posting_date,
+                            'account': core_credit,  
+                            'against_voucher_type': 'Purchase Receipt',
+                            'against_voucher': self.name,
+                            'cost_center': cost_center,
+                            'debit': 0.0,
+                            'credit': amount_to_use,
+                            'account_currency': 'PKR',
+                            'debit_in_account_currency': 0.0,
+                            'credit_in_account_currency': amount_to_use,
+                            'against': core_credit,
+                            'voucher_type': 'Purchase Receipt',
+                            'voucher_no': self.name,
+                            'remarks': 'Inventory fund for item',
+                            'is_opening': 'No',
+                            'is_advance': 'No',
+                            'fiscal_year': fiscal_year,
+                            'company': self.company,
+                            'transaction_currency': 'PKR',
+                            'debit_in_transaction_currency': 0.0,
+                            'credit_in_transaction_currency':amount_to_use,
+                            'transaction_exchange_rate': 1,
+                            'project': project,
+                            'program': program,
+                            'party_type': 'Donor',
+                            'party': donor,
+                            'subservice_area': subservice_area,
+                            'donor': donor,
+                            'inventory_flag': 'Purchased',
+                            'product': product
+                        })
+                    gl_entry_core_credit.insert(ignore_permissions=True)
+                    gl_entry_core_credit.submit()
+
                     gl_entry = frappe.get_doc({
                         'doctype': 'GL Entry',
                         'posting_date': self.posting_date,
                         'transaction_date': self.posting_date,
-                        'account': "Capital Stock - AKFP",
+                        'account': donation_account,
                         'against_voucher_type': 'Purchase Receipt',
                         'against_voucher': self.name,
                         'cost_center': cost_center,
@@ -73,13 +163,13 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'account_currency': 'PKR',
                         'debit_in_account_currency': amount,
                         'credit_in_account_currency': 0.0,
-                        'against': "Capital Stock - AKFP",
+                        'against': donation_account,
                         'voucher_type': 'Purchase Receipt',
                         'voucher_no': self.name,
                         'remarks': 'Donation for item',
                         'is_opening': 'No',
                         'is_advance': 'No',
-                        'fiscal_year': '2024-2025',
+                        'fiscal_year': fiscal_year,
                         'company': self.company,
                         'transaction_currency': 'PKR',
                         'debit_in_transaction_currency': amount,
@@ -111,13 +201,13 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'account_currency': 'PKR',
                         'debit_in_account_currency': 0.0,
                         'credit_in_account_currency': amount,
-                        'against': "Capital Stock - AKFP",
+                        'against': donation_account,
                         'voucher_type': 'Purchase Receipt',
                         'voucher_no': self.name,
                         'remarks': 'Inventory fund for item',
                         'is_opening': 'No',
                         'is_advance': 'No',
-                        'fiscal_year': '2024-2025',
+                        'fiscal_year': fiscal_year,
                         'company': self.company,
                         'transaction_currency': 'PKR',
                         'debit_in_transaction_currency': 0.0,
@@ -143,6 +233,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
 
             
             elif remaining_amount < 0:
+                # frappe.msgprint("remaining_amount < 0")
                 required_amount_for_item = required_total
                 last_donor_not_fully_used = None 
                 for donor_entry in donor_list:
@@ -158,11 +249,12 @@ class XAssetInvenPurchase(PurchaseReceipt):
                     if required_amount_for_item > 0:
                         amount_to_use = min(amount, required_amount_for_item)
 
-                        gl_entry_donation = frappe.get_doc({
+                       #core entries are sub-divded
+                        gl_entry_core_debit = frappe.get_doc({
                             'doctype': 'GL Entry',
                             'posting_date': self.posting_date,
                             'transaction_date': self.posting_date,
-                            'account': "Capital Stock - AKFP",
+                            'account': core_debit,
                             'against_voucher_type': 'Purchase Receipt',
                             'against_voucher': self.name,
                             'cost_center': cost_center,
@@ -171,13 +263,88 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'account_currency': 'PKR',
                             'debit_in_account_currency': amount_to_use,
                             'credit_in_account_currency': 0.0,
-                            'against': "Capital Stock - AKFP",
+                            'against':core_debit,
                             'voucher_type': 'Purchase Receipt',
                             'voucher_no': self.name,
                             'remarks': 'Donation for item',
                             'is_opening': 'No',
                             'is_advance': 'No',
-                            'fiscal_year': '2024-2025',
+                            'fiscal_year': fiscal_year,
+                            'company': self.company,
+                            'transaction_currency': 'PKR',
+                            'debit_in_transaction_currency': amount_to_use,
+                            'credit_in_transaction_currency': 0.0,
+                            'transaction_exchange_rate': 1,
+                            'project': project,
+                            'program': program,
+                            'party_type': 'Donor',
+                            'party': donor,
+                            'subservice_area': subservice_area,
+                            'donor': donor,
+                            'inventory_flag': 'Purchased',
+                            'product': product
+                        })
+                        gl_entry_core_debit.insert(ignore_permissions=True)
+                        gl_entry_core_debit.submit()
+
+
+                        gl_entry_core_credit = frappe.get_doc({
+                            'doctype': 'GL Entry',
+                            'posting_date': self.posting_date,
+                            'transaction_date': self.posting_date,
+                            'account': core_credit,  
+                            'against_voucher_type': 'Purchase Receipt',
+                            'against_voucher': self.name,
+                            'cost_center': cost_center,
+                            'debit': 0.0,
+                            'credit': amount_to_use,
+                            'account_currency': 'PKR',
+                            'debit_in_account_currency': 0.0,
+                            'credit_in_account_currency': amount_to_use,
+                            'against': core_credit,
+                            'voucher_type': 'Purchase Receipt',
+                            'voucher_no': self.name,
+                            'remarks': 'Inventory fund for item',
+                            'is_opening': 'No',
+                            'is_advance': 'No',
+                            'fiscal_year': fiscal_year,
+                            'company': self.company,
+                            'transaction_currency': 'PKR',
+                            'debit_in_transaction_currency': 0.0,
+                            'credit_in_transaction_currency':amount_to_use,
+                            'transaction_exchange_rate': 1,
+                            'project': project,
+                            'program': program,
+                            'party_type': 'Donor',
+                            'party': donor,
+                            'subservice_area': subservice_area,
+                            'donor': donor,
+                            'inventory_flag': 'Purchased',
+                            'product': product
+                        })
+                        gl_entry_core_credit.insert(ignore_permissions=True)
+                        gl_entry_core_credit.submit()
+
+                        gl_entry_donation = frappe.get_doc({
+                            'doctype': 'GL Entry',
+                            'posting_date': self.posting_date,
+                            'transaction_date': self.posting_date,
+                            'account': donation_account,
+                            'against_voucher_type': 'Purchase Receipt',
+                            'against_voucher': self.name,
+                            'cost_center': cost_center,
+                            'debit': amount_to_use,
+                            'credit': 0.0,
+                            'account_currency': 'PKR',
+                            'debit_in_account_currency': amount_to_use,
+                            'credit_in_account_currency': 0.0,
+                            'against': donation_account,
+                            'voucher_type': 'Purchase Receipt',
+                            'voucher_no': self.name,
+                            'remarks': 'Donation for item',
+                            'is_opening': 'No',
+                            'is_advance': 'No',
+                            'fiscal_year': fiscal_year,
                             'company': self.company,
                             'transaction_currency': 'PKR',
                             'debit_in_transaction_currency': amount_to_use,
@@ -194,6 +361,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         })
                         gl_entry_donation.insert(ignore_permissions=True)
                         gl_entry_donation.submit()
+
 
                         gl_entry_inventory_fund = frappe.get_doc({
                             'doctype': 'GL Entry',
@@ -214,7 +382,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'remarks': 'Inventory fund for item',
                             'is_opening': 'No',
                             'is_advance': 'No',
-                            'fiscal_year': '2024-2025',
+                            'fiscal_year': fiscal_year,
                             'company': self.company,
                             'transaction_currency': 'PKR',
                             'debit_in_transaction_currency': 0.0,
@@ -245,7 +413,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
         elif self.custom_type_of_transaction == "Asset Purchase Restricted":
             asset_debit_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_fund")
             asset_credit_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_designated_asset_fund_account")
-        
+           
             last_donor_not_fully_used = None
             # frappe.msgprint(frappe.as_json("create_donor_gl_entries_from_purchase_receipt_aq"))
 
@@ -261,6 +429,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
             remaining_amount = required_total - total_amount
 
             if remaining_amount == 0:
+                frappe.msgprint(frappe.as_json("Asset remaining_amount == 0:"))
                 for donor_entry in donor_list:
                     donor = donor_entry.get('donor')
                     cost_center = donor_entry.get('cost_center')
@@ -270,11 +439,12 @@ class XAssetInvenPurchase(PurchaseReceipt):
                     product = donor_entry.get('product')
                     amount = donor_entry.get('amount', 0.0)
 
-                    gl_entry = frappe.get_doc({
+
+                    gl_entry_core_debit = frappe.get_doc({
                         'doctype': 'GL Entry',
                         'posting_date': self.posting_date,
                         'transaction_date': self.posting_date,
-                        'account': "Capital Stock - AKFP",
+                        'account': core_debit,
                         'against_voucher_type': 'Purchase Receipt',
                         'against_voucher': self.name,
                         'cost_center': cost_center,
@@ -283,13 +453,88 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'account_currency': 'PKR',
                         'debit_in_account_currency': amount,
                         'credit_in_account_currency': 0.0,
-                        'against': "Capital Stock - AKFP",
+                        'against':core_debit,
                         'voucher_type': 'Purchase Receipt',
                         'voucher_no': self.name,
                         'remarks': 'Donation for item',
                         'is_opening': 'No',
                         'is_advance': 'No',
-                        'fiscal_year': '2024-2025',
+                        'fiscal_year': fiscal_year,
+                        'company': self.company,
+                        'transaction_currency': 'PKR',
+                        'debit_in_transaction_currency': amount,
+                        'credit_in_transaction_currency': 0.0,
+                        'transaction_exchange_rate': 1,
+                        'project': project,
+                        'program': program,
+                        'party_type': 'Donor',
+                        'party': donor,
+                        'subservice_area': subservice_area,
+                        'donor': donor,
+                        'inventory_flag': 'Purchased',
+                        'product': product
+                    })
+
+                    gl_entry_core_debit.insert(ignore_permissions=True)
+                    gl_entry_core_debit.submit()
+
+                    gl_entry_core_credit = frappe.get_doc({
+                        'doctype': 'GL Entry',
+                        'posting_date': self.posting_date,
+                        'transaction_date': self.posting_date,
+                        'account': core_credit,  
+                        'against_voucher_type': 'Purchase Receipt',
+                        'against_voucher': self.name,
+                        'cost_center': cost_center,
+                        'debit': 0.0,
+                        'credit': amount,
+                        'account_currency': 'PKR',
+                        'debit_in_account_currency': 0.0,
+                        'credit_in_account_currency': amount,
+                        'against': core_credit,
+                        'voucher_type': 'Purchase Receipt',
+                        'voucher_no': self.name,
+                        'remarks': 'Inventory fund for item',
+                        'is_opening': 'No',
+                        'is_advance': 'No',
+                        'fiscal_year': fiscal_year,
+                        'company': self.company,
+                        'transaction_currency': 'PKR',
+                        'debit_in_transaction_currency': 0.0,
+                        'credit_in_transaction_currency':amount,
+                        'transaction_exchange_rate': 1,
+                        'project': project,
+                        'program': program,
+                        'party_type': 'Donor',
+                        'party': donor,
+                        'subservice_area': subservice_area,
+                        'donor': donor,
+                        'inventory_flag': 'Purchased',
+                        'product': product
+                    })
+                    gl_entry_core_credit.insert(ignore_permissions=True)
+                    gl_entry_core_credit.submit()
+
+                    gl_entry = frappe.get_doc({
+                        'doctype': 'GL Entry',
+                        'posting_date': self.posting_date,
+                        'transaction_date': self.posting_date,
+                        'account': donation_account,
+                        'against_voucher_type': 'Purchase Receipt',
+                        'against_voucher': self.name,
+                        'cost_center': cost_center,
+                        'debit': amount,
+                        'credit': 0.0,
+                        'account_currency': 'PKR',
+                        'debit_in_account_currency': amount,
+                        'credit_in_account_currency': 0.0,
+                        'against': donation_account,
+                        'voucher_type': 'Purchase Receipt',
+                        'voucher_no': self.name,
+                        'remarks': 'Donation for item',
+                        'is_opening': 'No',
+                        'is_advance': 'No',
+                        'fiscal_year': fiscal_year,
                         'company': self.company,
                         'transaction_currency': 'PKR',
                         'debit_in_transaction_currency': amount,
@@ -327,7 +572,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'remarks': 'Inventory fund for item',
                         'is_opening': 'No',
                         'is_advance': 'No',
-                        'fiscal_year': '2024-2025',
+                        'fiscal_year': fiscal_year,
                         'company': self.company,
                         'transaction_currency': 'PKR',
                         'debit_in_transaction_currency': 0.0,
@@ -353,6 +598,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
 
             
             elif remaining_amount < 0:
+                # frappe.msgprint(frappe.as_json("Asset remaining_amount < 0:"))
                 required_amount_for_item = required_total
                 last_donor_not_fully_used = None 
                 for donor_entry in donor_list:
@@ -368,11 +614,91 @@ class XAssetInvenPurchase(PurchaseReceipt):
                     if required_amount_for_item > 0:
                         amount_to_use = min(amount, required_amount_for_item)
 
+                       
+
+                        # Create Core Debit Entry
+                        gl_entry_core_debit = frappe.get_doc({
+                            'doctype': 'GL Entry',
+                            'posting_date': self.posting_date,
+                            'transaction_date': self.posting_date,
+                            'account': core_debit,
+                            'against_voucher_type': 'Purchase Receipt',
+                            'against_voucher': self.name,
+                            'cost_center': cost_center,
+                            'debit': amount_to_use,
+                            'credit': 0.0,
+                            'account_currency': 'PKR',
+                            'debit_in_account_currency': amount_to_use,
+                            'credit_in_account_currency': 0.0,
+                            'against': core_debit,
+                            'voucher_type': 'Purchase Receipt',
+                            'voucher_no': self.name,
+                            'remarks': 'Donation for item',
+                            'is_opening': 'No',
+                            'is_advance': 'No',
+                            'fiscal_year': fiscal_year,
+                            'company': self.company,
+                            'transaction_currency': 'PKR',
+                            'debit_in_transaction_currency': amount_to_use,
+                            'credit_in_transaction_currency': 0.0,
+                            'transaction_exchange_rate': 1,
+                            'project': project,
+                            'program': program,
+                            'party_type': 'Donor',
+                            'party': donor,
+                            'subservice_area': subservice_area,
+                            'donor': donor,
+                            'inventory_flag': 'Purchased',
+                            'product': product
+                        })
+                        gl_entry_core_debit.insert(ignore_permissions=True)
+                        gl_entry_core_debit.submit()
+
+                        # Create Core Credit Entry
+                        gl_entry_core_credit = frappe.get_doc({
+                            'doctype': 'GL Entry',
+                            'posting_date': self.posting_date,
+                            'transaction_date': self.posting_date,
+                            'account': core_credit,
+                            'against_voucher_type': 'Purchase Receipt',
+                            'against_voucher': self.name,
+                            'cost_center': cost_center,
+                            'debit': 0.0,
+                            'credit': amount_to_use,
+                            'account_currency': 'PKR',
+                            'debit_in_account_currency': 0.0,
+                            'credit_in_account_currency': amount_to_use,
+                            'against': core_credit,
+                            'voucher_type': 'Purchase Receipt',
+                            'voucher_no': self.name,
+                            'remarks': 'Inventory fund for item',
+                            'is_opening': 'No',
+                            'is_advance': 'No',
+                            'fiscal_year': fiscal_year,
+                            'company': self.company,
+                            'transaction_currency': 'PKR',
+                            'debit_in_transaction_currency': 0.0,
+                            'credit_in_transaction_currency': amount_to_use,
+                            'transaction_exchange_rate': 1,
+                            'project': project,
+                            'program': program,
+                            'party_type': 'Donor',
+                            'party': donor,
+                            'subservice_area': subservice_area,
+                            'donor': donor,
+                            'inventory_flag': 'Purchased',
+                            'product': product
+                        })
+                        gl_entry_core_credit.insert(ignore_permissions=True)
+                        gl_entry_core_credit.submit()
+
+
+                         # Create GL Entry for Donation
                         gl_entry_donation = frappe.get_doc({
                             'doctype': 'GL Entry',
                             'posting_date': self.posting_date,
                             'transaction_date': self.posting_date,
-                            'account': "Capital Stock - AKFP",
+                            'account': donation_account,
                             'against_voucher_type': 'Purchase Receipt',
                             'against_voucher': self.name,
                             'cost_center': cost_center,
@@ -387,7 +713,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'remarks': 'Donation for item',
                             'is_opening': 'No',
                             'is_advance': 'No',
-                            'fiscal_year': '2024-2025',
+                            'fiscal_year': fiscal_year,
                             'company': self.company,
                             'transaction_currency': 'PKR',
                             'debit_in_transaction_currency': amount_to_use,
@@ -405,11 +731,12 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         gl_entry_donation.insert(ignore_permissions=True)
                         gl_entry_donation.submit()
 
+                        # Create Inventory Fund Entry
                         gl_entry_inventory_fund = frappe.get_doc({
                             'doctype': 'GL Entry',
                             'posting_date': self.posting_date,
                             'transaction_date': self.posting_date,
-                            'account': asset_credit_account,  
+                            'account': asset_credit_account,
                             'against_voucher_type': 'Purchase Receipt',
                             'against_voucher': self.name,
                             'cost_center': cost_center,
@@ -424,11 +751,11 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'remarks': 'Inventory fund for item',
                             'is_opening': 'No',
                             'is_advance': 'No',
-                            'fiscal_year': '2024-2025',
+                            'fiscal_year': fiscal_year,
                             'company': self.company,
                             'transaction_currency': 'PKR',
                             'debit_in_transaction_currency': 0.0,
-                            'credit_in_transaction_currency':amount_to_use,
+                            'credit_in_transaction_currency': amount_to_use,
                             'transaction_exchange_rate': 1,
                             'project': project,
                             'program': program,
@@ -451,7 +778,8 @@ class XAssetInvenPurchase(PurchaseReceipt):
                 if last_donor_not_fully_used:
                     frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
-                frappe.msgprint("GL Entries created successfully.") 
+                frappe.msgprint("GL Entries created successfully.")
+                
 
     def update_stock_ledger_entry(self):
         # frappe.msgprint(frappe.as_json("update_stock_ledger_entry working!"))
@@ -718,7 +1046,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
 
 
 @frappe.whitelist()
-def donor_list_data(doc):
+def donor_list_data_purchsae_receipt(doc):
     try:
         doc = frappe.get_doc(json.loads(doc))
     except (json.JSONDecodeError, TypeError) as e:
@@ -773,7 +1101,7 @@ def donor_list_data(doc):
 
                 match_found = True
                 balance = entry['total_balance']
-
+                #for handling 0 after submit
                 if balance == 0.0 and not doc.is_new() and docstatus == 0:
                     insufficient_balance_msg += f"{entry.get('donor')}\n"
 

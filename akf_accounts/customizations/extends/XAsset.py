@@ -199,13 +199,14 @@ def total_accumulated_depreciation(asset_name, gross_purchase_amount):
         SELECT ds.accumulated_depreciation_amount
         FROM `tabDepreciation Schedule` ds
         JOIN `tabAsset Depreciation Schedule` ads ON ds.parent = ads.name
-        WHERE ads.asset = %s ds.journal_entry IS NOT NULL
+        WHERE ads.asset = %s AND ds.journal_entry IS NOT NULL
         ORDER BY ds.schedule_date ASC
         LIMIT 1;
     """
     result = frappe.db.sql(query, (asset_name,), as_dict=True)
-    
+    frappe.msgprint(frappe.as_json(result))
     depreciated_amount = result[0].get('accumulated_depreciation_amount', 0) if result else 0
+    frappe.msgprint(frappe.as_json(depreciated_amount))
     
     try:
         gross_purchase_amount = float(gross_purchase_amount)

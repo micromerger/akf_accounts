@@ -37,7 +37,12 @@ frappe.ui.form.on("Funds Transfer", {
         
         
     },
-    
+    on_submit: function(frm){
+        // if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase"].includes(frm.doc.custom_type_of_transaction)) {
+            get_html(frm);
+        // }
+        
+        },
 
     onload: function(frm) {
         $("#table_render").empty();
@@ -483,12 +488,6 @@ function set_query_subservice_area_transfer_from(frm){
 
 
 
-    
-    
-
-
-
-
 function set_query_product_transfer_from(frm) {
     frm.fields_dict['funds_transfer_from'].grid.get_field('ff_product').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
@@ -620,7 +619,7 @@ function get_html(frm) {
     // $("#table_render").empty();
 
     frappe.call({
-        method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.donor_list_data",
+        method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.donor_list_data_funds_transfer",
         args: {
             doc: frm.doc,
         },
