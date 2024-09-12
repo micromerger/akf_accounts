@@ -24,7 +24,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
         if self.custom_type_of_transaction in ("Asset Purchase Restricted", "Inventory Purchase Restricted" ):
             self.create_donor_gl_entries_from_purchase_receipt()
         elif self.custom_type_of_transaction == "Normal":
-            frappe.msgrpint("This one is normal")
+            # frappe.msgrpint("This one is normal")
             pass
         # self.create_asset_inven_purchase_gl_entries()
  

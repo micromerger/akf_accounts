@@ -9,7 +9,8 @@ frappe.ui.form.on('Asset', {
         }, __("View"));
 
     }
-        if(frm.doc.purchase_recipt)
+        if(frm.doc.purchase_receipt){
+            console.log("Insideeee total_accumulated_depreciation")
         frm.call({
             method: 'akf_accounts.customizations.extends.XAsset.total_accumulated_depreciation',
             args: {
@@ -22,7 +23,7 @@ frappe.ui.form.on('Asset', {
             }
         });
 
-        
+    }
     },
     custom_source_of_asset_acquistion: function(frm) {
 		if(frm.doc.custom_source_of_asset_acquistion == 'In Kind'){

@@ -204,59 +204,30 @@ def total_accumulated_depreciation(asset_name, gross_purchase_amount):
         LIMIT 1;
     """
     result = frappe.db.sql(query, (asset_name,), as_dict=True)
-    frappe.msgprint(frappe.as_json(result))
+    # frappe.msgprint(f"Query Result: {result}")
+
     depreciated_amount = result[0].get('accumulated_depreciation_amount', 0) if result else 0
-    frappe.msgprint(frappe.as_json(depreciated_amount))
+    # frappe.msgprint(f"Depreciated Amount: {depreciated_amount}")
+
     
     try:
         gross_purchase_amount = float(gross_purchase_amount)
     except ValueError:
         frappe.throw("Invalid gross purchase amount")
 
-    current_asset_worth = gross_purchase_amount - depreciated_amount
+    # current_asset_worth = gross_purchase_amount - depreciated_amount
+    # frappe.msgprint(f"gross_purchase_amount: {gross_purchase_amount}")
+    # frappe.msgprint(f"current_asset_worth: {current_asset_worth}")
 
     frappe.db.sql("""
         UPDATE `tabAsset`
         SET custom_current_asset_worth = %s
         WHERE name = %s
-    """, (current_asset_worth, asset_name))
+    """, (depreciated_amount, asset_name))
     
     return True
 
-# @frappe.whitelist()
-# def total_accumulated_depreciation_js(asset_name):
-#     query = """
-#         SELECT ds.accumulated_depreciation_amount
-#         FROM `tabDepreciation Schedule` ds
-#         JOIN `tabAsset Depreciation Schedule` ads ON ds.parent = ads.name
-#         WHERE ads.asset = %s 
-#         ORDER BY ds.schedule_date asc
-#         LIMIT 1;
-#     """
-#     result = frappe.db.sql(query, (asset_name,), as_dict=True)
-#     depreciated_amount = result[0].get('accumulated_depreciation_amount', 0) if result else 0
-#     # frappe.db.set_value('Asset', asset_name, 'custom_current_asset_worth', depreciated_amount)
-#     frappe.db.sql(f""" update `tabAsset`
-#                 set  custom_current_asset_worth = '{depreciated_amount}'
-#                 where name = '{asset_name}' """)
-#     return True
 
-# @frappe.whitelist()
-# def total_accumulated_depreciation(name):
-#     query = """
-#         SELECT ds.accumulated_depreciation_amount
-#         FROM `tabDepreciation Schedule` ds
-#         JOIN `tabAsset Depreciation Schedule` ads ON ds.parent = ads.name
-#         WHERE ads.asset = %s AND ds.journal_entry IS NOT NULL
-#         ORDER BY ds.schedule_date DESC
-#         LIMIT 1;
-#     """
-    
-#     result = frappe.db.sql(query, (name,), as_dict=True)
-#     # frappe.msgprint(f"Query Result: {result}")
-#     if result:
-#         return result[0]['accumulated_depreciation_amount']
-#     return None
 @frappe.whitelist()
 def post_depreciation_entries_extended(date=None):
 	# Return if automatic booking of asset depreciation is disabled
@@ -267,7 +238,7 @@ def post_depreciation_entries_extended(date=None):
 	
 	if not date:
 		date = today()
-		# date = "2024-09-10"
+		# date = "2024-09-12"
 		# print(date)
 
 	failed_asset_names = []
@@ -309,8 +280,8 @@ def post_depreciation_entries_extended(date=None):
 					
 				}
 			)
-			# print("credit_and_debit_accounts_for_asset_category_and_company")
-			# print(credit_and_debit_accounts_for_asset_category_and_company)
+			print("credit_and_debit_accounts_for_asset_category_and_company")
+			print(credit_and_debit_accounts_for_asset_category_and_company)
 			
 		try:
 			make_depreciation_entry_extended(
@@ -377,7 +348,7 @@ def make_depreciation_entry_extended(
 
     if not date:
         date = today()
-    #    date = "2024-09-10"
+        # date = "2024-09-12"
 
     asset_depr_schedule_doc = frappe.get_doc("Asset Depreciation Schedule", asset_depr_schedule_name)
     asset = frappe.get_doc("Asset", asset_depr_schedule_doc.asset)

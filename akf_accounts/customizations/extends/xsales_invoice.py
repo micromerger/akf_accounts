@@ -12,18 +12,24 @@ class XSalesInvoice(SalesInvoice):
                 frappe.msgprint("There is no asset")
                 self.validate_qty()
             else:
-                frappe.msgprint("Validate Else")
+                # frappe.msgprint("Validate Else")
+                pass
                 
 
     def on_submit(self):
         super().on_submit()
         for i in self.items:
             if i.asset:
-                self.create_asset_gl_entries_for_asset_purchase()
+                # frappe.msgprint("If On Submit")
+                # pass
+                # self.create_asset_gl_entries_for_asset_purchase()
+                self.make_gl_entries_mine()
             else:
+                # frappe.msgprint("Else On Submit")
                 # pass
                 self.validate_qty()
-                self.make_gl_entries()
+                # frappe.msgprint("Else On Submit")
+                # self.make_gl_entries_mine()
                 self.gl_entries_inventory_purchase_disposal_sale_gain()
 
                 
@@ -258,8 +264,156 @@ class XSalesInvoice(SalesInvoice):
                         f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
                     )
 
-    def make_gl_entries(self):
-        pass
+    def make_gl_entries_mine(self):
+        fiscal_year = get_fiscal_year(self.posting_date, company=self.company)[0]
+        unrestricted_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_unrestricted_fund_account")
+        designated_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_designated_asset_fund_account")
+
+        # Helper function to avoid repeating GL entry logic
+        def create_gl_entry(account, debit, credit, remarks, cost_center):
+            gl_entry = frappe.get_doc({
+                'doctype': 'GL Entry',
+                'posting_date': self.posting_date,
+                'transaction_date': self.posting_date,
+                'account': account,
+                'against_voucher_type': 'Sales Invoice',
+                'against_voucher': self.name,
+                'cost_center': cost_center,
+                'debit': debit,
+                'credit': credit,
+                'account_currency': 'PKR',
+                'debit_in_account_currency': debit,
+                'credit_in_account_currency': credit,
+                'against': "Sales Invoice",
+                'voucher_type': 'Sales Invoice',
+                'voucher_no': self.name,
+                'remarks': remarks,
+                'is_opening': 'No',
+                'is_advance': 'No',
+                'fiscal_year': fiscal_year,
+                'company': self.company,
+                'transaction_currency': 'PKR',
+                'debit_in_transaction_currency': debit,
+                'credit_in_transaction_currency': credit,
+                'transaction_exchange_rate': 1,
+            })
+            gl_entry.insert(ignore_permissions=True)
+            gl_entry.submit()
+        
+
+        def create_gl_entry_accounts_receiveabe(account, debit, credit, remarks, cost_center):
+            gl_entry = frappe.get_doc({
+                'doctype': 'GL Entry',
+                'posting_date': self.posting_date,
+                'transaction_date': self.posting_date,
+                'account': account,
+                'against_voucher_type': 'Sales Invoice',
+                'against_voucher': self.name,
+                'cost_center': cost_center,
+                'debit': debit,
+                'credit': credit,
+                'account_currency': 'PKR',
+                'debit_in_account_currency': debit,
+                'credit_in_account_currency': credit,
+                'against': "Sales Invoice",
+                'voucher_type': 'Sales Invoice',
+                'voucher_no': self.name,
+                'remarks': remarks,
+                'is_opening': 'No',
+                'is_advance': 'No',
+                'fiscal_year': fiscal_year,
+                'company': self.company,
+                'transaction_currency': 'PKR',
+                'debit_in_transaction_currency': debit,
+                'credit_in_transaction_currency': credit,
+                'transaction_exchange_rate': 1,
+                'party_type': 'Customer',  
+                'party': self.customer,
+            })
+            gl_entry.insert(ignore_permissions=True)
+            gl_entry.submit()
+
+        for i in self.items:
+            actual_price_asset = frappe.db.sql("""
+                SELECT 
+                    gross_purchase_amount AS purchasing_cost,
+                    CASE 
+                        WHEN calculate_depreciation = 0 THEN 0
+                        WHEN calculate_depreciation = 1 AND IFNULL(custom_current_asset_worth, 0) != 0 THEN custom_current_asset_worth
+                        ELSE 0
+                    END AS depreciation_charged
+                FROM `tabAsset`
+                WHERE name = %s
+            """, (i.asset,), as_dict=True)
+
+            if actual_price_asset:
+                asset_purchase = float(actual_price_asset[0]['purchasing_cost'])
+                depreciation_charged = float(actual_price_asset[0]['depreciation_charged'])
+                
+                current_worth_of_asset = asset_purchase - depreciation_charged
+                
+            else:
+                asset_purchase = 0.0
+                current_worth_of_asset = 0.0
+            
+            # frappe.msgprint(frappe.as_json("asset_purchase"))
+            # frappe.msgprint(frappe.as_json(asset_purchase))
+
+            # frappe.msgprint(frappe.as_json("depreciation_charged"))
+            # frappe.msgprint(frappe.as_json(depreciation_charged))
+
+
+            # frappe.msgprint(frappe.as_json("current_worth_of_asset"))
+            # frappe.msgprint(frappe.as_json(current_worth_of_asset))
+
+            
+            if float(i.rate) > current_worth_of_asset:
+                gain = float(i.rate) - current_worth_of_asset
+                # frappe.msgprint(f"Gain Entry: Rate: {i.rate}, Gain: {gain}")
+
+                # Create the gain GL entries
+                # create_gl_entry_accounts_receiveabe(accounts_receivable, i.rate, 0, 'Sold Item', i.cost_center)
+                # create_gl_entry(custom_default_asset_account, 0, asset_purchase, 'Sold Item', i.cost_center)
+                # create_gl_entry(gain_account, 0, gain, 'Gain on sale', i.cost_center)
+                create_gl_entry(designated_fund_account, current_worth_of_asset, 0, 'Sold Item', i.cost_center)
+                create_gl_entry(unrestricted_fund_account, 0, current_worth_of_asset, 'Sold Item', i.cost_center)
+                # if depreciation_charged != 0.0:
+                #     # frappe.msgprint("Gain Depreciation is zero")
+                #     create_gl_entry(accumulated_depreciation_account, depreciation_charged,0,  'Sold Item', i.cost_center)
+                frappe.msgprint("GL Entries created successfully")
+
+            elif float(i.rate) < current_worth_of_asset:
+                loss = current_worth_of_asset - float(i.rate)
+                # frappe.msgprint(f"Loss Entry: Rate: {i.rate}, Loss: {loss}")
+                # frappe.msgprint(f"Loss Entry: Rate: {i.rate}, Loss: {loss}")
+
+                # create_gl_entry_accounts_receiveabe(accounts_receivable, i.rate, 0, 'Sold Item', i.cost_center)
+                # create_gl_entry(custom_default_asset_account, 0, asset_purchase, 'Sold Item', i.cost_center)
+                # create_gl_entry_accounts_receiveabe(loss_account, loss, 0, 'Loss on sale', i.cost_center)
+                create_gl_entry(designated_fund_account, current_worth_of_asset, 0, 'Sold Item', i.cost_center)
+                create_gl_entry(unrestricted_fund_account, 0, current_worth_of_asset, 'Sold Item', i.cost_center)
+                if depreciation_charged != 0.0:
+                    # frappe.msgprint("Loss Depreciation is zero")
+                    create_gl_entry_accounts_receiveabe(accumulated_depreciation_account, depreciation_charged, 0, 'Sold Item', i.cost_center)
+                frappe.msgprint("GL Entries created successfully")
+            else: 
+                # frappe.msgprint(f"No Gain/Loss")
+                # frappe.msgprint("depreciation_charged")
+                # create_gl_entry_accounts_receiveabe(accounts_receivable, i.rate, 0, 'Sold Item', i.cost_center)
+                # create_gl_entry(custom_default_asset_account, 0, asset_purchase, 'Sold Item', i.cost_center)
+                create_gl_entry(designated_fund_account, i.rate, 0, 'Sold Item', i.cost_center)
+                create_gl_entry(unrestricted_fund_account, 0, i.rate, 'Sold Item', i.cost_center)
+                # frappe.msgprint(frappe.as_json(depreciation_charged))
+                # if depreciation_charged != 0.0:
+                    # frappe.msgprint("inside depreciation_charged")
+
+                    # create_gl_entry_accounts_receiveabe(accounts_receivable, i.rate, 0, 'Sold Item', i.cost_center)
+                    # create_gl_entry_accounts_receiveabe(accumulated_depreciation_account, depreciation_charged, 0, 'Sold Item', i.cost_center)
+                    # create_gl_entry_accounts_receiveabe(accumulated_depreciation_account, depreciation_charged, 0, 'Sold Item', i.cost_center)
+                frappe.msgprint("GL Entries created successfully")
+
+
+        
     def gl_entries_inventory_purchase_disposal_sale_gain(self):
         fiscal_year = get_fiscal_year(self.posting_date, company=self.company)[0]
         inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")

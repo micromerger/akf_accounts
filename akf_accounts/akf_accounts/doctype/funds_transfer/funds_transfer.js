@@ -25,9 +25,9 @@ frappe.ui.form.on("Funds Transfer", {
         console.log(!frm.is_new());
         console.log(!frm.doc.__islocal);
 
-        if (!frm.is_new() && !frm.doc.__islocal) {
-            get_html(frm);
-        }
+        // if (!frm.is_new() && !frm.doc.__islocal) {
+        //     get_html(frm);
+        // }
 
         if (frm.doc.docstatus === 1) {  
             set_custom_btns(frm);
@@ -150,6 +150,10 @@ function update_ft_bank_account_in_children(frm) {
 // });
 
 frappe.ui.form.on("Funds Transfer From", {
+    ff_donor: function(frm, cdt, cdn) {
+        // Trigger the get_html function whenever ff_donor is updated
+        get_html(frm);
+    },
     funds_transfer_from_add: function(frm, cdt, cdn) {
         const cost_center = frm.doc.custom_cost_center; 
         const bank_account = frm.doc.custom_from_bank_account;

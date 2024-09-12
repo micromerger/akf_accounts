@@ -912,7 +912,7 @@
    "name": "Asset-custom_source_of_asset_acquistion",
    "no_copy": 0,
    "non_negative": 0,
-   "options": "\nNormal\nDonation\nIn-Kind",
+   "options": "\nNormal\nDonation\nIn Kind",
    "owner": "Administrator",
    "permlevel": 0,
    "precision": "",
