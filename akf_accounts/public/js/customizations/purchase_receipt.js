@@ -31,6 +31,15 @@ frappe.ui.form.on('Purchase Receipt', {
 
 });
 
+
+frappe.ui.form.on("Program Details", {
+    pd_donor: function(frm, cdt, cdn) {
+        // Trigger the get_html function whenever ff_donor is updated
+        get_html(frm);
+    }});
+
+
+    
 function set_query_for_item_code(frm) {
     frm.fields_dict['items'].grid.get_field('item_code').get_query = function(doc, cdt, cdn) {
         var asset_filters = {

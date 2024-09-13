@@ -2,7 +2,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate
 from erpnext.assets.doctype.asset.asset import Asset
-# /home/frappe/akf-dev/apps/erpnext/erpnext/assets/doctype/asset/depreciation.py
+
 from frappe.utils import (
 	cint,
 	today,

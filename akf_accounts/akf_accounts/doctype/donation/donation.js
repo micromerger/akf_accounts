@@ -17,6 +17,7 @@ frappe.ui.form.on('Donation', {
         set_query_subservice_area(frm);
         set_custom_btns(frm);
         set_exchange_rate_msg(frm);
+        set_up_return(frm);
     },
     donor_identity: function(frm){
         if(frm.doc.donor_identity=="Unknown" || frm.doc.donor_identity=="Merchant" || frm.doc.donor_identity=="Merchant - Known"){
@@ -31,7 +32,7 @@ frappe.ui.form.on('Donation', {
         frm.call("set_deduction_breakeven");
     },
     donation_type: function(frm){
-        frm.call("set_deduction_breakeven");
+        // frm.call("set_deduction_breakeven");
     },
     company: function (frm) {
         // erpnext.accounts.dimensions.update_dimension(frm, frm.doctype);
@@ -69,6 +70,9 @@ frappe.ui.form.on('Payment Detail', {
         row.donor =  row.donor_id;
         // frm.call("set_deduction_breakeven");        
     },
+    donation_type: function(frm){
+        frm.call("set_deduction_breakeven");
+    },
     pay_service_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         row.program = row.pay_service_area;
@@ -101,6 +105,7 @@ frappe.ui.form.on('Payment Detail', {
             });
         }else{
             row.transaction_no_cheque_no = '';
+            row.reference_date = null;
             row.account_paid_to = null;
         }
         frm.refresh_field("payment_detail");
@@ -206,7 +211,7 @@ function set_custom_btns(frm) {
             frappe.set_route("query-report", "General Ledger", {"voucher_no": frm.doc.name});
         }, __("View"));
         if(frm.doc.status!="Paid"){
-            if(frm.doc.contribution_type == "Pledge"){
+            if(frm.doc.contribution_type == "Pledge" && (!frm.doc.is_return)){
                 frm.add_custom_button(__('Payment Entry'), function () {
                     let donors_list = []
                     let idx_list;
@@ -443,6 +448,18 @@ function set_custom_btns(frm) {
 
                 }, __("Create"));
             }
+        }else if(frm.doc.status=="Paid"){
+            if(!frm.doc.is_return){
+                frm.add_custom_button(__('Return / Credit Note'), function () {
+                    // make_sales_return() {
+                        frappe.model.open_mapped_doc({
+                            method: "akf_accounts.akf_accounts.doctype.donation.donation.make_sales_return",
+                            frm: cur_frm
+                        });
+                    // }
+                }, __("Create"));
+                frm.page.set_inner_btn_group_as_primary(__('Create'));
+            }
         }
     }
 }
@@ -529,8 +546,9 @@ function set_query_donor_id(frm){
                     donor_name: dlist,
                 }
             };
-        }else if(frm.doc.donor_identity == "Merchant - Known"){
-            let dlist = ["in", "Merchant Known"];
+        }
+        else if(frm.doc.donor_identity == "Merchant - Known"){
+            let dlist = ["not in", "Unknown Donor"];
             return {
                 filters: {
                     donor_name: dlist,
@@ -652,6 +670,11 @@ function set_exchange_rate_msg(frm){
     frm.set_df_property("exchange_rate", "description", `1 ${(frm.doc.currency=="")?frm.doc.to_currency:frm.doc.currency} = [?] ${frm.doc.to_currency}`);
 }
 
+function set_up_return(frm){
+    if(frm.doc.is_return){
+        frm.call("set_deduction_breakeven");
+    }
+}
 /* 
 function apply_exchange_rate(frm){
     $.each(frm.doc.payment_detail || [], function(i, d) {

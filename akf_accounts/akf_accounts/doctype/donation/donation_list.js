@@ -3,7 +3,7 @@
 
 // render
 frappe.listview_settings['Donation'] = {
-	add_fields: ["donor", "donor_name", "status", "outstanding_amount"],
+	add_fields: ["donor", "donor_name", "status", "outstanding_amount", "is_return"],
 	get_indicator: function(doc) {
 		const status_colors = {
 			"Draft": "grey",
@@ -20,9 +20,13 @@ frappe.listview_settings['Donation'] = {
 		};
 		if(doc.status=="Paid" || doc.outstanding_amount==0){
 			return [__("Paid"), status_colors["Paid"], "status,=,"+"Paid"];
+		}
+		else if(doc.is_return || doc.status=="Return"){
+			return [__("Return"), status_colors["Return"], "status,=,"+"Paid"];
 		}else{
 			return [__(doc.status), status_colors[doc.status], "status,=,"+doc.status];
 		}
+		
 	},
 	right_column: "net_total",
 };

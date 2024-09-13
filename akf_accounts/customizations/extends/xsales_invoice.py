@@ -20,16 +20,16 @@ class XSalesInvoice(SalesInvoice):
         super().on_submit()
         for i in self.items:
             if i.asset:
-                # frappe.msgprint("If On Submit")
+                frappe.msgprint("If On Submit")
                 # pass
                 # self.create_asset_gl_entries_for_asset_purchase()
-                self.make_gl_entries_mine()
+                self.make_additional_gl_entries_for_asset()
             else:
-                # frappe.msgprint("Else On Submit")
+                frappe.msgprint("Else On Submit")
+                
                 # pass
                 self.validate_qty()
-                # frappe.msgprint("Else On Submit")
-                # self.make_gl_entries_mine()
+                frappe.msgprint("Else On Submit")
                 self.gl_entries_inventory_purchase_disposal_sale_gain()
 
                 
@@ -157,7 +157,7 @@ class XSalesInvoice(SalesInvoice):
                 frappe.msgprint("GL Entries created successfully")
 
             elif float(i.rate) < current_worth_of_asset:
-                loss = current_worth_of_asset - float(i.rate)
+                loss = float(current_worth_of_asset) - float(i.rate)
                 # frappe.msgprint(f"Loss Entry: Rate: {i.rate}, Loss: {loss}")
                 # frappe.msgprint(f"Loss Entry: Rate: {i.rate}, Loss: {loss}")
 
@@ -264,7 +264,7 @@ class XSalesInvoice(SalesInvoice):
                         f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
                     )
 
-    def make_gl_entries_mine(self):
+    def make_additional_gl_entries_for_asset(self):
         fiscal_year = get_fiscal_year(self.posting_date, company=self.company)[0]
         unrestricted_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_unrestricted_fund_account")
         designated_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_designated_asset_fund_account")
@@ -383,7 +383,7 @@ class XSalesInvoice(SalesInvoice):
                 frappe.msgprint("GL Entries created successfully")
 
             elif float(i.rate) < current_worth_of_asset:
-                loss = current_worth_of_asset - float(i.rate)
+                loss = float(current_worth_of_asset) - float(i.rate)
                 # frappe.msgprint(f"Loss Entry: Rate: {i.rate}, Loss: {loss}")
                 # frappe.msgprint(f"Loss Entry: Rate: {i.rate}, Loss: {loss}")
 
@@ -392,9 +392,9 @@ class XSalesInvoice(SalesInvoice):
                 # create_gl_entry_accounts_receiveabe(loss_account, loss, 0, 'Loss on sale', i.cost_center)
                 create_gl_entry(designated_fund_account, current_worth_of_asset, 0, 'Sold Item', i.cost_center)
                 create_gl_entry(unrestricted_fund_account, 0, current_worth_of_asset, 'Sold Item', i.cost_center)
-                if depreciation_charged != 0.0:
+                # if depreciation_charged != 0.0:
                     # frappe.msgprint("Loss Depreciation is zero")
-                    create_gl_entry_accounts_receiveabe(accumulated_depreciation_account, depreciation_charged, 0, 'Sold Item', i.cost_center)
+                    # create_gl_entry_accounts_receiveabe(accumulated_depreciation_account, depreciation_charged, 0, 'Sold Item', i.cost_center)
                 frappe.msgprint("GL Entries created successfully")
             else: 
                 # frappe.msgprint(f"No Gain/Loss")
@@ -435,7 +435,7 @@ class XSalesInvoice(SalesInvoice):
             WHERE si.name = %s
         """, (self.name,), as_dict=True)
         
-        # frappe.msgprint(frappe.as_json(actual_item_price))
+        frappe.msgprint(frappe.as_json(actual_item_price))
 
         item_valuation_dict = {item['item_code']: item['valuation_rate'] for item in actual_item_price}
 
@@ -573,8 +573,8 @@ class XSalesInvoice(SalesInvoice):
             if valuation_rate:
                 if valuation_rate < i.rate:
                     frappe.msgprint(f"Gain for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
-                    # gain = i.item_code - valuation_rate
-                    # frappe.msgprint(frappe.as_json(f"Gain {gain}"))
+                    gain = float(i.rate - valuation_rate)
+                    frappe.msgprint(frappe.as_json(f"Gain {gain}"))
 
                     gl_entry_gain_account = frappe.get_doc({
                         'doctype': 'GL Entry',
@@ -613,8 +613,8 @@ class XSalesInvoice(SalesInvoice):
 
                 elif valuation_rate > i.rate:
                     frappe.msgprint(f"Loss for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
-                    # loss = valuation_rate - i.item_code
-                    # frappe.msgprint(frappe.as_json(f"Loss {loss}"))
+                    loss = float(valuation_rate) - float(i.rate)
+                    frappe.msgprint(frappe.as_json(f"Loss {loss}"))
                  
 
                     gl_entry_loss_account = frappe.get_doc({

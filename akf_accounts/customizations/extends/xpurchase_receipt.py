@@ -44,7 +44,14 @@ class XAssetInvenPurchase(PurchaseReceipt):
         fiscal_year = get_fiscal_year(self.posting_date, company=self.company)[0]
         core_debit = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_asset_account")
         core_credit = frappe.db.get_value("Company", {"name": self.company}, "custom_stock_received_not_billed")
-        donation_account = frappe.db.get_value("Company", {"name": self.company}, "custom_donation_account") 
+        donation_account = frappe.db.get_value("Company", {"name": self.company}, "custom_donation_account")
+        # frappe.msgprint(frappe.as_json("core_debit")) 
+        # frappe.msgprint(frappe.as_json(core_debit))
+        # frappe.msgprint(frappe.as_json("core_credit")) 
+        # frappe.msgprint(frappe.as_json(core_credit))
+        # frappe.msgprint(frappe.as_json("donation_account")) 
+        # frappe.msgprint(frappe.as_json(donation_account))
+
         if self.custom_type_of_transaction == "Inventory Purchase Restricted":
             inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")
           
@@ -413,7 +420,12 @@ class XAssetInvenPurchase(PurchaseReceipt):
         elif self.custom_type_of_transaction == "Asset Purchase Restricted":
             asset_debit_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_fund")
             asset_credit_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_designated_asset_fund_account")
-           
+            # frappe.msgprint(frappe.as_json("asset_credit_account")) 
+            # frappe.msgprint(frappe.as_json(asset_credit_account))
+            # frappe.msgprint(frappe.as_json("core_credit")) 
+            # frappe.msgprint(frappe.as_json(core_credit))
+            # frappe.msgprint(frappe.as_json("donation_account")) 
+            # frappe.msgprint(frappe.as_json(donation_account))
             last_donor_not_fully_used = None
             # frappe.msgprint(frappe.as_json("create_donor_gl_entries_from_purchase_receipt_aq"))
 
@@ -779,8 +791,6 @@ class XAssetInvenPurchase(PurchaseReceipt):
                     frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
                 frappe.msgprint("GL Entries created successfully.")
-                
-
     def update_stock_ledger_entry(self):
         # frappe.msgprint(frappe.as_json("update_stock_ledger_entry working!"))
         final_list = []
@@ -866,7 +876,10 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         AND voucher_no = '{self.name}'
                 """
             )
+   
 
+    
+       
     def donor_list_data_from_purchase_receipt(self):
         donor_list = []
         total_amount = 0

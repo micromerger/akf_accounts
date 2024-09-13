@@ -126,7 +126,7 @@ override_doctype_class = {
 	"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
 	"Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
     "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
-    "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
+    # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
     "Asset": "akf_accounts.customizations.extends.XAsset.AssetExtendedClass",
     "Asset Movement": "akf_accounts.customizations.extends.XAssetMovement.AssetMovementExtendedClass",
    
@@ -146,13 +146,34 @@ override_doctype_class = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+
+      "cron": {
+          
+        # "0 0 * * *": [
+        #     "akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
+        # ],
+        # "*/5 * * * *": [
+        #     "akf_hrms.services.cron_jobs.attendance.mark_attendance",
+        # ],
+
+        "* * * * *": [
+            "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended"
+        ],
+        "*/45 * * * *": [
+            "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended"
+        ],
+        # "*/20 * * * *": [
+        #     "akf_hrms.services.cron_jobs.attendance.mark_proxy_attendance_logs",
+        # ]
+    },
 # 	"all": [
 # 		"akf_accounts.tasks.all"
 # 	],
-# 	"daily": [
-# 		"akf_accounts.tasks.daily"
-# 	],
+	"daily": [
+        "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended"
+		# "akf_accounts.tasks.daily"
+	],
 # 	"hourly": [
 # 		"akf_accounts.tasks.hourly"
 # 	],
@@ -162,7 +183,7 @@ override_doctype_class = {
 # 	"monthly": [
 # 		"akf_accounts.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------
@@ -173,10 +194,10 @@ override_doctype_class = {
 # ------------------------------
 #
 # /home/frappe/frappe-bench/apps/akf_accounts/akf_accounts/customizations/extends/XAsset.py
-override_whitelisted_methods = {
-	# "frappe.desk.doctype.event.event.get_events": "akf_accounts.event.get_events"
-     "erpnext.assets.doctype.asset.depreciation.post_depreciation_entries": "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended"
-}
+# override_whitelisted_methods = {
+# 	# "frappe.desk.doctype.event.event.get_events": "akf_accounts.event.get_events"
+#      "erpnext.assets.doctype.asset.depreciation.post_depreciation_entries": "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended"
+# }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

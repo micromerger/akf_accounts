@@ -25,9 +25,9 @@ frappe.ui.form.on("Funds Transfer", {
         console.log(!frm.is_new());
         console.log(!frm.doc.__islocal);
 
-        // if (!frm.is_new() && !frm.doc.__islocal) {
-        //     get_html(frm);
-        // }
+        if (!frm.is_new() && !frm.doc.__islocal) {
+            get_html(frm);
+        }
 
         if (frm.doc.docstatus === 1) {  
             set_custom_btns(frm);

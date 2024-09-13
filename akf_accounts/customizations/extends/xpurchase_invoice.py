@@ -763,92 +763,161 @@ class XPurchaseInvoice(PurchaseInvoice):
                     frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
                 frappe.msgprint("GL Entries created successfully.") 
-
     def update_stock_ledger_entry(self):
-        # frappe.msgprint(frappe.as_json("update_stock_ledger_entry working!"))
-        final_list = []
-        all_donor_id = []
-
         for row in self.items:
-            if hasattr(row, "custom_new") or hasattr(row, "custom_used"):
-                if frappe.db.exists(
-                    "Stock Ledger Entry",
-                    {
-                        "docstatus": 1,
-                        "voucher_no": self.name,
-                    },
-                ):
-                    frappe.db.sql(
-                        f""" 
-                            UPDATE `tabStock Ledger Entry`
-                            SET custom_new = {row.custom_new}, custom_used = {row.custom_used}
-                            WHERE docstatus = 1 
-                            AND voucher_detail_no = '{row.name}'
-                            AND voucher_no = '{self.name}'
-                        """
-                    )
+            if frappe.db.exists(
+                "Stock Ledger Entry",
+                {
+                    "docstatus": 1,
+                    "voucher_no": self.name,
+                },
+            ):
+                frappe.db.sql(
+                    f""" 
+                        UPDATE `tabStock Ledger Entry`
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{row.cost_center}'
+                        WHERE docstatus=1 
+                            and voucher_detail_no = '{row.name}'
+                            and voucher_no = '{self.name}'
+                    """
+                )
 
-        donor_list_data = self.donor_list_data_from_purchase_receipt()
-        donor_list = donor_list_data.get("donor_list", [])
+        if self.custom_donor_ids:
+            # Initialize an empty list to store child values
+            child_values = []
+            donor_names = []
 
-        for d in donor_list:
-            all_donor_id.append(d.get('donor'))
-            # frappe.msgprint(f"Current donors list: {frappe.as_json(all_donor_id)}")
-
-        # Initialize variables with default values
-        cost_center = ''
-        program = ''
-        subservice_area = ''
-        product = ''
-        project = ''
-
-        if donor_list:
-            first_donor = donor_list[0]
-            cost_center = first_donor.get('cost_center', '')
-            program = first_donor.get('program', '')
-            subservice_area = first_donor.get('subservice_area', '')
-            product = first_donor.get('product', '')
-            project = first_donor.get('project', '')
-
-            final_output = {
-                "donors": ", ".join(all_donor_id),
-                "cost_center": cost_center,
-                "product": product,
-                "program": program,
-                "project": project,
-                "subservice_area": subservice_area,
-            }
-            # frappe.msgprint(frappe.as_json("final_output"))
-            # frappe.msgprint(frappe.as_json(final_output))
-
-            final_list.append(final_output)
-            # frappe.msgprint(f"Final output list: {frappe.as_json(final_list)}")
-
-        if frappe.db.exists(
-            "Stock Ledger Entry",
-            {
-                "docstatus": 1,
-                "voucher_no": self.name,
-            },
-        ):
-            all_donor_id_json = json.dumps(all_donor_id)
-            frappe.db.sql(
-                f""" 
-                    UPDATE 
-                        `tabStock Ledger Entry`
-                    SET 
-                        custom_donor_list = '{all_donor_id_json}',
-                        program = '{program}',
-                        subservice_area = '{subservice_area}',
-                        product = '{product}',
-                        project = '{project}',
-                        custom_cost_center = '{cost_center}',
-                        inventory_flag = "Purchased"
-                    WHERE 
-                        docstatus = 1 
-                        AND voucher_no = '{self.name}'
-                """
+            # Fetch child table records for the current parent document
+            child_records = frappe.get_all(
+                "Donor List",
+                filters={"parent": self.name},
+                fields=["donor"],
             )
+
+            # Loop through each child record and process the values
+            for child in child_records:
+                child_values.append(child.donor)
+                donor=frappe.db.get_value('Donor',child.donor,'donor_name')
+                donor_names.append(donor)
+
+            if frappe.db.exists(
+                "Stock Ledger Entry",
+                {
+                    "docstatus": 1,
+                    "voucher_no": self.name,
+                },
+            ):
+                child_values_as_string = json.dumps(child_values)
+                frappe.db.sql(
+                    f""" 
+                            update 
+                                `tabStock Ledger Entry`
+                            set 
+                                custom_donor_list = '{child_values_as_string}'
+                            where 
+                                docstatus=1 
+                                and voucher_no = '{self.name}'
+                        """
+                )
+
+                donor_names_as_string = json.dumps(donor_names)
+                frappe.db.sql(
+                    f""" 
+                            update 
+                                `tabStock Ledger Entry`
+                            set 
+                                custom_donor_name_list = '{donor_names_as_string}'
+                            where 
+                                docstatus=1 
+                                and voucher_no = '{self.name}'
+                        """
+                )
+
+    # def update_stock_ledger_entry(self):
+    #     # frappe.msgprint(frappe.as_json("update_stock_ledger_entry working!"))
+    #     final_list = []
+    #     all_donor_id = []
+
+    #     for row in self.items:
+    #         if hasattr(row, "custom_new") or hasattr(row, "custom_used"):
+    #             if frappe.db.exists(
+    #                 "Stock Ledger Entry",
+    #                 {
+    #                     "docstatus": 1,
+    #                     "voucher_no": self.name,
+    #                 },
+    #             ):
+    #                 frappe.db.sql(
+    #                     f""" 
+    #                         UPDATE `tabStock Ledger Entry`
+    #                         SET custom_new = {row.custom_new}, custom_used = {row.custom_used}
+    #                         WHERE docstatus = 1 
+    #                         AND voucher_detail_no = '{row.name}'
+    #                         AND voucher_no = '{self.name}'
+    #                     """
+    #                 )
+
+    #     donor_list_data = self.donor_list_data_from_purchase_receipt()
+    #     donor_list = donor_list_data.get("donor_list", [])
+
+    #     for d in donor_list:
+    #         all_donor_id.append(d.get('donor'))
+    #         # frappe.msgprint(f"Current donors list: {frappe.as_json(all_donor_id)}")
+
+    #     # Initialize variables with default values
+    #     cost_center = ''
+    #     program = ''
+    #     subservice_area = ''
+    #     product = ''
+    #     project = ''
+
+    #     if donor_list:
+    #         first_donor = donor_list[0]
+    #         cost_center = first_donor.get('cost_center', '')
+    #         program = first_donor.get('program', '')
+    #         subservice_area = first_donor.get('subservice_area', '')
+    #         product = first_donor.get('product', '')
+    #         project = first_donor.get('project', '')
+
+    #         final_output = {
+    #             "donors": ", ".join(all_donor_id),
+    #             "cost_center": cost_center,
+    #             "product": product,
+    #             "program": program,
+    #             "project": project,
+    #             "subservice_area": subservice_area,
+    #         }
+    #         # frappe.msgprint(frappe.as_json("final_output"))
+    #         # frappe.msgprint(frappe.as_json(final_output))
+
+    #         final_list.append(final_output)
+    #         # frappe.msgprint(f"Final output list: {frappe.as_json(final_list)}")
+
+    #     if frappe.db.exists(
+    #         "Stock Ledger Entry",
+    #         {
+    #             "docstatus": 1,
+    #             "voucher_no": self.name,
+    #         },
+    #     ):
+    #         all_donor_id_json = json.dumps(all_donor_id)
+    #         frappe.db.sql(
+    #             f""" 
+    #                 UPDATE 
+    #                     `tabStock Ledger Entry`
+    #                 SET 
+    #                     custom_donor_list = '{all_donor_id_json}',
+    #                     program = '{program}',
+    #                     subservice_area = '{subservice_area}',
+    #                     product = '{product}',
+    #                     project = '{project}',
+    #                     custom_cost_center = '{cost_center}',
+    #                     inventory_flag = "Purchased"
+    #                 WHERE 
+    #                     docstatus = 1 
+    #                     AND voucher_no = '{self.name}'
+    #             """
+    #         )
 
     def donor_list_data_from_purchase_receipt(self):
         donor_list = []
