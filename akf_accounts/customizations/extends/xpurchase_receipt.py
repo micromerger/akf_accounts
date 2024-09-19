@@ -1430,3 +1430,14 @@ def donor_list_data_on_submit(doc):
         "total_balance": total_balance,
         "donor_list": donor_list  
     }
+
+
+# Below is the code written by MUBASHIR BASHIR
+# @frappe.whitelist()
+# def update_material_request_status(material_request, status):
+#     material_request_doc = frappe.get_doc('Material Request', material_request)
+
+#     material_request_doc.status = status
+    
+#     material_request_doc.save()
+

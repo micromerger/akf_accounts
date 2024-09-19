@@ -330,7 +330,8 @@ class Donation(Document):
 			else:
 				doc = frappe.get_doc(args)
 				doc.save(ignore_permissions=True)
-				doc.submit()
+				if(not self.is_return):
+					doc.submit()
 
 				if(self.donor_identity == "Unknown"):
 					# set Payment Entry id in payment_detail child table.
@@ -343,7 +344,8 @@ class Donation(Document):
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
-			doc.submit()
+			if(not self.is_return):
+				doc.submit()
 
 	def update_status(self):
 		status = "Paid" if(self.contribution_type == "Donation") else "Unpaid"

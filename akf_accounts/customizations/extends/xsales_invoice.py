@@ -7,6 +7,7 @@ class XSalesInvoice(SalesInvoice):
 
     def validate(self):
         super().validate()
+        frappe.msgprint("There is no asset")
         for i in self.items:
             if not i.asset:
                 frappe.msgprint("There is no asset")

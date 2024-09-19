@@ -21,10 +21,19 @@ from erpnext.assets.doctype.asset.depreciation import (
     get_credit_and_debit_accounts)
 
 class AssetExtendedClass(Asset):
-    # def validate(self):
-    #     super().validate()
-    #     if self.custom_source_of_asset_acquistion == "In Kind":
-    #         self.create_asset_gl_entries_in_kind()
+    def validate(self):
+        super().validate()
+       
+        if self.custom_source_of_asset_acquistion == "In Kind":
+            if self.purchase_receipt:
+                frappe.throw("Assets acquired 'In Kind' cannot have an associated Purchase Receipt, as they are donated directly.")
+     
+        elif self.custom_source_of_asset_acquistion == "Donation":
+            if not self.purchase_receipt:  
+                frappe.throw("Assets marked as 'Donation' must have an associated Purchase Receipt, as they are purchased.")
+        
+        else:
+            pass
              
     def on_submit(self):
         super().on_submit()
@@ -238,7 +247,7 @@ def post_depreciation_entries_extended(date=None):
 	
 	if not date:
 		date = today()
-		# date = "2024-09-12"
+		# date = "2024-10-31"
 		# print(date)
 
 	failed_asset_names = []
@@ -348,7 +357,7 @@ def make_depreciation_entry_extended(
 
     if not date:
         date = today()
-        # date = "2024-09-12"
+        # date = "2024-10-31"
 
     asset_depr_schedule_doc = frappe.get_doc("Asset Depreciation Schedule", asset_depr_schedule_name)
     asset = frappe.get_doc("Asset", asset_depr_schedule_doc.asset)
@@ -433,3 +442,21 @@ def make_depreciation_entry_extended(
         return asset_depr_schedule_doc
 
     raise depreciation_posting_error
+
+
+# @frappe.whitelist()
+# def update_date():
+#      frappe.db.sql("""
+#         UPDATE `tabPurchase Receipt` 
+#         SET posting_date = '2024-09-17' 
+#         WHERE name = 'MAT-PRE-2024-00552'
+#     """)
+
+
+@frappe.whitelist()
+def update_date():
+     frappe.db.sql("""
+        UPDATE `tabAsset` 
+        SET purchase_date = '2024-09-17' 
+        WHERE name = 'ACC-ASS-2024-00179'
+    """)
