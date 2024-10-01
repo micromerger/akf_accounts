@@ -791,10 +791,12 @@ class XAssetInvenPurchase(PurchaseReceipt):
                     frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
                 frappe.msgprint("GL Entries created successfully.")
+
+
     def update_stock_ledger_entry(self):
-        # frappe.msgprint(frappe.as_json("update_stock_ledger_entry working!"))
         final_list = []
         all_donor_id = []
+        all_donor_names = []
 
         for row in self.items:
             if hasattr(row, "custom_new") or hasattr(row, "custom_used"):
@@ -806,13 +808,14 @@ class XAssetInvenPurchase(PurchaseReceipt):
                     },
                 ):
                     frappe.db.sql(
-                        f""" 
-                            UPDATE `tabStock Ledger Entry`
-                            SET custom_new = {row.custom_new}, custom_used = {row.custom_used}
-                            WHERE docstatus = 1 
-                            AND voucher_detail_no = '{row.name}'
-                            AND voucher_no = '{self.name}'
-                        """
+                        """ 
+                        UPDATE `tabStock Ledger Entry`
+                        SET custom_new = %s, custom_used = %s
+                        WHERE docstatus = 1 
+                        AND voucher_detail_no = %s
+                        AND voucher_no = %s
+                        """,
+                        (row.custom_new, row.custom_used, row.name, self.name)
                     )
 
         donor_list_data = self.donor_list_data_from_purchase_receipt()
@@ -820,7 +823,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
 
         for d in donor_list:
             all_donor_id.append(d.get('donor'))
-            # frappe.msgprint(f"Current donors list: {frappe.as_json(all_donor_id)}")
+            all_donor_names.append(d.get('donor_name'))
 
         # Initialize variables with default values
         cost_center = ''
@@ -839,17 +842,15 @@ class XAssetInvenPurchase(PurchaseReceipt):
 
             final_output = {
                 "donors": ", ".join(all_donor_id),
+                "custom_donor_name_list": ",".join(all_donor_names),
                 "cost_center": cost_center,
                 "product": product,
                 "program": program,
                 "project": project,
                 "subservice_area": subservice_area,
             }
-            # frappe.msgprint(frappe.as_json("final_output"))
-            # frappe.msgprint(frappe.as_json(final_output))
 
             final_list.append(final_output)
-            # frappe.msgprint(f"Final output list: {frappe.as_json(final_list)}")
 
         if frappe.db.exists(
             "Stock Ledger Entry",
@@ -859,27 +860,25 @@ class XAssetInvenPurchase(PurchaseReceipt):
             },
         ):
             all_donor_id_json = json.dumps(all_donor_id)
-            frappe.db.sql(
-                f""" 
-                    UPDATE 
-                        `tabStock Ledger Entry`
-                    SET 
-                        custom_donor_list = '{all_donor_id_json}',
-                        program = '{program}',
-                        subservice_area = '{subservice_area}',
-                        product = '{product}',
-                        project = '{project}',
-                        custom_cost_center = '{cost_center}',
-                        inventory_flag = "Purchased"
-                    WHERE 
-                        docstatus = 1 
-                        AND voucher_no = '{self.name}'
-                """
-            )
-   
+            all_donor_names_json = json.dumps(all_donor_names)
 
-    
-       
+            frappe.db.sql(
+                """ 
+                UPDATE `tabStock Ledger Entry`
+                SET custom_donor_list = %s,
+                    custom_donor_name_list = %s,
+                    program = %s,
+                    subservice_area = %s,
+                    product = %s,
+                    project = %s,
+                    custom_cost_center = %s,
+                    inventory_flag = "Purchased"
+                WHERE docstatus = 1 
+                AND voucher_no = %s
+                """,
+                (all_donor_id_json, all_donor_names_json, program, subservice_area, product, project, cost_center, self.name)
+            )
+
     def donor_list_data_from_purchase_receipt(self):
         donor_list = []
         total_amount = 0
@@ -918,6 +917,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                     entry.get('cost_center'),
                     entry.get('product'),
                     entry.get('program')
+                    
                 )
 
                 if entry_key not in unique_entries:
@@ -931,7 +931,8 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'cost_center': p.pd_cost_center,
                             'product': p.pd_product,
                             'amount': amount,
-                            'program': p.pd_service_area
+                            'program': p.pd_service_area,
+                            'donor_name': p.pd_donor_name
                         }
                         donor_list.append(db_dict)
                         total_amount += amount

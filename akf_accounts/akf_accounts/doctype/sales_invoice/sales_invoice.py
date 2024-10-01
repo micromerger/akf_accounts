@@ -266,22 +266,16 @@ class SalesInvoice(SellingController):
 			self.indicator_title = _("Paid")
 
 	def validate(self):
-		# super(SalesInvoice, self).validate()
-		# frappe.msgprint("AKF Accounts Sales Invoice")
-		#Added by Aqsa
 		for i in self.items:
 			if i.asset:
 				pass
-				# frappe.msgprint("If is no asset")
 			else:
-				# frappe.msgprint("Else is no asset")
-				self.validate_qty()
-				# self.gl_entries_inventory_purchase_disposal_sale_gain()
-				# self.validate_qty_for_stock_entry()
-				
-				# frappe.msgprint("Validate Else")
-				# pass
-		#End Added by Aqsa
+				for i in self.items:
+					is_stock_item = frappe.db.get_value("Item", {"item_name": i.item_name}, "is_stock_item")
+					if is_stock_item:
+						self.validate_qty()
+					else:
+						pass
 
 		self.validate_auto_set_posting_time()
 
@@ -469,6 +463,7 @@ class SalesInvoice(SellingController):
 
 				self.make_bundle_using_old_serial_batch_fields(table_name)
 			self.update_stock_ledger()
+			self.update_stock_ledger_entry()
 
 		# this sequence because outstanding may get -ve
 		# self.make_gl_entries()
@@ -517,7 +512,7 @@ class SalesInvoice(SellingController):
 				# frappe.msgprint("Else On Submit")
 				self.validate_qty()
 				self.gl_entries_inventory_purchase_disposal_sale_gain()
-				# self.make_stock_ledger_entry()
+				
 
 
 	def validate_pos_return(self):
@@ -582,6 +577,7 @@ class SalesInvoice(SellingController):
 		# because updating reserved qty in bin depends upon updated delivered qty in SO
 		if self.update_stock == 1:
 			self.update_stock_ledger()
+			# self.update_stock_ledger_entry()
 
 		self.make_gl_entries_on_cancel()
 
@@ -1642,554 +1638,210 @@ class SalesInvoice(SellingController):
 		frappe.db.commit()
 
 
-	# def gl_entries_inventory_purchase_disposal_sale_gain(self):
-	# 	fiscal_year = get_fiscal_year(self.posting_date, company=self.company)[0]
-	# 	inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")
-	# 	unrestricted_fund_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_unrestricted_fund_account")
-	# 	gain_account = frappe.db.get_value("Company", {"name": self.company}, "custom_gain_account")
-	# 	loss_account = frappe.db.get_value("Company", {"name": self.company}, "custom_loss_account")
-	# 	accounts_receivable = frappe.db.get_value("Company", {"name": self.company}, "default_receivable_account")
-	# 	custom_default_asset_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_asset_account")
-
+	
 		
-	# 	# frappe.msgprint(frappe.as_json(inventory_account))
-	# 	# frappe.msgprint(frappe.as_json(unrestricted_fund_account))
-		
-	# 	actual_item_price = frappe.db.sql("""
-	# 		SELECT sii.item_code, i.valuation_rate 
-	# 		FROM `tabSales Invoice` AS si 
-	# 		INNER JOIN `tabSales Invoice Item` AS sii ON si.name = sii.parent 
-	# 		INNER JOIN `tabItem` AS i ON sii.item_code = i.item_code
-	# 		WHERE si.name = %s
-	# 	""", (self.name,), as_dict=True)
-		
-	# 	# frappe.msgprint(frappe.as_json(actual_item_price))
-
-	# 	item_valuation_dict = {item['item_code']: item['valuation_rate'] for item in actual_item_price}
-		
-	# 	for i in self.items:
-
-
-	# 		gl_entry_asset_account = frappe.get_doc({
-	# 			'doctype': 'GL Entry',
-	# 			'posting_date': self.posting_date,
-	# 			'transaction_date': self.posting_date,
-	# 			'account': custom_default_asset_account,
-	# 			'against_voucher_type': 'Sales Invoice',
-	# 			'against_voucher': self.name,
-	# 			'cost_center': i.cost_center,
-	# 			'debit': 0.0,
-	# 			'credit': i.amount,
-	# 			'account_currency': 'PKR',
-	# 			'debit_in_account_currency':0.0,
-	# 			'credit_in_account_currency':i.amount,
-	# 			'against': custom_default_asset_account,
-	# 			'voucher_type': 'Sales Invoice',
-	# 			'voucher_no': self.name,
-	# 			'remarks': 'Sold Item',
-	# 			'is_opening': 'No',
-	# 			'is_advance': 'No',
-	# 			'fiscal_year': fiscal_year,
-	# 			'company': self.company,
-	# 			'transaction_currency': 'PKR',
-	# 			'debit_in_transaction_currency': 0.0,
-	# 			'credit_in_transaction_currency': i.amount,
-	# 			'transaction_exchange_rate': 1,
-	# 			'project': i.project,
-	# 			'program': i.program,
-	# 			'subservice_area': i.subservice_area,
-	# 			'product': i.product,
-	# 			'party_type': 'Customer',  
-	# 			'party': self.customer,
-	# 		})
-
-	# 		gl_entry_inventory_account = frappe.get_doc({
-	# 			'doctype': 'GL Entry',
-	# 			'posting_date': self.posting_date,
-	# 			'transaction_date': self.posting_date,
-	# 			'account': inventory_account,
-	# 			'against_voucher_type': 'Sales Invoice',
-	# 			'against_voucher': self.name,
-	# 			'cost_center': i.cost_center,
-	# 			'debit': i.amount,
-	# 			'credit': 0.0,
-	# 			'account_currency': 'PKR',
-	# 			'debit_in_account_currency': i.amount,
-	# 			'credit_in_account_currency': 0.0,
-	# 			'against': inventory_account,
-	# 			'voucher_type': 'Sales Invoice',
-	# 			'voucher_no': self.name,
-	# 			'remarks': 'Sold Item',
-	# 			'is_opening': 'No',
-	# 			'is_advance': 'No',
-	# 			'fiscal_year': fiscal_year,
-	# 			'company': self.company,
-	# 			'transaction_currency': 'PKR',
-	# 			'debit_in_transaction_currency': i.rate,
-	# 			'credit_in_transaction_currency': 0.0,
-	# 			'transaction_exchange_rate': 1,
-	# 			'project': i.project,
-	# 			'program': i.program,
-	# 			'subservice_area': i.subservice_area,
-	# 			'product': i.product
-	# 		})
-
-	# 		gl_entry_unrestricted_fund_account = frappe.get_doc({
-	# 			'doctype': 'GL Entry',
-	# 			'posting_date': self.posting_date,
-	# 			'transaction_date': self.posting_date,
-	# 			'account': unrestricted_fund_account,
-	# 			'against_voucher_type': 'Sales Invoice',
-	# 			'against_voucher': self.name,
-	# 			'cost_center': i.cost_center,
-	# 			'debit': 0.0,
-	# 			'credit': i.amount,
-	# 			'account_currency': 'PKR',
-	# 			'debit_in_account_currency': 0.0,
-	# 			'credit_in_account_currency': i.amount,
-	# 			'against': unrestricted_fund_account,
-	# 			'voucher_type': 'Sales Invoice',
-	# 			'voucher_no': self.name,
-	# 			'remarks': 'Sold Item',
-	# 			'is_opening': 'No',
-	# 			'is_advance': 'No',
-	# 			'fiscal_year': fiscal_year,
-	# 			'company': self.company,
-	# 			'transaction_currency': 'PKR',
-	# 			'debit_in_transaction_currency': 0.0,
-	# 			'credit_in_transaction_currency': i.rate,
-	# 			'transaction_exchange_rate': 1,
-	# 			'project': i.project,
-	# 			'program': i.program,
-	# 			'subservice_area': i.subservice_area,
-	# 			'product': i.product
-	# 		})
-
-	# 		valuation_rate = item_valuation_dict.get(i.item_code)
-	# 		if valuation_rate:
-	# 			if valuation_rate < i.rate:
-	# 				# frappe.msgprint(f"Gain for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
-	# 				gain = float(i.rate - valuation_rate)
-	# 				# frappe.msgprint(frappe.as_json(f"Gain {gain}"))
-	# 				# frappe.msgprint(frappe.as_json(f"valuation_rate {valuation_rate}"))
-					
-	# 				total_gain = gain * i.qty
-	# 				# frappe.msgprint(frappe.as_json(f"total_gain {total_gain}"))
-
-	# 				debtors = i.amount + total_gain 
-	# 				gl_entry_debtors_account1 = frappe.get_doc({
-	# 					'doctype': 'GL Entry',
-	# 					'posting_date': self.posting_date,
-	# 					'transaction_date': self.posting_date,
-	# 					'account': accounts_receivable,
-	# 					'against_voucher_type': 'Sales Invoice',
-	# 					'against_voucher': self.name,
-	# 					'cost_center': i.cost_center,
-	# 					'debit': debtors,
-	# 					'credit': 0.0,
-	# 					'account_currency': 'PKR',
-	# 					'debit_in_account_currency':debtors,
-	# 					'credit_in_account_currency': 0.0,
-	# 					'against': accounts_receivable,
-	# 					'voucher_type': 'Sales Invoice',
-	# 					'voucher_no': self.name,
-	# 					'remarks': 'Sold Item',
-	# 					'is_opening': 'No',
-	# 					'is_advance': 'No',
-	# 					'fiscal_year': fiscal_year,
-	# 					'company': self.company,
-	# 					'transaction_currency': 'PKR',
-	# 					'debit_in_transaction_currency': debtors,
-	# 					'credit_in_transaction_currency': 0.0,
-	# 					'transaction_exchange_rate': 1,
-	# 					'project': i.project,
-	# 					'program': i.program,
-	# 					'subservice_area': i.subservice_area,
-	# 					'product': i.product,
-	# 					'party_type': 'Customer',  
-	# 					'party': self.customer,
-	# 				})
-	# 				gl_entry_debtors_account1.insert(ignore_permissions=True)
-	# 				gl_entry_debtors_account1.submit()
-
-	# 				gl_entry_gain_account = frappe.get_doc({
-	# 					'doctype': 'GL Entry',
-	# 					'posting_date': self.posting_date,
-	# 					'transaction_date': self.posting_date,
-	# 					'account': gain_account,
-	# 					'against_voucher_type': 'Sales Invoice',
-	# 					'against_voucher': self.name,
-	# 					'cost_center': i.cost_center,
-	# 					'debit': 0.0,
-	# 					'credit': total_gain,
-	# 					'account_currency': 'PKR',
-	# 					'debit_in_account_currency': 0.0,
-	# 					'credit_in_account_currency': total_gain,
-	# 					'against': gain_account,
-	# 					'voucher_type': 'Sales Invoice',
-	# 					'voucher_no': self.name,
-	# 					'remarks': 'Gain on Sale',
-	# 					'is_opening': 'No',
-	# 					'is_advance': 'No',
-	# 					'fiscal_year': fiscal_year,
-	# 					'company': self.company,
-	# 					'transaction_currency': 'PKR',
-	# 					'debit_in_transaction_currency': 0.0,
-	# 					'credit_in_transaction_currency': total_gain,
-	# 					'transaction_exchange_rate': 1,
-	# 					'project': i.project,
-	# 					'program': i.program,
-	# 					'subservice_area': i.subservice_area,
-	# 					'product': i.product
-	# 				})
-
-	# 				gl_entry_gain_account.insert(ignore_permissions=True)
-	# 				gl_entry_gain_account.submit()
-	# 				frappe.msgprint("GL Entries created successfully")
-
-	# 			elif valuation_rate > i.rate:
-	# 				# frappe.msgprint(f"Loss for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
-	# 				loss = float(valuation_rate) - float(i.rate)
-	# 				# frappe.msgprint(frappe.as_json(f"valuation_rate {valuation_rate}"))
-	# 				# frappe.msgprint(frappe.as_json(f"Loss {loss}"))
-	# 				total_loss = loss * i.qty
-
-	# 				debtors = i.amount - total_loss
-	# 				# frappe.msgprint(frappe.as_json(f"total_loss {total_loss}"))
-	# 				# frappe.msgprint(frappe.as_json(f"debtors {debtors}"))
-	# 				gl_entry_debtors_account2 = frappe.get_doc({
-	# 					'doctype': 'GL Entry',
-	# 					'posting_date': self.posting_date,
-	# 					'transaction_date': self.posting_date,
-	# 					'account': accounts_receivable,
-	# 					'against_voucher_type': 'Sales Invoice',
-	# 					'against_voucher': self.name,
-	# 					'cost_center': i.cost_center,
-	# 					'debit': debtors,
-	# 					'credit': 0.0,
-	# 					'account_currency': 'PKR',
-	# 					'debit_in_account_currency':debtors,
-	# 					'credit_in_account_currency': 0.0,
-	# 					'against': accounts_receivable,
-	# 					'voucher_type': 'Sales Invoice',
-	# 					'voucher_no': self.name,
-	# 					'remarks': 'Sold Item',
-	# 					'is_opening': 'No',
-	# 					'is_advance': 'No',
-	# 					'fiscal_year': fiscal_year,
-	# 					'company': self.company,
-	# 					'transaction_currency': 'PKR',
-	# 					'debit_in_transaction_currency': debtors,
-	# 					'credit_in_transaction_currency': 0.0,
-	# 					'transaction_exchange_rate': 1,
-	# 					'project': i.project,
-	# 					'program': i.program,
-	# 					'subservice_area': i.subservice_area,
-	# 					'product': i.product,
-	# 					'party_type': 'Customer',  
-	# 					'party': self.customer,
-	# 				})
-	# 				gl_entry_debtors_account2.insert(ignore_permissions=True)
-	# 				gl_entry_debtors_account2.submit()
-					
-
-	# 				gl_entry_loss_account = frappe.get_doc({
-	# 					'doctype': 'GL Entry',
-	# 					'posting_date': self.posting_date,
-	# 					'transaction_date': self.posting_date,
-	# 					'account': loss_account,
-	# 					'against_voucher_type': 'Sales Invoice',
-	# 					'against_voucher': self.name,
-	# 					'cost_center': i.cost_center,
-	# 					'debit': total_loss,
-	# 					'credit': 0.0,
-	# 					'account_currency': 'PKR',
-	# 					'debit_in_account_currency': total_loss,
-	# 					'credit_in_account_currency': 0.0,
-	# 					'against': loss_account,
-	# 					'voucher_type': 'Sales Invoice',
-	# 					'voucher_no': self.name,
-	# 					'remarks': 'Loss on Sale',
-	# 					'is_opening': 'No',
-	# 					'is_advance': 'No',
-	# 					'fiscal_year': fiscal_year,
-	# 					'company': self.company,
-	# 					'transaction_currency': 'PKR',
-	# 					'debit_in_transaction_currency': total_loss,
-	# 					'credit_in_transaction_currency': 0.0,
-	# 					'transaction_exchange_rate': 1,
-	# 					'project': i.project,
-	# 					'program': i.program,
-	# 					'subservice_area': i.subservice_area,
-	# 					'product': i.product
-	# 				})
-
-	# 				gl_entry_loss_account.insert(ignore_permissions=True)
-	# 				gl_entry_loss_account.submit()
-	# 				frappe.msgprint("GL Entries created successfully")
-
-	# 			else:
-	# 				gl_entry_debtors_account3 = frappe.get_doc({
-	# 				'doctype': 'GL Entry',
-	# 				'posting_date': self.posting_date,
-	# 				'transaction_date': self.posting_date,
-	# 				'account': accounts_receivable,
-	# 				'against_voucher_type': 'Sales Invoice',
-	# 				'against_voucher': self.name,
-	# 				'cost_center': i.cost_center,
-	# 				'debit': i.amount,
-	# 				'credit': 0.0,
-	# 				'account_currency': 'PKR',
-	# 				'debit_in_account_currency': i.amount,
-	# 				'credit_in_account_currency': 0.0,
-	# 				'against': accounts_receivable,
-	# 				'voucher_type': 'Sales Invoice',
-	# 				'voucher_no': self.name,
-	# 				'remarks': 'Sold Item',
-	# 				'is_opening': 'No',
-	# 				'is_advance': 'No',
-	# 				'fiscal_year': fiscal_year,
-	# 				'company': self.company,
-	# 				'transaction_currency': 'PKR',
-	# 				'debit_in_transaction_currency': i.amount,
-	# 				'credit_in_transaction_currency': 0.0,
-	# 				'transaction_exchange_rate': 1,
-	# 				'project': i.project,
-	# 				'program': i.program,
-	# 				'subservice_area': i.subservice_area,
-	# 				'product': i.product,
-	# 				'party_type': 'Customer',  
-	# 				'party': self.customer,
-	# 			})
-	# 			gl_entry_debtors_account3.insert(ignore_permissions=True)
-	# 			gl_entry_debtors_account3.submit()
-	# 			frappe.msgprint("GL Entries created successfully")
-					
-	# 			# frappe.msgprint(f"No gain or loss for item {i.item_code}: Valuation Rate: {valuation_rate}, Sale Rate: {i.rate}")
-	# 		else:
-				
-	# 			frappe.throw(f"No valuation rate found for item {i.item_code}")
-
-	# 		gl_entry_inventory_account.insert(ignore_permissions=True)
-	# 		gl_entry_inventory_account.submit()
-	# 		gl_entry_unrestricted_fund_account.insert(ignore_permissions=True)
-	# 		gl_entry_unrestricted_fund_account.submit()
-			
-	# 		gl_entry_asset_account.insert(ignore_permissions=True)
-	# 		gl_entry_asset_account.submit()
-
-
-	def make_stock_ledger_entry(self):
-		fiscal_year = get_fiscal_year(self.posting_date, company=self.company)[0]
-		
-		for i in self.items:
-			total_qty_in_stock = self.validate_qty_for_stock_entry()
-			item_code = i.item_code 
-			warehouse = i.warehouse
-			qty = i.qty
-			cost_center = i.cost_center
-			qty_after_transaction = total_qty_in_stock - qty
-			frappe.msgprint("qty")
-			frappe.msgprint(qty)
-			frappe.msgprint("total_qty_in_stock")
-			frappe.msgprint(total_qty_in_stock)
-
-
-			frappe.msgprint("qty_after_transaction")
-			frappe.msgprint(qty_after_transaction)
-
-			try:
-				# Create Stock Ledger Entry document
-				stock_ledger_entry = frappe.get_doc({
-					'doctype': 'Stock Ledger Entry',  # Changed to the correct doctype
-					'item_code': item_code,
-					'warehouse': warehouse,
-					'posting_date': self.posting_date,
-					'is_adjustment_entry': False,
-					'voucher_type': 'Sales Invoice',
-					'voucher_no': self.name,
-					'voucher_detail_no': self.name,
-					'recalculate_rate': False,
-					'actual_qty': -qty,
-					'qty_after_transaction': qty_after_transaction,
-					'incoming_rate': 0.00,
-					'outgoing_rate': 0.00,
-					'valuation_rate': 1643.05,  # Ensure this is dynamically calculated if necessary
-					'stock_value': 105154.95,  # Ensure this is dynamically calculated
-					'stock_value_difference': -200.00,  # Ensure this is correct
-					'company': self.company,  # Should be company, not self.name
-					'stock_uom': 'Nos',  # Should match the stock UOM
-					'fiscal_year': fiscal_year,
-					'has_batch_no': False,
-					'has_serial_no': False,
-					'is_cancelled': False,
-					'custom_new': True,
-					'custom_cost_center': cost_center,
-					'inventory_scenario': None,
-					'inventory_flag': None,
-					'custom_used': False,
-					'custom_target_service_area': None,
-					'custom_target_subservice_area': None,
-					'custom_target_product': None,
-					'custom_target_project': None
-				})
-
-				# Insert and submit the stock ledger entry
-				stock_ledger_entry.insert(ignore_permissions=True)
-				stock_ledger_entry.submit()
-
-				print("Stock Ledger Entry created successfully.")
-			
-			except Exception as e:
-				frappe.log_error(frappe.get_traceback(), "Failed to create Stock Ledger Entry")
-				frappe.throw(f"Failed to create Stock Ledger Entry: {str(e)}")
-
-	def validate_qty_for_stock_entry(self):
-		frappe.msgprint("Inside Validate quantity for Stock Entry")
-		for item in self.items:
-			condition_parts = [
-				(
-					f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
-					if item.custom_new
-					else "1=1"
-				),
-				(
-					f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
-					if item.custom_used
-					else "1=1"
-				),
-				(
-					f"(warehouse = '{item.warehouse}' OR (warehouse IS NULL AND '{item.warehouse}' = '') OR warehouse = '')"
-					if item.warehouse
-					else "1=1"
-				),
-				(
-					f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
-					if item.inventory_flag
-					else "1=1"
-				),
-				(
-					f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
-					if item.program
-					else "1=1"
-				),
-				(
-					f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
-					if item.subservice_area
-					else "1=1"
-				),
-				(
-					f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
-					if item.product
-					else "1=1"
-				),
-				(
-					f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
-					if item.project
-					else "1=1"
-				),
-			]
-			condition = " AND ".join(condition_parts)
-			# frappe.msgprint(frappe.as_json(condition))
-
-			try:
-				donated_invetory = frappe.db.sql(
-					f"""
-					SELECT ifnull(SUM(actual_qty),0) as donated_qty
-					FROM `tabStock Ledger Entry`
-					WHERE
-						item_code='{item.item_code}'
-						{f'AND {condition}' if condition else ''}
-					LIMIT 1
-				"""
-				)
-
-				frappe.msgprint(frappe.as_json(donated_invetory))
-				if donated_invetory:
-					total_qty = donated_invetory[0][0]
-					frappe.msgprint(frappe.as_json(total_qty))
-					return total_qty
-				
-			except Exception as e:
-				frappe.throw(f"Error executing query: {e}")
-			return 0 
-				
-
-
-
+	# mubarim new	
 	def validate_qty(self):
-		# frappe.msgprint("Validate quantity worked!")
+		# frappe.msgprint("validate_qty_mubarim")
 		for item in self.items:
 			condition_parts = [
 				(
-					f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
+					f" and custom_new = {item.custom_new} "
 					if item.custom_new
-					else "1=1"
+					else " and custom_new = 0 "
 				),
 				(
-					f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
+					f" and custom_used = {item.custom_used} "
 					if item.custom_used
-					else "1=1"
+					else " and custom_used = 0 "
 				),
 				(
-					f"(warehouse = '{item.warehouse}' OR (warehouse IS NULL AND '{item.warehouse}' = '') OR warehouse = '')"
+					f" and warehouse = '{item.warehouse}' "
 					if item.warehouse
-					else "1=1"
+					else " and warehouse IS NULL "
 				),
 				(
-					f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
+					f" and custom_cost_center = '{item.cost_center}' "
+					if item.cost_center
+					else " and custom_cost_center IS NULL "
+				),
+				(
+					f" and inventory_flag = '{item.inventory_flag}' "
 					if item.inventory_flag
-					else "1=1"
+					else " and inventory_flag = 'None' "
 				),
 				(
-					f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
+					f" and inventory_scenario = '{item.inventory_scenario}' "
+					if item.inventory_scenario
+					else " and inventory_scenario = 'None' "
+				),
+				(
+					f" and program = '{item.program}' "
 					if item.program
-					else "1=1"
+					else " and program IS NULL "
 				),
 				(
-					f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
+					f" and subservice_area = '{item.subservice_area}' "
 					if item.subservice_area
-					else "1=1"
+					else " and subservice_area IS NULL "
 				),
 				(
-					f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
+					f" and product = '{item.product}' "
 					if item.product
-					else "1=1"
+					else " and product IS NULL "
 				),
 				(
-					f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
+					f" and project = '{item.project}' "
 					if item.project
-					else "1=1"
+					else " and project IS NULL "
 				),
 			]
-			condition = " AND ".join(condition_parts)
-			# frappe.msgprint(frappe.as_json(condition))
+			condition = "  ".join(condition_parts)
 
-			try:
-				donated_invetory = frappe.db.sql(
-					f"""
+			query = f"""
 					SELECT ifnull(SUM(actual_qty),0) as donated_qty,
 						item_code
 					FROM `tabStock Ledger Entry`
 					WHERE
 						item_code='{item.item_code}'
-						{f'AND {condition}' if condition else ''}
-				""",
+						{f'{condition}' if condition else ''}
+				"""
+			# frappe.msgprint(f"query: {query}")
+			
+			try:
+				donated_invetory = frappe.db.sql(
+					query,
 					as_dict=True,
 				)
-
-				# frappe.msgprint(frappe.as_json(donated_invetory))
+				# frappe.msgprint(f"query result: {donated_invetory}")
 			except Exception as e:
 				frappe.throw(f"Error executing query: {e}")
 
 			for di in donated_invetory:
-				if di.donated_qty > item.qty:
+				if di.donated_qty >= item.qty:
 					pass
 				else:
 					frappe.throw(
 					f"Insufficient quantity for item {item.item_code}. "
 					f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
+					)
+					# frappe.throw(
+					# 	f"{item.item_code} quantity doesn't exist!" #against condtions {condition}
+					# )
+
+	def update_stock_ledger_entry(self):
+		for row in self.items:
+			if frappe.db.exists(
+				"Stock Ledger Entry",
+				{
+					"docstatus": 1,
+					"voucher_no": self.name,
+				},
+			):
+				frappe.db.sql(
+					f""" 
+						UPDATE `tabStock Ledger Entry`
+						SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{row.cost_center}'
+						WHERE docstatus=1 
+							and voucher_detail_no = '{row.name}'
+							and voucher_no = '{self.name}'
+					"""
 				)
+
+
+	#old perfect
+
+	# def validate_qty(self):
+
+	# 	frappe.msgprint("Validate quantity worked!")
+	# 	for item in self.items:
+	# 		condition_parts = [
+	# 			(
+	# 				f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
+	# 				if item.custom_new
+	# 				else "1=1"
+	# 			),
+	# 			(
+	# 				f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
+	# 				if item.custom_used
+	# 				else "1=1"
+	# 			),
+	# 			(
+	# 				f"(warehouse = '{item.warehouse}' OR (warehouse IS NULL AND '{item.warehouse}' = '') OR warehouse = '')"
+	# 				if item.warehouse
+	# 				else "1=1"
+	# 			),
+	# 			(
+	# 				f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
+	# 				if item.inventory_flag
+	# 				else "1=1"
+	# 			),
+	# 			(
+	# 				f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
+	# 				if item.program
+	# 				else "1=1"
+	# 			),
+	# 			(
+	# 				f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
+	# 				if item.subservice_area
+	# 				else "1=1"
+	# 			),
+	# 			(
+	# 				f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
+	# 				if item.product
+	# 				else "1=1"
+	# 			),
+	# 			(
+	# 				f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
+	# 				if item.project
+	# 				else "1=1"
+	# 			),
+	# 		]
+	# 		condition = " AND ".join(condition_parts)
+	# 		frappe.msgprint(frappe.as_json("condition"))
+	# 		frappe.msgprint(frappe.as_json(condition))
+
+	# 		query = f"""
+	# 			SELECT ifnull(SUM(actual_qty), 0) as donated_qty, item_code FROM `tabStock Ledger Entry`
+	# 			WHERE item_code='{item.item_code}' AND {condition}
+	# 			AND is_cancelled = 0
+	# 		"""
+	# 		frappe.msgprint(frappe.as_json("query"))
+	# 		frappe.msgprint(frappe.as_json(query))
+
+	# 		try:
+	# 			donated_invetory = frappe.db.sql(query, as_dict=True)
+	# 			frappe.msgprint(frappe.as_json("donated_invetory"))
+	# 			frappe.msgprint(frappe.as_json(donated_invetory))
+	# 		except Exception as e:
+	# 			frappe.throw(f"Error executing query: {e}")
+
+	# 		try:
+	# 			donated_invetory = frappe.db.sql(
+	# 				f"""
+	# 				SELECT ifnull(SUM(actual_qty),0) as donated_qty,
+	# 					item_code
+	# 				FROM `tabStock Ledger Entry`
+	# 				WHERE
+	# 					item_code='{item.item_code}'
+	# 					{f'AND {condition}' if condition else ''}
+	# 			""",
+	# 				as_dict=True,
+	# 			)
+
+	# 			frappe.msgprint(frappe.as_json("donated_invetory"))
+	# 			frappe.msgprint(frappe.as_json(donated_invetory))
+	# 		except Exception as e:
+	# 			frappe.throw(f"Error executing query: {e}")
+
+	# 		for di in donated_invetory:
+	# 			if di.donated_qty > item.qty:
+	# 				pass
+	# 			else:
+	# 				frappe.msgprint(
+	# 				f"Insufficient quantity for item {item.item_code}. "
+	# 				f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
+	# 			)
 
 	def make_gl_entries(self, gl_entries=None, from_repost=False):
 		from erpnext.accounts.general_ledger import make_gl_entries, make_reverse_gl_entries

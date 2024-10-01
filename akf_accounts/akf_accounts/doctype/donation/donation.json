@@ -28,8 +28,11 @@
   "exchange_rate",
   "column_break_gruy",
   "to_currency",
-  "payment_details_section",
+  "section_break_rutf",
   "donation_cost_center",
+  "column_break_kchn",
+  "total_donors",
+  "payment_details_section",
   "payment_detail",
   "section_break_otbq",
   "deduction_breakeven",
@@ -128,8 +131,9 @@
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nUnpaid\nPaid\nPartly Paid\nOverdue\nReturn",
+   "options": "Draft\nUnpaid\nPaid\nPartly Paid\nOverdue\nPartly Return\nReturn\nCredit Note Issued",
    "read_only": 1
   },
   {
@@ -318,12 +322,28 @@
    "label": "Return Against",
    "options": "Donation",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "donation_cost_center",
+   "fieldname": "total_donors",
+   "fieldtype": "Int",
+   "label": "Total Donors",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_rutf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_kchn",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-13 19:20:23.084531",
+ "modified": "2024-09-30 14:07:34.896686",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

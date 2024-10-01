@@ -39,7 +39,7 @@ frappe.ui.form.on('Payment Entry', {
 			}
 
             if (child.reference_doctype == "Donation") {
-				filters["status"] = "Unpaid";
+				filters["status"] = ["in", ("Unpaid", "Return")];
 			}
 
 			return {
@@ -95,7 +95,8 @@ frappe.ui.form.on("Payment Entry Reference", {
 					reference_doctype: row.reference_doctype,
 					reference_name: row.reference_name,
 					party_account_currency: (frm.doc.payment_type == "Receive") ?
-						frm.doc.paid_from_account_currency : frm.doc.paid_to_account_currency
+						frm.doc.paid_from_account_currency : frm.doc.paid_to_account_currency,
+					donor: frm.doc.party
 				},
 				callback: function(r, rt) {
 					if (r.message) {

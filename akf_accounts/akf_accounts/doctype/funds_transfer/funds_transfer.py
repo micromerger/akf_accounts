@@ -72,7 +72,7 @@ class FundsTransfer(Document):
                     f.ff_service_area == t.ft_service_area and
                     f.ff_subservice_area == t.ft_subservice_area and
                     f.ff_product == t.ft_product and
-                    f.ff_project == t.ft_project and
+                    f.project == t.project and
                     f.ff_account == t.ft_account and
                     f.ff_donor == t.ft_donor
                 ):
@@ -95,7 +95,7 @@ class FundsTransfer(Document):
                 new_amount = float(n.get('ft_amount', 0.0)) 
                 new_cost_center = n.get('ft_cost_center')
                 new_account = n.get('ft_account')
-                new_project = n.get('ft_project')
+                new_project = n.get('project')
                 new_program = n.get('ft_service_area')
                 new_subservice_area = n.get('ft_subservice_area')
                 new_product = n.get('ft_product')
@@ -203,7 +203,7 @@ class FundsTransfer(Document):
                     'account_currency': 'PKR',
                     'debit_in_account_currency': 0.0,
                     'credit_in_account_currency': total_transfer_amount,
-                    'against': total_transfer_amount,
+                    'against': self.custom_from_bank,
                     'voucher_type': 'Funds Transfer',
                     'voucher_no': self.name,
                     'remarks': 'Funds Transferred',
@@ -235,7 +235,7 @@ class FundsTransfer(Document):
                     'account_currency': 'PKR',
                     'debit_in_account_currency': total_transfer_amount,
                     'credit_in_account_currency': 0.0,
-                    'against': total_transfer_amount,
+                    'against': self.custom_to_bank,
                     'voucher_type': 'Funds Transfer',
                     'voucher_no': self.name,
                     'remarks': 'Funds Transferred',
@@ -293,7 +293,7 @@ class FundsTransfer(Document):
                 new_amount = float(n.get('ft_amount', 0.0))  # Required amount to transfer
                 new_cost_center = n.get('ft_cost_center')
                 new_account = n.get('ft_account')
-                new_project = n.get('ft_project')
+                new_project = n.get('project')
                 new_program = n.get('ft_service_area')
                 new_subservice_area = n.get('ft_subservice_area')
                 new_product = n.get('ft_product')
@@ -497,7 +497,7 @@ class FundsTransfer(Document):
     #                 new_amount = float(n.get('ft_amount', 0.0))  # Required amount to transfer
     #                 new_cost_center = n.get('ft_cost_center')
     #                 new_account = n.get('ft_account')
-    #                 new_project = n.get('ft_project')
+    #                 new_project = n.get('project')
     #                 new_program = n.get('ft_service_area')
     #                 new_subservice_area = n.get('ft_subservice_area')
     #                 new_product = n.get('ft_product')
@@ -672,7 +672,7 @@ class FundsTransfer(Document):
             for field, value in [
                 ('subservice_area', p.ff_subservice_area),
                 ('donor', p.ff_donor),
-                ('project', p.ff_project),
+                ('project', p.project),
                 ('cost_center', p.ff_cost_center),
                 ('product', p.ff_product),
                 ('program', p.ff_service_area),
@@ -718,7 +718,7 @@ class FundsTransfer(Document):
             for entry in donor_entries:
                 if ((entry.get('program') == p.ff_service_area or (not entry.get('program') and not p.ff_service_area)) and
                     (entry.get('subservice_area') == p.ff_subservice_area or (not entry.get('subservice_area') and not p.ff_subservice_area)) and
-                    (entry.get('project') == p.ff_project or (not entry.get('project') and not p.ff_project)) and
+                    (entry.get('project') == p.project or (not entry.get('project') and not p.project)) and
                     (entry.get('cost_center') == p.ff_cost_center or (not entry.get('cost_center') and not p.ff_cost_center)) and
                     (entry.get('product') == p.ff_product or (not entry.get('product') and not p.ff_product)) and
                     (entry.get('account') == p.ff_account or (not entry.get('account') and not p.ff_account)) and
@@ -760,7 +760,7 @@ class FundsTransfer(Document):
                             "donor": p.ff_donor,
                             "service_area": p.ff_service_area,
                             "subservice_area": p.ff_subservice_area,
-                            "project": p.ff_project,
+                            "project": p.project,
                             "cost_center": p.ff_cost_center,
                             "product": p.ff_product,
                             "company": p.ff_company,
@@ -801,7 +801,7 @@ class FundsTransfer(Document):
                     fields.append({
                         'donor': n.ft_donor,
                         'cost_center': n.ft_cost_center,
-                        'project': n.ft_project,
+                        'project': n.project,
                         'service_area': n.ft_service_area,
                         'subservice_area': n.ft_subservice_area,
                         'product': n.ft_product,
@@ -838,7 +838,7 @@ def donor_list_data_funds_transfer(doc):
         for field, value in [
             ('subservice_area', p.ff_subservice_area),
             ('donor', p.ff_donor),
-            ('project', p.ff_project),
+            ('project', p.project),
             ('cost_center', p.ff_cost_center),
             ('product', p.ff_product),
             ('program', p.ff_service_area),
@@ -885,7 +885,7 @@ def donor_list_data_funds_transfer(doc):
             # Check if the entry matches all conditions
             if ((entry.get('program') == p.ff_service_area or (not entry.get('program') and not p.ff_service_area)) and
                 (entry.get('subservice_area') == p.ff_subservice_area or (not entry.get('subservice_area') and not p.ff_subservice_area)) and
-                (entry.get('project') == p.ff_project or (not entry.get('project') and not p.ff_project)) and
+                (entry.get('project') == p.project or (not entry.get('project') and not p.project)) and
                 (entry.get('cost_center') == p.ff_cost_center or (not entry.get('cost_center') and not p.ff_cost_center)) and
                 (entry.get('product') == p.ff_product or (not entry.get('product') and not p.ff_product)) and
                 (entry.get('account') == p.ff_account or (not entry.get('account') and not p.ff_account)) and
@@ -947,7 +947,7 @@ def donor_list_data_funds_transfer(doc):
                         "donor": p.ff_donor,
                         "service_area": p.ff_service_area,
                         "subservice_area": p.ff_subservice_area,
-                        "project": p.ff_project,
+                        "project": p.project,
                         "cost_center": p.ff_cost_center,
                         "product": p.ff_product,
                         "company": p.ff_company,
@@ -999,7 +999,7 @@ def donor_list_data_funds_transfer_previous(doc):
         for field, value in [
             ('subservice_area', p.ff_subservice_area),
             ('donor', p.ff_donor),
-            ('project', p.ff_project),
+            ('project', p.project),
             ('cost_center', p.ff_cost_center),
             ('product', p.ff_product),
             ('program', p.ff_service_area),
@@ -1047,7 +1047,7 @@ def donor_list_data_funds_transfer_previous(doc):
         for entry in donor_entries:
             if ((entry.get('program') == p.ff_service_area or (not entry.get('program') and not p.ff_service_area)) and
                 (entry.get('subservice_area') == p.ff_subservice_area or (not entry.get('subservice_area') and not p.ff_subservice_area)) and
-                (entry.get('project') == p.ff_project or (not entry.get('project') and not p.ff_project)) and
+                (entry.get('project') == p.project or (not entry.get('project') and not p.project)) and
                 (entry.get('cost_center') == p.ff_cost_center or (not entry.get('cost_center') and not p.ff_cost_center)) and
                 (entry.get('product') == p.ff_product or (not entry.get('product') and not p.ff_product)) and
                 (entry.get('account') == p.ff_account or (not entry.get('account') and not p.ff_account)) and
@@ -1099,7 +1099,7 @@ def donor_list_data_funds_transfer_previous(doc):
                         "donor": p.ff_donor,
                         "service_area": p.ff_service_area,
                         "subservice_area": p.ff_subservice_area,
-                        "project": p.ff_project,
+                        "project": p.project,
                         "cost_center": p.ff_cost_center,
                         "product": p.ff_product,
                         "company": p.ff_company,

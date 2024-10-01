@@ -237,7 +237,7 @@ def total_accumulated_depreciation(asset_name, gross_purchase_amount):
     return True
 
 
-@frappe.whitelist()
+""" @frappe.whitelist()
 def post_depreciation_entries_extended(date=None):
 	# Return if automatic booking of asset depreciation is disabled
 	if not cint(
@@ -442,7 +442,7 @@ def make_depreciation_entry_extended(
         return asset_depr_schedule_doc
 
     raise depreciation_posting_error
-
+ """
 
 # @frappe.whitelist()
 # def update_date():
@@ -453,10 +453,10 @@ def make_depreciation_entry_extended(
 #     """)
 
 
-@frappe.whitelist()
-def update_date():
-     frappe.db.sql("""
-        UPDATE `tabAsset` 
-        SET purchase_date = '2024-09-17' 
-        WHERE name = 'ACC-ASS-2024-00179'
-    """)
+# @frappe.whitelist()
+# def update_date():
+#      frappe.db.sql("""
+#         UPDATE `tabAsset` 
+#         SET purchase_date = '2024-09-17' 
+#         WHERE name = 'ACC-ASS-2024-00179'
+#     """)

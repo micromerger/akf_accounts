@@ -13,7 +13,7 @@
   "ff_service_area",
   "ff_subservice_area",
   "ff_product",
-  "ff_project",
+  "project",
   "ff_donor"
  ],
  "fields": [
@@ -48,13 +48,6 @@
    "options": "Product"
   },
   {
-   "fieldname": "ff_project",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Project",
-   "options": "Project"
-  },
-  {
    "fieldname": "ff_donor",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -76,12 +69,19 @@
    "label": "Company",
    "options": "Company",
    "reqd": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-06 17:15:45.531056",
+ "modified": "2024-10-01 13:47:31.683401",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer From",

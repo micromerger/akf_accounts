@@ -3,20 +3,27 @@ frappe.ui.form.on('Purchase Receipt', {
   
     onload_post_render: function(frm) { 
 
-        set_query_for_item_code(frm);   
+        set_query_for_item_code(frm);
+        set_query_warehouse(frm);
+        if (frm.is_new() && !frm.doc.__islocal){
+            frm.set_value('set_warehouse', '');
+            frm.refresh_field['set_warehouse']
+        }
+       
 
     },
-    
+ 
     refresh: function(frm) {
-        
+        set_query_warehouse(frm);  
         set_queries_payment_details(frm);
         console.log("Refreshed triggered");
         if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase Restricted"].includes(frm.doc.custom_type_of_transaction)) {
             get_html(frm);
-        }        
+        }   
     },
 
     // Below is the code written by MUBASHIR BASHIR
+    
     validate: function(frm) {
         validate_item_quantity(frm);        
     },
@@ -44,6 +51,26 @@ frappe.ui.form.on('Purchase Receipt', {
 });
 
 
+
+function set_query_warehouse(frm) {
+
+    frm.doc.custom_program_details.forEach(function(row) {
+        let selected_cost_center = row.pd_cost_center;
+        
+        frm.set_query('set_warehouse', function() {  
+            return {
+                filters: {
+                    'custom_cost_center': selected_cost_center, 
+                    'is_group': 0, 
+                    'company': frm.doc.company
+                }
+            };
+        });
+    });
+}
+
+
+
 // Below is the code written by MUBASHIR BASHIR
 function get_original_item_qty(frm) {
     if (frm.doc.items && frm.doc.items.length > 0) {
@@ -67,44 +94,35 @@ function validate_item_quantity(frm) {
     });
 }
 
-// Below is the code written by MUBASHIR BASHIR
-// function update_material_request_status(frm) {
-//     frm.doc.items.forEach(function(item) {
-//         var original_qty = frm.original_qty_values[item.name];
-
-//         if (!item.material_request) {
-//             return;  
-//         }
-
-//         let status = '';
-
-//         if (item.qty < original_qty) {
-//             status = 'Partially Received';
-//         } else if (item.qty == original_qty) {
-//             status = 'Received';
-//         }
-
-//         frappe.call({
-//             method: 'akf_accounts.customizations.extends.xpurchase_receipt.update_material_request_status',
-//             args: {
-//                 material_request: item.material_request,
-//                 status: status
-//             },
-//             // callback: function(r) {
-//             //     if (r.message) {
-//             //         frappe.msgprint(`Status for Material Request ${item.material_request} updated to ${status}`);
-//             //     }
-//             // }
-//         });
-//     });
-// }
 
 
 frappe.ui.form.on("Program Details", {
     pd_donor: function(frm, cdt, cdn) {
-        // Trigger the get_html function whenever ff_donor is updated
         get_html(frm);
-    }});
+    },
+    pd_cost_center: function(frm, cdt, cdn) {
+        frm.set_value('set_warehouse', '');
+        frm.refresh_field['set_warehouse']
+        var row = locals[cdt][cdn]; 
+        selected_cost_center = row.pd_cost_center
+
+
+        console.log("selected_cost_centerrrrr");
+        console.log(row.pd_cost_center);
+
+        frm.set_query('set_warehouse', function() {  
+            return {
+                filters: {
+                    'custom_cost_center': selected_cost_center, 
+                    'is_group': 0, 
+                    'company': frm.doc.company
+                }
+            };
+        });
+  
+    }
+});
+
 
 
     
@@ -152,6 +170,7 @@ function set_query_for_item_code(frm) {
     };
 
 }
+
 
 function get_html(frm) {
     $("#table_render").empty();
@@ -297,8 +316,6 @@ function get_html(frm) {
     });
 }
 
-
-
 function set_queries_payment_details(frm){
     set_query_subservice_area(frm);
     set_query_cost_center(frm);
@@ -342,19 +359,6 @@ function set_query_cost_center(frm){
         };
     };
 }
-
-// function set_query_product(frm){
-//     frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
-//         var row = locals[cdt][cdn];
-//         return {
-//             filters: {
-//                 subservice_area: ["!=", ""],
-//                 subservice_area: row.pd_subservice_area,
-//             }
-//         };
-//     };
-// }
-
 
 function set_query_product(frm) {
     frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
@@ -404,3 +408,36 @@ frappe.ui.form.on("Purchase Receipt Item", {
 
     
 });
+
+
+// Below is the code written by MUBASHIR BASHIR
+// function update_material_request_status(frm) {
+//     frm.doc.items.forEach(function(item) {
+//         var original_qty = frm.original_qty_values[item.name];
+
+//         if (!item.material_request) {
+//             return;  
+//         }
+
+//         let status = '';
+
+//         if (item.qty < original_qty) {
+//             status = 'Partially Received';
+//         } else if (item.qty == original_qty) {
+//             status = 'Received';
+//         }
+
+//         frappe.call({
+//             method: 'akf_accounts.customizations.extends.xpurchase_receipt.update_material_request_status',
+//             args: {
+//                 material_request: item.material_request,
+//                 status: status
+//             },
+//             // callback: function(r) {
+//             //     if (r.message) {
+//             //         frappe.msgprint(`Status for Material Request ${item.material_request} updated to ${status}`);
+//             //     }
+//             // }
+//         });
+//     });
+// }

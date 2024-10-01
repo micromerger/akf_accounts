@@ -8,6 +8,10 @@ class Donation(Document):
 		self.validate_payment_details()
 		self.validate_deduction_percentages()
 		self.validate_pledge_contribution_type()
+		self.validate_is_return()
+		self.set_deduction_breakeven()
+		self.update_status()
+		
 			
 	def validate_payment_details(self):
 		if(len(self.payment_detail)<1):
@@ -35,18 +39,11 @@ class Donation(Document):
 					msg = f"<b>Row#{d.idx}:</b> {msg}"
 					frappe.throw(msg=f"{msg}", title="Payment Detail")
 
-	@frappe.whitelist()
-	def set_deduction_breakeven(self):
+	def get_deduction_details(self, row):
+			# if(row.donation_type=="Zakat"): return []
+			#Added by Aqsa
+			if row.donation_type in ["", "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]: return []
 
-		def reset_mode_of_payment(row):
-			if(self.contribution_type == "Pledge"):
-				row.mode_of_payment = None
-				row.account_paid_to = None
-				row.transaction_no_cheque_no = ""
-				row.reference_date = None
-
-		def get_deduction_details(row):
-			if(row.donation_type=="Zakat"): return []
 			return frappe.db.sql(f"""
 					SELECT 
 						company, income_type,
@@ -60,27 +57,45 @@ class Donation(Document):
 						and parent = '{row.pay_service_area}'
 						and project = '{row.project}'
 					""", as_dict=True)
+	
+
+	@frappe.whitelist()
+	def set_deduction_breakeven(self):
+
+		def reset_mode_of_payment(row):
+			if(self.contribution_type == "Pledge"):
+				row.mode_of_payment = None
+				row.account_paid_to = None
+				row.transaction_no_cheque_no = ""
+				row.reference_date = None
+
+		def get_deduction_details(row, deduction_breakeven):
+			#Added by Aqsa
+			if (row.donation_type in [None, "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]): 
+				return []
+
+			_breakeven = [d for d in deduction_breakeven if(d.random_id == row.random_id)]
 			
-		self.set("deduction_breakeven", [])
-		deduction_amount=0
-		total_donation=0
+			if (_breakeven):
+				return _breakeven
+
+			return frappe.db.sql(f"""
+					SELECT 
+						company, income_type,
+						(select project from `tabIncome Type` where name = dd.income_type) as project, 
+						account, percentage, min_percent, max_percent
+						
+					FROM 
+						`tabDeduction Details` dd
+					WHERE 
+						ifnull(account, "")!=""
+						and company = '{self.company}'
+						and parent = '{row.pay_service_area}'
+						and project = '{row.project}'
+					""", as_dict=True)
 		
-		for row in self.payment_detail:
-			reset_mode_of_payment(row)
-			total_donation+= row.donation_amount
-			row.base_donation_amount = self.apply_currecny_exchange(row.donation_amount)
-			# Setup Deduction Breakeven
-			temp_deduction_amount=0
-			# Looping
-			for args in get_deduction_details(row):
-				percentage_amount = 0
-				base_amount = 0
-				if(row.donation_amount>0 or self.is_return):
-					percentage_amount = row.donation_amount*(args.percentage/100)
-					base_amount = self.apply_currecny_exchange(percentage_amount)
-					temp_deduction_amount += percentage_amount
-				
-				args.update({
+		def set_deduction_details(row, args):
+			args.update({
 					"donor": row.donor_id,
 					"program": row.pay_service_area,
 					"subservice_area": row.pay_subservice_area,
@@ -91,13 +106,49 @@ class Donation(Document):
 					"amount": percentage_amount,
 					"base_amount": base_amount,
 					"service_area": row.program,
-					"project": args.project if(args.project) else row.project,
-
+					"project": row.project,
+					
 					"cost_center": self.donation_cost_center,
-					"payment_detail_id": row.idx,
+					"random_id": row.random_id,
 					})
-				self.append("deduction_breakeven", args)
+			self.append("deduction_breakeven", args)
 
+		def get_defaul_accounts(service_area, fieldname):
+			return frappe.db.get_value('Accounts Default', {'parent': service_area, 'company': self.company}, fieldname)
+		
+		def set_total_donors():
+			self.total_donors = len(self.payment_detail)
+
+		deduction_breakeven = self.deduction_breakeven
+		self.set("deduction_breakeven", [])
+		deduction_amount=0
+		total_donation=0
+		
+		for row in self.payment_detail:
+			# print("payment_detail: ", row.random_id)
+			reset_mode_of_payment(row)
+			total_donation+= row.donation_amount
+			row.base_donation_amount = self.apply_currecny_exchange(row.donation_amount)
+			# Setup Deduction Breakeven
+			temp_deduction_amount=0
+			# Looping
+			""" _breakeven = [d for d in deduction_breakeven if(d.random_id == row.random_id)]
+			_deduction_breakeven = _breakeven if(_breakeven) else get_deduction_details(row) """
+			for args in get_deduction_details(row, deduction_breakeven):
+				# print("_deduction_breakeven: ", args.random_id)
+				percentage_amount = 0
+				base_amount = 0
+				
+				if(row.donation_amount>0 or self.is_return):
+					percentage_amount = row.donation_amount*(args.percentage/100)
+					base_amount = self.apply_currecny_exchange(percentage_amount)
+					temp_deduction_amount += percentage_amount
+				
+				set_deduction_details(row, args)			
+			
+			row.equity_account = row.equity_account  if(row.equity_account) else get_defaul_accounts(row.pay_service_area, 'equity_account')
+			row.receivable_account = row.receivable_account if(row.receivable_account) else get_defaul_accounts(row.pay_service_area, 'receivable_account')
+			
 			row.cost_center = self.donation_cost_center
 			row.deduction_amount = temp_deduction_amount    
 			row.net_amount = (row.donation_amount-row.deduction_amount)
@@ -106,7 +157,69 @@ class Donation(Document):
 			deduction_amount += temp_deduction_amount
 			
 		# calculate total
+		set_total_donors()
 		self.calculate_total(total_donation, deduction_amount)
+
+	@frappe.whitelist()
+	def update_deduction_breakeven(self):
+		""" in case of return """
+		deduction_amount=0
+		total_donation=0
+		
+		deduction_breakeven = self.deduction_breakeven
+		breakeven_list = []
+		for row1 in self.payment_detail:
+			total_donation+= row1.donation_amount
+			row1.base_donation_amount = self.apply_currecny_exchange(row1.donation_amount)
+			# Setup Deduction Breakeven
+			temp_deduction_amount=0
+			
+			for row2 in deduction_breakeven:
+				if(row1.random_id == row2.random_id):
+					percentage_amount = 0
+					base_amount = 0
+					
+					if(row1.donation_amount>0 or self.is_return):
+						percentage_amount = row1.donation_amount*(row2.percentage/100)
+						base_amount = self.apply_currecny_exchange(percentage_amount)
+						temp_deduction_amount += percentage_amount
+
+					args = {
+					"random_id": row1.random_id,
+					"company": row2.company, 
+					"income_type": row2.income_type,
+					"project": row2.project,
+					"account": row2.account, 
+					"percentage": row2.percentage, 
+					"min_percent": row2.min_percent, 
+					"max_percent": row2.max_percent,
+
+					"donor": row1.donor_id,
+					"program": row1.pay_service_area,
+					"subservice_area": row1.pay_subservice_area,
+					"product": row1.product,
+					"program": row1.pay_service_area,
+
+					"donation_amount": row1.donation_amount,
+					"amount": percentage_amount,
+					"base_amount": base_amount,
+					"service_area": row1.program,
+					"project": row1.project,
+
+					"cost_center": row1.cost_center,
+					"payment_detail_id": row1.idx,
+					}
+					breakeven_list.append(args)
+		
+			row1.deduction_amount = temp_deduction_amount    
+			row1.net_amount = (row1.donation_amount-row1.deduction_amount)
+			row1.outstanding_amount = row1.donation_amount if(self.contribution_type=="Pledge") else row1.net_amount
+			row1.base_outstanding_amount = self.apply_currecny_exchange(row1.outstanding_amount)
+			deduction_amount += temp_deduction_amount
+		
+		self.set("deduction_breakeven", breakeven_list)
+		self.calculate_total(total_donation, deduction_amount)
+
 
 	def apply_currecny_exchange(self, amount):
 		if(self.currency):
@@ -171,8 +284,13 @@ class Donation(Document):
 
 	def make_payment_detail_gl_entry(self):
 		args = self.get_gl_entry_dict()
-		
 		for row in self.payment_detail:
+			""" is return reverse account functionality... """
+			_net_amount = self.apply_currecny_exchange(row.net_amount)
+			debit = _net_amount if(self.is_return) else 0
+			credit = 0 if(self.is_return) else _net_amount
+
+			""" end... """
 			# credit
 			args.update({
 				"party_type": "",
@@ -185,28 +303,32 @@ class Donation(Document):
 				"project": row.project,
 				"cost_center": row.cost_center,
 				"account": row.equity_account,
-				"debit": 0,
-				"credit": self.apply_currecny_exchange(row.net_amount),
-				"debit_in_account_currency": 0,
-				"credit_in_account_currency": self.apply_currecny_exchange(row.net_amount),
-				"debit_in_transaction_currency": 0,
-				"credit_in_transaction_currency": self.apply_currecny_exchange(row.net_amount),
+				"debit": debit,
+				"credit": credit,
+				"debit_in_account_currency": debit,
+				"credit_in_account_currency": credit,
+				"debit_in_transaction_currency": debit,
+				"credit_in_transaction_currency": credit,
 				
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
 			doc.submit()
+
 			# debit
+			debit = 0 if(self.is_return) else row.base_donation_amount
+			credit = row.base_donation_amount if(self.is_return) else 0
+			# arguements
 			args.update({
 				"party_type": "Donor",
 				"party": row.donor_id,
 				"account": row.receivable_account,
-				"debit":row.base_donation_amount,
-				"credit": 0,
-				"debit_in_account_currency": row.base_donation_amount,
-				"credit_in_account_currency": 0,
-				"debit_in_transaction_currency": row.base_donation_amount,
-				"credit_in_transaction_currency": 0,
+				"debit": debit,
+				"credit": credit,
+				"debit_in_account_currency": debit,
+				"credit_in_account_currency": credit,
+				"debit_in_transaction_currency": debit,
+				"credit_in_transaction_currency": credit,
 			})
 			if(self.donor_identity == "Merchant - Known"): pass
 			else:
@@ -215,11 +337,18 @@ class Donation(Document):
 				doc.submit()
 		
 		if(self.donor_identity == "Merchant - Known"):
+			
+			debit = 0 if(self.is_return) else self.base_total_donation
+			credit = self.base_total_donation if(self.is_return) else 0
+
 			args.update({
-				"debit": self.total_donation,
-				"debit_in_account_currency": self.base_total_donation,
-				"debit_in_transaction_currency": self.base_total_donation,
-				"credit_in_transaction_currency": 0,
+				"account": row.receivable_account,
+				"debit": debit,
+				"credit": credit,
+				"debit_in_account_currency": debit,
+				"credit_in_account_currency": credit,
+				"debit_in_transaction_currency": debit,
+				"credit_in_transaction_currency": credit,
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
@@ -229,16 +358,22 @@ class Donation(Document):
 		args = self.get_gl_entry_dict()
 		# Loop through each row in the child table `deduction_breakeven`
 		for row in self.deduction_breakeven:
+			""" In normal case, accounts are going to be credit
+			But, in return case accounts are debit.
+			 """
+			debit = row.base_amount if(self.is_return) else 0
+			credit = 0 if(self.is_return) else row.base_amount
+
 			args.update({
 				"account": row.account,
 				"cost_center": row.cost_center,
-				"debit": 0,
-				"credit": row.base_amount,
-				"debit_in_account_currency": 0,
-				"credit_in_account_currency": row.base_amount,
+				"debit": debit,
+				"credit": credit,
+				"debit_in_account_currency": debit,
+				"credit_in_account_currency": credit,
 
-				"debit_in_transaction_currency": 0,
-				"credit_in_transaction_currency": row.base_amount,
+				"debit_in_transaction_currency": debit,
+				"credit_in_transaction_currency": credit,
 				
 				"donor": row.donor,
 				"program": row.program,
@@ -288,12 +423,15 @@ class Donation(Document):
 			doc.submit()
 
 	def make_payment_entry(self):
-		# if(self.contribution_type!="Donation"): return
+		if(self.contribution_type!="Donation"): return
+		if(self.is_return): return
 		args = {}
+		
 		for row in self.payment_detail:
+			
 			args = frappe._dict({
 				"doctype": "Payment Entry",
-				"payment_type" : "Pay" if(self.is_return) else "Receive",
+				"payment_type" : "Receive",
 				"party_type" : "Donor",
 				"party" : row.donor_id,
 				"party_name" : row.donor_name,
@@ -304,34 +442,34 @@ class Donation(Document):
 				"reference_date" : row.reference_date,
 				"source_exchange_rate" : 0.3,
 				"target_exchange_rate": 1,
-				"paid_from" : row.account_paid_to if(self.is_return) else row.receivable_account,
-				"paid_to" : row.receivable_account if(self.is_return) else row.account_paid_to,
+				"paid_from" : row.receivable_account,
+				"paid_to" :  row.account_paid_to,
 				"reference_date" : self.due_date,
 				"cost_center" : row.cost_center,
-				"paid_amount" : (-1 * row.base_donation_amount) if(self.is_return) else row.base_donation_amount,
-				"received_amount" : (-1 * row.base_donation_amount) if(self.is_return) else row.base_donation_amount,
+				"paid_amount" : row.base_donation_amount,
+				"received_amount" : row.base_donation_amount,
 				"donor": row.donor_id,
 				"program" : row.pay_service_area,
 				"subservice_area" : row.pay_subservice_area,
-				"product": row.pay_product if(row.pay_product) else row.product,
+				"product": row.product,
 				"project" : row.project,
 				"cost_center" : row.cost_center,
 				"references": [{
 						"reference_doctype": "Donation",
 						"reference_name" : self.name,
 						"due_date" : self.posting_date,
-						"total_amount" : (-1 * self.base_total_donation) if(self.is_return) else self.base_total_donation,
-						"outstanding_amount" : (-1 * row.base_donation_amount) if(self.is_return) else row.base_donation_amount,
+						"total_amount" : self.base_total_donation,
+						"outstanding_amount" : row.base_donation_amount,
 						"allocated_amount" : row.base_donation_amount,
 				}]
 			})
+			# frappe.throw(frappe.as_json(args))
 			if(self.donor_identity == "Merchant - Known"):
 				pass
 			else:
 				doc = frappe.get_doc(args)
 				doc.save(ignore_permissions=True)
-				if(not self.is_return):
-					doc.submit()
+				doc.submit()
 
 				if(self.donor_identity == "Unknown"):
 					# set Payment Entry id in payment_detail child table.
@@ -344,15 +482,40 @@ class Donation(Document):
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
-			if(not self.is_return):
-				doc.submit()
+			doc.submit()
+
+	def validate_is_return(self):
+		if(self.is_return): 
+			# if(len(self.payment_detail)>1):
+				# frappe.throw('Only [1] donor is allowed.', title='Is Return (Credit Note)')
+			error_msg = ""
+			for row in self.payment_detail:
+				if (frappe.db.sql(f""" 
+					select d.name 
+					from `tabDonation` d inner join `tabPayment Detail` pd on (d.name=pd.parent) 
+					where d.return_against='{self.return_against}' 
+						and pd.donor_id='{row.donor_id}'
+						and pd.pay_service_area='{row.pay_service_area}'
+						and pd.pay_subservice_area='{row.pay_subservice_area}'
+						and pd.pay_product='{row.pay_product}'
+						and pd.project_id='{row.project_id}'
+						and pd.random_id = '{row.random_id}'
+						and pd.parent!= '{self.name}' """)):
+					error_msg += f" <b>Row #{row.idx}: </b> [{row.donor_name}]<br>"
+			if(error_msg!=""):	
+				frappe.throw(error_msg, title='Return entries already exist.')
 
 	def update_status(self):
-		status = "Paid" if(self.contribution_type == "Donation") else "Unpaid"
-		if(self.is_return): status = "Return"
-		self.db_set("status", status)
-		self.reload()
+		if(self.docstatus==1):
+			status = "Paid" if(self.contribution_type == "Donation") else "Unpaid"
+			if(self.is_return): 
+				status = "Return"
+				self.reset_return_to_paid()
+			self.db_set("status", status)
+		elif(self.docstatus==0):
+			self.db_set("status", "Draft")
 
+	
 	def before_cancel(self):
 		self.del_gl_entries()
 		self.del_payment_ledger_entry()
@@ -364,6 +527,7 @@ class Donation(Document):
 		self.del_payment_ledger_entry()
 		self.del_payment_entry()
 		self.del_child_table()
+		self.reset_return_to_paid()
 
 	def del_gl_entries(self):
 		if(frappe.db.exists({"doctype": "GL Entry", "docstatus": 1, "against_voucher": self.name})):
@@ -387,7 +551,18 @@ class Donation(Document):
 
 		if(frappe.db.exists({"doctype": "Deduction Breakeven", "docstatus": 1, "parent": self.name})):
 			frappe.db.sql(f""" delete from `tabDeduction Breakeven` Where docstatus= 1 and parent = "{self.name}" """)
- 
+	
+	def reset_return_to_paid(self):
+		if(not self.return_against): return
+		_actual_donors = frappe.db.get_value("Donation", {'docstatus': 1, 'name': self.return_against}, 'total_donors')
+		_total_donors = get_total_donors_return(self.return_against)
+		if(_actual_donors == _total_donors):
+			frappe.db.set_value("Donation", self.return_against, 'status', 'Credit Note Issued')
+		elif(_actual_donors > _total_donors and _total_donors>0):
+			frappe.db.set_value("Donation", self.return_against, 'status', 'Partly Return')
+		else:
+			frappe.db.set_value("Donation", self.return_against, 'status', 'Paid')
+
 
 @frappe.whitelist()
 def get_donors_list(donation_id):
@@ -416,56 +591,110 @@ def get_outstanding(filters):
 
 @frappe.whitelist()
 def pledge_payment_entry(doc, values):
-    from frappe.utils import getdate
-    curdate = getdate()
-    
-    doc = frappe._dict(ast.literal_eval(doc))
-    values = frappe._dict(ast.literal_eval(values))
-    row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor_id': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
-    
-    if(not row): frappe.throw(f"You're paying more than donation amount.")
-    args = frappe._dict({
-        "doctype": "Payment Entry",
-        "payment_type" : "Receive",
-        "party_type" : "Donor",
-        "party" : row.donor_id,
-        "party_name" : row.donor_name,
-        "posting_date" : curdate,
-        "company" : doc.company,
-        "mode_of_payment" : values.mode_of_payment,
-        "reference_no" : values.cheque_reference_no,
-        "source_exchange_rate" : 0.3,
-        "target_exchange_rate": 1,
-        "paid_from" : row.receivable_account,
-        "paid_to" : values.account_paid_to,
-        "reference_date" : curdate,
-        "cost_center" : row.cost_center,
-        "paid_amount" : values.paid_amount,
-        "received_amount" : values.paid_amount,
-        "program" : row.pay_service_area,
-        "subservice_area" : row.pay_subservice_area,
-        "product" : row.pay_product,
-        "project" : row.project,
-        "cost_center" : row.cost_center,
-        "donor": row.donor_id,
-        "references": [{
-                "reference_doctype": "Donation",
-                "reference_name" : doc.name,
-                "due_date" : curdate,
-                "total_amount" : doc.base_total_donation,
-                "outstanding_amount" : values.paid_amount,
-                "allocated_amount" : values.paid_amount,
-        }]
-    })
-    doc = frappe.get_doc(args)
-    doc.save(ignore_permissions=True)
-    doc.submit()
-    # frappe.throw(f"{row}")
-    frappe.db.set_value("Payment Detail", row.name, "paid", values.paid)
-    frappe.db.set_value("Payment Detail", row.name, "base_outstanding_amount", values.outstanding_amount)
-    pe_link = get_link_to_form("Payment Entry", doc.name, "Payment Entry")
-    frappe.msgprint(f"{pe_link} has been paid successfully!", alert=True)
-    return doc.name
+	from frappe.utils import getdate
+	curdate = getdate()
+
+	doc = frappe._dict(ast.literal_eval(doc))
+	values = frappe._dict(ast.literal_eval(values))
+	row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor_id': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
+
+	if(not row): frappe.throw(f"You're paying more than donation amount.")
+	args = frappe._dict({
+		"doctype": "Payment Entry",
+		"payment_type" : "Receive",
+		"party_type" : "Donor",
+		"party" : row.donor_id,
+		"party_name" : row.donor_name,
+		"posting_date" : curdate,
+		"company" : doc.company,
+		"mode_of_payment" : values.mode_of_payment,
+		"reference_no" : values.cheque_reference_no,
+		"source_exchange_rate" : 0.3,
+		"target_exchange_rate": 1,
+		"paid_from" : row.receivable_account,
+		"paid_to" : values.account_paid_to,
+		"reference_date" : curdate,
+		"cost_center" : row.cost_center,
+		"paid_amount" : values.paid_amount ,
+		"received_amount" : values.paid_amount,
+		"program" : row.pay_service_area,
+		"subservice_area" : row.pay_subservice_area,
+		"product" : row.pay_product,
+		"project" : row.project,
+		"cost_center" : row.cost_center,
+		"donor": row.donor_id,
+		"references": [{
+				"reference_doctype": "Donation",
+				"reference_name" : doc.name,
+				"due_date" : curdate,
+				"total_amount" : doc.base_total_donation,
+				"outstanding_amount" : values.paid_amount,
+				"allocated_amount" : values.paid_amount,
+		}]
+	})
+	_doc = frappe.get_doc(args)
+	_doc.save(ignore_permissions=True)
+	_doc.submit()
+	frappe.db.set_value("Payment Detail", row.name, "paid", values.paid)
+	frappe.db.set_value("Payment Detail", row.name, "base_outstanding_amount", values.outstanding_amount)
+	pe_link = get_link_to_form("Payment Entry", _doc.name, "Payment Entry")
+	frappe.msgprint(f"{pe_link} has been paid successfully!", alert=True)
+	return _doc.name
+
+@frappe.whitelist()
+def return_payment_entry(doc):
+	from frappe.utils import getdate
+	curdate = getdate()
+
+	doc = frappe._dict(ast.literal_eval(doc))
+	
+	args =  frappe._dict({
+		"doctype": "Payment Entry",
+		"payment_type" :  "Pay",
+		"party_type" : "Donor",
+		"posting_date" : curdate,
+		"company" : doc.company,
+		"source_exchange_rate" : 0.3,
+		"target_exchange_rate": 1,
+		"reference_date" : curdate,
+	})
+	
+	for row in doc.payment_detail:
+		row = frappe._dict(row)
+		args.update({
+			"party" : row.donor_id,
+			"party_name" : row.donor_name,
+			"mode_of_payment" :  row.mode_of_payment,
+			"paid_from" : row.account_paid_to,
+			"paid_to" : row.receivable_account,
+			"reference_no" : row.transaction_no_cheque_no,
+			"cost_center" : row.cost_center,
+			"paid_amount" : row.outstanding_amount,
+			"received_amount" : row.outstanding_amount,
+			"program" : row.pay_service_area,
+			"subservice_area" : row.pay_subservice_area,
+			"product" : row.pay_product,
+			"project" : row.project,
+			"cost_center" : row.cost_center,
+			"donor": row.donor_id,
+
+			"references": [{
+					"reference_doctype": "Donation",
+					"reference_name" : doc.name,
+					"due_date" : curdate,
+					"total_amount" : doc.base_total_donation,
+					"outstanding_amount" : -1 * row.outstanding_amount,
+					"allocated_amount" : -1 * row.outstanding_amount,
+			}]
+		})
+	
+	_doc = frappe.get_doc(args)
+	_doc.save(ignore_permissions=True)
+
+	# frappe.db.set_value("Payment Detail", row.name, "paid", values.paid)
+	pe_link = get_link_to_form("Payment Entry", _doc.name, "Payment Entry")
+	frappe.msgprint(f"{pe_link} has been created successfully!", alert=True)
+	return _doc.name
 
 @frappe.whitelist()
 def get_min_max_percentage(program, account):
@@ -605,14 +834,23 @@ def set_unknown_to_known(name, values):
     frappe.msgprint("Donor id, updated in [<b>Payment Detail, Deduction Breakeven, GL Entry, Payment Entry, Payment Ledger Entry</b>] accounting dimensions/doctypes.", alert=1)
 
 
+@frappe.whitelist()
+def get_total_donors_return(return_against):
+	result = frappe.db.sql(f""" 
+		select ifnull(sum(total_donors),0) as total_donors 
+		from `tabDonation` 
+		where docstatus<2 and return_against='{return_against}' 
+	""")
+	return result[0][0] if(result) else 0
+
+
 """ 12-09-2024 
 Nabeel Saleem 
 -> Return / Credit Note 
 """
 
 @frappe.whitelist()
-def make_sales_return(source_name, target_doc=None):
-	pass
+def make_donation_return(source_name, target_doc=None):
 	# from erpnext.controllers.sales_and_purchase_return import make_return_doc
 	return make_return_doc("Donation", source_name, target_doc)
 
@@ -624,10 +862,12 @@ def make_return_doc(
 	def set_missing_values(source, target):
 		doc = frappe.get_doc(target)
 		doc.is_return = 1
+		doc.status = "Return"
 		doc.return_against = source.name
 	
 	def update_payment_detail(source_doc, target_doc, source_parent):
 		target_doc.donation_amount = -1 * source_doc.donation_amount
+		target_doc.paid = 0
 
 	doclist = get_mapped_doc(
 		doctype,
@@ -651,3 +891,12 @@ def make_return_doc(
 	)
 
 	return doclist
+
+@frappe.whitelist()
+def verify_payment_entry(doctype, reference_name, fieldname):
+	return frappe.db.sql(f""" 
+		select {fieldname}
+		from `tab{doctype}`
+		where docstatus<2
+		and reference_name = '{reference_name}'
+	 """)

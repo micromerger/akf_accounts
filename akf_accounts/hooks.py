@@ -155,7 +155,7 @@ scheduler_events = {
         # ],
         "*/5 * * * *": [
             # "akf_hrms.services.cron_jobs.attendance.mark_attendance",
-             "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended",
+             "akf_accounts.customizations.extends.depreciation.post_depreciation_entries",
         ],
 
        
@@ -169,6 +169,7 @@ scheduler_events = {
 	"daily": [
        
 		# "akf_accounts.tasks.daily"
+        # "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended",
 	],
 	# "daily_long":
     # [    	

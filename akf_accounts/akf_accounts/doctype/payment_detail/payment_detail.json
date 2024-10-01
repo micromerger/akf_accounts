@@ -7,12 +7,11 @@
  "engine": "InnoDB",
  "field_order": [
   "donor_details_section",
-  "payment_detail_id",
+  "random_id",
   "donor_id",
   "donor_name",
   "cnic",
   "donor_type",
-  "donation_purpose",
   "donation_type",
   "column_break_uwow",
   "contact_no",
@@ -63,6 +62,7 @@
   "outstanding_amount",
   "base_outstanding_amount",
   "paid",
+  "is_return",
   "other_info_section",
   "payment_entry"
  ],
@@ -111,14 +111,6 @@
   {
    "fieldname": "column_break_sezm",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "payment_detail_id",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "in_list_view": 1,
-   "label": "Payment Detail ID",
-   "read_only": 1
   },
   {
    "default": "0",
@@ -347,12 +339,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "donation_purpose",
-   "fieldtype": "Select",
-   "label": "Intension",
-   "options": "\nSadqaat\nSadqa Jaria\nFitrana\nFidya\nDonation\nKaffara"
-  },
-  {
    "fetch_from": "donor_id.relationship_with_donor",
    "fieldname": "relationship_with_donor",
    "fieldtype": "Data",
@@ -447,12 +433,25 @@
    "in_standard_filter": 1,
    "label": "Cheque / Reference Date",
    "mandatory_depends_on": "eval: doc.mode_of_payment == \"bank\" || doc.mode_of_payment == \"Cheque\" || doc.mode_of_payment == \"Bank Draft\" "
+  },
+  {
+   "fieldname": "random_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Random ID",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_return",
+   "fieldtype": "Check",
+   "label": "Is Return"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-19 11:42:56.286693",
+ "modified": "2024-09-27 18:32:36.287826",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

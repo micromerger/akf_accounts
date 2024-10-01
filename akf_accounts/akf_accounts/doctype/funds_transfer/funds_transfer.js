@@ -32,9 +32,6 @@ frappe.ui.form.on("Funds Transfer", {
         if (frm.doc.docstatus === 1) {  
             set_custom_btns(frm);
         }
-
-       
-        
         
     },
     on_submit: function(frm){
@@ -76,7 +73,7 @@ frappe.ui.form.on("Funds Transfer", {
     custom_to_cost_center: function(frm) {
        
         update_ft_cost_center_in_children(frm);
-        // update_ft_bank_account_in_children(frm);
+       
     },
 });
 
@@ -128,30 +125,10 @@ function update_ft_bank_account_in_children(frm) {
 }
 
 
-// frappe.ui.form.on("Funds Transfer From", {
-//     funds_transfer_from_add: function(frm, cdt, cdn) {
-//         const cost_center = frm.doc.custom_cost_center; 
-//         const bank_account = frm.doc.custom_from_bank_account;
-//         const from_costcenter = frm.doc.custom_from_cost_center;
-
-//         const row = frappe.get_doc(cdt, cdn);
-//         if (frm.doc.transaction_type === 'Inter Fund') {
-//             console.log("Funds Transfer From Inter Fund ");
-//             frappe.model.set_value(row.doctype, row.name, "ff_cost_center", cost_center);
-//             frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account); 
-            
-//         } else if (frm.doc.transaction_type === 'Inter Branch') {
-//             console.log("Funds Transfer From Inter Branch ");
-//             frappe.model.set_value(row.doctype, row.name, "ff_cost_center", from_costcenter);
-//             frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account); 
-//         }
-       
-//     }
-// });
-
 frappe.ui.form.on("Funds Transfer From", {
     ff_donor: function(frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
+       
         get_html(frm);
     },
     funds_transfer_from_add: function(frm, cdt, cdn) {
@@ -178,6 +155,18 @@ frappe.ui.form.on("Funds Transfer From", {
 });
 
 frappe.ui.form.on("Funds Transfer To", {
+
+    ft_amount: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        let amount = row.ft_amount;
+
+        if (amount < 0) {
+            frappe.model.set_value(cdt, cdn, 'ft_amount', '');  
+            frappe.msgprint(__('Amount cannot be negative. Please enter a valid amount.'));  
+        }
+    },
+
+    
     funds_transfer_to_add: function(frm, cdt, cdn) {
         const cost_center = frm.doc.custom_cost_center;
         const bank_account = frm.doc.custom_to_bank_account;
@@ -199,7 +188,6 @@ frappe.ui.form.on("Funds Transfer To", {
     }
     
 });
-
 
 function update_cost_center_in_both_children(frm) {
     const cost_center = frm.doc.custom_cost_center;
@@ -272,7 +260,7 @@ frappe.ui.form.on('Funds Transfer From', {
         frappe.model.set_value(cdt, cdn, 'ff_service_area', '');
         frappe.model.set_value(cdt, cdn, 'ff_subservice_area', '');
         frappe.model.set_value(cdt, cdn, 'ff_product', '');
-        frappe.model.set_value(cdt, cdn, 'ff_project', '');
+        frappe.model.set_value(cdt, cdn, 'project', '');
        
         frappe.call({
             method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
@@ -310,6 +298,7 @@ frappe.ui.form.on('Funds Transfer From', {
 });
 
 frappe.ui.form.on('Funds Transfer To', {
+
     ft_company: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         let company = row.ft_company;
@@ -320,6 +309,7 @@ frappe.ui.form.on('Funds Transfer To', {
         frappe.model.set_value(cdt, cdn, 'ft_subservice_area', '');
         frappe.model.set_value(cdt, cdn, 'ft_product', '');
         frappe.model.set_value(cdt, cdn, 'ft_project', '');
+        
 
         frappe.call({
             method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
@@ -506,7 +496,7 @@ function set_query_product_transfer_from(frm) {
 }
 
 function set_query_project_transfer_from(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_project').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('project').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {

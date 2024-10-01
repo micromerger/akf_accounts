@@ -718,14 +718,32 @@ class XPaymentEntry(AccountsController):
                 """)
 
     # custom changes for donation
-    def update_status(self):
+    # def update_status(self):
         # if(self.party_type!="Donor"): return
+        # for row in self.references:
+        #     if(row.reference_doctype=="Donation" and row.outstanding_amount>=0):
+        #         status = "Partly Paid"
+        #         if(row.outstanding_amount==0): status = "Paid"
+        #         else if(row.allocated_amount<0): status = "Return"
+        #         frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
+        #         frappe.db.set_value(row.reference_doctype, row.reference_name, "base_outstanding_amount", row.outstanding_amount)
+
+
+    def update_status(self):
         for row in self.references:
-            if(row.reference_doctype=="Donation" and row.outstanding_amount>=0):
-                status = "Partly Paid"
-                if(row.outstanding_amount==0): status = "Paid"
+            if row.reference_doctype == "Donation" and row.outstanding_amount >= 0:
+             
+                if row.outstanding_amount == 0:
+                    status = "Paid"
+                elif(row.outstanding_amount>0):
+                    status = "Partly Paid"
+                    
+                if(frappe.db.exists(row.reference_doctype, {"docstatus": 1,"name": row.reference_name, "is_return": 1})):
+                    status = "Return"
+                
                 frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
                 frappe.db.set_value(row.reference_doctype, row.reference_name, "base_outstanding_amount", row.outstanding_amount)
+
 
     def set_cheque_leaf_cleared(self):
         if(self.custom_cheque_leaf):

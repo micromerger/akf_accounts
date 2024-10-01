@@ -9,6 +9,7 @@ frappe.listview_settings['Donation'] = {
 			"Draft": "grey",
 			"Unpaid": "orange",
 			"Paid": "green",
+			"Partly Return": "yellow",
 			"Return": "gray",
 			"Credit Note Issued": "gray",
 			"Unpaid and Discounted": "orange",
@@ -18,7 +19,7 @@ frappe.listview_settings['Donation'] = {
 			"Partly Paid": "yellow",
 			"Internal Transfer": "darkgrey"
 		};
-		if(doc.status=="Paid" || doc.outstanding_amount==0){
+		if((doc.status=="Paid" || doc.outstanding_amount==0) && (!doc.is_return) ){
 			return [__("Paid"), status_colors["Paid"], "status,=,"+"Paid"];
 		}
 		else if(doc.is_return || doc.status=="Return"){
