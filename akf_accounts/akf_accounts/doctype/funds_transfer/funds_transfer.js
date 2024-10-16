@@ -18,7 +18,7 @@ frappe.ui.form.on("Funds Transfer", {
 
     refresh: function(frm) {
         set_query_service_area_transfer_from(frm);
-        set_query_service_area_transfer_to(frm);
+        // set_query_service_area_transfer_to(frm);
         set_queries_funds_transfer_to(frm);
         set_queries_funds_transfer_from(frm);
         set_queries_transaction_types(frm);
@@ -743,7 +743,7 @@ function set_cost_center_in_children(child_table, cost_center_field, cost_center
 }
 
 function set_query_service_area_transfer_from(frm) {
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
+   /*  frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         var company = row.ff_company;
 
@@ -760,7 +760,7 @@ function set_query_service_area_transfer_from(frm) {
                 company: company
             }
         };
-    };
+    }; */
 }
 
 

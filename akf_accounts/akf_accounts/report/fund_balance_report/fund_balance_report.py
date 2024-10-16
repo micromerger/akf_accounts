@@ -15,10 +15,13 @@ def execute(filters=None):
 
 def get_columns():
     columns = [
-        _("Funds") + ":Date:140",
-        _("Funds Code") + ":Link/Donor:140",
-        # _("Service Area") + ":Data:140",
-        # _("Balance") + ":Data:140",
+        _("Account") + ":Link/Account:140",
+        _("Branch") + ":Link/Cost Center:140",
+        _("Service Area") + ":Link/Program:140",
+        _("Subservice Area") + ":Link/Subservice Area:140",
+        _("Funds / Projects") + ":Link/Project:140",
+        _("Funds Code") + ":Link/Project:140",
+        _("Balance") + ":Data:140",
     ]
     return columns
 
@@ -50,14 +53,16 @@ def get_query_result(filters):
     result = frappe.db.sql(
         """
         SELECT 
-			name
+			gle.account,gle.cost_center,gle.program,gle.subservice_area,proj.project_name, gle.project, SUM(gle.debit)-SUM(gle.credit) 
         FROM 
-            `tabGL Entry`
+            `tabGL Entry` gle
+        LEFT JOIN 
+            `tabAccount` acc ON gle.account = acc.name
+        RIGHT JOIN 
+            `tabProject` proj ON gle.project = proj.name
         WHERE
-            docstatus != 2
-        {0}
-    """.format(
-            conditions if conditions else ""
+            acc.root_type = 'Equity'
+        {0}""".format(conditions if conditions else ""
         ),
         filters,
         as_dict=0,

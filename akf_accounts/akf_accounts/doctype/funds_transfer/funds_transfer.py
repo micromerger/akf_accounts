@@ -966,13 +966,16 @@ def donor_list_data_funds_transfer(doc):
                 no_entries_found.add(f"Cost Center '{p.ff_cost_center}' and Bank Account {p.ff_account}")
 
     # Display insufficient balance messages for tracked donors
-    for donor in insufficient_balances:
-        if donor not in [entry[0] for entry in duplicate_entries]:
-            frappe.msgprint(f'<span style="color: red;">Insufficient balance for donor "{donor}" with provided details.</span>')
+    if docstatus == 0 :
+        for donor in insufficient_balances:
+            if donor not in [entry[0] for entry in duplicate_entries]:
+                if donor:
+                    frappe.msgprint(f'<span style="color: red;">Insufficient balance for donor "{donor}" with provided details.</span>')
+                
 
-    # Display no entries found messages
-    for item in no_entries_found:
-        frappe.msgprint(f'<span style="color: red;">No such entry exists for {item} with provided details.</span>')
+        # Display no entries found messages
+        for item in no_entries_found:
+            frappe.msgprint(f'<span style="color: red;">No such entry exists for {item} with provided details.</span>')
 
     return {
         "total_balance": total_balance,

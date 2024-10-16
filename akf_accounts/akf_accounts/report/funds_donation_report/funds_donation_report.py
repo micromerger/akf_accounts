@@ -17,17 +17,17 @@ def get_columns():
     columns = [
         _("Date") + ":Date:140",
         _("Donor") + ":Link/Donor:140",
-        _("Fund/Class") + ":Data:140",
-        # _("Voucher No") + ":Data:140",
-        # _("Manual No") + ":Data:140",
-        # _("Amount") + ":Data:140",
-        # _("Admin Income") + ":Data:140",
-        # _("Fund Raising Income") + ":Data:140",
-        # _("Endowment Income") + ":Data:140",
-        # _("Admin Budget Fund") + ":Data:140",
-        # _("Operation Budget Fund") + ":Data:140",
-        # _("CMCDB Fund") + ":Data:140",
-        # _("Net Amount") + ":Data:140",
+        _("Fund/Class") + ":Link/Project:140",
+        _("Voucher No") + ":Select:140",
+        _("Manual No") + ":Data:140",
+        _("Amount") + ":Currency:140",
+        _("Admin Income") + ":Currency:140",
+        _("Fund Raising Income") + ":Currency:140",
+        _("Endowment Income") + ":Currency:140",
+        _("Admin Budget Fund") + ":Currency:140",
+        _("Operation Budget Fund") + ":Currency:140",
+        _("CMCDB Fund") + ":Currency:140",
+        _("Net Amount") + ":Currency:140",
     ]
     return columns
 
@@ -40,50 +40,52 @@ def get_data(filters):
 def get_conditions(filters):
     conditions = ""
 
-    # if filters.get("company"):
-    #     conditions += " AND company = %(company)s"
-    # if filters.get("applicant"):
-    #     conditions += " AND applicant = %(applicant)s"
-    # if filters.get("branch"):
-    #     conditions += " AND branch = %(branch)s"
-    # if filters.get("loan_type"):
-    #     conditions += " AND loan_type = %(loan_category)s"
-    # if filters.get("repayment_start_date"):
-    #     conditions += " AND repayment_start_date = %(repayment_start_date)s"
+    if filters.get("from_date") and filters.get("to_date"):
+        conditions += " AND posting_date BETWEEN %(from_date)s AND %(to_date)s"
+    if filters.get("donor"):
+        conditions += " AND pd.donor_id = %(donor)s"
+    if filters.get("project"):
+        conditions += " AND pd.project_id = %(project)s"
 
     return conditions
-
-
-# "Fund/Class",
-# "Voucher No",
-# "Manual No",
-# "Amount",
-# "Admin Income",
-# "Fund Raising Income",
-# "Endowment Income",
-# "Admin Raising Income",
-# "Operation Budget Fund",
-# "CMCDB Fund",
-# "Net Amount"
 
 
 def get_query_result(filters):
     conditions = get_conditions(filters)
     result = frappe.db.sql(
         """
-        SELECT 
-			date,
-			donor,
-			party_name
-            
-        FROM 
-            `tabDonation`
-        WHERE
-            docstatus != 2
-        {0}
-    """.format(
-            conditions if conditions else ""
-        ),
+        SELECT posting_date,pd.donor_id,pd.project_id,d.name,pd.receipt_number,db.donation_amount,
+        CASE 
+            WHEN db.income_type = 'Admin Income' THEN db.amount
+            ELSE 0
+        END,
+        CASE 
+            WHEN db.income_type = 'Fund raising' THEN db.amount
+            ELSE 0
+        END,
+        CASE 
+            WHEN db.income_type = 'Endowment' THEN db.amount
+            ELSE 0
+        END,
+        CASE 
+            WHEN db.income_type = 'OFSP Admin budget' THEN db.amount
+            ELSE 0
+        END,
+        CASE 
+            WHEN db.income_type = 'OFSP Operational budget' THEN db.amount
+            ELSE 0
+        END,
+        CASE 
+            WHEN db.income_type = 'OFSP CMCDP budget' THEN db.amount
+            ELSE 0
+        END,
+        pd.net_amount
+
+        FROM `tabDonation` d
+        LEFT JOIN `tabPayment Detail` pd ON d.name = pd.parent
+        LEFT JOIN `tabDeduction Breakeven` db ON d.name = db.parent
+        WHERE d.docstatus != 2
+        {0}""".format(conditions if conditions else ""),
         filters,
         as_dict=0,
     )

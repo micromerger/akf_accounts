@@ -15,13 +15,19 @@ def execute(filters=None):
 
 def get_columns():
     columns = [
-        # _("Date") + ":Date:140",
+        _("Date") + ":Date:140",
         _("Donor") + ":Link/Donor:140",
-        # _("Voucher No") + ":Data:140",
-        # _("Status") + ":Data:140",
-        # _("Manual No") + ":Data:140",
-        # _("Status") + ":Data:140",
-        # _("Amount") + ":Data:140",
+        _("Voucher No") + ":Data:140",
+        _("Branch From") + ":Data:140",
+        _("Branch To") + ":Data:140",
+        _("Service Area From") + ":Data:140",
+        _("Service Area To") + ":Data:140",
+        _("Subservice Area From") + ":Data:140",
+        _("Subservice Area To") + ":Data:140",
+        _("Project From") + ":Data:140",
+        _("Project To") + ":Data:140",
+        _("Status") + ":Data:140",
+        _("Amount") + ":Data:140",
     ]
     return columns
 
@@ -34,16 +40,16 @@ def get_data(filters):
 def get_conditions(filters):
     conditions = ""
 
-    # if filters.get("company"):
-    #     conditions += " AND company = %(company)s"
-    # if filters.get("applicant"):
-    #     conditions += " AND applicant = %(applicant)s"
-    # if filters.get("branch"):
-    #     conditions += " AND branch = %(branch)s"
-    # if filters.get("loan_type"):
-    #     conditions += " AND loan_type = %(loan_category)s"
-    # if filters.get("repayment_start_date"):
-    #     conditions += " AND repayment_start_date = %(repayment_start_date)s"
+    if filters.get("from_date") and filters.get("to_date"):
+        conditions += " AND posting_date BETWEEN %(from_date)s AND %(to_date)s"
+    if filters.get("voucher_no"):
+        conditions += " AND ft.name = %(voucher_no)s"
+    if filters.get("donor"):
+        conditions += " AND ftf.ff_donor = %(donor)s"
+    if filters.get("branch"):
+        conditions += " AND ft.custom_from_cost_center = %(branch)s"
+    if filters.get("project"):
+        conditions += " AND ftf.ff_project = %(project)s"
 
     return conditions
 
@@ -53,11 +59,18 @@ def get_query_result(filters):
     result = frappe.db.sql(
         """
         SELECT 
-			name
+			ft.posting_date,ftf.ff_donor,ft.name,ft.custom_from_cost_center,ft.custom_to_cost_center,ftf.ff_service_area,ftt.ft_service_area,ftf.ff_subservice_area,ftt.ft_subservice_area,ftf.ff_project,ftt.ft_project,
+            CASE
+                WHEN ft.docstatus = 0 THEN 'Pending'
+                WHEN ft.docstatus = 1 THEN 'Acknowledged'
+            END
+            ,ftt.ft_amount
         FROM 
-            `tabGL Entry`
+            `tabFunds Transfer` ft
+        LEFT JOIN `tabFunds Transfer From` ftf ON ft.name = ftf.parent
+        LEFT JOIN `tabFunds Transfer To` ftt ON ft.name = ftt.parent
         WHERE
-            docstatus != 2
+            ft.docstatus != 2
         {0}
     """.format(
             conditions if conditions else ""

@@ -266,6 +266,7 @@ class SalesInvoice(SellingController):
 			self.indicator_title = _("Paid")
 
 	def validate(self):
+		frappe.msgprint("Validate worked extended!")
 		for i in self.items:
 			if i.asset:
 				pass
@@ -504,12 +505,12 @@ class SalesInvoice(SellingController):
 
 		for i in self.items:
 			if i.asset:
-				# frappe.msgprint("If On Submit")
+				frappe.msgprint("If On Submit")
 				self.make_gl_entries()
 				self.make_additional_gl_entries_for_asset()
 				
 			else:
-				# frappe.msgprint("Else On Submit")
+				frappe.msgprint("Else On Submit")
 				self.validate_qty()
 				self.gl_entries_inventory_purchase_disposal_sale_gain()
 				
@@ -1642,7 +1643,7 @@ class SalesInvoice(SellingController):
 		
 	# mubarim new	
 	def validate_qty(self):
-		# frappe.msgprint("validate_qty_mubarim")
+		frappe.msgprint("validate_qty_mubarim")
 		for item in self.items:
 			condition_parts = [
 				(

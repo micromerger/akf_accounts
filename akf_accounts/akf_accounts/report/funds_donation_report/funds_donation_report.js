@@ -4,8 +4,14 @@
 frappe.query_reports["Funds Donation Report"] = {
   filters: [
     {
-      fieldname: "date",
-      label: __("Date"),
+      fieldname: "from_date",
+      label: __("From Date"),
+      fieldtype: "Date",
+      options: "",
+    },
+    {
+      fieldname: "to_date",
+      label: __("To Date"),
       fieldtype: "Date",
       options: "",
     },
@@ -15,23 +21,11 @@ frappe.query_reports["Funds Donation Report"] = {
       fieldtype: "Link",
       options: "Donor",
     },
-    // {
-    //   fieldname: "party_name",
-    //   label: __("Fund/Class"),
-    //   fieldtype: "Data",
-    //   options: "",
-    // },
-    // {
-    //   fieldname: "",
-    //   label: __("Filter 4"),
-    //   fieldtype: "",
-    //   options: "",
-    // },
-    // {
-    //   fieldname: "",
-    //   label: __("Filter 5"),
-    //   fieldtype: "",
-    //   options: "",
-    // },
+    {
+      fieldname: "project",
+      label: __("Fund/Class"),
+      fieldtype: "Link",
+      options: "Project",
+    },
   ],
 };

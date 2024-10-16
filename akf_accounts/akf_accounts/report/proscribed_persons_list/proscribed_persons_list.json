@@ -1,7 +1,7 @@
 {
  "add_total_row": 0,
  "columns": [],
- "creation": "2024-05-31 12:28:44.423880",
+ "creation": "2024-10-11 16:18:04.009314",
  "disabled": 0,
  "docstatus": 0,
  "doctype": "Report",
@@ -9,14 +9,18 @@
  "idx": 0,
  "is_standard": "Yes",
  "letterhead": null,
- "modified": "2024-10-04 18:23:39.063024",
+ "modified": "2024-10-11 16:37:14.495963",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
- "name": "Inter Branch Transfer Report",
+ "name": "Proscribed Persons List",
  "owner": "Administrator",
  "prepared_report": 0,
- "ref_doctype": "Funds Transfer",
- "report_name": "Inter Branch Transfer Report",
+ "ref_doctype": "Proscribed Persons",
+ "report_name": "Proscribed Persons List",
  "report_type": "Script Report",
- "roles": []
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ]
 }

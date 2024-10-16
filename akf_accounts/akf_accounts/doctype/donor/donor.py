@@ -7,29 +7,86 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from erpnext.accounts.utils import get_balance_on
 
-
-
 class Donor(Document):
-	def onload(self):
-		"""Load address and contacts in `__onload`"""
-		load_address_and_contact(self)
+    def onload(self):
+        """Load address and contacts in `__onload`"""
+        load_address_and_contact(self)
 
-	def validate(self):
-		from frappe.utils import validate_email_address
-		if self.email:
-			validate_email_address(self.email.strip(), True)
-		# frappe.msgprint("Balance from Donor!")
-		# party_balance = get_balance_on(party_type="Donor", party="DONOR-2024-00012", cost_center="Rawalpindi Branch - AKFP")
-		# frappe.msgprint(frappe.as_json(party_balance))
+    def validate(self):
+        from frappe.utils import validate_email_address
+        if self.email:
+            validate_email_address(self.email.strip(), True)
+        self.verify_proscribed_person()
+        self.verify_cnic()
+
+    def verify_proscribed_person(self):
+        if self.cnic:
+            formatted_cnic = self.cnic.replace("-", "")
+            
+            proscribed_person = frappe.db.get_value("Proscribed Persons", {"cnic": formatted_cnic}, "cnic")
+            
+            if proscribed_person:
+                frappe.throw(f"Proscribed Person with CNIC {formatted_cnic} found.")
+                # email_template = frappe.db.get_value("Email Template", {"subject": "Urgent Notification: Proscribed Person Identified"}, ["subject", "response"], as_dict=True)
+                
+                # if email_template:
+                #     message = email_template["response"].replace("{cnic}", formatted_cnic)
+                    
+                #     frappe.sendmail(
+                #         recipients=['aqsaabbasee@gmail.com'],
+                #         subject=email_template["subject"],
+                #         message=message,
+                #         now=True  
+                #     )
+                    
+                #     frappe.msgprint("Proscribed person notification email sent successfully.")
+                    
+                    
+
+    def verify_cnic(self):
+        # Define a regex pattern for CNIC: `xxxxx-xxxxxxx-x`
+        cnic_pattern = r"^\d{5}-\d{7}-\d{1}$"
         
+        # Check if CNIC matches the pattern
+        if not self.match_regex(cnic_pattern, self.cnic):
+            frappe.throw('Please enter a valid CNIC in the format xxxxx-xxxxxxx-x.')
 
-	def verify_cnic(self):
-		if (not match_regex("", self.custom_cnic)):
-			exception_msg('Please enter valid %s.'%details.custom_label)
-		
-	def match_regex(regex ,mystr):
-		return re.match(regex, mystr)
-              
+    def match_regex(self, pattern, mystr):
+        """Match the given string with the regex pattern."""
+        return re.match(pattern, mystr)
+    
+
+@frappe.whitelist()
+def check_all_donors_against_proscribed_persons():
+    all_donors = frappe.get_all("Donor", filters={"cnic": ["!=", ""]}, fields=["name", "cnic", "email"])
+    
+    # Iterate over each donor
+    for donor in all_donors:
+        formatted_cnic = donor.cnic.replace("-", "")
+        
+        proscribed_person = frappe.db.get_value("Proscribed Persons", {"cnic": formatted_cnic}, "cnic")
+        
+        if proscribed_person:
+            email_template = frappe.db.get_value("Email Template", {"subject": "Urgent Notification: Proscribed Person Identified"}, ["subject", "response"], as_dict=True)
+            if email_template:
+                message = email_template["response"].replace("{cnic}", formatted_cnic)
+                
+                if donor.email:
+                    try:
+                        frappe.sendmail(
+                            recipients=["aqsaabbasee@gmail.com"], 
+                            subject=email_template["subject"],
+                            message=message,
+                            now=True 
+                        )
+                        
+                        frappe.msgprint(f"Proscribed person notification email sent for Donor: {donor.name} (CNIC: {formatted_cnic})")
+                    
+                    except Exception as e:
+                        frappe.log_error(f"Failed to send email for Donor: {donor.name}, Error: {str(e)}", "Email Send Failure")
+
+            frappe.throw(f"Proscribed Person with CNIC {formatted_cnic} found for Donor: {donor.name}. Action required!")
+     
 @frappe.whitelist()
 def donor_html():
     frappe.msgprint("Hello Function!!")
