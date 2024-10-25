@@ -20,11 +20,16 @@ class FundsTransfer(Document):
         self.validate_cost_center()
         self.validate_bank_accounts()
         # self.create_gl_entries_for_inter_funds_transfer()
+        self.set_deduction_breakeven()
 
     def on_submit(self):
         transaction_types = ['Inter Branch', 'Inter Fund']
         if self.transaction_type in transaction_types:
             self.create_gl_entries_for_inter_funds_transfer()
+        if(self.transaction_type == 'Inter Branch'): 
+            from akf_accounts.akf_accounts.doctype.funds_transfer.deduction_breakeven import make_deduction_gl_entries
+            make_deduction_gl_entries(self)
+        
     def on_cancel(self):
         self.delete_all_gl_entries()
     
@@ -33,17 +38,17 @@ class FundsTransfer(Document):
 
     def validate_cost_center(self):
         if self.transaction_type == 'Inter Branch':
-            if self.custom_from_cost_center == self.custom_to_cost_center:
+            if self.from_cost_center == self.to_cost_center:
                 frappe.throw("Cost Centers cannot be same in Inter Branch Transfer")
 
     def validate_bank_accounts(self):
         if self.transaction_type == 'Inter Branch':
-            if self.custom_from_bank_account == self.custom_to_bank_account:
+            if self.from_bank_account == self.to_bank_account:
                 frappe.throw("Banks cannot be same in Inter Branch Transfer")
     
     def create_gl_entries_for_inter_funds_transfer(self):
         today_date = today()
-        fiscal_year = get_fiscal_year(today_date, company=self.custom_company)[0]
+        fiscal_year = get_fiscal_year(today_date, company=self.company)[0]
         if not self.funds_transfer_to:
             frappe.throw("There is no information to transfer funds.")
             return
@@ -92,7 +97,8 @@ class FundsTransfer(Document):
 
             for n in self.funds_transfer_to:
                 new_donor = n.get('ft_donor')
-                new_amount = float(n.get('ft_amount', 0.0)) 
+                ftf_amount = float(n.get('ft_amount', 0.0))
+                ftt_amount = float(n.get('outstanding_amount', 0.0))
                 new_cost_center = n.get('ft_cost_center')
                 new_account = n.get('ft_account')
                 new_project = n.get('project')
@@ -102,10 +108,10 @@ class FundsTransfer(Document):
                 new_company = n.get('ft_company')
 
                 if prev_donor == new_donor:
-                    if prev_amount >= new_amount:  
-                        total_transfer_amount += new_amount
+                    if prev_amount >= ftf_amount:  
+                        total_transfer_amount += ftf_amount
 
-                        # Debit entry for previous dimension
+                        # Debit entry for previous dimension; funds transfer from
                         gl_entry_for_previous_dimension = frappe.get_doc({
                             'doctype': 'GL Entry',
                             'posting_date': self.posting_date,
@@ -114,10 +120,10 @@ class FundsTransfer(Document):
                             'against_voucher_type': 'Funds Transfer',
                             'against_voucher': self.name,
                             'cost_center': prev_cost_center,
-                            'debit': new_amount,
+                            'debit': ftf_amount,
                             'credit': 0.0,
                             'account_currency': 'PKR',
-                            'debit_in_account_currency': new_amount,
+                            'debit_in_account_currency': ftf_amount,
                             'credit_in_account_currency': 0.0,
                             'against': prev_account,
                             'voucher_type': 'Funds Transfer',
@@ -128,7 +134,7 @@ class FundsTransfer(Document):
                             'fiscal_year': fiscal_year,
                             'company': prev_company,
                             'transaction_currency': 'PKR',
-                            'debit_in_transaction_currency': new_amount,
+                            'debit_in_transaction_currency': ftf_amount,
                             'credit_in_transaction_currency': 0.0,
                             'transaction_exchange_rate': 1,
                             'project': prev_project,
@@ -144,7 +150,7 @@ class FundsTransfer(Document):
                         gl_entry_for_previous_dimension.insert(ignore_permissions=True)
                         gl_entry_for_previous_dimension.submit()
 
-                        # Credit entry for new dimension
+                        # Credit entry for new dimension; funds transfer from
                         gl_entry_for_new_dimension = frappe.get_doc({
                             'doctype': 'GL Entry',
                             'posting_date': self.posting_date,
@@ -154,10 +160,10 @@ class FundsTransfer(Document):
                             'against_voucher': self.name,
                             'cost_center': new_cost_center,
                             'debit': 0.0,
-                            'credit': new_amount,
+                            'credit': ftt_amount,
                             'account_currency': 'PKR',
                             'debit_in_account_currency': 0.0,
-                            'credit_in_account_currency': new_amount,
+                            'credit_in_account_currency': ftt_amount,
                             'against': new_account,
                             'voucher_type': 'Funds Transfer',
                             'voucher_no': self.name,
@@ -168,7 +174,7 @@ class FundsTransfer(Document):
                             'company': new_company,
                             'transaction_currency': 'PKR',
                             'debit_in_transaction_currency': 0.0,
-                            'credit_in_transaction_currency': new_amount,
+                            'credit_in_transaction_currency': ftt_amount,
                             'transaction_exchange_rate': 1,
                             'project': new_project,
                             'program': new_program,
@@ -188,22 +194,22 @@ class FundsTransfer(Document):
 
         # Create bank account GL entries only once after the loop
         if total_transfer_amount > 0:
-            if self.custom_from_bank:
+            if self.from_bank:
                 # Credit entry for bank account
                 gl_entry_for_bank_credit = frappe.get_doc({
                     'doctype': 'GL Entry',
                     'posting_date': self.posting_date,
                     'transaction_date': self.posting_date,
-                    'account': self.custom_from_bank,
+                    'account': self.from_bank,
                     'against_voucher_type': 'Funds Transfer',
                     'against_voucher': self.name,
-                    'cost_center': self.custom_from_cost_center,
+                    'cost_center': self.from_cost_center,
                     'debit': 0.0,
                     'credit': total_transfer_amount,
                     'account_currency': 'PKR',
                     'debit_in_account_currency': 0.0,
                     'credit_in_account_currency': total_transfer_amount,
-                    'against': self.custom_from_bank,
+                    'against': self.from_bank,
                     'voucher_type': 'Funds Transfer',
                     'voucher_no': self.name,
                     'remarks': 'Funds Transferred',
@@ -220,22 +226,22 @@ class FundsTransfer(Document):
                 gl_entry_for_bank_credit.insert(ignore_permissions=True)
                 gl_entry_for_bank_credit.submit()
 
-            if self.custom_to_bank:
+            if self.to_bank:
                 # Debit entry for bank account
                 gl_entry_for_bank_debit = frappe.get_doc({
                     'doctype': 'GL Entry',
                     'posting_date': self.posting_date,
                     'transaction_date': self.posting_date,
-                    'account': self.custom_to_bank,
+                    'account': self.to_bank,
                     'against_voucher_type': 'Funds Transfer',
                     'against_voucher': self.name,
-                    'cost_center': self.custom_to_cost_center,
+                    'cost_center': self.to_cost_center,
                     'debit': total_transfer_amount,
                     'credit': 0.0,
                     'account_currency': 'PKR',
                     'debit_in_account_currency': total_transfer_amount,
                     'credit_in_account_currency': 0.0,
-                    'against': self.custom_to_bank,
+                    'against': self.to_bank,
                     'voucher_type': 'Funds Transfer',
                     'voucher_no': self.name,
                     'remarks': 'Funds Transferred',
@@ -257,7 +263,7 @@ class FundsTransfer(Document):
     
     def create_gl_entries_for_inter_funds_transfer_previous(self):
         today_date = today()
-        fiscal_year = get_fiscal_year(today_date, company=self.custom_company)[0]
+        fiscal_year = get_fiscal_year(today_date, company=self.company)[0]
         if not self.funds_transfer_to:
             frappe.throw("There is no information to transfer funds.")
             return
@@ -290,7 +296,8 @@ class FundsTransfer(Document):
 
             for n in self.funds_transfer_to:
                 new_donor = n.get('ft_donor')
-                new_amount = float(n.get('ft_amount', 0.0))  # Required amount to transfer
+                ftf_amount = float(n.get('ft_amount', 0.0))  # Required amount to transfer
+                ftt_amount = float(n.get('outstanding_amount', 0.0))
                 new_cost_center = n.get('ft_cost_center')
                 new_account = n.get('ft_account')
                 new_project = n.get('project')
@@ -300,11 +307,11 @@ class FundsTransfer(Document):
                 new_company = n.get('ft_company')
 
                 if prev_donor == new_donor:
-                    if prev_amount >= new_amount:  # Sufficient balance for this transfer
+                    if prev_amount >= ftf_amount:  # Sufficient balance for this transfer
                         # Accumulate total transfer amount
-                        total_transfer_amount += new_amount
+                        total_transfer_amount += ftf_amount
 
-                        # Debit entry for previous dimension
+                        # Debit entry for previous dimension; funds transfer from
                         gl_entry_for_previous_dimension = frappe.get_doc({
                             'doctype': 'GL Entry',
                             'posting_date': self.posting_date,
@@ -313,10 +320,10 @@ class FundsTransfer(Document):
                             'against_voucher_type': 'Funds Transfer',
                             'against_voucher': self.name,
                             'cost_center': prev_cost_center,
-                            'debit': new_amount,
+                            'debit': ftf_amount,
                             'credit': 0.0,
                             'account_currency': 'PKR',
-                            'debit_in_account_currency': new_amount,
+                            'debit_in_account_currency': ftf_amount,
                             'credit_in_account_currency': 0.0,
                             'against': prev_account,
                             'voucher_type': 'Funds Transfer',
@@ -327,7 +334,7 @@ class FundsTransfer(Document):
                             'fiscal_year': fiscal_year,
                             'company': prev_company,
                             'transaction_currency': 'PKR',
-                            'debit_in_transaction_currency': new_amount,
+                            'debit_in_transaction_currency': ftf_amount,
                             'credit_in_transaction_currency': 0.0,
                             'transaction_exchange_rate': 1,
                             'project': prev_project,
@@ -343,7 +350,7 @@ class FundsTransfer(Document):
                         gl_entry_for_previous_dimension.insert(ignore_permissions=True)
                         gl_entry_for_previous_dimension.submit()
 
-                        # Credit entry for new dimension
+                        # Credit entry for new dimension funds transfer to
                         gl_entry_for_new_dimension = frappe.get_doc({
                             'doctype': 'GL Entry',
                             'posting_date': self.posting_date,
@@ -353,10 +360,10 @@ class FundsTransfer(Document):
                             'against_voucher': self.name,
                             'cost_center': new_cost_center,
                             'debit': 0.0,
-                            'credit': new_amount,
+                            'credit': ftt_amount,
                             'account_currency': 'PKR',
                             'debit_in_account_currency': 0.0,
-                            'credit_in_account_currency': new_amount,
+                            'credit_in_account_currency': ftt_amount,
                             'against': new_account,
                             'voucher_type': 'Funds Transfer',
                             'voucher_no': self.name,
@@ -367,7 +374,7 @@ class FundsTransfer(Document):
                             'company': new_company,
                             'transaction_currency': 'PKR',
                             'debit_in_transaction_currency': 0.0,
-                            'credit_in_transaction_currency': new_amount,
+                            'credit_in_transaction_currency': ftt_amount,
                             'transaction_exchange_rate': 1,
                             'project': new_project,
                             'program': new_program,
@@ -387,16 +394,16 @@ class FundsTransfer(Document):
 
         # Create bank account GL entries only once after the loop
         if total_transfer_amount > 0:
-            if self.custom_from_bank:
+            if self.from_bank:
                 # Credit entry for bank account
                 gl_entry_for_bank_credit = frappe.get_doc({
                     'doctype': 'GL Entry',
                     'posting_date': self.posting_date,
                     'transaction_date': self.posting_date,
-                    'account': self.custom_from_bank,
+                    'account': self.from_bank,
                     'against_voucher_type': 'Funds Transfer',
                     'against_voucher': self.name,
-                    'cost_center': self.custom_from_cost_center,
+                    'cost_center': self.from_cost_center,
                     'debit': 0.0,
                     'credit': total_transfer_amount,
                     'account_currency': 'PKR',
@@ -419,16 +426,16 @@ class FundsTransfer(Document):
                 gl_entry_for_bank_credit.insert(ignore_permissions=True)
                 gl_entry_for_bank_credit.submit()
 
-            if self.custom_to_bank:
+            if self.to_bank:
                 # Debit entry for bank account
                 gl_entry_for_bank_debit = frappe.get_doc({
                     'doctype': 'GL Entry',
                     'posting_date': self.posting_date,
                     'transaction_date': self.posting_date,
-                    'account': self.custom_to_bank,
+                    'account': self.to_bank,
                     'against_voucher_type': 'Funds Transfer',
                     'against_voucher': self.name,
-                    'cost_center': self.custom_to_cost_center,
+                    'cost_center': self.to_cost_center,
                     'debit': total_transfer_amount,
                     'credit': 0.0,
                     'account_currency': 'PKR',
@@ -456,7 +463,7 @@ class FundsTransfer(Document):
     
     # def create_gl_entries_for_inter_funds_transfer(self):
     #     today_date = today()
-    #     fiscal_year = get_fiscal_year(today_date, company=self.custom_company)[0]
+    #     fiscal_year = get_fiscal_year(today_date, company=self.company)[0]
     #     if not self.funds_transfer_to:
     #         frappe.throw("There is no information to transfer funds.")
     #         return
@@ -506,16 +513,16 @@ class FundsTransfer(Document):
     #                 if prev_donor == new_donor:
     #                     if prev_amount >= new_amount:  # Sufficient balance for this transfer
     #                         # frappe.msgprint(f"Donor {prev_donor} has enough balance. Transferring {new_amount}.")
-    #                         if self.custom_from_bank:
+    #                         if self.from_bank:
     #                             # Credit entry for new dimension
     #                             gl_entry_for_bank_credit = frappe.get_doc({
     #                                 'doctype': 'GL Entry',
     #                                 'posting_date': self.posting_date,
     #                                 'transaction_date': self.posting_date,
-    #                                 'account': self.custom_from_bank,
+    #                                 'account': self.from_bank,
     #                                 'against_voucher_type': 'Funds Transfer',
     #                                 'against_voucher': self.name,
-    #                                 'cost_center': self.custom_from_cost_center,
+    #                                 'cost_center': self.from_cost_center,
     #                                 'debit': 0.0,
     #                                 'credit': total_transfer_amount,
     #                                 'account_currency': 'PKR',
@@ -539,16 +546,16 @@ class FundsTransfer(Document):
     #                             gl_entry_for_bank_credit.insert(ignore_permissions=True)
     #                             gl_entry_for_bank_credit.submit()
 
-    #                         if self.custom_to_bank:
+    #                         if self.to_bank:
     #                             # Debit entry for previous dimension
     #                             gl_entry_for_previous_bank = frappe.get_doc({
     #                                 'doctype': 'GL Entry',
     #                                 'posting_date': self.posting_date,
     #                                 'transaction_date': self.posting_date,
-    #                                 'account': self.custom_to_bank,
+    #                                 'account': self.to_bank,
     #                                 'against_voucher_type': 'Funds Transfer',
     #                                 'against_voucher': self.name,
-    #                                 'cost_center': self.custom_to_cost_center,
+    #                                 'cost_center': self.to_cost_center,
     #                                 'debit': total_transfer_amount,
     #                                 'credit': 0.0,
     #                                 'account_currency': 'PKR',
@@ -805,7 +812,7 @@ class FundsTransfer(Document):
                         'service_area': n.ft_service_area,
                         'subservice_area': n.ft_subservice_area,
                         'product': n.ft_product,
-                        'amount': n.ft_amount,
+                        'amount': n.outstanding_amount,
                         'account': n.ft_account,
                         'company': n.ft_company
                     })
@@ -815,6 +822,12 @@ class FundsTransfer(Document):
                 })
         return result
 
+    @frappe.whitelist()
+    def set_deduction_breakeven(self):
+        if(self.transaction_type=='Inter Branch'): 
+            from akf_accounts.akf_accounts.doctype.funds_transfer.deduction_breakeven import apply_deduction_breakeven
+            apply_deduction_breakeven(self)
+        else: self.set("deduction_breakeven", [])
 
 
 @frappe.whitelist()
@@ -981,8 +994,6 @@ def donor_list_data_funds_transfer(doc):
         "total_balance": total_balance,
         "donor_list": donor_list  
     }
-
-
 
 @frappe.whitelist()
 def donor_list_data_funds_transfer_previous(doc):

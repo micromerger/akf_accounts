@@ -6,16 +6,31 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_jlrv",
+  "company",
+  "from_cost_center",
+  "cost_center",
+  "from_bank_account",
+  "from_bank",
   "amended_from",
-  "test",
+  "column_break_qciy",
   "transaction_type",
   "posting_date",
+  "to_cost_center",
+  "to_bank_account",
+  "to_bank",
   "section_break_lbjh",
   "donor_list_html",
   "section_break_jrzi",
   "funds_transfer_from",
   "section_break_pwtm",
-  "funds_transfer_to"
+  "funds_transfer_to",
+  "section_break_gyhb",
+  "deduction_breakeven",
+  "section_break_ramb",
+  "total_amount",
+  "column_break_spin",
+  "total_deduction",
+  "outstanding_amount"
  ],
  "fields": [
   {
@@ -33,17 +48,12 @@
    "search_index": 1
   },
   {
-   "fieldname": "test",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Test"
-  },
-  {
    "default": "Inter Fund",
    "fieldname": "transaction_type",
    "fieldtype": "Select",
    "label": "Transaction Type",
-   "options": "Inter Fund\nInter Branch"
+   "options": "Inter Fund\nInter Branch",
+   "reqd": 1
   },
   {
    "fieldname": "posting_date",
@@ -79,12 +89,118 @@
    "fieldtype": "Table",
    "label": "Funds Transfer To",
    "options": "Funds Transfer To"
+  },
+  {
+   "fieldname": "section_break_gyhb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "fieldname": "deduction_breakeven",
+   "fieldtype": "Table",
+   "label": "Deduction Breakeven",
+   "options": "Deduction Breakeven"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "fieldname": "from_cost_center",
+   "fieldtype": "Link",
+   "label": "From Cost Center",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "options": "Cost Center"
+  },
+  {
+   "depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "fieldname": "from_bank_account",
+   "fieldtype": "Link",
+   "label": "From Bank Account",
+   "options": "Account"
+  },
+  {
+   "depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "fieldname": "from_bank",
+   "fieldtype": "Link",
+   "label": "From Bank",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_qciy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "fieldname": "to_cost_center",
+   "fieldtype": "Link",
+   "label": "To Cost Center",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "options": "Cost Center"
+  },
+  {
+   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "fieldname": "to_bank_account",
+   "fieldtype": "Link",
+   "label": "To Bank Account",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "options": "Account"
+  },
+  {
+   "depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "fieldname": "to_bank",
+   "fieldtype": "Link",
+   "label": "To Bank",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "options": "Account"
+  },
+  {
+   "fieldname": "section_break_ramb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_spin",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_deduction",
+   "fieldtype": "Currency",
+   "label": "Total Deduction",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Outstanding Amount",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-05 17:53:53.852729",
+ "modified": "2024-10-25 17:36:35.043129",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",
