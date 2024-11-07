@@ -128,7 +128,7 @@ override_doctype_class = {
     "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
     # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
     "Asset": "akf_accounts.customizations.extends.XAsset.AssetExtendedClass",
-    "Asset Movement": "akf_accounts.customizations.extends.XAssetMovement.AssetMovementExtendedClass",
+    # "Asset Movement": "akf_accounts.customizations.extends.XAssetMovement.AssetMovementExtendedClass"
    
 }
 # Document Events

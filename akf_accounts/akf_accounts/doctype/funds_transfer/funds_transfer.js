@@ -91,7 +91,7 @@ function handle_transaction_type_logic(frm) {
         frm.set_value('cost_center', '');
         frm.call("set_deduction_breakeven");
     }
-    f
+    
 }
 
 function update_ff_bank_account_in_children(frm) {
@@ -196,6 +196,16 @@ frappe.ui.form.on("Funds Transfer From", {
                 frm.refresh_field('funds_transfer_from'); // Corrected method call
             }
         });
+    },
+
+    ff_service_area: function (frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        if (row.ff_service_area) {
+          row.ff_subservice_area = "";
+          row.ff_product = "";
+          row.project = "";
+        }
+        frm.refresh_field("funds_transfer_from")
     }
 });
 
@@ -285,6 +295,15 @@ frappe.ui.form.on("Funds Transfer To", {
                 frm.fields_dict['funds_transfer_to'].grid.refresh_field('ft_service_area');
             }
         });
+    },
+    ft_service_area: function (frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        if (row.ft_service_area) {
+          row.ft_subservice_area = "";
+          row.ft_product = "";
+          row.project = "";
+        }
+        frm.refresh_field("funds_transfer_to")
     }
     
 });

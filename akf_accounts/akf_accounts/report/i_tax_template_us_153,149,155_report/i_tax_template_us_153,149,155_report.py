@@ -1,6 +1,7 @@
 # Copyright (c) 2024, Nabeel Saleem and contributors
 # For license information, please see license.txt
 
+
 import frappe
 from frappe import _
 
@@ -16,15 +17,15 @@ def execute(filters=None):
 def get_columns():
     columns = [
         _("Payment Section") + ":Data:140",
-        # _("TaxPayer NTN") + ":Data:140",
-        # _("TaxPayer CNIC") + ":Data:140",
-        # _("TaxPayer Name") + ":Data:140",
-        # _("TaxPayer City") + ":Data:140",
-        # _("TaxPayer Address") + ":Data:140",
-        # _("TaxPayer Status") + ":Data:140",
-        # _("TaxPayer Business Name") + ":Date:140",
-        # _("Taxable Amount") + ":Data:140",
-        # _("Tax Amount") + ":Data:140",
+        _("TaxPayer NTN") + ":Data:140",
+        _("TaxPayer CNIC") + ":Data:140",
+        _("TaxPayer Name") + ":Data:140",
+        _("TaxPayer City") + ":Data:140",
+        _("TaxPayer Address") + ":Data:140",
+        _("TaxPayer Status") + ":Data:140",
+        _("TaxPayer Business Name") + ":Date:140",
+        _("Taxable Amount") + ":Data:140",
+        _("Tax Amount") + ":Data:140",
     ]
     return columns
 
@@ -56,11 +57,13 @@ def get_query_result(filters):
     result = frappe.db.sql(
         """
         SELECT 
-			name
+			pi.tax_withholding_category, sup.tax_id, sup.cnic, pi.supplier, 'City', 'Address', sup.supplier_type, 'Business Name', pi.total, pi.taxes_and_charges_deducted
         FROM 
-            `tabGL Entry`
+            `tabPurchase Invoice` pi
+        LEFT JOIN
+			`tabSupplier` sup On pi.supplier = sup.name
         WHERE
-            docstatus != 2
+            pi.docstatus != 2
         {0}
     """.format(
             conditions if conditions else ""

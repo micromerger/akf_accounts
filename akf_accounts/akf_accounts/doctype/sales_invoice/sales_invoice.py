@@ -266,7 +266,6 @@ class SalesInvoice(SellingController):
 			self.indicator_title = _("Paid")
 
 	def validate(self):
-		frappe.msgprint("Validate worked extended!")
 		for i in self.items:
 			if i.asset:
 				pass
@@ -505,12 +504,10 @@ class SalesInvoice(SellingController):
 
 		for i in self.items:
 			if i.asset:
-				frappe.msgprint("If On Submit")
 				self.make_gl_entries()
 				self.make_additional_gl_entries_for_asset()
 				
 			else:
-				frappe.msgprint("Else On Submit")
 				self.validate_qty()
 				self.gl_entries_inventory_purchase_disposal_sale_gain()
 				
@@ -1266,17 +1263,6 @@ class SalesInvoice(SellingController):
 				asset_purchase = 0.0
 				current_worth_of_asset = 0.0
 			
-			# frappe.msgprint(frappe.as_json("asset_purchase"))
-			# frappe.msgprint(frappe.as_json(asset_purchase))
-
-			# frappe.msgprint(frappe.as_json("depreciation_charged"))
-			# frappe.msgprint(frappe.as_json(depreciation_charged))
-
-
-			# frappe.msgprint(frappe.as_json("current_worth_of_asset"))
-			# frappe.msgprint(frappe.as_json(current_worth_of_asset))
-
-			
 			if float(i.rate) > current_worth_of_asset:
 				gain = float(i.rate) - current_worth_of_asset
 				# frappe.msgprint(f"Gain Entry: Rate: {i.rate}, Gain: {gain}")
@@ -1290,7 +1276,6 @@ class SalesInvoice(SellingController):
 				# if depreciation_charged != 0.0:
 				#     # frappe.msgprint("Gain Depreciation is zero")
 				#     create_gl_entry(accumulated_depreciation_account, depreciation_charged,0,  'Sold Item', i.cost_center)
-				frappe.msgprint("GL Entries created successfully")
 
 			elif float(i.rate) < current_worth_of_asset:
 				loss = float(current_worth_of_asset) - float(i.rate)
@@ -1305,7 +1290,7 @@ class SalesInvoice(SellingController):
 				# if depreciation_charged != 0.0:
 					# frappe.msgprint("Loss Depreciation is zero")
 					# create_gl_entry_accounts_receiveabe(accumulated_depreciation_account, depreciation_charged, 0, 'Sold Item', i.cost_center)
-				frappe.msgprint("GL Entries created successfully")
+				# frappe.msgprint("GL Entries created successfully")
 			else: 
 				# frappe.msgprint(f"No Gain/Loss")
 				# frappe.msgprint("depreciation_charged")
@@ -1320,7 +1305,7 @@ class SalesInvoice(SellingController):
 					# create_gl_entry_accounts_receiveabe(accounts_receivable, i.rate, 0, 'Sold Item', i.cost_center)
 					# create_gl_entry_accounts_receiveabe(accumulated_depreciation_account, depreciation_charged, 0, 'Sold Item', i.cost_center)
 					# create_gl_entry_accounts_receiveabe(accumulated_depreciation_account, depreciation_charged, 0, 'Sold Item', i.cost_center)
-				frappe.msgprint("GL Entries created successfully")
+				# frappe.msgprint("GL Entries created successfully")
 
 	def gl_entries_inventory_purchase_disposal_sale_gain(self):
 		fiscal_year = get_fiscal_year(self.posting_date, company=self.company)[0]
@@ -1520,7 +1505,7 @@ class SalesInvoice(SellingController):
 					gl_entry_debtors_account.submit()
 					gl_entry_gain_account.insert(ignore_permissions=True)
 					gl_entry_gain_account.submit()
-					frappe.msgprint("GL Entries created successfully")
+					# frappe.msgprint("GL Entries created successfully")
 
 				elif valuation_rate > i.rate:
 					loss = float(valuation_rate) - float(i.rate)
@@ -1596,7 +1581,7 @@ class SalesInvoice(SellingController):
 					gl_entry_loss_account.insert(ignore_permissions=True)
 					gl_entry_debtors_account.submit()
 					gl_entry_loss_account.submit()
-					frappe.msgprint("GL Entries created successfully")
+					# frappe.msgprint("GL Entries created successfully")
 
 			else:
 				# Handle the case where valuation_rate is not found
@@ -1634,7 +1619,7 @@ class SalesInvoice(SellingController):
 				})
 				gl_entry_debtors_account.insert(ignore_permissions=True)
 				gl_entry_debtors_account.submit()
-				frappe.msgprint("GL Entries created successfully")
+				# frappe.msgprint("GL Entries created successfully")
 
 		frappe.db.commit()
 
@@ -1643,7 +1628,6 @@ class SalesInvoice(SellingController):
 		
 	# mubarim new	
 	def validate_qty(self):
-		frappe.msgprint("validate_qty_mubarim")
 		for item in self.items:
 			condition_parts = [
 				(
@@ -1669,12 +1653,12 @@ class SalesInvoice(SellingController):
 				(
 					f" and inventory_flag = '{item.inventory_flag}' "
 					if item.inventory_flag
-					else " and inventory_flag = 'None' "
+					else ""
 				),
 				(
 					f" and inventory_scenario = '{item.inventory_scenario}' "
 					if item.inventory_scenario
-					else " and inventory_scenario = 'None' "
+					else ""
 				),
 				(
 					f" and program = '{item.program}' "
@@ -1707,14 +1691,12 @@ class SalesInvoice(SellingController):
 						item_code='{item.item_code}'
 						{f'{condition}' if condition else ''}
 				"""
-			# frappe.msgprint(f"query: {query}")
 			
 			try:
 				donated_invetory = frappe.db.sql(
 					query,
 					as_dict=True,
 				)
-				# frappe.msgprint(f"query result: {donated_invetory}")
 			except Exception as e:
 				frappe.throw(f"Error executing query: {e}")
 
@@ -1723,12 +1705,9 @@ class SalesInvoice(SellingController):
 					pass
 				else:
 					frappe.throw(
-					f"Insufficient quantity for item {item.item_code}. "
-					f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
-					)
-					# frappe.throw(
-					# 	f"{item.item_code} quantity doesn't exist!" #against condtions {condition}
-					# )
+				f"Insufficient quantity for item {item.item_code}. "
+				f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
+				)
 
 	def update_stock_ledger_entry(self):
 		for row in self.items:
@@ -1748,101 +1727,6 @@ class SalesInvoice(SellingController):
 							and voucher_no = '{self.name}'
 					"""
 				)
-
-
-	#old perfect
-
-	# def validate_qty(self):
-
-	# 	frappe.msgprint("Validate quantity worked!")
-	# 	for item in self.items:
-	# 		condition_parts = [
-	# 			(
-	# 				f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
-	# 				if item.custom_new
-	# 				else "1=1"
-	# 			),
-	# 			(
-	# 				f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
-	# 				if item.custom_used
-	# 				else "1=1"
-	# 			),
-	# 			(
-	# 				f"(warehouse = '{item.warehouse}' OR (warehouse IS NULL AND '{item.warehouse}' = '') OR warehouse = '')"
-	# 				if item.warehouse
-	# 				else "1=1"
-	# 			),
-	# 			(
-	# 				f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
-	# 				if item.inventory_flag
-	# 				else "1=1"
-	# 			),
-	# 			(
-	# 				f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
-	# 				if item.program
-	# 				else "1=1"
-	# 			),
-	# 			(
-	# 				f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
-	# 				if item.subservice_area
-	# 				else "1=1"
-	# 			),
-	# 			(
-	# 				f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
-	# 				if item.product
-	# 				else "1=1"
-	# 			),
-	# 			(
-	# 				f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
-	# 				if item.project
-	# 				else "1=1"
-	# 			),
-	# 		]
-	# 		condition = " AND ".join(condition_parts)
-	# 		frappe.msgprint(frappe.as_json("condition"))
-	# 		frappe.msgprint(frappe.as_json(condition))
-
-	# 		query = f"""
-	# 			SELECT ifnull(SUM(actual_qty), 0) as donated_qty, item_code FROM `tabStock Ledger Entry`
-	# 			WHERE item_code='{item.item_code}' AND {condition}
-	# 			AND is_cancelled = 0
-	# 		"""
-	# 		frappe.msgprint(frappe.as_json("query"))
-	# 		frappe.msgprint(frappe.as_json(query))
-
-	# 		try:
-	# 			donated_invetory = frappe.db.sql(query, as_dict=True)
-	# 			frappe.msgprint(frappe.as_json("donated_invetory"))
-	# 			frappe.msgprint(frappe.as_json(donated_invetory))
-	# 		except Exception as e:
-	# 			frappe.throw(f"Error executing query: {e}")
-
-	# 		try:
-	# 			donated_invetory = frappe.db.sql(
-	# 				f"""
-	# 				SELECT ifnull(SUM(actual_qty),0) as donated_qty,
-	# 					item_code
-	# 				FROM `tabStock Ledger Entry`
-	# 				WHERE
-	# 					item_code='{item.item_code}'
-	# 					{f'AND {condition}' if condition else ''}
-	# 			""",
-	# 				as_dict=True,
-	# 			)
-
-	# 			frappe.msgprint(frappe.as_json("donated_invetory"))
-	# 			frappe.msgprint(frappe.as_json(donated_invetory))
-	# 		except Exception as e:
-	# 			frappe.throw(f"Error executing query: {e}")
-
-	# 		for di in donated_invetory:
-	# 			if di.donated_qty > item.qty:
-	# 				pass
-	# 			else:
-	# 				frappe.msgprint(
-	# 				f"Insufficient quantity for item {item.item_code}. "
-	# 				f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
-	# 			)
 
 	def make_gl_entries(self, gl_entries=None, from_repost=False):
 		from erpnext.accounts.general_ledger import make_gl_entries, make_reverse_gl_entries

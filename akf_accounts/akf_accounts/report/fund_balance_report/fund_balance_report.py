@@ -34,16 +34,14 @@ def get_data(filters):
 def get_conditions(filters):
     conditions = ""
 
-    # if filters.get("company"):
-    #     conditions += " AND company = %(company)s"
-    # if filters.get("applicant"):
-    #     conditions += " AND applicant = %(applicant)s"
-    # if filters.get("branch"):
-    #     conditions += " AND branch = %(branch)s"
-    # if filters.get("loan_type"):
-    #     conditions += " AND loan_type = %(loan_category)s"
-    # if filters.get("repayment_start_date"):
-    #     conditions += " AND repayment_start_date = %(repayment_start_date)s"
+    if filters.get("branch"):
+        conditions += " AND gle.cost_center = %(branch)s"
+    if filters.get("service_area"):
+        conditions += " AND gle.program = %(service_area)s"
+    if filters.get("subservice_area"):
+        conditions += " AND gle.subservice_area = %(subservice_area)s"
+    if filters.get("project"):
+        conditions += " AND gle.project = %(project)s"
 
     return conditions
 
@@ -53,7 +51,7 @@ def get_query_result(filters):
     result = frappe.db.sql(
         """
         SELECT 
-			gle.account,gle.cost_center,gle.program,gle.subservice_area,proj.project_name, gle.project, SUM(gle.debit)-SUM(gle.credit) 
+			gle.account,gle.cost_center,gle.program,gle.subservice_area,proj.project_name, gle.project, (SUM(gle.debit)-SUM(gle.credit)) 
         FROM 
             `tabGL Entry` gle
         LEFT JOIN 
@@ -61,8 +59,9 @@ def get_query_result(filters):
         RIGHT JOIN 
             `tabProject` proj ON gle.project = proj.name
         WHERE
-            acc.root_type = 'Equity'
-        {0}""".format(conditions if conditions else ""
+            acc.root_type = 'Equity' {0}
+        Group By
+            gle.account,gle.cost_center,gle.project""".format(conditions if conditions else ""
         ),
         filters,
         as_dict=0,

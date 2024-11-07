@@ -6,6 +6,7 @@ from frappe.utils import nowdate
 class AssetMovementExtendedClass(AssetMovement):
     def validate(self):
         super().validate()
+    
         # frappe.msgprint("This is my extended code Asset Movement.")
         # self.create_asset_movement_gl_entries()
     def on_submit(self):
