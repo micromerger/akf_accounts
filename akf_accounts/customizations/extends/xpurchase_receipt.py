@@ -799,85 +799,86 @@ class XAssetInvenPurchase(PurchaseReceipt):
         all_donor_names = []
 
         for row in self.items:
-            if hasattr(row, "custom_new") or hasattr(row, "custom_used"):
-                if frappe.db.exists(
-                    "Stock Ledger Entry",
-                    {
-                        "docstatus": 1,
-                        "voucher_no": self.name,
-                    },
-                ):
-                    frappe.db.sql(
-                        """ 
-                        UPDATE `tabStock Ledger Entry`
-                        SET custom_new = %s, custom_used = %s
-                        WHERE docstatus = 1 
-                        AND voucher_detail_no = %s
-                        AND voucher_no = %s
-                        """,
-                        (row.custom_new, row.custom_used, row.name, self.name)
-                    )
+            # if hasattr(row, "custom_new") or hasattr(row, "custom_used"):
+            if frappe.db.exists(
+                "Stock Ledger Entry",
+                {
+                    "docstatus": 1,
+                    "voucher_no": self.name,
+                },
+            ):
+                frappe.db.sql(
+                    """ 
+                    UPDATE `tabStock Ledger Entry`
+                    SET custom_new = %s, custom_used = %s, custom_cost_center = %s
+                    WHERE docstatus = 1 
+                    AND voucher_detail_no = %s
+                    AND voucher_no = %s
+                    """,
+                    (row.custom_new, row.custom_used, row.cost_center, row.name, self.name)
+                )
+            
+        if(self.custom_type_of_transaction != 'Normal'):
+            donor_list_data = self.donor_list_data_from_purchase_receipt()
+            donor_list = donor_list_data.get("donor_list", [])
 
-        donor_list_data = self.donor_list_data_from_purchase_receipt()
-        donor_list = donor_list_data.get("donor_list", [])
+            for d in donor_list:
+                all_donor_id.append(d.get('donor'))
+                all_donor_names.append(d.get('donor_name'))
 
-        for d in donor_list:
-            all_donor_id.append(d.get('donor'))
-            all_donor_names.append(d.get('donor_name'))
+            # Initialize variables with default values
+            cost_center = ''
+            program = ''
+            subservice_area = ''
+            product = ''
+            project = ''
 
-        # Initialize variables with default values
-        cost_center = ''
-        program = ''
-        subservice_area = ''
-        product = ''
-        project = ''
+            if donor_list:
+                first_donor = donor_list[0]
+                cost_center = first_donor.get('cost_center', '')
+                program = first_donor.get('program', '')
+                subservice_area = first_donor.get('subservice_area', '')
+                product = first_donor.get('product', '')
+                project = first_donor.get('project', '')
 
-        if donor_list:
-            first_donor = donor_list[0]
-            cost_center = first_donor.get('cost_center', '')
-            program = first_donor.get('program', '')
-            subservice_area = first_donor.get('subservice_area', '')
-            product = first_donor.get('product', '')
-            project = first_donor.get('project', '')
+                final_output = {
+                    "donors": ", ".join(all_donor_id),
+                    "custom_donor_name_list": ",".join(all_donor_names),
+                    "cost_center": cost_center,
+                    "product": product,
+                    "program": program,
+                    "project": project,
+                    "subservice_area": subservice_area,
+                }
 
-            final_output = {
-                "donors": ", ".join(all_donor_id),
-                "custom_donor_name_list": ",".join(all_donor_names),
-                "cost_center": cost_center,
-                "product": product,
-                "program": program,
-                "project": project,
-                "subservice_area": subservice_area,
-            }
+                final_list.append(final_output)
 
-            final_list.append(final_output)
+            if frappe.db.exists(
+                "Stock Ledger Entry",
+                {
+                    "docstatus": 1,
+                    "voucher_no": self.name,
+                },
+            ):
+                all_donor_id_json = json.dumps(all_donor_id)
+                all_donor_names_json = json.dumps(all_donor_names)
 
-        if frappe.db.exists(
-            "Stock Ledger Entry",
-            {
-                "docstatus": 1,
-                "voucher_no": self.name,
-            },
-        ):
-            all_donor_id_json = json.dumps(all_donor_id)
-            all_donor_names_json = json.dumps(all_donor_names)
-
-            frappe.db.sql(
-                """ 
-                UPDATE `tabStock Ledger Entry`
-                SET custom_donor_list = %s,
-                    custom_donor_name_list = %s,
-                    program = %s,
-                    subservice_area = %s,
-                    product = %s,
-                    project = %s,
-                    custom_cost_center = %s,
-                    inventory_flag = "Purchased"
-                WHERE docstatus = 1 
-                AND voucher_no = %s
-                """,
-                (all_donor_id_json, all_donor_names_json, program, subservice_area, product, project, cost_center, self.name)
-            )
+                frappe.db.sql(
+                    """ 
+                    UPDATE `tabStock Ledger Entry`
+                    SET custom_donor_list = %s,
+                        custom_donor_name_list = %s,
+                        program = %s,
+                        subservice_area = %s,
+                        product = %s,
+                        project = %s,
+                        custom_cost_center = %s,
+                        inventory_flag = "Purchased"
+                    WHERE docstatus = 1 
+                    AND voucher_no = %s
+                    """,
+                    (all_donor_id_json, all_donor_names_json, program, subservice_area, product, project, cost_center, self.name)
+                )
 
     def donor_list_data_from_purchase_receipt(self):
         donor_list = []

@@ -196,44 +196,54 @@ class XSalesInvoice(SalesInvoice):
             for item in self.items:
                 condition_parts = [
                     (
-                        f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
+                        f" and custom_new = {item.custom_new} "
                         if item.custom_new
-                        else "1=1"
+                        else " and custom_new = 0 "
                     ),
                     (
-                        f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
+                        f" and custom_used = {item.custom_used} "
                         if item.custom_used
-                        else "1=1"
+                        else " and custom_used = 0 "
                     ),
                     (
-                        f"(warehouse = '{item.warehouse}' OR (warehouse IS NULL AND '{item.warehouse}' = '') OR warehouse = '')"
-                        if item.warehouse
-                        else "1=1"
+                        f" and warehouse = '{item.s_warehouse}' "
+                        if item.s_warehouse
+                        else " and warehouse IS NULL "
                     ),
                     (
-                        f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
+                        f" and custom_cost_center = '{item.cost_center}' "
+                        if item.cost_center
+                        else " and custom_cost_center IS NULL "
+                    ),
+                    (
+                        f" and inventory_flag = '{item.inventory_flag}' "
                         if item.inventory_flag
-                        else "1=1"
+                        else "Normal"
                     ),
                     (
-                        f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
+                        f" and inventory_scenario = '{item.inventory_scenario}' "
+                        if item.inventory_scenario
+                        else "Normal"
+                    ),
+                    (
+                        f" and program = '{item.program}' "
                         if item.program
-                        else "1=1"
+                        else " and program IS NULL "
                     ),
                     (
-                        f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
+                        f" and subservice_area = '{item.subservice_area}' "
                         if item.subservice_area
-                        else "1=1"
+                        else " and subservice_area IS NULL "
                     ),
                     (
-                        f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
+                        f" and product = '{item.product}' "
                         if item.product
-                        else "1=1"
+                        else " and product IS NULL "
                     ),
                     (
-                        f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
+                        f" and project = '{item.project}' "
                         if item.project
-                        else "1=1"
+                        else " and project IS NULL "
                     ),
                 ]
                 condition = " AND ".join(condition_parts)

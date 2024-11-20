@@ -1,48 +1,48 @@
 frappe.ui.form.on('Purchase Receipt', {
 
-  
-    onload_post_render: function(frm) { 
+
+    onload_post_render: function (frm) {
 
         set_query_for_item_code(frm);
         set_query_warehouse(frm);
-        if (frm.is_new() && !frm.doc.__islocal){
+        if (frm.is_new() && !frm.doc.__islocal) {
             frm.set_value('set_warehouse', '');
             frm.refresh_field['set_warehouse']
         }
-       
+
 
     },
- 
-    refresh: function(frm) {
-        set_query_warehouse(frm);  
+
+    refresh: function (frm) {
+        set_query_warehouse(frm);
         set_queries_payment_details(frm);
         console.log("Refreshed triggered");
         if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase Restricted"].includes(frm.doc.custom_type_of_transaction)) {
             get_html(frm);
-        }   
+        }
     },
 
     // Below is the code written by MUBASHIR BASHIR
-    
-    validate: function(frm) {
-        validate_item_quantity(frm);        
+
+    validate: function (frm) {
+        validate_item_quantity(frm);
     },
 
-    on_submit: function(frm){
-            // if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase"].includes(frm.doc.custom_type_of_transaction)) {
-                get_html(frm);
-            // }
+    on_submit: function (frm) {
+        // if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase"].includes(frm.doc.custom_type_of_transaction)) {
+        get_html(frm);
+        // }
 
-            // Below is the code written by MUBASHIR BASHIR
-            // update_material_request_status(frm);
-            
-            },
+        // Below is the code written by MUBASHIR BASHIR
+        // update_material_request_status(frm);
 
-	onload: function(frm) {
-		$("#table_render").empty();
-		$("#total_balance").empty();
-		$("#previous").empty();
-		$("#next").empty();
+    },
+
+    onload: function (frm) {
+        $("#table_render").empty();
+        $("#total_balance").empty();
+        $("#previous").empty();
+        $("#next").empty();
 
         // Below is the code written by MUBASHIR BASHIR
         get_original_item_qty(frm);
@@ -54,14 +54,14 @@ frappe.ui.form.on('Purchase Receipt', {
 
 function set_query_warehouse(frm) {
 
-    frm.doc.custom_program_details.forEach(function(row) {
+    frm.doc.custom_program_details.forEach(function (row) {
         let selected_cost_center = row.pd_cost_center;
-        
-        frm.set_query('set_warehouse', function() {  
+
+        frm.set_query('set_warehouse', function () {
             return {
                 filters: {
-                    'custom_cost_center': selected_cost_center, 
-                    'is_group': 0, 
+                    'custom_cost_center': selected_cost_center,
+                    'is_group': 0,
                     'company': frm.doc.company
                 }
             };
@@ -75,7 +75,7 @@ function set_query_warehouse(frm) {
 function get_original_item_qty(frm) {
     if (frm.doc.items && frm.doc.items.length > 0) {
         frm.original_qty_values = {};
-        frm.doc.items.forEach(function(item) {
+        frm.doc.items.forEach(function (item) {
             frm.original_qty_values[item.name] = item.qty;
         });
     } else {
@@ -85,7 +85,7 @@ function get_original_item_qty(frm) {
 
 // Below is the code written by MUBASHIR BASHIR
 function validate_item_quantity(frm) {
-    frm.doc.items.forEach(function(item) {
+    frm.doc.items.forEach(function (item) {
         var original_qty = frm.original_qty_values[item.name];
 
         if (item.qty > original_qty) {
@@ -97,41 +97,41 @@ function validate_item_quantity(frm) {
 
 
 frappe.ui.form.on("Program Details", {
-    pd_donor: function(frm, cdt, cdn) {
+    pd_donor: function (frm, cdt, cdn) {
         get_html(frm);
     },
-    pd_cost_center: function(frm, cdt, cdn) {
+    pd_cost_center: function (frm, cdt, cdn) {
         frm.set_value('set_warehouse', '');
         frm.refresh_field['set_warehouse']
-        var row = locals[cdt][cdn]; 
+        var row = locals[cdt][cdn];
         selected_cost_center = row.pd_cost_center
 
 
         console.log("selected_cost_centerrrrr");
         console.log(row.pd_cost_center);
 
-        frm.set_query('set_warehouse', function() {  
+        frm.set_query('set_warehouse', function () {
             return {
                 filters: {
-                    'custom_cost_center': selected_cost_center, 
-                    'is_group': 0, 
+                    'custom_cost_center': selected_cost_center,
+                    'is_group': 0,
                     'company': frm.doc.company
                 }
             };
         });
-  
+
     }
 });
 
 
 
-    
+
 function set_query_for_item_code(frm) {
-    frm.fields_dict['items'].grid.get_field('item_code').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['items'].grid.get_field('item_code').get_query = function (doc, cdt, cdn) {
         var asset_filters = {
             disabled: 0,
             has_variants: 0,
-            is_fixed_asset: 1 
+            is_fixed_asset: 1
         };
         var inventory_filters = {
             disabled: 0,
@@ -142,25 +142,25 @@ function set_query_for_item_code(frm) {
             disabled: 0
         };
         console.log("custom_type_of_transaction", frm.doc.custom_type_of_transaction)
-        console.log("inventory_filters" , inventory_filters);
-        console.log("asset_filters" , asset_filters);
-        console.log("normal_filters" , normal_filters);
-        
+        console.log("inventory_filters", inventory_filters);
+        console.log("asset_filters", asset_filters);
+        console.log("normal_filters", normal_filters);
+
         if (frm.doc.custom_type_of_transaction === "Asset Purchase Restricted") {
             console.log("Inside Asset Purchase");
-            
+
             return {
                 filters: asset_filters
             };
-        } 
+        }
         else if (frm.doc.custom_type_of_transaction === "Inventory Purchase Restricted") {
             console.log("Inside Inventory Purchase Restricted");
             console.log();
-            
+
             return {
                 filters: inventory_filters
             };
-        } 
+        }
         else {
             console.log("Inside Else");
             return {
@@ -180,7 +180,7 @@ function get_html(frm) {
         args: {
             doc: frm.doc,
         },
-        callback: function(r) {
+        callback: function (r) {
             console.log("DONOR LISTTTT");
             console.log(r.message);
 
@@ -209,26 +209,26 @@ function get_html(frm) {
 
                     function displayPage(page) {
                         // Filter out rows where balance is 0 before slicing for pagination
-                        var filteredDonorList = donorList.filter(function(d) {
+                        var filteredDonorList = donorList.filter(function (d) {
                             var balance = parseFloat(d.balance) || 0;
                             var usedAmount = parseFloat(d.used_amount) || 0;
-                        
+
                             // Show the record if the balance is non-zero or the donated amount is greater than zero
                             return balance !== 0 || (balance === 0 && usedAmount > 0);
                         });
-                        
-                    
+
+
                         // Check if there are any valid entries after filtering
                         if (filteredDonorList.length === 0) {
                             // No valid entries, so do not display headers and show a message
                             frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
                             return;
                         }
-                    
+
                         var start = (page - 1) * recordsPerPage;
                         var end = start + recordsPerPage;
                         var paginatedDonorList = filteredDonorList.slice(start, end);
-                    
+
                         var tableHeader = `
                             <table class="table table-bordered" style="border: 2px solid black;" id="table_render">
                                 <thead style="background-color: #015aab; color: white; text-align: left;">
@@ -241,17 +241,17 @@ function get_html(frm) {
                                 </thead>
                                 <tbody>
                         `;
-                    
+
                         var donorListRows = "";
-                        paginatedDonorList.forEach(function(d) {
+                        paginatedDonorList.forEach(function (d) {
                             var donorId = d.donor || '-';
                             var costCenter = d.cost_center || '-';
                             var product = d.product || '-';
                             var balance = d.balance || '0';
                             var usedAmount = d.used_amount || '0';
-                    
+
                             var backgroundColor = (parseFloat(balance) < 0 || parseFloat(usedAmount) < 0) ? '#EE4B2B' : '#d1d1d1';
-                    
+
                             var row = `
                                 <tr style="background-color: ${backgroundColor}; color: black; text-align: left;">
                                     <td class="text-left" style="border: 1px solid black;">${donorId}</td>
@@ -262,22 +262,22 @@ function get_html(frm) {
                             `;
                             donorListRows += row;
                         });
-                    
+
                         var completeTable = tableHeader + donorListRows + "</tbody></table><br>";
-                    
+
                         if (docstatus != 1 && totalBalance !== 0) {
                             completeTable += `
                                 <h5 style="text-align: right;" id="total_balance"><strong>Total Balance: Rs.${totalBalance}</strong></h5>
                             `;
                         }
-                    
+
                         if (totalPages > 1) {
                             completeTable += generatePaginationControls();
                         }
-                    
+
                         frm.set_df_property('custom_donor_list_html', 'options', completeTable);
                     }
-                    
+
                     function generatePaginationControls() {
                         var controls = `<div style="text-align: center; margin-top: 10px;">`;
 
@@ -295,7 +295,7 @@ function get_html(frm) {
                         return controls;
                     }
 
-                    window.changePage = function(page) {
+                    window.changePage = function (page) {
                         if (page >= 1 && page <= totalPages) {
                             currentPage = page;
                             displayPage(currentPage);
@@ -316,16 +316,16 @@ function get_html(frm) {
     });
 }
 
-function set_queries_payment_details(frm){
+function set_queries_payment_details(frm) {
     set_query_subservice_area(frm);
     set_query_cost_center(frm);
     set_query_product(frm);
     set_query_project(frm);
- 
+
 }
 
-function set_query_service_area(frm){
-    frm.fields_dict['custom_program_details'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
+function set_query_service_area(frm) {
+    frm.fields_dict['custom_program_details'].grid.get_field('service_area').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -336,8 +336,8 @@ function set_query_service_area(frm){
     };
 }
 
-function set_query_subservice_area(frm){
-    frm.fields_dict['custom_program_details'].grid.get_field('pd_subservice_area').get_query = function(doc, cdt, cdn) {
+function set_query_subservice_area(frm) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_subservice_area').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -348,8 +348,8 @@ function set_query_subservice_area(frm){
     };
 }
 
-function set_query_cost_center(frm){
-    frm.fields_dict['custom_program_details'].grid.get_field('pd_cost_center').get_query = function(doc, cdt, cdn) {
+function set_query_cost_center(frm) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_cost_center').get_query = function (doc, cdt, cdn) {
         return {
             filters: {
                 is_group: 0,
@@ -361,7 +361,7 @@ function set_query_cost_center(frm){
 }
 
 function set_query_product(frm) {
-    frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         console.log("pd_subservice_area:", row.pd_subservice_area);
 
@@ -375,15 +375,15 @@ function set_query_product(frm) {
     };
 }
 
-function set_query_project(frm){
-    frm.fields_dict['custom_program_details'].grid.get_field('pd_project').get_query = function(doc, cdt, cdn) {
+function set_query_project(frm) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_project').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
                 company: frm.doc.company,
                 custom_program: ["!=", ""],
                 custom_program: row.pd_service_area,
-                
+
             }
         };
     };
@@ -391,22 +391,22 @@ function set_query_project(frm){
 
 
 frappe.ui.form.on("Purchase Receipt Item", {
-    custom_new: function(frm, cdt, cdn){
+    custom_new: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        if(row.custom_new){
+        if (row.custom_new) {
             row.custom_used = 0;
         }
         frm.refresh_field("items")
     },
-    custom_used: function(frm, cdt, cdn){
+    custom_used: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        if(row.custom_used){
+        if (row.custom_used) {
             row.custom_new = 0;
         }
         frm.refresh_field("items")
     }
 
-    
+
 });
 
 
@@ -416,7 +416,7 @@ frappe.ui.form.on("Purchase Receipt Item", {
 //         var original_qty = frm.original_qty_values[item.name];
 
 //         if (!item.material_request) {
-//             return;  
+//             return;
 //         }
 
 //         let status = '';
