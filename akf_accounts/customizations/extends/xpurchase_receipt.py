@@ -810,12 +810,12 @@ class XAssetInvenPurchase(PurchaseReceipt):
                 frappe.db.sql(
                     """ 
                     UPDATE `tabStock Ledger Entry`
-                    SET custom_new = %s, custom_used = %s, custom_cost_center = %s
+                    SET custom_new = %s, custom_used = %s, custom_cost_center = %s, inventory_flag = %s, inventory_scenario = %s
                     WHERE docstatus = 1 
                     AND voucher_detail_no = %s
                     AND voucher_no = %s
                     """,
-                    (row.custom_new, row.custom_used, row.cost_center, row.name, self.name)
+                    (row.custom_new, row.custom_used, row.cost_center, row.inventory_flag, row.inventory_scenario, row.name, self.name)
                 )
             
         if(self.custom_type_of_transaction != 'Normal'):
