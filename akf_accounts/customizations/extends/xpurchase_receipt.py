@@ -7,10 +7,15 @@ from erpnext.accounts.utils import get_fiscal_year
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import PurchaseReceipt
 
 class XAssetInvenPurchase(PurchaseReceipt):
+    # def before_validate(self):
+    #     super(XAssetInvenPurchase, self).before_validate()
+    #     self.set_warehouse_cost_centers()
+
     def validate(self):
-       
         super().validate()
+        self.set_warehouse_cost_centers()
         # frappe.msgprint('accounts')
+
     def on_submit(self):
         super().on_submit()
         self.make_gl_entries()
@@ -1057,7 +1062,17 @@ class XAssetInvenPurchase(PurchaseReceipt):
 
         return messages
 
-    #added 0 logic with insufficient balanace 
+    #added 0 logic with insufficient balanace
+
+    
+    def set_warehouse_cost_centers(self):
+        for item in self.items:
+            accepted_warehouse_cost_center = ""
+            accepted_warehouse = self.set_warehouse
+            accepted_warehouse_cost_center = frappe.db.get_value(
+                "Warehouse", accepted_warehouse, "custom_cost_center"
+            )
+            item.cost_center = accepted_warehouse_cost_center
 
 
 @frappe.whitelist()
