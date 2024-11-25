@@ -119,6 +119,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                     gl_entry_core_debit.insert(ignore_permissions=True)
@@ -157,6 +158,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                     gl_entry_core_credit.insert(ignore_permissions=True)
@@ -194,6 +196,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'subservice_area': subservice_area,
                         'donor': donor,
                         'inventory_flag': 'Purchased',
+                        'inventory_scenario': 'Restricted',
                         'product': product
                     })
 
@@ -232,6 +235,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'subservice_area': subservice_area,
                         'donor': donor,
                         'inventory_flag': 'Purchased',
+                        'inventory_scenario': 'Restricted',
                         'product': product
                     })
                     gl_entry_inventory_fund.insert(ignore_permissions=True)
@@ -294,6 +298,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                         gl_entry_core_debit.insert(ignore_permissions=True)
@@ -332,6 +337,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                         gl_entry_core_credit.insert(ignore_permissions=True)
@@ -369,6 +375,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                         gl_entry_donation.insert(ignore_permissions=True)
@@ -407,6 +414,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                         gl_entry_inventory_fund.insert(ignore_permissions=True)
@@ -489,6 +497,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'subservice_area': subservice_area,
                         'donor': donor,
                         'inventory_flag': 'Purchased',
+                        'inventory_scenario': 'Restricted',
                         'product': product
                     })
 
@@ -527,6 +536,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'subservice_area': subservice_area,
                         'donor': donor,
                         'inventory_flag': 'Purchased',
+                        'inventory_scenario': 'Restricted',
                         'product': product
                     })
                     gl_entry_core_credit.insert(ignore_permissions=True)
@@ -564,6 +574,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'subservice_area': subservice_area,
                         'donor': donor,
                         'inventory_flag': 'Purchased',
+                        'inventory_scenario': 'Restricted',
                         'product': product
                     })
 
@@ -602,6 +613,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         'subservice_area': subservice_area,
                         'donor': donor,
                         'inventory_flag': 'Purchased',
+                        'inventory_scenario': 'Restricted',
                         'product': product
                     })
                     gl_entry_inventory_fund.insert(ignore_permissions=True)
@@ -666,6 +678,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                         gl_entry_core_debit.insert(ignore_permissions=True)
@@ -704,6 +717,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                         gl_entry_core_credit.insert(ignore_permissions=True)
@@ -743,6 +757,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                         gl_entry_donation.insert(ignore_permissions=True)
@@ -781,6 +796,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
                             'subservice_area': subservice_area,
                             'donor': donor,
                             'inventory_flag': 'Purchased',
+                            'inventory_scenario': 'Restricted',
                             'product': product
                         })
                         gl_entry_inventory_fund.insert(ignore_permissions=True)
@@ -878,7 +894,8 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         product = %s,
                         project = %s,
                         custom_cost_center = %s,
-                        inventory_flag = "Purchased"
+                        inventory_flag = "Purchased",
+                        inventory_scenario = "Restricted"
                     WHERE docstatus = 1 
                     AND voucher_no = %s
                     """,
@@ -1073,6 +1090,10 @@ class XAssetInvenPurchase(PurchaseReceipt):
                 "Warehouse", accepted_warehouse, "custom_cost_center"
             )
             item.cost_center = accepted_warehouse_cost_center
+        
+            if(self.custom_type_of_transaction != 'Normal'):
+                item.inventory_flag = 'Donated'
+                item.inventory_scenario = 'Restricted'
 
 
 @frappe.whitelist()
