@@ -287,8 +287,7 @@
   {
    "fieldname": "receipt_number",
    "fieldtype": "Data",
-   "label": "Receipt Number",
-   "unique": 1
+   "label": "Receipt Number"
   },
   {
    "fieldname": "column_break_airg",
@@ -470,7 +469,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-28 17:42:56.689126",
+ "modified": "2024-11-28 18:25:36.926396",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",
