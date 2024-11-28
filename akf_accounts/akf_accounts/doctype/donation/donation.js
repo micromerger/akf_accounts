@@ -267,6 +267,16 @@ function set_custom_btns(frm) {
 
 /* APPLYING SET QUERIES */
 function set_queries(frm) {
+
+    frm.set_query('cash_received_by_finance', function () {
+        return {
+            filters: {
+                company: frm.doc.company,
+                department: ['like', 'Finance - AKFP']
+            }
+        };
+    });
+
     // set query on Account in `Deduction Breakeven`
     frm.fields_dict['deduction_breakeven'].grid.get_field('account').get_query = function (doc, cdt, cdn) {
         return {

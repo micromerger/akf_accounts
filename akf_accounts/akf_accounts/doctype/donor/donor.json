@@ -9,6 +9,7 @@
   "naming_series",
   "nationality_type",
   "donor_name",
+  "donor_dob",
   "department",
   "branch",
   "branch_abbreviation",
@@ -24,6 +25,8 @@
   "city",
   "contact_person",
   "contact_number",
+  "registration_date",
+  "foa",
   "address_contacts",
   "address_html",
   "column_break_9",
@@ -32,7 +35,6 @@
   "section_break_huvh",
   "donor_list",
   "care_of_details_tab",
-  "foa",
   "co_name",
   "co_contact_no",
   "co_email",
@@ -131,8 +133,7 @@
   {
    "fieldname": "contact_no",
    "fieldtype": "Data",
-   "label": "Contact No",
-   "reqd": 1
+   "label": "Contact No"
   },
   {
    "fieldname": "city",
@@ -147,8 +148,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "CNIC",
-   "mandatory_depends_on": "eval: doc.identification_type!=\"Others\"",
-   "unique": 1
+   "mandatory_depends_on": "eval: doc.identification_type!=\"Others\" && doc.foa == 0"
   },
   {
    "fieldname": "branch",
@@ -246,6 +246,16 @@
    "fieldname": "foa",
    "fieldtype": "Check",
    "label": "FOA"
+  },
+  {
+   "fieldname": "donor_dob",
+   "fieldtype": "Date",
+   "label": "Donor DOB"
+  },
+  {
+   "fieldname": "registration_date",
+   "fieldtype": "Date",
+   "label": "Registration Date"
   }
  ],
  "image_field": "image",
@@ -255,7 +265,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-09-20 19:18:21.978609",
+ "modified": "2024-11-28 16:30:08.948171",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

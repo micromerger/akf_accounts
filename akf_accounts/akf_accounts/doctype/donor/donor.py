@@ -6,6 +6,7 @@ import frappe, re
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from erpnext.accounts.utils import get_balance_on
+from frappe.utils import getdate, formatdate, get_link_to_form
 
 class Donor(Document):
     def onload(self):
@@ -18,6 +19,7 @@ class Donor(Document):
             validate_email_address(self.email.strip(), True)
         self.verify_proscribed_person()
         self.verify_cnic()
+        self.validate_duplicate_cnic()
 
     def verify_proscribed_person(self):
         if self.cnic:
@@ -55,7 +57,12 @@ class Donor(Document):
         """Match the given string with the regex pattern."""
         return re.match(pattern, mystr)
     
-
+    def validate_duplicate_cnic(self):
+        preDonor = frappe.db.get_value('Donor', {'cnic': self.cnic}, ['name', 'department', 'creation'], as_dict=1)
+        if(preDonor):
+            # get_link_to_form # (doctype: str, name: str, label: str | None = None) -> str:
+            frappe.throw(f"""A donor with ID: {get_link_to_form('Donor',preDonor.name)}, already exists created by {preDonor.department} on {formatdate(getdate(preDonor.creation))}.""")
+        
 @frappe.whitelist()
 def check_all_donors_against_proscribed_persons():
     all_donors = frappe.get_all("Donor", filters={"cnic": ["!=", ""]}, fields=["name", "cnic", "email"])

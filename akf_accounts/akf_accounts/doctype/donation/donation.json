@@ -10,15 +10,18 @@
   "naming_series",
   "donor_identity",
   "contribution_type",
+  "plaque_name",
   "donation_type",
   "column_break_gxmk",
   "company",
   "posting_date",
   "posting_time",
   "edit_posting_date_time",
+  "reconcile",
   "column_break_qxif",
   "cash_receipt_date_by_donor_desk",
   "cash_received_in_finance",
+  "cash_received_by_finance",
   "due_date",
   "is_return",
   "return_against",
@@ -338,12 +341,29 @@
   {
    "fieldname": "column_break_kchn",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "plaque_name",
+   "fieldtype": "Data",
+   "label": "Plaque Name"
+  },
+  {
+   "fieldname": "cash_received_by_finance",
+   "fieldtype": "Link",
+   "label": "Cash Received By Finance ",
+   "options": "Employee"
+  },
+  {
+   "default": "0",
+   "fieldname": "reconcile",
+   "fieldtype": "Check",
+   "label": "Reconcile"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-30 14:07:34.896686",
+ "modified": "2024-11-28 16:02:01.496896",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
