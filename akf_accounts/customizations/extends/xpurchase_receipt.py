@@ -19,6 +19,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
     def on_submit(self):
         super().on_submit()
         self.make_gl_entries()
+        self.set_warehouse_cost_centers()
         self.update_stock_ledger_entry()
         messages = self.empty_message()
         # frappe.throw(f"{messages}")
@@ -848,7 +849,6 @@ class XAssetInvenPurchase(PurchaseReceipt):
                 all_donor_names.append(d.get('donor_name'))
 
             # Initialize variables with default values
-            cost_center = ''
             program = ''
             subservice_area = ''
             product = ''
@@ -856,7 +856,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
 
             if donor_list:
                 first_donor = donor_list[0]
-                cost_center = first_donor.get('cost_center', '')
+                # cost_center = first_donor.get('cost_center', '')
                 program = first_donor.get('program', '')
                 subservice_area = first_donor.get('subservice_area', '')
                 product = first_donor.get('product', '')
@@ -865,7 +865,6 @@ class XAssetInvenPurchase(PurchaseReceipt):
                 final_output = {
                     "donors": ", ".join(all_donor_id),
                     "custom_donor_name_list": ",".join(all_donor_names),
-                    "cost_center": cost_center,
                     "product": product,
                     "program": program,
                     "project": project,
@@ -893,13 +892,12 @@ class XAssetInvenPurchase(PurchaseReceipt):
                         subservice_area = %s,
                         product = %s,
                         project = %s,
-                        custom_cost_center = %s,
                         inventory_flag = "Purchased",
                         inventory_scenario = "Restricted"
                     WHERE docstatus = 1 
                     AND voucher_no = %s
                     """,
-                    (all_donor_id_json, all_donor_names_json, program, subservice_area, product, project, cost_center, self.name)
+                    (all_donor_id_json, all_donor_names_json, program, subservice_area, product, project,  self.name)
                 )
 
     def donor_list_data_from_purchase_receipt(self):
