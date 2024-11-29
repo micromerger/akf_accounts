@@ -30,7 +30,7 @@ frappe.ui.form.on('Donor', {
         frm.set_value("others", "");
     },
 	cnic: function(frm) {
-        console.log(frm.doc.cnic)
+        // console.log(frm.doc.cnic)
         if (frm.doc.cnic && frm.doc.identification_type != "Other") {
             const labelName = __(frm.fields_dict['cnic'].df.label);
             if (!internationalIdNumberValidation(frm.doc.cnic, frm.doc.identification_type)) {

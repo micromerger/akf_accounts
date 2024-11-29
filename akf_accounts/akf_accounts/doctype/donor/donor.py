@@ -48,8 +48,8 @@ class Donor(Document):
     def verify_cnic(self):
         # Define a regex pattern for CNIC: `xxxxx-xxxxxxx-x`
         cnic_pattern = r"^\d{5}-\d{7}-\d{1}$"
-        
         # Check if CNIC matches the pattern
+        if(not self.cnic): return
         if not self.match_regex(cnic_pattern, self.cnic):
             frappe.throw('Please enter a valid CNIC in the format xxxxx-xxxxxxx-x.')
 
@@ -58,10 +58,12 @@ class Donor(Document):
         return re.match(pattern, mystr)
     
     def validate_duplicate_cnic(self):
-        preDonor = frappe.db.get_value('Donor', {'cnic': self.cnic}, ['name', 'department', 'creation'], as_dict=1)
+        # preDonor = frappe.db.get_value('Donor', {'name':['!=', self.name], 'cnic': self.cnic}, ['name', 'department', 'creation'], as_dict=1)
+        preDonor = frappe.db.sql(f"""Select name, department, creation From `tabDonor` where name!='{self.name}' and cnic='{self.cnic}' """, as_dict=1)
         if(preDonor):
             # get_link_to_form # (doctype: str, name: str, label: str | None = None) -> str:
-            frappe.throw(f"""A donor with ID: {get_link_to_form('Donor',preDonor.name)}, already exists created by {preDonor.department} on {formatdate(getdate(preDonor.creation))}.""")
+            for d in preDonor:
+                frappe.throw(f"""A donor with ID: {get_link_to_form('Donor',d.name)}, already exists created by {d.department} on {formatdate(getdate(d.creation))}.""")
         
 @frappe.whitelist()
 def check_all_donors_against_proscribed_persons():
