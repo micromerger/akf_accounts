@@ -59,6 +59,8 @@ class Donor(Document):
     
     def validate_duplicate_cnic(self):
         # preDonor = frappe.db.get_value('Donor', {'name':['!=', self.name], 'cnic': self.cnic}, ['name', 'department', 'creation'], as_dict=1)
+        # Check if CNIC matches the pattern
+        if(not self.cnic): return
         preDonor = frappe.db.sql(f"""Select name, department, creation From `tabDonor` where name!='{self.name}' and cnic='{self.cnic}' """, as_dict=1)
         if(preDonor):
             # get_link_to_form # (doctype: str, name: str, label: str | None = None) -> str:
