@@ -3,6 +3,8 @@ from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 from erpnext.accounts.utils import get_balance_on
 
+from frappe.core.doctype.communication.email import make
+
 class Donation(Document):
 	def validate(self):
 		self.validate_payment_details()
@@ -262,6 +264,48 @@ class Donation(Document):
 		if(self.contribution_type=="Donation"):
 			self.make_payment_entry()
 		self.update_status()
+		self.send_donation_emails()		# Mubashir Bashir
+
+	#Mubashir Bashir Start 3-12-24
+	def send_donation_emails(self):
+		
+		"""
+		Sends email notifications to all users linked to the project when a new donation is added.
+		"""
+		for payment in self.payment_detail:
+			project_id = payment.project_id
+			if project_id:
+				project_users = frappe.db.sql(
+					"""
+					SELECT email
+					FROM `tabProject User`
+					WHERE parent = %s
+					""",
+					(project_id,),
+					as_dict=True,
+				)
+				
+				email_addresses = [user["email"] for user in project_users if user["email"]]
+
+				for email in email_addresses:
+					subject = f"New Donation Received for Project {project_id}"
+					message = f"""
+					Dear User,<br><br>
+					A new donation has been added for the project: <b>{project_id}</b>.<br><br>
+					Donation Details:<br>
+					- Project: <b>{project_id}</b><br>
+					- Donation Amount: <b>{payment.donation_amount}</b><br><br>
+					Regards,<br>
+					{self.company}
+					"""
+
+
+					frappe.sendmail(
+						recipients=email,
+						subject=subject,
+						message=message,
+					)
+			#Mubashir Bashir End 3-12-24
 
 	def get_gl_entry_dict(self):
 		return frappe._dict({
