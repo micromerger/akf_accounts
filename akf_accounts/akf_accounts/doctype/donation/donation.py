@@ -72,8 +72,10 @@ class Donation(Document):
 				row.reference_date = None
 
 		def get_deduction_details(row, deduction_breakeven):
-			#Added by Aqsa
-			if (row.donation_type in [None, "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]): 
+			# Added by Aqsa
+			# Mobeen said no deduction only on Zakat
+			# if (row.donation_type in [None, "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]): 
+			if (row.donation_type in [None, "Zakat"]) or (self.contribution_type=='Pledge'): 
 				return []
 
 			_breakeven = [d for d in deduction_breakeven if(d.random_id == row.random_id)]
@@ -121,6 +123,12 @@ class Donation(Document):
 		def set_total_donors():
 			self.total_donors = len(self.payment_detail)
 
+		def verify_unique_receipt_no(row):
+			if(not row.receipt_number): return
+			receipt_list = [d.idx for d in self.payment_detail if(row.receipt_number == d.receipt_number and row.idx!=d.idx)]
+			if(receipt_list):
+				frappe.throw(f"Receipt#<b>{row.receipt_number}</b> in row#<b>{row.idx}</b> is already used in another row.", title='Receipt No.')
+			
 		deduction_breakeven = self.deduction_breakeven
 		self.set("deduction_breakeven", [])
 		deduction_amount=0
@@ -128,6 +136,7 @@ class Donation(Document):
 		
 		for row in self.payment_detail:
 			# print("payment_detail: ", row.random_id)
+			verify_unique_receipt_no(row)
 			reset_mode_of_payment(row)
 			total_donation+= row.donation_amount
 			row.base_donation_amount = self.apply_currecny_exchange(row.donation_amount)

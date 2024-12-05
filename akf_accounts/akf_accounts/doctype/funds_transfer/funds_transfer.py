@@ -65,7 +65,8 @@ class FundsTransfer(Document):
         missing_donor_ids = donor_ids_from - donor_ids_to
         if missing_donor_ids:
             missing_donors_message = ", ".join(missing_donor_ids)
-            frappe.throw(f"No details are provided for Donor(s): {missing_donors_message}")
+            # frappe.throw(f"No details are provided for Donor(s): {missing_donors_message}")
+            frappe.throw("Donor must be Same")
 
         # Validate if there are exact matches between funds_transfer_from and funds_transfer_to
         for f in self.funds_transfer_from:
@@ -98,7 +99,7 @@ class FundsTransfer(Document):
             for n in self.funds_transfer_to:
                 new_donor = n.get('ft_donor')
                 ftf_amount = float(n.get('ft_amount', 0.0))
-                ftt_amount = float(n.get('outstanding_amount', 0.0))
+                ftt_amount = float(n.get('ft_amount', 0.0))
                 new_cost_center = n.get('ft_cost_center')
                 new_account = n.get('ft_account')
                 new_project = n.get('project')
@@ -280,7 +281,7 @@ class FundsTransfer(Document):
         missing_donor_ids = donor_ids_from - donor_ids_to
         if missing_donor_ids:
             missing_donors_message = ", ".join(missing_donor_ids)
-            frappe.throw(f"No details are provided for Donor(s): {missing_donors_message}")
+            frappe.throw(f"Donor must be Same: {missing_donors_message}")
 
         # Accumulate total transfer amount and process donor entries
         for d in donor_list:
@@ -297,7 +298,7 @@ class FundsTransfer(Document):
             for n in self.funds_transfer_to:
                 new_donor = n.get('ft_donor')
                 ftf_amount = float(n.get('ft_amount', 0.0))  # Required amount to transfer
-                ftt_amount = float(n.get('outstanding_amount', 0.0))
+                # ftt_amount = float(n.get('outstanding_amount', 0.0))
                 new_cost_center = n.get('ft_cost_center')
                 new_account = n.get('ft_account')
                 new_project = n.get('project')
