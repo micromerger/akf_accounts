@@ -40,6 +40,7 @@
   "section_break_otbq",
   "deduction_breakeven",
   "section_break_wznb",
+  "foreign_currency_column",
   "total_donation",
   "total_deduction",
   "outstanding_amount",
@@ -152,6 +153,7 @@
   {
    "bold": 1,
    "default": "0",
+   "depends_on": "eval: doc.currency!='PKR';",
    "fieldname": "net_amount",
    "fieldtype": "Currency",
    "label": "Net Amount",
@@ -165,6 +167,7 @@
   {
    "bold": 1,
    "default": "0",
+   "depends_on": "eval: doc.currency!='PKR';",
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
@@ -208,6 +211,7 @@
   {
    "bold": 1,
    "default": "0",
+   "depends_on": "eval: doc.currency!='PKR';",
    "fieldname": "total_donation",
    "fieldtype": "Currency",
    "label": "Total Donation",
@@ -221,6 +225,7 @@
   {
    "bold": 1,
    "default": "0",
+   "depends_on": "eval: doc.currency!='PKR';",
    "fieldname": "total_deduction",
    "fieldtype": "Currency",
    "label": "Total Deduction",
@@ -291,25 +296,25 @@
   {
    "fieldname": "base_total_donation",
    "fieldtype": "Currency",
-   "label": "Base Total Donation ",
+   "label": "Total Donation ",
    "read_only": 1
   },
   {
    "fieldname": "base_total_deduction",
    "fieldtype": "Currency",
-   "label": "Base Total Deduction",
+   "label": "Total Deduction",
    "read_only": 1
   },
   {
    "fieldname": "base_net_amount",
    "fieldtype": "Currency",
-   "label": "Base Net Amount",
+   "label": "Net Amount",
    "read_only": 1
   },
   {
    "fieldname": "base_outstanding_amount",
    "fieldtype": "Currency",
-   "label": "Base Outstanding Amount",
+   "label": "Outstanding Amount",
    "read_only": 1
   },
   {
@@ -358,12 +363,16 @@
    "fieldname": "reconcile",
    "fieldtype": "Check",
    "label": "Reconcile"
+  },
+  {
+   "fieldname": "foreign_currency_column",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-28 16:02:01.496896",
+ "modified": "2024-12-06 20:34:33.827925",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

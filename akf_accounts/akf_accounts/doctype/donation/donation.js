@@ -9,7 +9,6 @@ frappe.ui.form.on('Donation', {
     },
     onload: function (frm) {
         erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
-
         // frm.refresh_field('payment_detail');
     },
     refresh: function (frm) {
@@ -17,7 +16,7 @@ frappe.ui.form.on('Donation', {
         set_query_subservice_area(frm);
         set_custom_btns(frm);
         set_exchange_rate_msg(frm);
-
+        toggleModeOfPaymentRowWise(frm);
     },
     donor_identity: function (frm) {
         if (frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant" || frm.doc.donor_identity == "Merchant - Known") {
@@ -30,6 +29,7 @@ frappe.ui.form.on('Donation', {
     },
     contribution_type: function (frm) {
         frm.call("set_deduction_breakeven");
+        toggleModeOfPaymentRowWise(frm);
     },
     donation_type: function (frm) {
         // frm.call("set_deduction_breakeven");
@@ -80,7 +80,7 @@ frappe.ui.form.on('Payment Detail', {
     pay_service_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         row.program = row.pay_service_area;
-        frm.call("set_deduction_breakeven");  // nabeel saleem      
+        frm.call("set_deduction_breakeven");  // nabeel saleem
     },
     pay_subservice_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
@@ -106,19 +106,19 @@ frappe.ui.form.on('Payment Detail', {
     },
     mode_of_payment: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        
-        if (row.mode_of_payment != undefined) {
+        if (row.mode_of_payment == undefined || row.mode_of_payment == '') {
+            row.transaction_no_cheque_no = '';
+            row.reference_date = null;
+            row.account_paid_to = null;
+            frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn].refresh_field('reference_date');
+
+        } else{
             row.transaction_no_cheque_no = '';
             erpnext.accounts.pos.get_payment_mode_account(frm, row.mode_of_payment, function (account) {
                 row.account_paid_to = account;
                 frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn].refresh_field('account_paid_to');
                 frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn].refresh_field('transaction_no_cheque_no');
             });
-        } else {
-            row.transaction_no_cheque_no = '';
-            row.reference_date = null;
-            row.account_paid_to = null;
-            frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn].refresh_field('reference_date');
         }
         frm.refresh_field("payment_detail");
     },
@@ -143,6 +143,8 @@ frappe.ui.form.on('Payment Detail', {
         if(frm.doc.is_return){ return; }
         let row = locals[cdt][cdn];
         row.random_id = Math.floor((1000 + row.idx) + (Math.random() * 9000));
+        // toggleModeOfPaymentRowWise(frm);
+        showHideModeOfPaymentForSingleRow(frm, row);
         frm.refresh_field("payment_detail")
         // if(frm.doc.is_return){
         //     frm.call("update_deduction_breakeven");
@@ -492,7 +494,7 @@ function pledge_payment_entry(frm) {
         },
         callback: function (r) {
             let data = r.message;
-            console.log(data);
+            // console.log(data);
             donors_list = data['donors_list'];
             idx_list = data['idx_list'];
         }
@@ -540,7 +542,7 @@ function pledge_payment_entry(frm) {
                 read_only: 1,
                 onchange: function (val) {
                     let donor_id = d.fields_dict.donor_id.value;
-                    console.log(donor_id)
+                    // console.log(donor_id)
                 }
             },
             {
@@ -610,16 +612,27 @@ function pledge_payment_entry(frm) {
                     if (mode_of_payment == "Cash") {
                         d.fields_dict.cheque_reference_no.value = ""
                         d.fields_dict.cheque_reference_date.value = ""
+                        d.fields_dict.cheque_reference_no.df.value = "";
+                        d.fields_dict.cheque_reference_date.df.value = "";
+                        d.fields_dict.cheque_reference_no.df.read_only = 1;
+                        d.fields_dict.cheque_reference_date.df.read_only = 1;
                         d.fields_dict.cheque_reference_no.df.reqd = 0;
                         d.fields_dict.cheque_reference_date.df.reqd = 0;
                     } else {
+                        d.fields_dict.cheque_reference_no.df.read_only = 0;
+                        d.fields_dict.cheque_reference_date.df.read_only = 0;
                         d.fields_dict.cheque_reference_no.df.reqd = 1;
                         d.fields_dict.cheque_reference_date.df.reqd = 1;
                     }
+                    erpnext.accounts.pos.get_payment_mode_account(frm, mode_of_payment, function (account) {
+                        d.fields_dict.account_paid_to.value = account
+                        
+                    });
 
+                    d.fields_dict.account_paid_to.refresh();
                     d.fields_dict.cheque_reference_no.refresh();
                     d.fields_dict.cheque_reference_date.refresh();
-
+                    
                     if (mode_of_payment == "") {
                         d.fields_dict.account_paid_to.value = null;
                         d.fields_dict.account_paid_to.refresh();
@@ -749,6 +762,28 @@ function return_payment_entry(frm){
             }
         }
     });
+}
+
+function showHideModeOfPaymentForSingleRow(frm, row){
+    const flag = frm.doc.contribution_type=='Pledge'? 1: 0;
+    // console.log("flag: ", flag);
+    frm.set_df_property('payment_detail', 'read_only', flag, frm.doc.name, 'mode_of_payment', row.name);
+}
+function toggleModeOfPaymentRowWise(frm){
+     // Iterate through each row in the child table
+     if(frm.doc.docstatus>0) { return }
+     frm.doc.payment_detail.forEach((row) => {
+        if (frm.doc.contribution_type=='Pledge') { // Replace with your condition
+            // frappe.model.set_value(row.doctype, row.name, 'mode_of_payment', 'read_only', 1);
+            // console.log("mode_of_payment: ", 1);
+            frm.set_df_property('payment_detail', 'read_only', 1, frm.doc.name, 'mode_of_payment', row.name);
+        }else{
+            // console.log("mode_of_payment: ", 0);
+            frm.set_df_property('payment_detail', 'read_only', 0, frm.doc.name, 'mode_of_payment', row.name);
+        }
+    });
+    // Refresh the child table to apply the changes
+    frm.refresh_field('payment_detail');
 }
 
 // new changes
