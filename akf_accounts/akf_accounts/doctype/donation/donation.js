@@ -80,7 +80,7 @@ frappe.ui.form.on('Payment Detail', {
     pay_service_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         row.program = row.pay_service_area;
-        // frm.call("set_deduction_breakeven");        
+        frm.call("set_deduction_breakeven");        
     },
     pay_subservice_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
