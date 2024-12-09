@@ -965,3 +965,47 @@ def verify_payment_entry(doctype, reference_name, fieldname):
 		where docstatus<2
 		and reference_name = '{reference_name}'
 	 """)
+
+
+def notify_overdue_tasks(project):
+    """
+    Check for overdue tasks related to the specified project and notify if any are found.
+    """
+    # Fetch the project name
+    project_name = frappe.db.get_value("Project", project, "subject") or project
+
+    # Fetch all tasks for the given project that are overdue
+    overdue_tasks = frappe.get_all(
+        "Task",
+        filters={
+            "project": project,
+            "status": ["not in", ["Completed", "Cancelled", "Template"]],
+            "end_date": ["<", frappe.utils.nowdate()]
+        },
+        fields=["name", "subject", "status", "exp_end_date"]
+    )
+
+    if overdue_tasks:
+        task_details = "".join(
+            f"<li><b>{task['subject']}</b> (Status: {task['status']}, Due Date: {task['end_date']})</li>"
+            for task in overdue_tasks
+        )
+
+        recipients = "bashirmubashir798@gmail.com"
+        subject = f"Overdue Tasks Alert for Project: {project_name}"
+
+        message = f"""
+        Dear User,<br><br>
+        The following tasks in the project <b>{project_name}</b> are overdue:<br>
+        <ul>{task_details}</ul>
+        Please take necessary actions to resolve these tasks.<br><br>
+        Regards,<br>
+        Project Management System
+        """
+
+        frappe.sendmail(
+			recipients=recipients,
+			subject=subject,
+			message=message
+		)
+
