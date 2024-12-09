@@ -152,12 +152,12 @@ scheduler_events = {
           
         # "0 0 * * *": [
         #     "akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
-        # ],
+        # ],        		
+       
         "*/5 * * * *": [
             # "akf_hrms.services.cron_jobs.attendance.mark_attendance",
              "akf_accounts.customizations.extends.depreciation.post_depreciation_entries",
-        ],
-
+        ],      
        
         # "*/20 * * * *": [
         #     "akf_hrms.services.cron_jobs.attendance.mark_proxy_attendance_logs",
@@ -170,6 +170,7 @@ scheduler_events = {
        
 		# "akf_accounts.tasks.daily"
         # "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended",
+        "akf_accounts.akf_accounts.doctype.donation.donation.cron_for_notify_overdue_tasks"
 	],
 	# "daily_long":
     # [    	

@@ -301,19 +301,20 @@ class Donation(Document):
 				]
 
 				company_currency = frappe.db.get_value('Company', self.company, 'default_currency')
+				currency = self.currency or company_currency
 
 				for user in email_addresses:
-					formatted_amount = frappe.utils.fmt_money(payment.donation_amount, currency=company_currency)
+					formatted_amount = frappe.utils.fmt_money(payment.donation_amount, currency=currency)
 					email = user["email"]
 					full_name = user["full_name"] or "Valued Team Member"
 					subject = f"New Donation Received for Project {project_name}"
 					message = f"""
 					Dear {full_name},<br><br>
-					We are excited to inform you that a new donation has been received for the project: <b>{project_name}</b>.<br><br>
-					<b>Donation Details:</b><br>
+					We are excited to inform you that a new {self.contribution_type} has been received for the project: <b>{project_name}</b>.<br><br>
+					<b>{self.contribution_type} Details:</b><br>
 					- <b>Project Name:</b> {project_name}<br>
 					- <b>Project ID:</b> {project_id}<br>
-					- <b>Donation Amount:</b> {formatted_amount}<br>
+					- <b>{self.contribution_type} Amount:</b> {formatted_amount}<br>
 					Your contribution and effort towards this project are greatly appreciated. Please feel free to reach out if you have any questions.<br><br>
 					Best regards,<br>
 					<b>{self.company}</b>
@@ -627,7 +628,6 @@ class Donation(Document):
 			frappe.db.set_value("Donation", self.return_against, 'status', 'Partly Return')
 		else:
 			frappe.db.set_value("Donation", self.return_against, 'status', 'Paid')
-
 
 @frappe.whitelist()
 def get_donors_list(donation_id):
@@ -967,45 +967,89 @@ def verify_payment_entry(doctype, reference_name, fieldname):
 	 """)
 
 
-def notify_overdue_tasks(project):
-    """
-    Check for overdue tasks related to the specified project and notify if any are found.
-    """
-    # Fetch the project name
-    project_name = frappe.db.get_value("Project", project, "subject") or project
+# akf_accounts.akf_accounts.doctype.donation.donation.cron_for_notify_overdue_tasks
 
-    # Fetch all tasks for the given project that are overdue
+#Mubashir Bashir Start 9-12-24
+@frappe.whitelist()
+def cron_for_notify_overdue_tasks():	#Mubashir
+
+    processed_projects = set()    
+    donation_docs = frappe.get_all(
+        'Donation',
+        filters={
+            'docstatus': 1,
+            'contribution_type': 'Donation',
+        },
+        fields=['name'] 
+    )
+    
+    for donation in donation_docs:
+        donation_doc = frappe.get_doc('Donation', donation['name'])
+        for payment in donation_doc.payment_detail:
+            project = payment.get('project')
+            
+            if project and project not in processed_projects:
+                processed_projects.add(project)                
+                notify_overdue_tasks(project)
+
+
+
+@frappe.whitelist()
+def notify_overdue_tasks(project):	#Mubashir
+    """
+    Notify users with the 'Project Manager' role about overdue tasks related to a specific project.
+    """
+    project_name = frappe.db.get_value("Project", project, "project_name") or project
+
     overdue_tasks = frappe.get_all(
         "Task",
         filters={
             "project": project,
-            "status": ["not in", ["Completed", "Cancelled", "Template"]],
-            "end_date": ["<", frappe.utils.nowdate()]
+            "status": "Overdue"
         },
         fields=["name", "subject", "status", "exp_end_date"]
     )
 
     if overdue_tasks:
         task_details = "".join(
-            f"<li><b>{task['subject']}</b> (Status: {task['status']}, Due Date: {task['end_date']})</li>"
+            f"<li><b>{task['subject']}</b> (Status: {task['status']}, Due Date: {task['exp_end_date']})</li>"
             for task in overdue_tasks
         )
+        project_users = frappe.get_all(
+            "Project User",
+            filters={"parent": project},
+            fields=["email", "full_name"]
+        )
 
-        recipients = "bashirmubashir798@gmail.com"
-        subject = f"Overdue Tasks Alert for Project: {project_name}"
+        for user in project_users:
+            email = user.get("email")
+            full_name = user.get("full_name", "Project Manager")
 
-        message = f"""
-        Dear User,<br><br>
-        The following tasks in the project <b>{project_name}</b> are overdue:<br>
-        <ul>{task_details}</ul>
-        Please take necessary actions to resolve these tasks.<br><br>
-        Regards,<br>
-        Project Management System
-        """
-
-        frappe.sendmail(
-			recipients=recipients,
-			subject=subject,
-			message=message
-		)
-
+            # Check if the user has the 'Project Manager' role
+            if email:
+                roles = frappe.get_all(
+                    "Has Role",
+                    filters={"parent": email, "role": "Projects Manager"},
+                    fields=["role"]
+                )
+                if roles:
+                    subject = f"Overdue Tasks Alert for Project: {project_name}"
+                    message = f"""
+                    Dear {full_name},<br><br>
+                    The following tasks in the project <b>{project_name}</b> are overdue:<br>
+                    <ul>{task_details}</ul>
+                    Please take necessary actions to resolve these tasks.<br><br>
+                    Regards,<br>
+                    Project Management System
+                    """
+                    print(f'sending email to {email}')
+                    try:
+                        frappe.sendmail(
+                            recipients=email,
+                            subject=subject,
+                            message=message
+                        )
+                        print(f'email sent to {email}')
+                    except Exception as e:
+                        frappe.log_error(message=str(e), title="Error in Task Overdue Notification")
+#Mubashir Bashir End 9-12-24
