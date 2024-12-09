@@ -64,7 +64,8 @@
   {
    "fieldname": "pd_balance",
    "fieldtype": "Data",
-   "label": "Balance"
+   "label": "Balance",
+   "read_only": 1
   },
   {
    "fetch_from": "pd_donor.donor_name",
@@ -77,7 +78,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-26 12:26:28.812946",
+ "modified": "2024-12-09 11:16:51.133681",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",
