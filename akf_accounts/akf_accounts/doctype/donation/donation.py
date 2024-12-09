@@ -157,8 +157,10 @@ class Donation(Document):
 				
 				set_deduction_details(row, args)			
 			
-			row.equity_account = row.equity_account  if(row.equity_account) else get_defaul_accounts(row.pay_service_area, 'equity_account')
-			row.receivable_account = row.receivable_account if(row.receivable_account) else get_defaul_accounts(row.pay_service_area, 'receivable_account')
+			# row.equity_account = row.equity_account  if(row.equity_account) else get_defaul_accounts(row.pay_service_area, 'equity_account')
+			# row.receivable_account = row.receivable_account if(row.receivable_account) else get_defaul_accounts(row.pay_service_area, 'receivable_account')
+			row.equity_account = get_defaul_accounts(row.pay_service_area, 'equity_account')
+			row.receivable_account = get_defaul_accounts(row.pay_service_area, 'receivable_account')
 			
 			row.cost_center = self.donation_cost_center
 			row.deduction_amount = temp_deduction_amount    
