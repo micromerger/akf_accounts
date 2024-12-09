@@ -284,9 +284,10 @@ class Donation(Document):
 		for payment in self.payment_detail:
 			project_id = payment.project_id
 			if project_id:
+				project_name = frappe.db.get_value('Project', project_id, 'project_name')
 				project_users = frappe.db.sql(
 					"""
-					SELECT email
+					SELECT email, full_name
 					FROM `tabProject User`
 					WHERE parent = %s
 					""",
@@ -294,21 +295,29 @@ class Donation(Document):
 					as_dict=True,
 				)
 				
-				email_addresses = [user["email"] for user in project_users if user["email"]]
+				email_addresses = [
+					{"email": user["email"], "full_name": user["full_name"]}
+					for user in project_users if user["email"]
+				]
 
-				for email in email_addresses:
-					subject = f"New Donation Received for Project {project_id}"
+				company_currency = frappe.db.get_value('Company', self.company, 'default_currency')
+
+				for user in email_addresses:
+					formatted_amount = frappe.utils.fmt_money(payment.donation_amount, currency=company_currency)
+					email = user["email"]
+					full_name = user["full_name"] or "Valued Team Member"
+					subject = f"New Donation Received for Project {project_name}"
 					message = f"""
-					Dear User,<br><br>
-					A new donation has been added for the project: <b>{project_id}</b>.<br><br>
-					Donation Details:<br>
-					- Project: <b>{project_id}</b><br>
-					- Donation Amount: <b>{payment.donation_amount}</b><br><br>
-					Regards,<br>
-					{self.company}
+					Dear {full_name},<br><br>
+					We are excited to inform you that a new donation has been received for the project: <b>{project_name}</b>.<br><br>
+					<b>Donation Details:</b><br>
+					- <b>Project Name:</b> {project_name}<br>
+					- <b>Project ID:</b> {project_id}<br>
+					- <b>Donation Amount:</b> {formatted_amount}<br>
+					Your contribution and effort towards this project are greatly appreciated. Please feel free to reach out if you have any questions.<br><br>
+					Best regards,<br>
+					<b>{self.company}</b>
 					"""
-
-
 					frappe.sendmail(
 						recipients=email,
 						subject=subject,
@@ -567,19 +576,22 @@ class Donation(Document):
 			self.db_set("status", status)
 		elif(self.docstatus==0):
 			self.db_set("status", "Draft")
+		elif(self.docstatus==2):
+			self.db_set("status", "Cancelled")
 
 	
 	def before_cancel(self):
 		self.del_gl_entries()
 		self.del_payment_ledger_entry()
 		self.del_payment_entry()
-		self.del_child_table()
+		# self.del_child_table()
 		
 	def on_cancel(self):
 		self.del_gl_entries()
 		self.del_payment_ledger_entry()
 		self.del_payment_entry()
-		self.del_child_table()
+		# self.del_child_table()
+		self.update_status()
 		self.reset_return_to_paid()
 
 	def del_gl_entries(self):
