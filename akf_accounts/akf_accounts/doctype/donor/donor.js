@@ -19,6 +19,7 @@ frappe.ui.form.on('Donor', {
 		} else {
 			frappe.contacts.clear_address_and_contact(frm);
 		}
+        setQueryDesk(frm);
 		apply_mask_on_id_number(frm);
 	},
     identification_type: function(frm){
@@ -46,6 +47,15 @@ frappe.ui.form.on('Donor', {
     },
 });
 
+
+function setQueryDesk(frm){
+    frm.set_query("donor_desk", function() {
+        let ffilters = frm.doc.department == undefined ? { department: ["!=", undefined] } : { department: frm.doc.department };
+        return {
+            filters: ffilters
+        };
+    });
+}
 
 function apply_mask_on_id_number(frm) {
     let maskValue = "";

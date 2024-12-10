@@ -22,8 +22,8 @@ frappe.ui.form.on("Funds Transfer", {
         set_queries_funds_transfer_to(frm);
         set_queries_funds_transfer_from(frm);
         set_queries_transaction_types(frm);
-        console.log(!frm.is_new());
-        console.log(!frm.doc.__islocal);
+        // console.log(!frm.is_new());
+        // console.log(!frm.doc.__islocal);
 
         if (!frm.is_new() && !frm.doc.__islocal) {
             get_html(frm);
@@ -52,7 +52,7 @@ frappe.ui.form.on("Funds Transfer", {
     },
 
     cost_center: function(frm) {
-        console.log("Custom Cost Center triggered");
+        // console.log("Custom Cost Center triggered");
         update_cost_center_in_both_children(frm);
     },
 
@@ -78,7 +78,7 @@ frappe.ui.form.on("Funds Transfer", {
 
 function handle_transaction_type_logic(frm) {
     if (frm.doc.transaction_type === 'Inter Fund') {
-        console.log("Inside handle_transaction_type_logic Inter Fund ");
+        // console.log("Inside handle_transaction_type_logic Inter Fund ");
         
         frm.set_value('from_cost_center', '');
         frm.set_value('to_cost_center', '');
@@ -87,7 +87,7 @@ function handle_transaction_type_logic(frm) {
         frm.set_value('deduction_breakeven', []);
         frm.refresh_field("deduction_breakeven");
     } else if (frm.doc.transaction_type === 'Inter Branch') {
-        console.log("Inside handle_transaction_type_logic Inter Branch ");
+        // console.log("Inside handle_transaction_type_logic Inter Branch ");
         frm.set_value('cost_center', '');
         frm.call("set_deduction_breakeven");
     }
@@ -129,7 +129,7 @@ function update_ft_bank_account_in_children(frm) {
 frappe.ui.form.on("Funds Transfer From", {
     ff_donor: function(frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
-       
+        frm.call("donor_list_data_funds_transfer").then(r=>{});
         get_html(frm);
     },
     funds_transfer_from_add: function(frm, cdt, cdn) {
@@ -139,12 +139,12 @@ frappe.ui.form.on("Funds Transfer From", {
 
         const row = frappe.get_doc(cdt, cdn);
         if (frm.doc.transaction_type === 'Inter Fund') {
-            console.log("Funds Transfer From Inter Fund");
+            // console.log("Funds Transfer From Inter Fund");
             frappe.model.set_value(row.doctype, row.name, "ff_cost_center", cost_center);
             frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account);
             frm.fields_dict['funds_transfer_from'].grid.grid_rows_by_docname[cdn].toggle_editable('ff_cost_center', false);
         } else if (frm.doc.transaction_type === 'Inter Branch') {
-            console.log("Funds Transfer From Inter Branch");
+            // console.log("Funds Transfer From Inter Branch");
             frappe.model.set_value(row.doctype, row.name, "ff_cost_center", from_costcenter);
             frappe.model.set_value(row.doctype, row.name, "ff_account", bank_account);
             frm.fields_dict['funds_transfer_from'].grid.grid_rows_by_docname[cdn].toggle_editable('ff_cost_center', false);
@@ -170,8 +170,8 @@ frappe.ui.form.on("Funds Transfer From", {
                 doc: frm.doc
             },
             callback: function(r) {
-                console.log("SERVICE AREA QUERY!!!");
-                console.log(r.message);  
+                // console.log("SERVICE AREA QUERY!!!");
+                // console.log(r.message);  
 
                 frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
                     var row = locals[cdt][cdn];
@@ -209,17 +209,39 @@ frappe.ui.form.on("Funds Transfer From", {
     }
 });
 
-frappe.ui.form.on("Funds Transfer To", {
 
-    ft_amount: function(frm, cdt, cdn) {
-        let row = locals[cdt][cdn];
-        let amount = row.ft_amount;
-
-        if (amount < 0) {
-            frappe.model.set_value(cdt, cdn, 'ft_amount', '');  
-            frappe.msgprint(__('Amount cannot be negative. Please enter a valid amount.'));  
+function get_balance_funds_tranfer_from(funds_transfer_from, row){
+    // let ftrow = locals[cdt][cdn];
+    let balance_amount = 0.0;
+    let doctype, docname;
+    let matched = true;
+    funds_transfer_from.forEach(element => {
+        doctype = element.doctype;
+        docname = element.name;
+        if((element.ff_donor== row.ft_donor) && (row.ft_amount<=element.ff_balance_amount) && matched){
+            balance_amount += element.ff_balance_amount;
+            matched = false;
+            frappe.model.set_value(doctype, docname, 'ff_transfer_amount', row.ft_amount);
+            frappe.model.set_value(doctype, docname, 'transfer', 1);
+        }else if(element.ff_donor== row.ft_donor){
+            frappe.model.set_value(doctype, docname, 'ff_transfer_amount', 0.0);
+            frappe.model.set_value(doctype, docname, 'transfer', 0);
+            matched = true;
         }
-        frm.call("set_deduction_breakeven");
+    });
+    
+    return  balance_amount;
+}
+
+frappe.ui.form.on("Funds Transfer To", {
+    ft_donor: function(frm, cdt, cdn){
+        frm.trigger()
+    },
+    ft_amount: function(frm, cdt, cdn) {
+        frm.call("update_funds_tranfer_from");    
+        setTimeout(() => {
+            frm.call("set_deduction_breakeven");
+        }, 200);
     },
     project: function(frm, cdt, cdn) {
         frm.call("set_deduction_breakeven");
@@ -240,12 +262,12 @@ frappe.ui.form.on("Funds Transfer To", {
         
         set_random_id();
         if (frm.doc.transaction_type === 'Inter Fund') {
-            console.log("Funds Transfer From Inter Fund ");
+            // console.log("Funds Transfer From Inter Fund ");
             frappe.model.set_value(row.doctype, row.name, "ft_cost_center", cost_center);
             frappe.model.set_value(row.doctype, row.name, "ft_account", bank_account); 
             
         } else if (frm.doc.transaction_type === 'Inter Branch') {
-            console.log("Funds Transfer From Inter Branch ");
+            // console.log("Funds Transfer From Inter Branch ");
             frappe.model.set_value(row.doctype, row.name, "ft_cost_center", to_costcenter);
             frappe.model.set_value(row.doctype, row.name, "ft_account", bank_account); 
         }
@@ -269,8 +291,8 @@ frappe.ui.form.on("Funds Transfer To", {
                 doc: frm.doc
             },
             callback: function(r) {
-                console.log("SERVICE AREA QUERY!!!");
-                console.log(r.message);  
+                // console.log("SERVICE AREA QUERY!!!");
+                // console.log(r.message);  
 
                 frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function(doc, cdt, cdn) {
                     var row = locals[cdt][cdn];
@@ -636,131 +658,119 @@ function set_query_account(frm){
 }
 
 function get_html(frm) {
-    // $("#table_render").empty();
+    var donorList = [];
+    if(frm.doc.docstatus==0){
+        donorList = frm.doc.funds_transfer_from;
+    }else if(frm.doc.docstatus==1){
+        donorList = frm.doc.funds_transfer_to;
+    }
+    if (donorList.length === 0) {
+        $("#table_render").empty();
+        $("#total_balance").empty();
+        $("#previous").empty();
+        $("#next").empty();
+        frm.set_df_property('donor_list_html', 'options', `<p class="text-center;">No donor records found.`);
+    } else if (donorList.length > 0) {
+        var currentPage = 1;
+        var recordsPerPage = 5;
+        var totalPages = Math.ceil(donorList.length / recordsPerPage);
 
-    frappe.call({
-        method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.donor_list_data_funds_transfer",
-        args: {
-            doc: frm.doc,
-        },
-        callback: function(r) {
-            console.log("DONOR LISTTTT");
-            console.log(r.message);
+        function displayPage(page) {
+            
+            var start = (page - 1) * recordsPerPage;
+            var end = start + recordsPerPage;
+            var paginatedDonorList = donorList.slice(start, end);
+            
+            var tableHeader = `
+                <table class="table table-bordered" style="border: 2px solid black;" id="table_render">
+                    <thead style="background-color: #015aab; color: white; text-align: left;">
+                        <tr>
+                            <th class="text-left" style="border: 1px solid black;">Donor ID</th>
+                            <th class="text-left" style="border: 1px solid black;">Donor Name</th>
+                            <th class="text-left" style="border: 1px solid black;">Cost Center</th>
+                            <th class="text-left" style="border: 1px solid black;">Product</th>
+                            ${frm.doc.docstatus == 1 ? '<th class="text-right" style="border: 1px solid black;">Transferred Amount</th>' : '<th class="text-right" style="border: 1px solid black;">Balance</th>'}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-            if (r.message) {
-                console.log("Function Triggered from JS side Donor List");
-                console.log(r.message);
-
-                var donorList = r.message.donor_list;
-                var totalBalance = r.message.total_balance || 0;
-                var docstatus = frm.doc.docstatus;
-
-                if (!donorList || donorList.length === 0) {
-                    console.log("donorList000", donorList);
-                    $("#table_render").empty();
-                    $("#total_balance").empty();
-                    $("#previous").empty();
-                    $("#next").empty();
-                    frm.set_df_property('donor_list_html', 'options', 'No donor records found.');
-                } else if (donorList && donorList.length > 0) {
-                    console.log("donorList111", donorList);
-
-                    var currentPage = 1;
-                    var recordsPerPage = 5;
-                    var totalPages = Math.ceil(donorList.length / recordsPerPage);
-
-                    function displayPage(page) {
-                        var start = (page - 1) * recordsPerPage;
-                        var end = start + recordsPerPage;
-                        var paginatedDonorList = donorList.slice(start, end);
-
-                        var tableHeader = `
-                            <table class="table table-bordered" style="border: 2px solid black;" id="table_render">
-                                <thead style="background-color: #015aab; color: white; text-align: left;">
-                                    <tr>
-                                        <th class="text-left" style="border: 1px solid black;">Donor ID</th>
-                                        <th class="text-left" style="border: 1px solid black;">Cost Center</th>
-                                        <th class="text-left" style="border: 1px solid black;">Product</th>
-                                        ${docstatus == 1 ? '<th class="text-left" style="border: 1px solid black;">Transferred Amount</th>' : '<th class="text-left" style="border: 1px solid black;">Balance</th>'}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                        `;
-
-                        var donorListRows = "";
-                        paginatedDonorList.forEach(function(d) {
-                            var donorId = d.donor || '-';
-                            var costCenter = d.cost_center || '-';
-                            var product = d.product || '-';
-                            var balance = d.balance || '0';
-                            var usedAmount = d.used_amount || '0';
-
-                            var backgroundColor = (parseFloat(balance) < 0 || parseFloat(usedAmount) < 0) ? '#EE4B2B' : '#d1d1d1'; 
-
-                            var row = `
-                                <tr style="background-color: ${backgroundColor}; color: black; text-align: left;">
-                                    <td class="text-left" style="border: 1px solid black;">${donorId}</td>
-                                    <td class="text-left" style="border: 1px solid black;">${costCenter}</td>
-                                    <td class="text-left" style="border: 1px solid black;">${product}</td>
-                                    ${docstatus == 1 ? `<td class="text-left" style="border: 1px solid black;">Rs.${usedAmount}</td>` : `<td class="text-left" style="border: 1px solid black;">Rs.${balance}</td>`}
-                                </tr>
-                            `;
-                            donorListRows += row;
-                        });
-
-                        var completeTable = tableHeader + donorListRows + "</tbody></table><br>";
-
-                        if (docstatus != 1 && totalBalance !== 0) {
-                            completeTable += `
-                                <h5 style="text-align: right;" id="total_balance"><strong>Total Balance: Rs.${totalBalance}</strong></h5>
-                            `;
-                        }
-
-                        if (totalPages > 1) {
-                            completeTable += generatePaginationControls();
-                            console.log("Completeee Tableee")
-                            console.log(completeTable)
-                        }
-
-                        frm.set_df_property('donor_list_html', 'options', completeTable);
-                    }
-
-                    function generatePaginationControls() {
-                        var controls = `<div style="text-align: center; margin-top: 10px;">`;
-
-                        if (currentPage > 1) {
-                            controls += `<button onclick="changePage(${currentPage - 1})" style="text-align: right;" id="previous">Previous</button>`;
-                        }
-
-                        controls += ` Page ${currentPage} of ${totalPages} `;
-
-                        if (currentPage < totalPages) {
-                            controls += `<button onclick="changePage(${currentPage + 1})" style="text-align: right;" id="next">Next</button>`;
-                        }
-
-                        controls += `</div>`;
-                        return controls;
-                    }
-
-                    window.changePage = function(page) {
-                        if (page >= 1 && page <= totalPages) {
-                            currentPage = page;
-                            displayPage(currentPage);
-                        }
-                    };
-
-                    displayPage(currentPage);
+            var donorListRows = "";
+            var totalBalance=0.0;
+            paginatedDonorList.forEach(function(row) {
+                var donorId, donorName, costCenter, product, balance;
+                if("ff_donor" in row){
+                    donorId = row.ff_donor;
+                    donorName = row.ff_donor_name;
+                    costCenter = row.ff_cost_center;
+                    product = row.ff_product;
+                    balance = row.ff_balance_amount;
+                }else if("ft_donor" in row){
+                    donorId = row.ft_donor;
+                    donorName = row.ft_donor_name;
+                    costCenter = row.ft_cost_center;
+                    product = row.ft_product;
+                    balance = row.ft_amount;
                 }
-            } else {
-                $("#table_render").empty();
-                $("#total_balance").empty();
-                $("#previous").empty();
-                $("#next").empty();
-                frm.set_df_property('donor_list_html', 'options', '');
-                frappe.msgprint("No data received.");
+                totalBalance += balance;
+                var backgroundColor = (parseFloat(balance) < 0) ? '#EE4B2B' : '#d1d1d1'; 
+                var row = `
+                    <tr style="background-color: ${backgroundColor}; color: black; text-align: left;">
+                        <td class="text-left" style="border: 1px solid black;">${donorId}</td>
+                        <td class="text-left" style="border: 1px solid black;">${donorName}</td>
+                        <td class="text-left" style="border: 1px solid black;">${costCenter}</td>
+                        <td class="text-left" style="border: 1px solid black;">${product}</td>
+                        <td class="text-right" style="border: 1px solid black;">${format_currency(balance)}</td>
+                    </tr>
+                `;
+                donorListRows += row;
+            });
+
+            var completeTable = tableHeader + donorListRows + "</tbody></table><br>";
+
+            if (frm.doc.docstatus != 1 && totalBalance !== 0) {
+                completeTable += `
+                    <p style="text-align: right;" id="total_balance">Total Balance: <strong>${format_currency(totalBalance)}</strong></p>
+                `;
             }
+
+            if (totalPages > 1) {
+                completeTable += generatePaginationControls();
+                // console.log("Completeee Tableee")
+                // console.log(completeTable)
+            }
+
+            frm.set_df_property('donor_list_html', 'options', completeTable);
         }
-    });
+
+        function generatePaginationControls() {
+            var controls = `<div style="text-align: center; margin-top: 10px;">`;
+
+            if (currentPage > 1) {
+                controls += `<button onclick="changePage(${currentPage - 1})" style="text-align: right;" id="previous">Previous</button>`;
+            }
+
+            controls += ` Page ${currentPage} of ${totalPages} `;
+
+            if (currentPage < totalPages) {
+                controls += `<button onclick="changePage(${currentPage + 1})" style="text-align: right;" id="next">Next</button>`;
+            }
+
+            controls += `</div>`;
+            return controls;
+        }
+
+        window.changePage = function(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayPage(currentPage);
+            }
+        };
+
+        displayPage(currentPage);
+    }
+        
+    
 }
 
 function set_cost_center_in_children(child_table, cost_center_field, cost_center) {
@@ -810,7 +820,13 @@ function set_query_service_area_transfer_to(frm) {
     };
 }
 
-
+function format_currency(amount){
+    const formattedAmount = amount.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'PKR'
+    });
+    return formattedAmount.replace('PKR', 'Rs.');
+}
 
 //Backup Perfect Function Muavia
 // frappe.ui.form.on("Funds Transfer To", {

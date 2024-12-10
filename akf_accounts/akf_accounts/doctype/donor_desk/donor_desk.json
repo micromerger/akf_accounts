@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:desk_name",
+ "creation": "2024-12-10 15:09:12.923682",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "desk_name",
+  "department"
+ ],
+ "fields": [
+  {
+   "fieldname": "desk_name",
+   "fieldtype": "Data",
+   "label": "Desk Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-10 15:10:46.527309",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Donor Desk",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

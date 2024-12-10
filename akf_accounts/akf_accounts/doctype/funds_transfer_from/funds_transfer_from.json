@@ -14,7 +14,12 @@
   "ff_subservice_area",
   "ff_product",
   "project",
-  "ff_donor"
+  "ff_donor",
+  "ff_donor_name",
+  "ff_balance_amount",
+  "ff_transfer_amount",
+  "column_break_tzki",
+  "transfer"
  ],
  "fields": [
   {
@@ -31,28 +36,32 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Service Area",
-   "options": "Program"
+   "options": "Program",
+   "reqd": 1
   },
   {
    "fieldname": "ff_subservice_area",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Subservice Area",
-   "options": "Subservice Area"
+   "options": "Subservice Area",
+   "reqd": 1
   },
   {
    "fieldname": "ff_product",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Product",
-   "options": "Product"
+   "options": "Product",
+   "reqd": 1
   },
   {
    "fieldname": "ff_donor",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Donor",
-   "options": "Donor"
+   "options": "Donor",
+   "reqd": 1
   },
   {
    "fieldname": "ff_account",
@@ -75,13 +84,45 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Project",
-   "options": "Project"
+   "options": "Project",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "ff_donor.donor_name",
+   "fieldname": "ff_donor_name",
+   "fieldtype": "Data",
+   "label": "Donor Name",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "ff_balance_amount",
+   "fieldtype": "Currency",
+   "label": "Balance Amount",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "ff_transfer_amount",
+   "fieldtype": "Currency",
+   "label": "Transfer Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_tzki",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "transfer",
+   "fieldtype": "Check",
+   "label": "Transfer"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-01 13:47:31.683401",
+ "modified": "2024-12-10 18:30:04.539495",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer From",

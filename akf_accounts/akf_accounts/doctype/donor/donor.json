@@ -13,11 +13,15 @@
   "department",
   "branch",
   "branch_abbreviation",
+  "donor_desk",
   "identification_type",
   "cnic",
   "others",
+  "owner_id",
+  "owner_name",
   "column_break_5",
   "donor_type",
+  "old_id",
   "email",
   "image",
   "address",
@@ -39,7 +43,10 @@
   "co_contact_no",
   "co_email",
   "co_address",
-  "relationship_with_donor"
+  "relationship_with_donor",
+  "area",
+  "co_city",
+  "co_country"
  ],
  "fields": [
   {
@@ -256,6 +263,45 @@
    "fieldname": "registration_date",
    "fieldtype": "Date",
    "label": "Registration Date"
+  },
+  {
+   "fieldname": "donor_desk",
+   "fieldtype": "Link",
+   "label": "Donor Desk",
+   "options": "Donor Desk"
+  },
+  {
+   "fieldname": "old_id",
+   "fieldtype": "Data",
+   "label": "Old ID"
+  },
+  {
+   "fieldname": "area",
+   "fieldtype": "Data",
+   "label": "C/O Area"
+  },
+  {
+   "fieldname": "co_city",
+   "fieldtype": "Data",
+   "label": "C/O City"
+  },
+  {
+   "fieldname": "co_country",
+   "fieldtype": "Data",
+   "label": "C/O Country"
+  },
+  {
+   "fieldname": "owner_id",
+   "fieldtype": "Link",
+   "label": "Owner Id",
+   "options": "User"
+  },
+  {
+   "fetch_from": "owner_id.full_name",
+   "fieldname": "owner_name",
+   "fieldtype": "Data",
+   "label": "Owner Name",
+   "read_only": 1
   }
  ],
  "image_field": "image",
@@ -265,7 +311,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-11-28 16:30:08.948171",
+ "modified": "2024-12-10 16:35:09.859272",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
@@ -286,7 +332,6 @@
   }
  ],
  "quick_entry": 1,
- "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
