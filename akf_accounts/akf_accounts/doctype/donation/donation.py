@@ -263,7 +263,7 @@ class Donation(Document):
 		# base amount calculation...
 		self.base_total_donation  = self.apply_currecny_exchange(self.total_donation)
 		self.base_total_deduction = self.apply_currecny_exchange(self.total_deduction)
-		self.base_outstanding_amount = self.apply_currecny_exchange(self.outstanding_amount)
+		self.base_outstanding_amount = self.apply_currecny_exchange(self.total_donation)
 		self.base_net_amount = self.apply_currecny_exchange(self.net_amount)
 		# ...!
 

@@ -733,7 +733,9 @@ class XPaymentEntry(AccountsController):
     def update_status(self, cancelled=False):
         for row in self.references:
             if (row.reference_doctype == "Donation") and (row.outstanding_amount >= 0):
-                if (row.outstanding_amount == 0 or row.total_amount == row.outstanding_amount):
+                if (row.outstanding_amount == 0 ):
+                    status = "Paid"
+                elif(row.total_amount == row.outstanding_amount):
                     status = "Unpaid"
                 elif(row.outstanding_amount>0):
                     status = "Partly Paid"
