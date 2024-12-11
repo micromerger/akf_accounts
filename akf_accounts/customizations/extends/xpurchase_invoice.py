@@ -763,6 +763,7 @@ class XPurchaseInvoice(PurchaseInvoice):
                     frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
                 frappe.msgprint("GL Entries created successfully.") 
+    
     def update_stock_ledger_entry(self):
         for row in self.items:
             if frappe.db.exists(
@@ -979,9 +980,7 @@ class XPurchaseInvoice(PurchaseInvoice):
             "total_amount": total_amount,
             "donor_list": donor_list  
         }
-    
-
-   
+       
     def empty_message(self):
         donor_list = []
         total_balance = 0
@@ -1218,9 +1217,6 @@ def donor_list_data(doc):
         "donor_list": donor_list  
     }
 
-
-
-
 @frappe.whitelist()
 def donor_list_data_frappe_on_submit(doc):
     empty_message = None
@@ -1352,7 +1348,6 @@ def donor_list_data_frappe_on_submit(doc):
     frappe.msgprint(frappe.as_json(f"Empty Message: {empty_message}"))
 
     return empty_message
-
 
 ##TEST DONOR LIST FUNC
 @frappe.whitelist()

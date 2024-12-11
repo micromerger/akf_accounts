@@ -633,7 +633,7 @@ class Donation(Document):
 
 @frappe.whitelist()
 def get_donors_list(donation_id):
-    result = frappe.db.sql(f""" select donor_id, idx from `tabPayment Detail` where paid = 0 and parent='{donation_id}' """, as_dict=0)
+    result = frappe.db.sql(f""" select donor_id, idx from `tabPayment Detail` where base_outstanding_amount>0 and parent='{donation_id}' """, as_dict=0)
     donors_list = {d[0] for d in result} if(result) else []
     idx_list = {}
     for donor in donors_list:
@@ -697,6 +697,7 @@ def pledge_payment_entry(doc, values):
 				"total_amount" : doc.base_total_donation,
 				"outstanding_amount" : values.paid_amount,
 				"allocated_amount" : values.paid_amount,
+				"custom_donation_payment_detail": row.name
 		}]
 	})
 	_doc = frappe.get_doc(args)

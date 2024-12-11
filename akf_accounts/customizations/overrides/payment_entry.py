@@ -103,7 +103,7 @@ class XPaymentEntry(AccountsController):
         self.update_advance_paid()
         self.update_payment_schedule()
         self.set_status()
-        self.update_status()
+        self.update_status(cancelled=False)
         self.set_cheque_leaf_cleared()
 
     def set_liability_account(self):
@@ -173,6 +173,7 @@ class XPaymentEntry(AccountsController):
         self.set_payment_req_status()
         self.set_status()
         self.reverse_cheque_leaf()
+        self.update_status(cancelled=True)
 
     def set_payment_req_status(self):
         from erpnext.accounts.doctype.payment_request.payment_request import update_payment_req_status
@@ -729,20 +730,28 @@ class XPaymentEntry(AccountsController):
         #         frappe.db.set_value(row.reference_doctype, row.reference_name, "base_outstanding_amount", row.outstanding_amount)
 
 
-    def update_status(self):
+    def update_status(self, cancelled=False):
         for row in self.references:
-            if row.reference_doctype == "Donation" and row.outstanding_amount >= 0:
-             
-                if row.outstanding_amount == 0:
-                    status = "Paid"
+            if (row.reference_doctype == "Donation") and (row.outstanding_amount >= 0):
+                if (row.outstanding_amount == 0 or row.total_amount == row.outstanding_amount):
+                    status = "Unpaid"
                 elif(row.outstanding_amount>0):
                     status = "Partly Paid"
                     
                 if(frappe.db.exists(row.reference_doctype, {"docstatus": 1,"name": row.reference_name, "is_return": 1})):
                     status = "Return"
-                
+                    
                 frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
                 frappe.db.set_value(row.reference_doctype, row.reference_name, "base_outstanding_amount", row.outstanding_amount)
+                
+                if(cancelled):
+                    # payment detail base-outstanding-amount
+                    details = frappe.db.get_value('Payment Detail', row.custom_donation_payment_detail, ['net_amount', 'base_outstanding_amount'], as_dict=1)
+                    if(details):
+                        base_outstanding_amount = (details.base_outstanding_amount + row.allocated_amount)
+                        frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "base_outstanding_amount", base_outstanding_amount)
+                        frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "paid", 0)
+                    # end...
 
 
     def set_cheque_leaf_cleared(self):
