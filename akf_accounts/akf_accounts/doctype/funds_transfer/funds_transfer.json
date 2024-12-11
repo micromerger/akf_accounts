@@ -129,6 +129,7 @@
    "fieldname": "from_bank_account",
    "fieldtype": "Link",
    "label": "From Bank Account",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Branch'",
    "options": "Account"
   },
   {
@@ -200,7 +201,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-25 17:36:35.043129",
+ "modified": "2024-12-11 18:01:22.188304",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",

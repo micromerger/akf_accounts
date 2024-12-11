@@ -36,28 +36,32 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Service Area",
-   "options": "Program"
+   "options": "Program",
+   "reqd": 1
   },
   {
    "fieldname": "ft_subservice_area",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Subservice Area",
-   "options": "Subservice Area"
+   "options": "Subservice Area",
+   "reqd": 1
   },
   {
    "fieldname": "ft_product",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Product",
-   "options": "Product"
+   "options": "Product",
+   "reqd": 1
   },
   {
    "fieldname": "ft_donor",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Donor",
-   "options": "Donor"
+   "options": "Donor",
+   "reqd": 1
   },
   {
    "fieldname": "ft_company",
@@ -87,7 +91,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Project",
-   "options": "Project"
+   "options": "Project",
+   "reqd": 1
   },
   {
    "fieldname": "random_id",
@@ -114,6 +119,7 @@
    "default": "0",
    "fieldname": "ft_balance_amount",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Balance Amount",
    "read_only": 1
   }
@@ -121,7 +127,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-10 16:55:53.376548",
+ "modified": "2024-12-11 18:01:45.478926",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer To",
