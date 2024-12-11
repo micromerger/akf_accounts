@@ -347,7 +347,7 @@ class FundsTransfer(Document):
         def gl_entry_bank_to(total_transfer_amount):
             to_bank = None
             if(not self.to_bank) and (self.transaction_type=='Inter Fund'): return
-            if(not self.from_bank_account) and (self.transaction_type=='Inter Branch'): return
+            if(not self.to_bank_account) and (self.transaction_type=='Inter Branch'): return
             if(self.to_bank): to_bank = self.to_bank
             if(self.to_bank_account): to_bank = self.to_bank_account
             
@@ -356,7 +356,7 @@ class FundsTransfer(Document):
                 'doctype': 'GL Entry',
                 'posting_date': self.posting_date,
                 'transaction_date': self.posting_date,
-                'account': self.to_bank,
+                'account': to_bank,
                 'against_voucher_type': 'Funds Transfer',
                 'against_voucher': self.name,
                 'cost_center': self.to_cost_center,
@@ -365,7 +365,7 @@ class FundsTransfer(Document):
                 'account_currency': 'PKR',
                 'debit_in_account_currency': total_transfer_amount,
                 'credit_in_account_currency': 0.0,
-                'against': self.to_bank,
+                'against': to_bank,
                 'voucher_type': 'Funds Transfer',
                 'voucher_no': self.name,
                 'remarks': 'Funds Transferred',
