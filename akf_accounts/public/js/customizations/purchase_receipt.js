@@ -9,14 +9,11 @@ frappe.ui.form.on('Purchase Receipt', {
             frm.set_value('set_warehouse', '');
             frm.refresh_field['set_warehouse']
         }
-
-
     },
 
     refresh: function (frm) {
         set_query_warehouse(frm);
         set_queries_payment_details(frm);
-        console.log("Refreshed triggered");
         if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase Restricted"].includes(frm.doc.custom_type_of_transaction)) {
             get_html(frm);
         }
@@ -30,7 +27,7 @@ frappe.ui.form.on('Purchase Receipt', {
 
     on_submit: function (frm) {
         // if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase"].includes(frm.doc.custom_type_of_transaction)) {
-        get_html(frm);
+        // get_html(frm);
         // }
 
         // Below is the code written by MUBASHIR BASHIR
@@ -98,7 +95,8 @@ function validate_item_quantity(frm) {
 
 frappe.ui.form.on("Program Details", {
     pd_donor: function (frm, cdt, cdn) {
-        get_html(frm);
+        // get_html(frm);
+        frm.call('get_balance_dimensions');
     },
     pd_cost_center: function (frm, cdt, cdn) {
         frm.set_value('set_warehouse', '');
@@ -175,145 +173,131 @@ function set_query_for_item_code(frm) {
 function get_html(frm) {
     $("#table_render").empty();
 
-    frappe.call({
-        method: "akf_accounts.customizations.extends.xpurchase_receipt.donor_list_data_purchsae_receipt",
-        args: {
-            doc: frm.doc,
-        },
-        callback: function (r) {
-            console.log("DONOR LISTTTT");
-            console.log(r.message);
+    const donorList = frm.doc.custom_program_details;
+    
+    if (donorList) {
+        var totalBalance = 0.0;
+        var docstatus = frm.doc.docstatus;
+        
+        if (!donorList || donorList.length === 0) {
+            
+            $("#table_render").empty();
+            $("#total_balance").empty();
+            $("#previous").empty();
+            $("#next").empty();
+            frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
+        } else if (donorList && donorList.length > 0) {
+            
+            var currentPage = 1;
+            var recordsPerPage = 5;
+            var totalPages = Math.ceil(donorList.length / recordsPerPage);
 
-            if (r.message) {
-                console.log("Function Triggered from JS side Donor List");
-                console.log(r.message);
+            function displayPage(page) {
+                // Filter out rows where balance is 0 before slicing for pagination
+                var filteredDonorList = donorList.filter(function (d) {
+                    var balance = parseFloat(d.actual_balance) || 0;
+                    var usedAmount = parseFloat(d.actual_balance) || 0;
 
-                var donorList = r.message.donor_list;
-                var totalBalance = r.message.total_balance || 0;
-                var docstatus = frm.doc.docstatus;
+                    // Show the record if the balance is non-zero or the donated amount is greater than zero
+                    return balance !== 0 || (balance === 0 && usedAmount > 0);
+                });
 
-                if (!donorList || donorList.length === 0) {
-                    console.log("donorList000", donorList);
-                    $("#table_render").empty();
-                    $("#total_balance").empty();
-                    $("#previous").empty();
-                    $("#next").empty();
+
+                // Check if there are any valid entries after filtering
+                if (filteredDonorList.length === 0) {
+                    // No valid entries, so do not display headers and show a message
                     frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
-                    frappe.throw("No such entry exists for donor with provided details.");
-                } else if (donorList && donorList.length > 0) {
-                    console.log("donorList111", donorList);
+                    return;
+                }
 
-                    var currentPage = 1;
-                    var recordsPerPage = 5;
-                    var totalPages = Math.ceil(donorList.length / recordsPerPage);
+                var start = (page - 1) * recordsPerPage;
+                var end = start + recordsPerPage;
+                var paginatedDonorList = filteredDonorList.slice(start, end);
 
-                    function displayPage(page) {
-                        // Filter out rows where balance is 0 before slicing for pagination
-                        var filteredDonorList = donorList.filter(function (d) {
-                            var balance = parseFloat(d.balance) || 0;
-                            var usedAmount = parseFloat(d.used_amount) || 0;
-
-                            // Show the record if the balance is non-zero or the donated amount is greater than zero
-                            return balance !== 0 || (balance === 0 && usedAmount > 0);
-                        });
-
-
-                        // Check if there are any valid entries after filtering
-                        if (filteredDonorList.length === 0) {
-                            // No valid entries, so do not display headers and show a message
-                            frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
-                            return;
-                        }
-
-                        var start = (page - 1) * recordsPerPage;
-                        var end = start + recordsPerPage;
-                        var paginatedDonorList = filteredDonorList.slice(start, end);
-
-                        var tableHeader = `
+                var tableHeader = `
                             <table class="table table-bordered" style="border: 2px solid black;" id="table_render">
                                 <thead style="background-color: #015aab; color: white; text-align: left;">
                                     <tr>
                                         <th class="text-left" style="border: 1px solid black;">Donor ID</th>
                                         <th class="text-left" style="border: 1px solid black;">Cost Center</th>
                                         <th class="text-left" style="border: 1px solid black;">Product</th>
-                                        ${docstatus == 1 ? '<th class="text-left" style="border: 1px solid black;">Donated Amount</th>' : '<th class="text-left" style="border: 1px solid black;">Balance</th>'}
+                                        ${docstatus == 1 ? '<th class="text-right" style="border: 1px solid black;">Donated Amount</th>' : '<th class="text-right" style="border: 1px solid black;">Balance</th>'}
                                     </tr>
                                 </thead>
                                 <tbody>
                         `;
 
-                        var donorListRows = "";
-                        paginatedDonorList.forEach(function (d) {
-                            var donorId = d.donor || '-';
-                            var costCenter = d.cost_center || '-';
-                            var product = d.product || '-';
-                            var balance = d.balance || '0';
-                            var usedAmount = d.used_amount || '0';
+                var donorListRows = "";
+                paginatedDonorList.forEach(function (d) {
+                    var donorId = d.pd_donor || '-';
+                    var costCenter = d.pd_cost_center || '-';
+                    var product = d.pd_product || '-';
+                    var balance = format_currency(d.actual_balance);
+                    var usedAmount = format_currency(frm.doc.total);
 
-                            var backgroundColor = (parseFloat(balance) < 0 || parseFloat(usedAmount) < 0) ? '#EE4B2B' : '#d1d1d1';
+                    var backgroundColor = (parseFloat(balance) < 0 || parseFloat(usedAmount) < 0) ? '#EE4B2B' : '#d1d1d1';
 
-                            var row = `
+                    var row = `
                                 <tr style="background-color: ${backgroundColor}; color: black; text-align: left;">
                                     <td class="text-left" style="border: 1px solid black;">${donorId}</td>
                                     <td class="text-left" style="border: 1px solid black;">${costCenter}</td>
                                     <td class="text-left" style="border: 1px solid black;">${product}</td>
-                                    ${docstatus == 1 ? `<td class="text-left" style="border: 1px solid black;">Rs.${usedAmount}</td>` : `<td class="text-left" style="border: 1px solid black;">Rs.${balance}</td>`}
+                                    ${docstatus == 1 ? `<td class="text-right" style="border: 1px solid black;">${usedAmount}</td>` : `<td class="text-right" style="border: 1px solid black;">${balance}</td>`}
                                 </tr>
                             `;
-                            donorListRows += row;
-                        });
+                    donorListRows += row;
 
-                        var completeTable = tableHeader + donorListRows + "</tbody></table><br>";
+                    totalBalance += d.actual_balance
+                });
 
-                        if (docstatus != 1 && totalBalance !== 0) {
-                            completeTable += `
-                                <h5 style="text-align: right;" id="total_balance"><strong>Total Balance: Rs.${totalBalance}</strong></h5>
+                var completeTable = tableHeader + donorListRows + "</tbody></table><br>";
+
+                if (docstatus != 1 && totalBalance !== 0) {
+                    completeTable += `
+                                <h5 style="text-align: right;" id="total_balance">Total Balance: <strong>${format_currency(totalBalance)}</strong></h5>
                             `;
-                        }
+                }
 
-                        if (totalPages > 1) {
-                            completeTable += generatePaginationControls();
-                        }
+                if (totalPages > 1) {
+                    completeTable += generatePaginationControls();
+                }
 
-                        frm.set_df_property('custom_donor_list_html', 'options', completeTable);
-                    }
+                frm.set_df_property('custom_donor_list_html', 'options', completeTable);
+            }
 
-                    function generatePaginationControls() {
-                        var controls = `<div style="text-align: center; margin-top: 10px;">`;
+            function generatePaginationControls() {
+                var controls = `<div style="text-align: center; margin-top: 10px;">`;
 
-                        if (currentPage > 1) {
-                            controls += `<button onclick="changePage(${currentPage - 1})" style="text-align: right;" id="previous">Previous</button>`;
-                        }
+                if (currentPage > 1) {
+                    controls += `<button onclick="changePage(${currentPage - 1})" style="text-align: right;" id="previous">Previous</button>`;
+                }
 
-                        controls += ` Page ${currentPage} of ${totalPages} `;
+                controls += ` Page ${currentPage} of ${totalPages} `;
 
-                        if (currentPage < totalPages) {
-                            controls += `<button onclick="changePage(${currentPage + 1})" style="text-align: right;" id="next">Next</button>`;
-                        }
+                if (currentPage < totalPages) {
+                    controls += `<button onclick="changePage(${currentPage + 1})" style="text-align: right;" id="next">Next</button>`;
+                }
 
-                        controls += `</div>`;
-                        return controls;
-                    }
+                controls += `</div>`;
+                return controls;
+            }
 
-                    window.changePage = function (page) {
-                        if (page >= 1 && page <= totalPages) {
-                            currentPage = page;
-                            displayPage(currentPage);
-                        }
-                    };
-
+            window.changePage = function (page) {
+                if (page >= 1 && page <= totalPages) {
+                    currentPage = page;
                     displayPage(currentPage);
                 }
-            } else {
-                $("#table_render").empty();
-                $("#total_balance").empty();
-                $("#previous").empty();
-                $("#next").empty();
-                frm.set_df_property('custom_donor_list_html', 'options', '');
-                frappe.msgprint("No data received.");
-            }
+            };
+
+            displayPage(currentPage);
         }
-    });
+    } else {
+        $("#table_render").empty();
+        $("#total_balance").empty();
+        $("#previous").empty();
+        $("#next").empty();
+        frm.set_df_property('custom_donor_list_html', 'options', '');
+    }
 }
 
 function set_queries_payment_details(frm) {
@@ -409,6 +393,13 @@ frappe.ui.form.on("Purchase Receipt Item", {
 
 });
 
+function format_currency(amount){
+    const formattedAmount = amount.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'PKR'
+    });
+    return formattedAmount.replace('PKR', 'Rs.');
+}
 
 // Below is the code written by MUBASHIR BASHIR
 // function update_material_request_status(frm) {

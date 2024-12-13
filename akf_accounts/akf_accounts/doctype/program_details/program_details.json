@@ -12,8 +12,9 @@
   "pd_product",
   "pd_project",
   "pd_donor",
-  "pd_balance",
-  "pd_donor_name"
+  "pd_donor_name",
+  "column_break_hkup",
+  "actual_balance"
  ],
  "fields": [
   {
@@ -62,23 +63,29 @@
    "reqd": 1
   },
   {
-   "fieldname": "pd_balance",
-   "fieldtype": "Data",
-   "label": "Balance",
-   "read_only": 1
-  },
-  {
    "fetch_from": "pd_donor.donor_name",
    "fieldname": "pd_donor_name",
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Donor Name"
+  },
+  {
+   "fieldname": "column_break_hkup",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "actual_balance",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Actual Balance",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-09 11:16:51.133681",
+ "modified": "2024-12-12 13:36:55.366657",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",
