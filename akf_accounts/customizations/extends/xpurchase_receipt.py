@@ -1105,11 +1105,13 @@ class XAssetInvenPurchase(PurchaseReceipt):
 			product = row.pd_product
 			project = row.pd_project
 
+		# self.project = project
 		for item in self.items:
 			item.program = service_area
 			item.subservice_area = subservice_area
 			item.product = product
 			item.project = project
+
 
 	@frappe.whitelist()
 	def get_balance_dimensions(self, is_valid=False):
