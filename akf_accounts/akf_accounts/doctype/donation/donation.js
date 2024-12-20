@@ -19,11 +19,13 @@ frappe.ui.form.on('Donation', {
         toggleModeOfPaymentRowWise(frm);
     },
     donor_identity: function (frm) {
-        if (frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant" || frm.doc.donor_identity == "Merchant - Known") {
+        if (frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant - Unknown" || frm.doc.donor_identity == "Merchant - Known") {
             frm.set_value("contribution_type", "Donation");
             frm.set_df_property("contribution_type", "read_only", 1)
         } else {
             frm.set_value("contribution_type", "");
+            frm.set_value("mode_of_payment", null);
+            frm.set_value("account_paid_to", null);
             frm.set_df_property("contribution_type", "read_only", 0)
         }
     },
@@ -60,6 +62,17 @@ frappe.ui.form.on('Donation', {
     },
     exchange_rate: function (frm) {
         frm.call("set_deduction_breakeven");
+    },
+    // In parent donation-table
+    mode_of_payment: function (frm) {
+        const mode_of_payment = frm.doc.mode_of_payment;
+        if (mode_of_payment == undefined || mode_of_payment == '') {
+            frm.set_value('account_paid_to',null);
+        } else{
+            erpnext.accounts.pos.get_payment_mode_account(frm, mode_of_payment, function (account) {
+                frm.set_value('account_paid_to',account);
+            });
+        }
     },
 
 });
@@ -104,6 +117,7 @@ frappe.ui.form.on('Payment Detail', {
             }
         }
     },
+    // In child Payment Detail table
     mode_of_payment: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         if (row.mode_of_payment == undefined || row.mode_of_payment == '') {
@@ -145,7 +159,8 @@ frappe.ui.form.on('Payment Detail', {
         row.random_id = Math.floor((1000 + row.idx) + (Math.random() * 9000));
         // toggleModeOfPaymentRowWise(frm);
         showHideModeOfPaymentForSingleRow(frm, row);
-        frm.refresh_field("payment_detail")
+        fill_mode_of_payment_and_account(frm, row);
+        frm.refresh_field("payment_detail");
         // if(frm.doc.is_return){
         //     frm.call("update_deduction_breakeven");
         // }else{
@@ -434,6 +449,7 @@ function set_query_equity_account(frm) {
                 company: ["!=", ""],
                 company: frm.doc.company,
                 root_type: "Equity",
+                // account_currency: frm.doc.currency,
             }
         };
     };
@@ -769,16 +785,38 @@ function showHideModeOfPaymentForSingleRow(frm, row){
     // console.log("flag: ", flag);
     frm.set_df_property('payment_detail', 'read_only', flag, frm.doc.name, 'mode_of_payment', row.name);
 }
+function fill_mode_of_payment_and_account(frm, row){
+    
+    const donor_identity = frm.doc.donor_identity;
+
+    function validate_mode_of_payment_and_account_paid_to(){
+        const mode_of_payment = frm.doc.mode_of_payment;
+        const account_paid_to = frm.doc.account_paid_to;
+        if(mode_of_payment=="" || mode_of_payment==undefined){
+            frappe.throw(`Please select mode of payment`);
+        }
+        if(account_paid_to=="" || account_paid_to==undefined){
+            frappe.throw(`Please select account paid to`);
+        }
+    }
+    let readOnly = 0;
+    if (donor_identity == "Merchant - Unknown" || donor_identity == "Merchant - Known") {
+        validate_mode_of_payment_and_account_paid_to();
+        row.mode_of_payment = frm.doc.mode_of_payment;
+        row.account_paid_to = frm.doc.account_paid_to;
+        readOnly = 1;
+    }
+    frm.set_df_property('payment_detail', 'read_only', readOnly, frm.doc.name, 'mode_of_payment', row.name);
+    frm.set_df_property('payment_detail', 'read_only', readOnly, frm.doc.name, 'account_paid_to', row.name);
+}
+
 function toggleModeOfPaymentRowWise(frm){
      // Iterate through each row in the child table
      if(frm.doc.docstatus>0) { return }
      frm.doc.payment_detail.forEach((row) => {
         if (frm.doc.contribution_type=='Pledge') { // Replace with your condition
-            // frappe.model.set_value(row.doctype, row.name, 'mode_of_payment', 'read_only', 1);
-            // console.log("mode_of_payment: ", 1);
             frm.set_df_property('payment_detail', 'read_only', 1, frm.doc.name, 'mode_of_payment', row.name);
         }else{
-            // console.log("mode_of_payment: ", 0);
             frm.set_df_property('payment_detail', 'read_only', 0, frm.doc.name, 'mode_of_payment', row.name);
         }
     });

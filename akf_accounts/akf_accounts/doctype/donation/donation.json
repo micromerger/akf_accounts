@@ -33,6 +33,9 @@
   "to_currency",
   "section_break_rutf",
   "donation_cost_center",
+  "column_break_futi",
+  "mode_of_payment",
+  "account_paid_to",
   "column_break_kchn",
   "total_donors",
   "payment_details_section",
@@ -367,12 +370,32 @@
   {
    "fieldname": "foreign_currency_column",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_futi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown';",
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Mode Of Payment",
+   "mandatory_depends_on": "eval: doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown';",
+   "options": "Mode of Payment"
+  },
+  {
+   "depends_on": "eval: doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown';",
+   "fieldname": "account_paid_to",
+   "fieldtype": "Link",
+   "label": "Account Paid To",
+   "mandatory_depends_on": "eval: doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown';",
+   "options": "Account"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-06 20:34:33.827925",
+ "modified": "2024-12-17 16:19:18.372412",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

@@ -59,7 +59,6 @@ class Donation(Document):
 						and parent = '{row.pay_service_area}'
 						and project = '{row.project}'
 					""", as_dict=True)
-	
 
 	@frappe.whitelist()
 	def set_deduction_breakeven(self):
@@ -70,7 +69,10 @@ class Donation(Document):
 				row.account_paid_to = None
 				row.transaction_no_cheque_no = ""
 				row.reference_date = None
-
+			elif(self.donor_identity in ["Merchant - Known", "Merchant - Unknown"]):
+				row.mode_of_payment = self.mode_of_payment
+				row.account_paid_to = self.account_paid_to
+			
 		def get_deduction_details(row, deduction_breakeven):
 			# Added by Aqsa
 			# Mobeen said no deduction only on Zakat
@@ -343,8 +345,8 @@ class Donation(Document):
 			# 'is_opening': 'No',
 			# 'is_advance': 'No',
 			'company': self.company,
-			'transaction_currency': self.to_currency,
-			'transaction_exchange_rate': "1",
+			'transaction_currency': self.currency,
+			'transaction_exchange_rate': self.exchange_rate,
 		})
 
 	def make_payment_detail_gl_entry(self):
@@ -352,9 +354,16 @@ class Donation(Document):
 		for row in self.payment_detail:
 			""" is return reverse account functionality... """
 			_net_amount = self.apply_currecny_exchange(row.net_amount)
-			debit = _net_amount if(self.is_return) else 0
-			credit = 0 if(self.is_return) else _net_amount
-
+			# Transaction Currency
+			debit, credit, debit_in_transaction_currency, credit_in_transaction_currency = 0,0,0,0
+			if(self.is_return): # debit
+				debit = _net_amount
+				debit_in_transaction_currency = row.net_amount
+			else: # credit
+				credit = _net_amount
+				credit_in_transaction_currency = row.net_amount
+			""" debit = _net_amount if(self.is_return) else 0
+			credit = 0 if(self.is_return) else _net_amount """
 			""" end... """
 			# credit
 			args.update({
@@ -372,17 +381,28 @@ class Donation(Document):
 				"credit": credit,
 				"debit_in_account_currency": debit,
 				"credit_in_account_currency": credit,
-				"debit_in_transaction_currency": debit,
-				"credit_in_transaction_currency": credit,
+				"debit_in_transaction_currency": debit_in_transaction_currency,
+				"credit_in_transaction_currency": credit_in_transaction_currency,
 				
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
 			doc.submit()
 
+			if(self.is_return): # credit
+				debit = 0 # PKR
+				debit_in_transaction_currency = 0 # USD
+				credit = row.base_donation_amount
+				credit_in_transaction_currency = row.donation_amount # USD
+			else: # debit
+				debit = row.base_donation_amount # PKR
+				debit_in_transaction_currency = row.donation_amount  # USD
+				credit = 0
+				credit_in_transaction_currency = 0 # USD
+
 			# debit
-			debit = 0 if(self.is_return) else row.base_donation_amount
-			credit = row.base_donation_amount if(self.is_return) else 0
+			""" debit = 0 if(self.is_return) else row.base_donation_amount
+			credit = row.base_donation_amount if(self.is_return) else 0 """
 			# arguements
 			args.update({
 				"party_type": "Donor",
@@ -390,10 +410,10 @@ class Donation(Document):
 				"account": row.receivable_account,
 				"debit": debit,
 				"credit": credit,
-				"debit_in_account_currency": debit,
-				"credit_in_account_currency": credit,
-				"debit_in_transaction_currency": debit,
-				"credit_in_transaction_currency": credit,
+				"debit_in_account_currency": debit_in_transaction_currency,
+				"credit_in_account_currency": credit_in_transaction_currency,
+				"debit_in_transaction_currency": debit_in_transaction_currency,
+				"credit_in_transaction_currency": credit_in_transaction_currency,
 			})
 			if(self.donor_identity == "Merchant - Known"): pass
 			else:
@@ -402,18 +422,29 @@ class Donation(Document):
 				doc.submit()
 		
 		if(self.donor_identity == "Merchant - Known"):
+			if(self.is_return): # credit
+				debit = 0 # PKR
+				debit_in_transaction_currency = 0 # USD
+				credit = self.base_total_donation
+				credit_in_transaction_currency = self.total_donation # USD
+			else: # debit
+				debit = self.base_total_donation # PKR
+				debit_in_transaction_currency = self.total_donation  # USD
+				credit = 0
+				credit_in_transaction_currency = 0 # USD
 			
-			debit = 0 if(self.is_return) else self.base_total_donation
-			credit = self.base_total_donation if(self.is_return) else 0
-
+			""" debit = 0 if(self.is_return) else self.base_total_donation
+			credit = self.base_total_donation if(self.is_return) else 0 """
+			
+			# debit entry
 			args.update({
 				"account": row.receivable_account,
 				"debit": debit,
 				"credit": credit,
 				"debit_in_account_currency": debit,
 				"credit_in_account_currency": credit,
-				"debit_in_transaction_currency": debit,
-				"credit_in_transaction_currency": credit,
+				"debit_in_transaction_currency": debit_in_transaction_currency,
+				"credit_in_transaction_currency": credit_in_transaction_currency,
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
@@ -426,8 +457,17 @@ class Donation(Document):
 			""" In normal case, accounts are going to be credit
 			But, in return case accounts are debit.
 			 """
-			debit = row.base_amount if(self.is_return) else 0
-			credit = 0 if(self.is_return) else row.base_amount
+			# Transaction Currency
+			debit, credit, debit_in_transaction_currency, credit_in_transaction_currency = 0,0,0,0
+			if(self.is_return): # debit
+				debit = 0
+				debit_in_transaction_currency = 0
+			else: # credit
+				credit = row.base_amount # account currency
+				credit_in_transaction_currency = row.amount # transaction currency
+
+			""" debit = row.base_amount if(self.is_return) else 0
+			credit = 0 if(self.is_return) else row.base_amount """
 
 			args.update({
 				"account": row.account,
@@ -437,8 +477,8 @@ class Donation(Document):
 				"debit_in_account_currency": debit,
 				"credit_in_account_currency": credit,
 
-				"debit_in_transaction_currency": debit,
-				"credit_in_transaction_currency": credit,
+				"debit_in_transaction_currency": debit_in_transaction_currency,
+				"credit_in_transaction_currency": credit_in_transaction_currency,
 				
 				"donor": row.donor,
 				"program": row.program,
@@ -468,7 +508,7 @@ class Donation(Document):
 				"against_voucher_type": "Donation",
 				"against_voucher_no": self.name,
 				"amount": row.base_donation_amount,
-				"amount_in_account_currency": row.base_donation_amount,
+				# "amount_in_account_currency": row.base_donation_amount,
 				# 'remarks': self.instructions_internal,
 				"voucher_detail_no": row.name,
 			})
@@ -511,8 +551,8 @@ class Donation(Document):
 				"paid_to" :  row.account_paid_to,
 				"reference_date" : self.due_date,
 				"cost_center" : row.cost_center,
-				"paid_amount" : row.base_donation_amount,
-				"received_amount" : row.base_donation_amount,
+				"paid_amount" : row.donation_amount,
+				"received_amount" : row.donation_amount,
 				"donor": row.donor_id,
 				"program" : row.pay_service_area,
 				"subservice_area" : row.pay_subservice_area,
@@ -523,9 +563,9 @@ class Donation(Document):
 						"reference_doctype": "Donation",
 						"reference_name" : self.name,
 						"due_date" : self.posting_date,
-						"total_amount" : self.base_total_donation,
-						"outstanding_amount" : row.base_donation_amount,
-						"allocated_amount" : row.base_donation_amount,
+						"total_amount" : self.total_donation,
+						"outstanding_amount" : row.donation_amount,
+						"allocated_amount" : row.donation_amount,
 				}]
 			})
 			# frappe.throw(frappe.as_json(args))
@@ -534,7 +574,7 @@ class Donation(Document):
 			else:
 				doc = frappe.get_doc(args)
 				doc.save(ignore_permissions=True)
-				doc.submit()
+				# doc.submit()
 
 				if(self.donor_identity == "Unknown"):
 					# set Payment Entry id in payment_detail child table.
