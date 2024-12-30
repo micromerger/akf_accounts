@@ -127,10 +127,20 @@ function update_ft_bank_account_in_children(frm) {
 }
 
 frappe.ui.form.on("Funds Transfer From", {
+    project: function(frm, cdt, cdn) {
+        // Trigger the get_html function whenever ff_donor is updated
+        frm.call("donor_list_data_funds_transfer").then(r=>{});
+        // get_html(frm);
+    },
+    ff_account: function(frm, cdt, cdn) {
+        // Trigger the get_html function whenever ff_donor is updated
+        frm.call("donor_list_data_funds_transfer").then(r=>{});
+        // get_html(frm);
+    },
     ff_donor: function(frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
         frm.call("donor_list_data_funds_transfer").then(r=>{});
-        get_html(frm);
+        // get_html(frm);
     },
     funds_transfer_from_add: function(frm, cdt, cdn) {
         const cost_center = frm.doc.cost_center; 

@@ -112,7 +112,7 @@ class Donation(Document):
 					"amount": percentage_amount,
 					"base_amount": base_amount,
 					"service_area": row.program,
-					"project": row.project,
+					"project": args.project if(args.project) else row.project,
 					
 					"cost_center": self.donation_cost_center,
 					"random_id": row.random_id,
@@ -274,8 +274,7 @@ class Donation(Document):
 		self.make_payment_detail_gl_entry()
 		self.make_deduction_gl_entries()
 		self.make_payment_ledger_entry()
-		if(self.contribution_type=="Donation"):
-			self.make_payment_entry()
+		self.make_payment_entry()
 		self.update_status()
 		self.send_donation_emails()		# Mubashir Bashir
 
@@ -460,8 +459,8 @@ class Donation(Document):
 			# Transaction Currency
 			debit, credit, debit_in_transaction_currency, credit_in_transaction_currency = 0,0,0,0
 			if(self.is_return): # debit
-				debit = 0
-				debit_in_transaction_currency = 0
+				debit = row.base_amount # account currency
+				debit_in_transaction_currency = row.amount # transaction currency
 			else: # credit
 				credit = row.base_amount # account currency
 				credit_in_transaction_currency = row.amount # transaction currency
@@ -492,6 +491,7 @@ class Donation(Document):
 			doc.submit()
 
 	def make_payment_ledger_entry(self):
+		if(self.is_return): return
 		args = {}
 		for row in self.payment_detail:
 			args = frappe._dict({
@@ -598,7 +598,9 @@ class Donation(Document):
 				if (frappe.db.sql(f""" 
 					select d.name 
 					from `tabDonation` d inner join `tabPayment Detail` pd on (d.name=pd.parent) 
-					where d.return_against='{self.return_against}' 
+					where 
+						d.docstatus=1
+     					and d.return_against='{self.return_against}' 
 						and pd.donor_id='{row.donor_id}'
 						and pd.pay_service_area='{row.pay_service_area}'
 						and pd.pay_subservice_area='{row.pay_subservice_area}'
@@ -974,7 +976,8 @@ def make_return_doc(
 		doc.return_against = source.name
 	
 	def update_payment_detail(source_doc, target_doc, source_parent):
-		target_doc.donation_amount = -1 * source_doc.donation_amount
+		# target_doc.donation_amount = -1 * source_doc.donation_amount
+		target_doc.donation_amount = source_doc.donation_amount
 		target_doc.paid = 0
 
 	doclist = get_mapped_doc(
