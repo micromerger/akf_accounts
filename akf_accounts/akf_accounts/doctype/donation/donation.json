@@ -25,6 +25,7 @@
   "due_date",
   "is_return",
   "return_against",
+  "reverse_against",
   "section_break_bezw",
   "from_currency_column",
   "currency",
@@ -390,12 +391,19 @@
    "label": "Account Paid To",
    "mandatory_depends_on": "eval: doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown';",
    "options": "Account"
+  },
+  {
+   "fieldname": "reverse_against",
+   "fieldtype": "Link",
+   "label": "Reverse Against",
+   "options": "Donation",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-17 16:19:18.372412",
+ "modified": "2024-12-30 15:40:57.167970",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

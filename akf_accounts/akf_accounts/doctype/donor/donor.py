@@ -8,6 +8,7 @@ from frappe.model.document import Document
 from erpnext.accounts.utils import get_balance_on
 from frappe.utils import getdate, formatdate, get_link_to_form
 
+from akf_accounts.akf_accounts.doctype.proscribed_person.proscribed_person import active_or_block_donor
 class Donor(Document):
     def onload(self):
         """Load address and contacts in `__onload`"""
@@ -25,7 +26,7 @@ class Donor(Document):
         if self.cnic:
             formatted_cnic = self.cnic.replace("-", "")
             
-            proscribed_person = frappe.db.get_value("Proscribed Persons", {"cnic": formatted_cnic}, "cnic")
+            proscribed_person = frappe.db.get_value("Proscribed Person", {"cnic": formatted_cnic}, "cnic")
             
             if proscribed_person:
                 frappe.throw(f"Proscribed Person with CNIC {formatted_cnic} found.")
@@ -66,6 +67,15 @@ class Donor(Document):
             # get_link_to_form # (doctype: str, name: str, label: str | None = None) -> str:
             for d in preDonor:
                 frappe.throw(f"""A donor with ID: {get_link_to_form('Donor',d.name)}, already exists created by {d.department} on {formatdate(getdate(d.creation))}.""")
+    
+    def after_insert(self):
+        self.update_status()
+        
+    def update_status(self):
+        if(self.identification_type == "CNIC"):
+            if(frappe.db.exists("Proscribed Person", {"cnic": self.cnic})):
+                active_or_block_donor(self.cnic) 
+                self.reload()
         
 @frappe.whitelist()
 def check_all_donors_against_proscribed_persons():
@@ -75,7 +85,7 @@ def check_all_donors_against_proscribed_persons():
     for donor in all_donors:
         formatted_cnic = donor.cnic.replace("-", "")
         
-        proscribed_person = frappe.db.get_value("Proscribed Persons", {"cnic": formatted_cnic}, "cnic")
+        proscribed_person = frappe.db.get_value("Proscribed Person", {"cnic": formatted_cnic}, "cnic")
         
         if proscribed_person:
             email_template = frappe.db.get_value("Email Template", {"subject": "Urgent Notification: Proscribed Person Identified"}, ["subject", "response"], as_dict=True)

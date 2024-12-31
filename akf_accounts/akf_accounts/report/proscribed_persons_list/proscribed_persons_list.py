@@ -19,7 +19,7 @@ def get_columns():
             "label": _("Proscribed Person ID"),
             "fieldname": "p_name",
             "fieldtype": "Link",
-            "options": "Proscribed Persons",
+            "options": "Proscribed Person",
             "width": 240,
         },
         {
@@ -54,7 +54,7 @@ def get_data(filters):
             p.father_name,
             p.cnic
         FROM
-            `tabProscribed Persons` p
+            `tabProscribed Person` p
         JOIN
             `tabDonor` d
         ON

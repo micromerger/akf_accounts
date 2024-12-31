@@ -15,7 +15,7 @@
  "name": "Proscribed Persons List",
  "owner": "Administrator",
  "prepared_report": 0,
- "ref_doctype": "Proscribed Persons",
+ "ref_doctype": "Proscribed Person",
  "report_name": "Proscribed Persons List",
  "report_type": "Script Report",
  "roles": [

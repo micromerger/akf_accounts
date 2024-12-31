@@ -364,6 +364,7 @@ function set_query_donor_id(frm) {
             return {
                 filters: {
                     donor_name: dlist,
+                    status: "Active",
                 }
             };
         } else if (frm.doc.donor_identity == "Known") {
@@ -371,6 +372,7 @@ function set_query_donor_id(frm) {
             return {
                 filters: {
                     donor_name: dlist,
+                    status: "Active",
                 }
             };
         }
@@ -379,6 +381,16 @@ function set_query_donor_id(frm) {
             return {
                 filters: {
                     donor_name: dlist,
+                    status: "Active",
+                }
+            };
+        }
+        else if (frm.doc.donor_identity == "Merchant - Unknown") {
+            let dlist = ["not in", "known Donor"];
+            return {
+                filters: {
+                    donor_name: dlist,
+                    status: "Active",
                 }
             };
         }

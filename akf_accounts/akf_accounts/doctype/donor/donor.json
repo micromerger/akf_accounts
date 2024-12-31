@@ -31,6 +31,7 @@
   "contact_number",
   "registration_date",
   "foa",
+  "status",
   "address_contacts",
   "address_html",
   "column_break_9",
@@ -302,6 +303,15 @@
    "fieldtype": "Data",
    "label": "Owner Name",
    "read_only": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Active\nBlocked",
+   "read_only": 1
   }
  ],
  "image_field": "image",
@@ -311,7 +321,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-12-10 16:35:09.859272",
+ "modified": "2024-12-31 17:40:51.563814",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

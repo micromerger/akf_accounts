@@ -14,7 +14,6 @@ class Donation(Document):
 		self.set_deduction_breakeven()
 		self.update_status()
 		
-			
 	def validate_payment_details(self):
 		if(len(self.payment_detail)<1):
 			frappe.throw("Please provide, payment details to proceed further.")
@@ -130,7 +129,12 @@ class Donation(Document):
 			receipt_list = [d.idx for d in self.payment_detail if(row.receipt_number == d.receipt_number and row.idx!=d.idx)]
 			if(receipt_list):
 				frappe.throw(f"Receipt#<b>{row.receipt_number}</b> in row#<b>{row.idx}</b> is already used in another row.", title='Receipt No.')
-			
+		
+		# 31-12-2024 nabeel saleem
+		def validate_active_donor(row):
+			if(frappe.db.exists("Donor", {"name": row.donor_id, "status": "Blocked"})):
+				frappe.throw(f"<b>Row#{row.idx}</b> donor: {row.donor_id} is blocked.", title='Blocked Donor.')
+				
 		deduction_breakeven = self.deduction_breakeven
 		self.set("deduction_breakeven", [])
 		deduction_amount=0
@@ -138,6 +142,7 @@ class Donation(Document):
 		
 		for row in self.payment_detail:
 			# print("payment_detail: ", row.random_id)
+			validate_active_donor(row)
 			verify_unique_receipt_no(row)
 			reset_mode_of_payment(row)
 			total_donation+= row.donation_amount
