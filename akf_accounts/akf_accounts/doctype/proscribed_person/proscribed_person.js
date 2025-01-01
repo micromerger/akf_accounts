@@ -1,7 +1,7 @@
 // Copyright (c) 2024, Nabeel Saleem and contributors
 // For license information, please see license.txt
-let cnic_mask= "99999-9999999-9";
-let cnicRegix = /^\d{5}-\d{7}-\d{1}$/;
+let cnic_mask= "9999999999999";
+let cnicRegix = /^\d{5}\d{7}\d{1}$/;
 
 frappe.ui.form.on("Proscribed Person", {
 	refresh(frm) {

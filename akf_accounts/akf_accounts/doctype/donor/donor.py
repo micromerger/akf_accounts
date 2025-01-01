@@ -8,7 +8,7 @@ from frappe.model.document import Document
 from erpnext.accounts.utils import get_balance_on
 from frappe.utils import getdate, formatdate, get_link_to_form
 
-from akf_accounts.akf_accounts.doctype.proscribed_person.proscribed_person import active_or_block_donor
+from akf_accounts.akf_accounts.doctype.proscribed_person.proscribed_person import process_proscribed_person_detail
 class Donor(Document):
     def onload(self):
         """Load address and contacts in `__onload`"""
@@ -16,35 +16,10 @@ class Donor(Document):
 
     def validate(self):
         from frappe.utils import validate_email_address
-        if self.email:
-            validate_email_address(self.email.strip(), True)
-        self.verify_proscribed_person()
+        if self.email: validate_email_address(self.email.strip(), True)
         self.verify_cnic()
         self.validate_duplicate_cnic()
-
-    def verify_proscribed_person(self):
-        if self.cnic:
-            formatted_cnic = self.cnic.replace("-", "")
-            
-            proscribed_person = frappe.db.get_value("Proscribed Person", {"cnic": formatted_cnic}, "cnic")
-            
-            if proscribed_person:
-                frappe.throw(f"Proscribed Person with CNIC {formatted_cnic} found.")
-                # email_template = frappe.db.get_value("Email Template", {"subject": "Urgent Notification: Proscribed Person Identified"}, ["subject", "response"], as_dict=True)
-                
-                # if email_template:
-                #     message = email_template["response"].replace("{cnic}", formatted_cnic)
-                    
-                #     frappe.sendmail(
-                #         recipients=['aqsaabbasee@gmail.com'],
-                #         subject=email_template["subject"],
-                #         message=message,
-                #         now=True  
-                #     )
-                    
-                #     frappe.msgprint("Proscribed person notification email sent successfully.")
-                    
-                    
+        self.validate_proscribed_person()
 
     def verify_cnic(self):
         # Define a regex pattern for CNIC: `xxxxx-xxxxxxx-x`
@@ -68,14 +43,20 @@ class Donor(Document):
             for d in preDonor:
                 frappe.throw(f"""A donor with ID: {get_link_to_form('Donor',d.name)}, already exists created by {d.department} on {formatdate(getdate(d.creation))}.""")
     
+    def validate_proscribed_person(self):
+        formatted_cnic = str(self.cnic).replace("-", "")
+        if((not self.is_new()) and frappe.db.exists("Donor", {"name": self.name, "status": "Blocked"})):
+            frappe.throw("You're unable to make any change. Because, you're in proscribed person list.", title="Donor Blocked")
+            
     def after_insert(self):
         self.update_status()
         
     def update_status(self):
         if(self.identification_type == "CNIC"):
-            if(frappe.db.exists("Proscribed Person", {"cnic": self.cnic})):
-                active_or_block_donor(self.cnic) 
-                self.reload()
+            formatted_cnic = str(self.cnic).replace("-", "")
+            if(frappe.db.exists("Proscribed Person", {"cnic": formatted_cnic})):
+                self.status = "Blocked"
+                process_proscribed_person_detail(self.cnic, status="Blocked")
         
 @frappe.whitelist()
 def check_all_donors_against_proscribed_persons():
