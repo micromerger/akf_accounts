@@ -7,8 +7,6 @@ frappe.ui.form.on('Purchase Invoice', {
     refresh: function(frm) {
         // toggle_custom_fields(frm);
         set_queries_payment_details(frm);
-        console.log("Refresh triggered");
-
         // Check if the form is not new, not local, and custom_type_of_transaction is "Inventory Purchase Restricted"
         if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase Restricted"].includes(frm.doc.custom_type_of_transaction)) {
             // Check if any item has an empty purchase_receipt
@@ -260,7 +258,8 @@ function set_queries_payment_details(frm){
     set_query_cost_center(frm);
     set_query_product(frm);
     set_query_project(frm);
- 
+    set_query_donor(frm);
+    
 }
 
 function set_query_service_area(frm){
@@ -340,6 +339,16 @@ function set_query_project(frm){
     };
 }
 
+function set_query_donor(frm){
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_donor').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                status: "Active"
+            }
+        };
+    };
+}
 
 frappe.ui.form.on("Purchase Receipt Item", {
     custom_new: function(frm, cdt, cdn){

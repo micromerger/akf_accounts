@@ -19,8 +19,8 @@ frappe.ui.form.on("Funds Transfer", {
     refresh: function(frm) {
         set_query_service_area_transfer_from(frm);
         // set_query_service_area_transfer_to(frm);
-        set_queries_funds_transfer_to(frm);
         set_queries_funds_transfer_from(frm);
+        set_queries_funds_transfer_to(frm);
         set_queries_transaction_types(frm);
         // console.log(!frm.is_new());
         // console.log(!frm.doc.__islocal);
@@ -512,6 +512,7 @@ function set_queries_funds_transfer_from(frm) {
     set_query_product_transfer_from(frm);
     set_query_project_transfer_from(frm);
     set_query_account_transfer_from(frm);
+    set_query_ff_donor_transfer_from(frm);
 }
 
 function set_query_cost_center_transfer_from(frm) {
@@ -580,12 +581,24 @@ function set_query_account_transfer_from(frm){
     };
 }
 
+function set_query_ff_donor_transfer_from(frm){
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_donor').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                status: "Active",
+            }
+        };
+    };
+}
+
 function set_queries_funds_transfer_to(frm){
     set_query_cost_center(frm);
     set_query_subservice_area(frm);
     set_query_product(frm);
     set_query_project(frm);
     set_query_account(frm);
+    set_query_ft_donor(frm);
  
 }
 
@@ -662,6 +675,17 @@ function set_query_account(frm){
                 company: row.ft_company,
                 
                 
+            }
+        };
+    };
+}
+
+function set_query_ft_donor(frm){
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_donor').get_query = function(doc, cdt, cdn) {
+        var row = locals[cdt][cdn];
+        return {
+            filters: {
+                status: "Active",
             }
         };
     };
