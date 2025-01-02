@@ -10,7 +10,7 @@
   "naming_series",
   "donor_identity",
   "contribution_type",
-  "plaque_name",
+  "plaque_branding",
   "donation_type",
   "column_break_gxmk",
   "company",
@@ -19,9 +19,6 @@
   "edit_posting_date_time",
   "reconcile",
   "column_break_qxif",
-  "cash_receipt_date_by_donor_desk",
-  "cash_received_in_finance",
-  "cash_received_by_finance",
   "due_date",
   "is_return",
   "return_against",
@@ -263,16 +260,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "cash_receipt_date_by_donor_desk",
-   "fieldtype": "Date",
-   "label": "Cash Receipt Date By Donor Desk"
-  },
-  {
-   "fieldname": "cash_received_in_finance",
-   "fieldtype": "Date",
-   "label": "Cash Received In Finance"
-  },
-  {
    "fieldname": "from_currency_column",
    "fieldtype": "Column Break",
    "label": "Currency Exchange"
@@ -352,17 +339,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "plaque_name",
-   "fieldtype": "Data",
-   "label": "Plaque Name"
-  },
-  {
-   "fieldname": "cash_received_by_finance",
-   "fieldtype": "Link",
-   "label": "Cash Received By Finance ",
-   "options": "Employee"
-  },
-  {
    "default": "0",
    "fieldname": "reconcile",
    "fieldtype": "Check",
@@ -398,12 +374,17 @@
    "label": "Reverse Against",
    "options": "Donation",
    "read_only": 1
+  },
+  {
+   "fieldname": "plaque_branding",
+   "fieldtype": "Data",
+   "label": "Plaque/Branding"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-30 15:40:57.167970",
+ "modified": "2025-01-02 19:29:53.228690",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

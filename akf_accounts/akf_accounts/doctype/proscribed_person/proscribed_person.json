@@ -19,8 +19,7 @@
    "fieldname": "name1",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Name",
-   "reqd": 1
+   "label": "Name"
   },
   {
    "fieldname": "father_name",
@@ -58,7 +57,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-01 13:57:55.977974",
+ "modified": "2025-01-02 11:59:05.090049",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Proscribed Person",

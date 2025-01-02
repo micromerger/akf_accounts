@@ -9,6 +9,9 @@ from erpnext.accounts.utils import get_balance_on
 from frappe.utils import getdate, formatdate, get_link_to_form
 
 from akf_accounts.akf_accounts.doctype.proscribed_person.proscribed_person import process_proscribed_person_detail
+
+email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+
 class Donor(Document):
     def onload(self):
         """Load address and contacts in `__onload`"""
@@ -17,10 +20,29 @@ class Donor(Document):
     def validate(self):
         from frappe.utils import validate_email_address
         if self.email: validate_email_address(self.email.strip(), True)
+        self.sum_up_dial_code_contact_no()
+        verify_email(self)
         self.verify_cnic()
         self.validate_duplicate_cnic()
         self.validate_proscribed_person()
 
+    def sum_up_dial_code_contact_no(self):
+        if (self.country):
+            dial_code, phone_mask, phone_regix = self.get_country_details()
+            
+            if(dial_code and phone_mask):
+                phone_mask = '%s%s'%(dial_code, phone_mask)
+                mobileSize = len(self.contact_no)
+                maskSize = len(phone_mask)
+                
+                if(mobileSize<maskSize):
+                    self.contact_no = '{0}{1}'.format(dial_code, self.contact_no)
+                
+            verify_numbers(self, phone_regix)
+
+    def get_country_details(self):
+        return frappe.db.get_value('Country', {'name': self.country}, ["custom_dial_code", "custom_phone_mask", "custom_phone_regex"])
+    
     def verify_cnic(self):
         # Define a regex pattern for CNIC: `xxxxx-xxxxxxx-x`
         cnic_pattern = r"^\d{5}-\d{7}-\d{1}$"
@@ -47,7 +69,7 @@ class Donor(Document):
         formatted_cnic = str(self.cnic).replace("-", "")
         if((not self.is_new()) and frappe.db.exists("Donor", {"name": self.name, "status": "Blocked"})):
             frappe.throw("You're unable to make any change. Because, you're in proscribed person list.", title="Donor Blocked")
-            
+    
     def after_insert(self):
         self.update_status()
         
@@ -57,7 +79,55 @@ class Donor(Document):
             if(frappe.db.exists("Proscribed Person", {"cnic": formatted_cnic})):
                 self.status = "Blocked"
                 process_proscribed_person_detail(self.cnic, status="Blocked")
-        
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_donor_primary_contact(doctype, txt, searchfield, start, page_len, filters):
+    from frappe import qb
+    donor = filters.get("donor")
+
+    con = qb.DocType("Contact")
+    dlink = qb.DocType("Dynamic Link")
+
+    return (
+        qb.from_(con)
+        .join(dlink)
+        .on(con.name == dlink.parent)
+        .select(con.name, con.email_id)
+        .where((dlink.link_name == donor) & (con.name.like(f"%{txt}%")))
+        .run()
+    )
+
+
+def verify_numbers(self, phone_regix):
+    num_list = {
+        "contact_no": "Contact No", 
+        # "contact_number_whatsapp": "Contact Number (Whatsapp)", 
+        # "contact_no_in_case_of_emergency": "Contact No. in Case of Emergency",
+        # "mobilewhatsapp_no": "Mobile/WhatsApp No" 
+    }
+    for key, value in num_list.items():
+        number = self.get(key)
+        if number:
+            if (not match_regex(phone_regix, number)):
+                exception_msg('Please enter valid %s.'%value)
+
+def verify_email(self):
+	if not match_regex(email_regex, self.email):
+		exception_msg("Please enter valid email.")
+	# if frappe.db.exists('Donor',{'name':['!=', self.name],'email':self.email}):
+	# 	exception_msg("Email is already registered.")
+  
+def match_regex(regex ,mystr):
+	return re.match(regex, mystr)
+
+def exception_msg(msg):
+	frappe.throw(msg)
+
+def alert_msg(msg):
+	frappe.msgprint(msg, alert=1)
+ 
 @frappe.whitelist()
 def check_all_donors_against_proscribed_persons():
     all_donors = frappe.get_all("Donor", filters={"cnic": ["!=", ""]}, fields=["name", "cnic", "email"])

@@ -7,34 +7,40 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "nationality_type",
+  "donor_type",
   "donor_name",
   "donor_dob",
-  "department",
-  "branch",
-  "branch_abbreviation",
-  "donor_desk",
-  "identification_type",
-  "cnic",
-  "others",
+  "old_id",
   "owner_id",
   "owner_name",
   "column_break_5",
-  "donor_type",
-  "old_id",
-  "email",
+  "department",
+  "donor_desk",
+  "branch",
+  "branch_abbreviation",
   "image",
   "address",
-  "contact_no",
   "city",
   "contact_person",
   "contact_number",
+  "column_break_fzwx",
+  "nationality_type",
   "registration_date",
-  "foa",
   "status",
+  "foa",
+  "section_break_ygie",
+  "identification_type",
+  "cnic",
+  "others",
+  "column_break_cmtj",
+  "email",
+  "country",
+  "contact_no",
   "address_contacts",
+  "donor_primary_address",
   "address_html",
   "column_break_9",
+  "donor_primary_contact",
   "contact_html",
   "amended_from",
   "section_break_huvh",
@@ -74,7 +80,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Email"
+   "label": "Email",
+   "unique": 1
   },
   {
    "fieldname": "image",
@@ -136,20 +143,25 @@
   {
    "fieldname": "address",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Address"
   },
   {
+   "depends_on": "country",
    "fieldname": "contact_no",
    "fieldtype": "Data",
-   "label": "Contact No"
+   "label": "Contact No",
+   "unique": 1
   },
   {
    "fieldname": "city",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "City",
    "options": "City"
   },
   {
+   "allow_in_quick_entry": 1,
    "depends_on": "eval: doc.identification_type!=\"Others\"",
    "fieldname": "cnic",
    "fieldtype": "Data",
@@ -165,6 +177,7 @@
    "options": "Cost Center"
   },
   {
+   "allow_in_quick_entry": 1,
    "default": "CNIC",
    "fieldname": "identification_type",
    "fieldtype": "Select",
@@ -175,12 +188,14 @@
    "depends_on": "eval: doc.donor_type==\"Organizational\" || doc.donor_type==\"Institutional\"",
    "fieldname": "contact_person",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Contact Person"
   },
   {
    "depends_on": "eval: doc.donor_type==\"Organizational\" || doc.donor_type==\"Institutional\"",
    "fieldname": "contact_number",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Contact Number"
   },
   {
@@ -312,6 +327,36 @@
    "label": "Status",
    "options": "Active\nBlocked",
    "read_only": 1
+  },
+  {
+   "fieldname": "donor_primary_address",
+   "fieldtype": "Link",
+   "label": "Donor Primary Address",
+   "options": "Address"
+  },
+  {
+   "fieldname": "donor_primary_contact",
+   "fieldtype": "Link",
+   "label": "Donor Primary Contact",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "section_break_ygie",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_cmtj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fzwx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
   }
  ],
  "image_field": "image",
@@ -321,7 +366,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2024-12-31 17:40:51.563814",
+ "modified": "2025-01-02 18:10:35.331426",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
@@ -341,7 +386,6 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

@@ -42,7 +42,7 @@ def add_user_tags_gl_entry(donor_id, status="Blocked"):
 	if(donor_id):
 		filters = {"is_cancelled": 0, "donor": donor_id}
 		if(frappe.db.exists("GL Entry", filters)):
-			_user_tags = "Proscribed Person" if(status=="Blocked") else "-"
+			_user_tags = "Proscribed Person" if(status=="Blocked") else ""
 			frappe.db.set_value("GL Entry", filters, "_user_tags", _user_tags)
 			# frappe.db.sql(f"""Update `tabGL Entry` Set _user_tags='{_user_tags}' Where is_cancelled=0 and donor='{donor_id}' """)
 # 4
@@ -52,7 +52,7 @@ def add_user_tags_stock_ledger_entry(donor_id, status="Blocked"):
 		for d in sle_voucher_nos:
 			filters = {"docstatus": 1, "voucher_no": d.parent}
 			if(frappe.db.exists("Stock Ledger Entry", filters)):
-				_user_tags = "Proscribed Person" if(status=="Blocked") else "-"
+				_user_tags = "Proscribed Person" if(status=="Blocked") else ""
 				frappe.db.set_value("Stock Ledger Entry", filters, "_user_tags", _user_tags)
 
 def format_cnic(cnic):

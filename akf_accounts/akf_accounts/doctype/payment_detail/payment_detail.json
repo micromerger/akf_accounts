@@ -29,6 +29,8 @@
   "pay_product",
   "column_break_ibfu",
   "pay_subservice_area",
+  "share_no",
+  "share_person_name",
   "receipt_details_section",
   "receipt_number",
   "column_break_airg",
@@ -39,6 +41,9 @@
   "equity_account",
   "mode_of_payment",
   "account_paid_to",
+  "cash_receipt_date_by_donor_desk",
+  "cash_received_in_finance",
+  "cash_received_by_finance",
   "special_instruction_for_donor",
   "special_instruction_by_finance",
   "column_break_wlkz",
@@ -474,12 +479,45 @@
    "fieldname": "clearance_date",
    "fieldtype": "Date",
    "label": "Clearance Date"
+  },
+  {
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "fieldname": "share_no",
+   "fieldtype": "Percent",
+   "label": "Share No",
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+  },
+  {
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "fieldname": "share_person_name",
+   "fieldtype": "Data",
+   "label": "Share Person Name",
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+  },
+  {
+   "depends_on": "eval: doc.mode_of_payment === 'Cash'",
+   "fieldname": "cash_receipt_date_by_donor_desk",
+   "fieldtype": "Date",
+   "label": "Cash Receipt Date By Donor Desk"
+  },
+  {
+   "depends_on": "eval: doc.mode_of_payment === 'Cash'",
+   "fieldname": "cash_received_in_finance",
+   "fieldtype": "Date",
+   "label": "Cash Received In Finance"
+  },
+  {
+   "depends_on": "eval: doc.mode_of_payment === 'Cash'",
+   "fieldname": "cash_received_by_finance",
+   "fieldtype": "Link",
+   "label": "Cash Received By Finance ",
+   "options": "Employee"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-30 14:48:41.316991",
+ "modified": "2025-01-02 19:31:42.639538",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",
