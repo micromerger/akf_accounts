@@ -115,10 +115,10 @@ def verify_numbers(self, phone_regix):
 
 def verify_email(self):
     if(not self.email): return
-	if not match_regex(email_regex, self.email):
-		exception_msg("Please enter valid email.")
-	# if frappe.db.exists('Donor',{'name':['!=', self.name],'email':self.email}):
-	# 	exception_msg("Email is already registered.")
+    if not match_regex(email_regex, self.email):
+        exception_msg("Please enter valid email.")
+    # if frappe.db.exists('Donor',{'name':['!=', self.name],'email':self.email}):
+    # 	exception_msg("Email is already registered.")
   
 def match_regex(regex ,mystr):
 	return re.match(regex, mystr)
