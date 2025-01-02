@@ -1136,7 +1136,7 @@ class XAssetInvenPurchase(PurchaseReceipt):
 				else:
 					label =  field2.replace("pd_", "")
 					label =  label.replace("_", " ")
-					frappe.msgprint(f"Row#{funds_from_row.idx}, please select <b>{label.capitalize()}</b>", title="Program Details")
+					# frappe.msgprint(f"Row#{funds_from_row.idx}, please select <b>{label.capitalize()}</b>", title="Program Details")
 			return conditions
 		
 		def get_donor_entries(condition):
