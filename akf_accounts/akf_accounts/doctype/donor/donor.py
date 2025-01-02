@@ -44,12 +44,13 @@ class Donor(Document):
         return frappe.db.get_value('Country', {'name': self.country}, ["custom_dial_code", "custom_phone_mask", "custom_phone_regex"])
     
     def verify_cnic(self):
-        # Define a regex pattern for CNIC: `xxxxx-xxxxxxx-x`
-        cnic_pattern = r"^\d{5}-\d{7}-\d{1}$"
-        # Check if CNIC matches the pattern
-        if(not self.cnic): return
-        if not self.match_regex(cnic_pattern, self.cnic):
-            frappe.throw('Please enter a valid CNIC in the format xxxxx-xxxxxxx-x.')
+        if(self.identification_type=="CNIC"):
+            # Define a regex pattern for CNIC: `xxxxx-xxxxxxx-x`
+            cnic_pattern = r"^\d{5}-\d{7}-\d{1}$"
+            # Check if CNIC matches the pattern
+            if(not self.cnic): return
+            if not self.match_regex(cnic_pattern, self.cnic):
+                frappe.throw('Please enter a valid CNIC in the format xxxxx-xxxxxxx-x.')
 
     def match_regex(self, pattern, mystr):
         """Match the given string with the regex pattern."""
