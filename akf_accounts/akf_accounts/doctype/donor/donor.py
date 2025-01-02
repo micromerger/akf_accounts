@@ -28,17 +28,17 @@ class Donor(Document):
 
     def sum_up_dial_code_contact_no(self):
         if (self.country):
-            dial_code, phone_mask, phone_regix = self.get_country_details()
-            
-            if(dial_code and phone_mask):
-                phone_mask = '%s%s'%(dial_code, phone_mask)
-                mobileSize = len(self.contact_no)
-                maskSize = len(phone_mask)
-                
-                if(mobileSize<maskSize):
-                    self.contact_no = '{0}{1}'.format(dial_code, self.contact_no)
-                
-            verify_numbers(self, phone_regix)
+            if(self.contact_no):
+                dial_code, phone_mask, phone_regix = self.get_country_details()
+                if(dial_code and phone_mask):
+                    phone_mask = '%s%s'%(dial_code, phone_mask)
+                    mobileSize = len(self.contact_no)
+                    maskSize = len(phone_mask)
+                    
+                    if(mobileSize<maskSize):
+                        self.contact_no = '{0}{1}'.format(dial_code, self.contact_no)
+                    
+                verify_numbers(self, phone_regix)
 
     def get_country_details(self):
         return frappe.db.get_value('Country', {'name': self.country}, ["custom_dial_code", "custom_phone_mask", "custom_phone_regex"])
