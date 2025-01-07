@@ -1188,9 +1188,9 @@ class XAssetInvenPurchase(PurchaseReceipt):
 					if(is_valid):
 						frappe.throw(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{row.pd_donor}</b> with provided details""", 
 								title="Program Details")
-					else:
-						frappe.msgprint(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{row.pd_donor}</b> with provided details""", 
-								title="Program Details")
+					# else:
+					# 	frappe.msgprint(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{row.pd_donor}</b> with provided details""", 
+					# 			title="Program Details")
 					
 				for entry in donor_entries:
 					entry_key = (
@@ -1220,9 +1220,9 @@ class XAssetInvenPurchase(PurchaseReceipt):
 							if(is_valid):
 								frappe.throw(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{item}</b> with provided details""", 
 									title="Program Details")
-							else:
-								frappe.msgprint(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{item}</b> with provided details""", 
-									title="Program Details")
+							# else:
+								# frappe.msgprint(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{item}</b> with provided details""", 
+								# 	title="Program Details")
 					
 					total_balance += row.actual_balance
 			set_total_balance(total_balance)
