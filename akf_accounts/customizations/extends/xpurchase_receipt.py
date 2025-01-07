@@ -1139,35 +1139,48 @@ class XAssetInvenPurchase(PurchaseReceipt):
 					# frappe.msgprint(f"Row#{funds_from_row.idx}, please select <b>{label.capitalize()}</b>", title="Program Details")
 			return conditions
 		
-		def get_donor_entries(condition):
-			""" sql by nabeel saleem """
-			query = f"""  Select 
-					ifnull((sum(distinct gl.credit) - sum(distinct gl.debit)),0) as total_balance,
-					gl.donor,
-					(select donor_name from `tabDonor` where name=gl.donor) as donor_name,
-					gl.program,
-					gl.subservice_area,
-					gl.project,
-					gl.cost_center,
-					gl.product,
-					gl.company,
-					gl.account
-				From 
-					`tabGL Entry` gl, `tabDonation` d, `tabFunds Transfer` ft
-				Where 
-					(gl.voucher_no = d.name or gl.voucher_no = ft.name)
-					and d.contribution_type ='Donation'
-					and gl.is_cancelled=0
-					and voucher_type  in ('Donation', 'Funds Transfer')
-					and gl.account in (select name from `tabAccount` where disabled=0 and account_type='Equity' and name=gl.account)
-					{f'{condition}' if condition else ''}
-				Having 
-					total_balance>0
-				Order By 
-					total_balance desc
-				"""
+		# def get_donor_entries(condition):
+		def get_donor_entries(row):
+			from akf_projects.customizations.overrides.project.financial_stats import get_transactions
+			filters = {
+				# 'company': self.company,
+				'cost_center': row.pd_cost_center,			
+				'service_area': row.pd_service_area,
+				'subservice_area': row.pd_subservice_area,
+				'product': row.pd_product,
+				'project': row.pd_project,
+				'donor': row.pd_donor,
+			}
+			details = get_transactions(filters)
+			return details
+			# """ sql by nabeel saleem """
+			# query = f"""  Select 
+			# 		ifnull((sum(distinct gl.credit) - sum(distinct gl.debit)),0) as total_balance,
+			# 		gl.donor,
+			# 		(select donor_name from `tabDonor` where name=gl.donor) as donor_name,
+			# 		gl.program,
+			# 		gl.subservice_area,
+			# 		gl.project,
+			# 		gl.cost_center,
+			# 		gl.product,
+			# 		gl.company,
+			# 		gl.account
+			# 	From 
+			# 		`tabGL Entry` gl, `tabDonation` d, `tabFunds Transfer` ft
+			# 	Where 
+			# 		(gl.voucher_no = d.name or gl.voucher_no = ft.name)
+			# 		and d.contribution_type ='Donation'
+			# 		and gl.is_cancelled=0
+			# 		and voucher_type  in ('Donation', 'Funds Transfer')
+			# 		and gl.account in (select name from `tabAccount` where disabled=0 and account_type='Equity' and name=gl.account)
+			# 		{f'{condition}' if condition else ''}
+			# 	Having 
+			# 		total_balance>0
+			# 	Order By 
+			# 		total_balance desc
+			# 	"""
 			
-			return frappe.db.sql(query, as_dict=True)
+			# return frappe.db.sql(query, as_dict=True)
 		
 		def set_total_balance(total_balance):
 			self.custom_total_balance = total_balance
@@ -1177,11 +1190,13 @@ class XAssetInvenPurchase(PurchaseReceipt):
 			for row in self.custom_program_details:
 				# Construct the condition
 				condition = validate_missing_info(row)
-				try:
-					donor_entries = get_donor_entries(condition)
-					# frappe.msgprint(f"donor_entries: {donor_entries}")
-				except Exception as e:
-					frappe.throw(f"Error executing query: {e}")
+				# try:
+					# donor_entries = get_donor_entries(condition)
+				donor_entries = get_donor_entries(row)
+				remaining_amount = donor_entries.get("remaining_amount")
+				# frappe.msgprint(f"donor_entries: {donor_entries}")
+				# except Exception as e:
+				# 	frappe.throw(f"Error executing query: {e}")
 					
 				if(not donor_entries): 
 					row.actual_balance = 0.0
@@ -1192,39 +1207,39 @@ class XAssetInvenPurchase(PurchaseReceipt):
 					# 	frappe.msgprint(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{row.pd_donor}</b> with provided details""", 
 					# 			title="Program Details")
 					
-				for entry in donor_entries:
-					entry_key = (
-						entry.get('cost_center'),
-						entry.get('program'), 
-						entry.get('subservice_area'), 
-						entry.get('product'),
-						entry.get('donor'),                     
-						entry.get('project'),
-					)
+				# for entry in donor_entries:
+				entry_key = (
+					row.get('pd_cost_center'),
+					row.get('pd_service_area'), 
+					row.get('pd_subservice_area'), 
+					row.get('pd_product'),
+					row.get('pd_donor'),                     
+					row.get('pd_project'),
+				)
 
-					if entry_key in unique_entries:
-						# Mark it as a duplicate and notify the user
-						if entry_key not in duplicate_entries:
-							duplicate_entries.add(entry_key)
-							if(is_valid):
-								frappe.throw(f'<b>Row#{row.idx}</b>; duplicate entry exists for donor "{entry.get("donor")}" with provided details.</span>', title="Program Details")
-							else:
-								frappe.msgprint(f'<b>Row#{row.idx}</b>; duplicate entry exists for donor "{entry.get("donor")}" with provided details.</span>',title="Program Details")
-					else:
-						row.actual_balance = entry.total_balance
-						# Add to unique entries if not seen before
-						unique_entries.add(entry_key)
-						# Handle balance checks
-						if (entry.total_balance <= 0.0 and not self.is_new() and docstatus == 0):
-							# Exclude negative balances and track insufficient balance
-							if(is_valid):
-								frappe.throw(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{item}</b> with provided details""", 
-									title="Program Details")
-							# else:
-								# frappe.msgprint(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{item}</b> with provided details""", 
-								# 	title="Program Details")
-					
-					total_balance += row.actual_balance
+				if entry_key in unique_entries:
+					# Mark it as a duplicate and notify the user
+					if entry_key not in duplicate_entries:
+						duplicate_entries.add(entry_key)
+						if(is_valid):
+							frappe.throw(f'<b>Row#{row.idx}</b>; duplicate entry exists for donor "{entry.get("donor")}" with provided details.</span>', title="Program Details")
+						else:
+							frappe.msgprint(f'<b>Row#{row.idx}</b>; duplicate entry exists for donor "{entry.get("donor")}" with provided details.</span>',title="Program Details")
+				else:
+					row.actual_balance = remaining_amount
+					# Add to unique entries if not seen before
+					unique_entries.add(entry_key)
+					# Handle balance checks
+					if (remaining_amount <= 0.0 and not self.is_new() and docstatus == 0):
+						# Exclude negative balances and track insufficient balance
+						if(is_valid):
+							frappe.throw(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{row.pd_donor}</b> with provided details""", 
+								title="Program Details")
+						# else:
+							# frappe.msgprint(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{item}</b> with provided details""", 
+							# 	title="Program Details")
+				
+				total_balance += row.actual_balance
 			set_total_balance(total_balance)
 
 		execute_program_details()
