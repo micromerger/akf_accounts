@@ -282,6 +282,7 @@ class Donation(Document):
 		self.make_payment_entry()
 		self.update_status()
 		self.send_donation_emails()		# Mubashir Bashir
+		self.update_project_allocation_check() #Mubarrim
 
 	#Mubashir Bashir Start 3-12-24
 	def send_donation_emails(self):
@@ -333,6 +334,32 @@ class Donation(Document):
 						message=message,
 					)
 			#Mubashir Bashir End 3-12-24
+
+	
+	def update_project_allocation_check(self): #Mubarrim 07-01-2025
+		for project in self.payment_detail:
+			project_id = project.project_id
+			costing=frappe.db.get_values("Project",project_id,["estimated_costing","custom_total_allocation"])
+			estimated_cost=costing[0][0]
+			total_allocation=costing[0][1]
+			if(total_allocation >= estimated_cost):
+				frappe.db.sql(f""" 
+							Update 
+								`tabProject`
+							Set 
+								custom_allocation_check = 1
+							Where 
+								name = '{project_id}'
+								""")
+			else:
+				frappe.db.sql(f""" 
+							Update 
+								`tabProject`
+							Set 
+								custom_allocation_check = 0
+							Where 
+								name = '{project_id}'
+								""")
 
 	def get_gl_entry_dict(self):
 		return frappe._dict({
@@ -643,6 +670,7 @@ class Donation(Document):
 		# self.del_child_table()
 		self.update_status()
 		self.reset_return_to_paid()
+		self.update_project_allocation_check()
 
 	def del_gl_entries(self):
 		if(frappe.db.exists({"doctype": "GL Entry", "docstatus": 1, "against_voucher": self.name})):

@@ -446,7 +446,8 @@ function set_query_project(frm) {
         return {
             filters: {
                 company: frm.doc.company,
-                custom_program: program
+                custom_program: program,
+                custom_allocation_check: 0
             }
         };
     };
