@@ -8,6 +8,13 @@
  "field_order": [
   "naming_series",
   "donor_type",
+  "profession",
+  "organization_contact_person",
+  "representative_designation",
+  "company_name",
+  "company_owner_name",
+  "company_contact_number",
+  "company_email_address",
   "donor_name",
   "donor_dob",
   "old_id",
@@ -357,6 +364,52 @@
    "fieldtype": "Link",
    "label": "Country",
    "options": "Country"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organizational\"",
+   "fieldname": "profession",
+   "fieldtype": "Select",
+   "label": "Profession / Business Category",
+   "options": "\nSoftware House\nManufacture\nImporter\nExporter"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organizational\"",
+   "fieldname": "organization_contact_person",
+   "fieldtype": "Data",
+   "label": "Organization Contact Person",
+   "mandatory_depends_on": "eval: doc.donor_type == \"Organizational\""
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organizational\"",
+   "fieldname": "representative_designation",
+   "fieldtype": "Data",
+   "label": "Representative Designation",
+   "mandatory_depends_on": "eval: doc.donor_type == \"Organizational\""
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organizational\"",
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "label": "Company Name",
+   "mandatory_depends_on": "eval: doc.donor_type == \"Organizational\""
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organizational\"",
+   "fieldname": "company_owner_name",
+   "fieldtype": "Data",
+   "label": "Company Owner Name"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organizational\"",
+   "fieldname": "company_contact_number",
+   "fieldtype": "Data",
+   "label": "Company Contact Number"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organizational\"",
+   "fieldname": "company_email_address",
+   "fieldtype": "Data",
+   "label": "Company Email Address"
   }
  ],
  "image_field": "image",
@@ -366,7 +419,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2025-01-02 18:10:35.331426",
+ "modified": "2025-01-08 14:48:55.019325",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
