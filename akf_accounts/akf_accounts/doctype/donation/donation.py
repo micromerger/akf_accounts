@@ -336,7 +336,7 @@ class Donation(Document):
 			#Mubashir Bashir End 3-12-24
 
 	
-	def update_project_allocation_check(self): #Mubarrim 07-01-2025
+	def update_project_allocation_check(self): #Mubarrim 08-01-2025
 		for project in self.payment_detail:
 			project_id = project.project_id
 			costing=frappe.db.get_values("Project",project_id,["estimated_costing","custom_total_allocation"])
