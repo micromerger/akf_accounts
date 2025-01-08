@@ -521,59 +521,59 @@
    "label": "Transaction Attachment"
   },
   {
-   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" doc.share_no >= 1;",
    "fieldname": "first_share_person_name",
    "fieldtype": "Data",
    "label": "First Share Person Name",
-   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" doc.share_no >= 1;"
   },
   {
-   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 2;",
    "fieldname": "second_share_person_name",
    "fieldtype": "Data",
    "label": "Second Share Person Name",
-   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 2;"
   },
   {
-   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 3;",
    "fieldname": "third_share_person_name",
    "fieldtype": "Data",
    "label": "Third Share Person Name",
-   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 3;"
   },
   {
-   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 4;",
    "fieldname": "fourth_share_person_name",
    "fieldtype": "Data",
    "label": "Fourth Share Person Name",
-   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 4;"
   },
   {
-   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 5;",
    "fieldname": "fifth_share_person_name",
    "fieldtype": "Data",
    "label": "Fifth Share Person Name",
-   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 5;"
   },
   {
-   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 6;",
    "fieldname": "sixth_share_person_name",
    "fieldtype": "Data",
    "label": "SIxth Share Person Name",
-   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 6;"
   },
   {
-   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";",
+   "depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 7;",
    "fieldname": "seventh_share_person_name",
    "fieldtype": "Data",
    "label": "Seventh Share Person Name",
-   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\";"
+   "mandatory_depends_on": "eval:doc.pay_subservice_area==\"Qurbani\" && doc.share_no >= 7;"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-07 09:10:47.640098",
+ "modified": "2025-01-08 13:34:37.360667",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",
