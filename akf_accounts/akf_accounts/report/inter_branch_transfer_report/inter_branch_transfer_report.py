@@ -59,7 +59,7 @@ def get_query_result(filters):
     result = frappe.db.sql(
         """
         SELECT 
-			ft.posting_date,ftf.ff_donor,ft.name,ft.custom_from_cost_center,ft.custom_to_cost_center,ftf.ff_service_area,ftt.ft_service_area,ftf.ff_subservice_area,ftt.ft_subservice_area,ftf.ff_project,ftt.ft_project,
+			ft.posting_date,ftf.ff_donor,ft.name,ft.custom_from_cost_center,ft.custom_to_cost_center,ftf.ff_service_area,ftt.ft_service_area,ftf.ff_subservice_area,ftt.ft_subservice_area,ftf.project,ftt.project,
             CASE
                 WHEN ft.docstatus = 0 THEN 'Pending'
                 WHEN ft.docstatus = 1 THEN 'Acknowledged'
