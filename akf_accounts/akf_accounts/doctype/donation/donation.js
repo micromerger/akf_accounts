@@ -15,6 +15,7 @@ frappe.ui.form.on('Donation', {
         set_queries(frm);
         set_query_subservice_area(frm);
         set_custom_btns(frm);
+        set_labels(frm);
         set_exchange_rate_msg(frm);
         toggleModeOfPaymentRowWise(frm);
     },
@@ -67,10 +68,10 @@ frappe.ui.form.on('Donation', {
     mode_of_payment: function (frm) {
         const mode_of_payment = frm.doc.mode_of_payment;
         if (mode_of_payment == undefined || mode_of_payment == '') {
-            frm.set_value('account_paid_to',null);
-        } else{
+            frm.set_value('account_paid_to', null);
+        } else {
             erpnext.accounts.pos.get_payment_mode_account(frm, mode_of_payment, function (account) {
-                frm.set_value('account_paid_to',account);
+                frm.set_value('account_paid_to', account);
             });
         }
     },
@@ -126,7 +127,7 @@ frappe.ui.form.on('Payment Detail', {
             row.account_paid_to = null;
             frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn].refresh_field('reference_date');
 
-        } else{
+        } else {
             row.transaction_no_cheque_no = '';
             erpnext.accounts.pos.get_payment_mode_account(frm, row.mode_of_payment, function (account) {
                 row.account_paid_to = account;
@@ -154,7 +155,7 @@ frappe.ui.form.on('Payment Detail', {
         frm.refresh_field("payment_detail");
     }, */
     payment_detail_add: function (frm, cdt, cdn) {
-        if(frm.doc.is_return){ return; }
+        if (frm.doc.is_return) { return; }
         let row = locals[cdt][cdn];
         row.random_id = Math.floor((1000 + row.idx) + (Math.random() * 9000));
         // toggleModeOfPaymentRowWise(frm);
@@ -197,91 +198,130 @@ frappe.ui.form.on('Deduction Breakeven', {
 /* CUSTOM BUTTONS ON TOP OF DOCTYPE */
 function set_custom_btns(frm) {
 
-    if (frm.doc.docstatus == 1) {
-        if (frm.doc.donor_identity == "Unknown" && frm.doc.contribution_type === "Donation") {
-            frm.add_custom_button(__('Reverse Donor'), function () {
-                // let donors_list = []
-                let idx_list;
-                frappe.call({
-                    method: "akf_accounts.akf_accounts.doctype.donation.donation.get_idx_list_unknown",
-                    async: false,
-                    args: {
-                        donation_id: frm.doc.name,
-                    },
-                    callback: function (r) {
-                        let data = r.message;
-                        idx_list = data;
-                    }
-                });
-
-                let d = new frappe.ui.Dialog({
-                    title: 'Known donor detail',
-                    fields: [
-                        {
-                            label: 'Donor',
-                            fieldname: 'donor',
-                            fieldtype: 'Link',
-                            options: "Donor",
-                            reqd: 1,
-                            get_query() {
-                                return {
-                                    filters: {
-                                        donor_name: ["not in", ["Unknown Donor", "Merchant Known"]]
-                                    }
-                                }
-                            }
-                        },
-
-                        {
-                            label: 'Payment Detail Serial No',
-                            fieldname: 'serial_no',
-                            fieldtype: 'Select',
-                            options: idx_list,
-                            reqd: 1
-                        }
-                    ],
-                    size: 'small', // small, large, extra-large 
-                    primary_action_label: 'Submit',
-                    primary_action(values) {
-                        // console.log(values);
-                        if (values) {
-                            frappe.call({
-                                method: "akf_accounts.akf_accounts.doctype.donation.donation.set_unknown_to_known",
-                                args: {
-                                    name: frm.doc.name,
-                                    values: values
-                                },
-                                callback: function (r) {
-                                    d.hide();
-                                    frm.reload_doc()
-                                }
-                            });
-                        }
-                    }
-                });
-                d.show();
+    function doubtful_debtors() {
+        if (frm.doc.contribution_type == "Pledge") {
+            frm.add_custom_button(__('Doubtful Debt'), function () {
+                doubtful_debtors_dialog(frm);
             });
         }
+    }
+    function unknonw_to_known() {
+        function get_idx_list() {
+            let idx_list;
+            frappe.call({
+                method: "akf_accounts.akf_accounts.doctype.donation.donation.get_idx_list_unknown",
+                async: false,
+                args: {
+                    donation_id: frm.doc.name,
+                },
+                callback: function (r) {
+                    let data = r.message;
+                    idx_list = data;
+                }
+            });
+            return idx_list;
+        }
+        function get_dialog(title, idx_list) {
+            let d = new frappe.ui.Dialog({
+                title: title,
+                fields: [
+                    {
+                        label: 'Donor (Known)',
+                        fieldname: 'donor',
+                        fieldtype: 'Link',
+                        options: "Donor",
+                        reqd: 1,
+                        get_query() {
+                            return {
+                                filters: {
+                                    donor_name: ["not in", ["Unknown Donor", "Merchant Known"]]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        label: 'Payment Detail Serial No',
+                        fieldname: 'serial_no',
+                        fieldtype: 'Select',
+                        options: idx_list,
+                        reqd: 1
+                    }
+                ],
+                size: 'small', // small, large, extra-large 
+                primary_action_label: 'Submit',
+                primary_action(values) {
+                    // console.log(values);
+                    if (values) {
+                        /* frappe.call({
+                            method: "akf_accounts.akf_accounts.doctype.donation.donation.set_unknown_to_known",
+                            args: {
+                                name: frm.doc.name,
+                                values: values
+                            },
+                            callback: function (r) {
+                                d.hide();
+                                frm.reload_doc()
+                            }
+                        }); */
+                        // frm.add_custom_button(__('Reverse Donor'), function () {
+                            frappe.model.open_mapped_doc({
+                                method:"akf_accounts.akf_accounts.doctype.donation.unknown_to_known.convert_unknown_to_known",
+                                frm: cur_frm,
+                                args: values
+                            });
+                        // });
+                    }
+                }
+            });
+            d.show();
+        }
+        if (frm.doc.donor_identity == "Unknown" && frm.doc.contribution_type === "Donation") {
+            let idx_list = get_idx_list();
+            if(idx_list.length>0){
+                frm.add_custom_button(__('Reverse Donor'), function () {
+                    const title = "Unknown to Known donor";
+                    get_dialog(title, idx_list);
+                });
+            }
+        }
+    }
+    function accounting_ledger() {
         frm.add_custom_button(__('Accounting Ledger'), function () {
             frappe.set_route("query-report", "General Ledger", { "voucher_no": frm.doc.name });
         }, __("View"));
+    }
+    function payment_entry() {
         if (frm.doc.status != "Paid") {
             if (frm.doc.contribution_type == "Pledge") {
                 frm.add_custom_button(__('Payment Entry'), function () {
                     pledge_payment_entry(frm);
                 }, __("Create"));
-            }else if(frm.doc.status=='Return'){
+            } else if (frm.doc.status == 'Return') {
                 // return_payment_entry(frm);
-            }else if(frm.doc.status=="Partly Return"){
+            } else if (frm.doc.status == "Partly Return") {
                 credit_note_return(frm);
             }
         } else if (frm.doc.status == "Paid") {
-                credit_note_return(frm);
+            credit_note_return(frm);
         }
+    }
+    if (frm.doc.docstatus == 1) {
+        unknonw_to_known();
+        doubtful_debtors();
+        accounting_ledger();
+        payment_entry();
     }
 }
 /* END CUSTOM BUTTONS ON TOP OF DOCTYPE */
 
+function set_labels(frm){
+    function reverse_against_label(){
+        if(frm.doc.unknown_to_known){
+            frm.set_df_property('return_against', 'label', 'Reverse Against');
+        }
+    }
+    reverse_against_label();
+}
 /* APPLYING SET QUERIES */
 function set_queries(frm) {
 
@@ -360,7 +400,7 @@ function set_query_donor_id(frm) {
         var row = locals[cdt][cdn];
 
         if (frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant") {
-            let dlist = ["in", "Unknown Donor"];
+            let dlist = frm.doc.unknonw_to_known == undefined ? ["in", "Unknown Donor"] : ["not in", "Unknown Donor"];
             return {
                 filters: {
                     donor_name: dlist,
@@ -511,6 +551,173 @@ function set_exchange_rate_msg(frm) {
 }
 
 /* Dialog for payment entry */
+function doubtful_debtors_dialog(frm) {
+    let donors_list = []
+    let idx_list;
+    frappe.call({
+        method: "akf_accounts.akf_accounts.doctype.donation.donation.get_donors_list",
+        async: false,
+        args: {
+            donation_id: frm.doc.name,
+        },
+        callback: function (r) {
+            let data = r.message;
+            // console.log(data);
+            donors_list = data['donors_list'];
+            idx_list = data['idx_list'];
+        }
+    });
+
+    let d = new frappe.ui.Dialog({
+        title: 'Doubtful Debt Details',
+        fields: [
+            {
+                label: '',
+                fieldname: 'donor_section',
+                fieldtype: 'Section Break',
+                options: "",
+                reqd: 0
+            },
+            {
+                label: 'Donor ID',
+                fieldname: 'donor_id',
+                fieldtype: 'Link',
+                options: "Donor",
+                reqd: 1,
+                get_query() {
+                    return {
+                        filters: {
+                            name: ["in", donors_list],
+                        }
+                    }
+                },
+                onchange: function (val) {
+                    let donor_id = d.fields_dict.donor_id.value;
+
+                    if (donor_id in idx_list) {
+                        d.fields_dict.serial_no.df.options = idx_list[donor_id];
+                        d.fields_dict.serial_no.refresh();
+                    }
+                }
+            },
+            {
+                label: 'Donation Amount.',
+                fieldname: 'donation_amount',
+                fieldtype: 'Currency',
+                options: "",
+                default: 0,
+                reqd: 0,
+                read_only: 1,
+                onchange: function (val) {
+                    let donor_id = d.fields_dict.donor_id.value;
+                    // console.log(donor_id)
+                }
+            },
+            {
+                label: '',
+                fieldname: 'col_break',
+                fieldtype: 'Column Break',
+                options: "",
+                reqd: 0
+            },
+            {
+                label: 'Serial No.',
+                fieldname: 'serial_no',
+                fieldtype: 'Select',
+                options: "",
+                reqd: 1,
+                onchange: function (val) {
+                    let donor_id = d.fields_dict.donor_id.value;
+                    let serial_no = d.fields_dict.serial_no.value;
+                    if (donor_id != null && serial_no != null) {
+                        frappe.call({
+                            method: "akf_accounts.akf_accounts.doctype.donation.donation.get_donation_amount",
+                            args: {
+                                filters: { "name": frm.doc.name, "donor_id": donor_id, "idx": serial_no },
+                            },
+                            callback: function (r) {
+                                d.fields_dict.donation_amount.value = r.message;
+                                d.fields_dict.donation_amount.refresh();
+
+                            }
+                        })
+                    }
+                }
+            },
+
+            {
+                label: 'Doubtful Amount',
+                fieldname: 'doubtful_amount',
+                fieldtype: 'Currency',
+                options: "",
+                default: 0,
+                reqd: 1,
+                onchange: function (val) {
+                    let donation_amount = d.fields_dict.donation_amount.value;
+                    let doubtful_amount = d.fields_dict.doubtful_amount.value;
+                    if (doubtful_amount > donation_amount) {
+                        frappe.msgprint("Doubtful amount must be less than or equal to donation amount!")
+                    }
+                }
+            },
+            {
+                label: 'Accounts Detail',
+                fieldname: 'accounts_section',
+                fieldtype: 'Section Break',
+                options: "",
+                reqd: 0,
+            },
+            {
+                label: 'Doubtful Debt Account',
+                fieldname: 'doubtful_debt_account',
+                fieldtype: 'Link',
+                options: "Account",
+                reqd: 1,
+                /* get_query() {
+                    let mode_of_payment = d.fields_dict.mode_of_payment.value;
+                    let account_type = mode_of_payment == "Cash" ? "Cash" : "Bank";
+                    return {
+                        filters: {
+                            is_group: 0,
+                            company: frm.doc.company,
+                            account_type: account_type
+                        }
+                    }
+                } */
+            },
+        ],
+        size: 'small', // small, large, extra-large 
+        primary_action_label: 'Record Doubtful Debt',
+        primary_action(values) {
+            if (values.paid_amount > values.outstanding_amount) {
+                frappe.msgprint("Paid amount must be less than or equal to outstanding amount!")
+            }
+            else if (values) {
+                let paid = values.paid_amount == values.outstanding_amount ? 1 : 0;
+                let outstanding_amount = values.paid_amount <= values.outstanding_amount ? (values.outstanding_amount - values.paid_amount) : 0;
+                values['paid'] = paid;
+                values['outstanding_amount'] = outstanding_amount;
+                frm.call("record_doubtful_debt", { values: values })
+                /* frappe.call({
+                    method: "akf_accounts.akf_accounts.doctype.donation.donation.record_doubtful_debt",
+                    args: {
+                        doc: frm.doc,
+                        values: values
+                    },
+                    callback: function (r) {
+                        d.hide();
+                        // frm.refresh_field("payment_detail");
+                        frm.reload_doc();
+                        // frappe.set_route("Form", "Payment Entry", r.message);
+                    }
+                }); */
+            }
+        }
+    });
+    d.show();
+}
+
+/* Dialog for payment entry */
 function pledge_payment_entry(frm) {
     let donors_list = []
     let idx_list;
@@ -598,7 +805,7 @@ function pledge_payment_entry(frm) {
                             callback: function (r) {
                                 d.fields_dict.outstanding_amount.value = r.message;
                                 d.fields_dict.outstanding_amount.refresh();
-                                
+
                             }
                         })
                     }
@@ -654,13 +861,13 @@ function pledge_payment_entry(frm) {
                     }
                     erpnext.accounts.pos.get_payment_mode_account(frm, mode_of_payment, function (account) {
                         d.fields_dict.account_paid_to.value = account
-                        
+
                     });
 
                     d.fields_dict.account_paid_to.refresh();
                     d.fields_dict.cheque_reference_no.refresh();
                     d.fields_dict.cheque_reference_date.refresh();
-                    
+
                     if (mode_of_payment == "") {
                         d.fields_dict.account_paid_to.value = null;
                         d.fields_dict.account_paid_to.refresh();
@@ -739,16 +946,16 @@ function pledge_payment_entry(frm) {
 }
 
 function credit_note_return(frm) {
-    if (frm.doc.is_return){ return };
+    if (frm.doc.is_return) { return };
     frappe.call({
         method: "akf_accounts.akf_accounts.doctype.donation.donation.get_total_donors_return",
-        args:{
+        args: {
             'return_against': frm.doc.name
         },
-        callback: function(r){
-            if(r.message==frm.doc.total_donors){
+        callback: function (r) {
+            if (r.message == frm.doc.total_donors) {
                 // pass
-            }else{
+            } else {
                 frm.add_custom_button(__('Return / Credit Note'), function () {
                     // make_sales_return() {
                     frappe.model.open_mapped_doc({
@@ -763,7 +970,7 @@ function credit_note_return(frm) {
     });
 }
 
-function return_payment_entry(frm){
+function return_payment_entry(frm) {
     frappe.call({
         method: "akf_accounts.akf_accounts.doctype.donation.donation.verify_payment_entry",
         args: {
@@ -792,22 +999,22 @@ function return_payment_entry(frm){
     });
 }
 
-function showHideModeOfPaymentForSingleRow(frm, row){
-    const flag = frm.doc.contribution_type=='Pledge'? 1: 0;
+function showHideModeOfPaymentForSingleRow(frm, row) {
+    const flag = frm.doc.contribution_type == 'Pledge' ? 1 : 0;
     // console.log("flag: ", flag);
     frm.set_df_property('payment_detail', 'read_only', flag, frm.doc.name, 'mode_of_payment', row.name);
 }
-function fill_mode_of_payment_and_account(frm, row){
-    
+function fill_mode_of_payment_and_account(frm, row) {
+
     const donor_identity = frm.doc.donor_identity;
 
-    function validate_mode_of_payment_and_account_paid_to(){
+    function validate_mode_of_payment_and_account_paid_to() {
         const mode_of_payment = frm.doc.mode_of_payment;
         const account_paid_to = frm.doc.account_paid_to;
-        if(mode_of_payment=="" || mode_of_payment==undefined){
+        if (mode_of_payment == "" || mode_of_payment == undefined) {
             frappe.throw(`Please select mode of payment`);
         }
-        if(account_paid_to=="" || account_paid_to==undefined){
+        if (account_paid_to == "" || account_paid_to == undefined) {
             frappe.throw(`Please select account paid to`);
         }
     }
@@ -822,13 +1029,13 @@ function fill_mode_of_payment_and_account(frm, row){
     frm.set_df_property('payment_detail', 'read_only', readOnly, frm.doc.name, 'account_paid_to', row.name);
 }
 
-function toggleModeOfPaymentRowWise(frm){
-     // Iterate through each row in the child table
-     if(frm.doc.docstatus>0) { return }
-     frm.doc.payment_detail.forEach((row) => {
-        if (frm.doc.contribution_type=='Pledge') { // Replace with your condition
+function toggleModeOfPaymentRowWise(frm) {
+    // Iterate through each row in the child table
+    if (frm.doc.docstatus > 0) { return }
+    frm.doc.payment_detail.forEach((row) => {
+        if (frm.doc.contribution_type == 'Pledge') { // Replace with your condition
             frm.set_df_property('payment_detail', 'read_only', 1, frm.doc.name, 'mode_of_payment', row.name);
-        }else{
+        } else {
             frm.set_df_property('payment_detail', 'read_only', 0, frm.doc.name, 'mode_of_payment', row.name);
         }
     });

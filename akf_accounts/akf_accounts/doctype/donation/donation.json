@@ -10,7 +10,6 @@
   "naming_series",
   "donor_identity",
   "contribution_type",
-  "plaque_branding",
   "donation_type",
   "column_break_gxmk",
   "company",
@@ -21,8 +20,8 @@
   "column_break_qxif",
   "due_date",
   "is_return",
+  "unknown_to_known",
   "return_against",
-  "reverse_against",
   "section_break_bezw",
   "from_currency_column",
   "currency",
@@ -138,7 +137,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nUnpaid\nPaid\nPartly Paid\nOverdue\nPartly Return\nReturn\nCredit Note Issued",
+   "options": "Draft\nUnpaid\nPaid\nPartly Paid\nOverdue\nPartly Return\nReturn\nCredit Note Issued\nUnknown To Known",
    "read_only": 1
   },
   {
@@ -243,7 +242,7 @@
   {
    "fieldname": "donation_cost_center",
    "fieldtype": "Link",
-   "label": "Cost Center",
+   "label": "Branch",
    "options": "Cost Center",
    "reqd": 1
   },
@@ -369,22 +368,17 @@
    "options": "Account"
   },
   {
-   "fieldname": "reverse_against",
-   "fieldtype": "Link",
-   "label": "Reverse Against",
-   "options": "Donation",
+   "default": "0",
+   "fieldname": "unknown_to_known",
+   "fieldtype": "Check",
+   "label": "Unknown To Known",
    "read_only": 1
-  },
-  {
-   "fieldname": "plaque_branding",
-   "fieldtype": "Data",
-   "label": "Plaque/Branding"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-02 19:29:53.228690",
+ "modified": "2025-01-16 17:24:31.282733",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

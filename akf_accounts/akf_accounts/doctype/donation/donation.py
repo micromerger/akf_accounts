@@ -240,7 +240,6 @@ class Donation(Document):
 		self.set("deduction_breakeven", breakeven_list)
 		self.calculate_total(total_donation, deduction_amount)
 
-
 	def apply_currecny_exchange(self, amount):
 		if(self.currency):
 			if(self.currency != self.to_currency):
@@ -284,83 +283,6 @@ class Donation(Document):
 		self.send_donation_emails()		# Mubashir Bashir
 		self.update_project_allocation_check() #Mubarrim
 
-	#Mubashir Bashir Start 3-12-24
-	def send_donation_emails(self):
-		
-		"""
-		Sends email notifications to all users linked to the project when a new donation is added.
-		"""
-		for payment in self.payment_detail:
-			project_id = payment.project_id
-			if project_id:
-				project_name = frappe.db.get_value('Project', project_id, 'project_name')
-				project_users = frappe.db.sql(
-					"""
-					SELECT email, full_name
-					FROM `tabProject User`
-					WHERE parent = %s
-					""",
-					(project_id,),
-					as_dict=True,
-				)
-				
-				email_addresses = [
-					{"email": user["email"], "full_name": user["full_name"]}
-					for user in project_users if user["email"]
-				]
-
-				company_currency = frappe.db.get_value('Company', self.company, 'default_currency')
-				currency = self.currency or company_currency
-
-				for user in email_addresses:
-					formatted_amount = frappe.utils.fmt_money(payment.donation_amount, currency=currency)
-					email = user["email"]
-					full_name = user["full_name"] or "Valued Team Member"
-					subject = f"New Donation Received for Project {project_name}"
-					message = f"""
-					Dear {full_name},<br><br>
-					We are excited to inform you that a new {self.contribution_type} has been received for the project: <b>{project_name}</b>.<br><br>
-					<b>{self.contribution_type} Details:</b><br>
-					- <b>Project Name:</b> {project_name}<br>
-					- <b>Project ID:</b> {project_id}<br>
-					- <b>{self.contribution_type} Amount:</b> {formatted_amount}<br>
-					Your contribution and effort towards this project are greatly appreciated. Please feel free to reach out if you have any questions.<br><br>
-					Best regards,<br>
-					<b>{self.company}</b>
-					"""
-					frappe.sendmail(
-						recipients=email,
-						subject=subject,
-						message=message,
-					)
-			#Mubashir Bashir End 3-12-24
-
-	
-	def update_project_allocation_check(self): #Mubarrim 08-01-2025
-		for project in self.payment_detail:
-			project_id = project.project_id
-			costing=frappe.db.get_values("Project",project_id,["estimated_costing","custom_total_allocation"])
-			estimated_cost=costing[0][0]
-			total_allocation=costing[0][1]
-			if(total_allocation >= estimated_cost):
-				frappe.db.sql(f""" 
-							Update 
-								`tabProject`
-							Set 
-								custom_allocation_check = 1
-							Where 
-								name = '{project_id}'
-								""")
-			else:
-				frappe.db.sql(f""" 
-							Update 
-								`tabProject`
-							Set 
-								custom_allocation_check = 0
-							Where 
-								name = '{project_id}'
-								""")
-
 	def get_gl_entry_dict(self):
 		return frappe._dict({
 			'doctype': 'GL Entry',
@@ -390,6 +312,9 @@ class Donation(Document):
 			if(self.is_return): # debit
 				debit = _net_amount
 				debit_in_transaction_currency = row.net_amount
+			elif(self.unknown_to_known): # credit
+				credit = _net_amount
+				credit_in_transaction_currency = row.net_amount
 			else: # credit
 				credit = _net_amount
 				credit_in_transaction_currency = row.net_amount
@@ -420,39 +345,72 @@ class Donation(Document):
 			doc.save(ignore_permissions=True)
 			doc.submit()
 
-			if(self.is_return): # credit
-				debit = 0 # PKR
-				debit_in_transaction_currency = 0 # USD
-				credit = row.base_donation_amount
-				credit_in_transaction_currency = row.donation_amount # USD
-			else: # debit
-				debit = row.base_donation_amount # PKR
-				debit_in_transaction_currency = row.donation_amount  # USD
-				credit = 0
-				credit_in_transaction_currency = 0 # USD
-
-			# debit
-			""" debit = 0 if(self.is_return) else row.base_donation_amount
-			credit = row.base_donation_amount if(self.is_return) else 0 """
-			# arguements
-			args.update({
-				"party_type": "Donor",
-				"party": row.donor_id,
-				"account": row.receivable_account,
-				"debit": debit,
-				"credit": credit,
-				"debit_in_account_currency": debit_in_transaction_currency,
-				"credit_in_account_currency": credit_in_transaction_currency,
-				"debit_in_transaction_currency": debit_in_transaction_currency,
-				"credit_in_transaction_currency": credit_in_transaction_currency,
-			})
-			if(self.donor_identity == "Merchant - Known"): pass
+			if(self.unknown_to_known):
+				# debtors entry
+				for rowp in frappe.db.sql("""select * from `tabPayment Detail`
+						where docstatus=%(docstatus)s and parent = %(parent)s and random_id=%(random_id)s""", 
+      					{"docstatus": 1,"parent": self.return_against, "random_id": row.random_id}, as_dict=1):
+					frappe.db.set_value("Payment Detail", rowp.name, "unknown_to_known", 1)
+					args.update({
+						"account": rowp.equity_account,
+						'against': f"Donation: {self.return_against}",
+						'against_voucher': self.name,
+						'voucher_no': self.return_against,
+						"party_type": "",
+						"party": "",
+						"voucher_detail_no": row.name,
+						"donor": rowp.donor_id,
+						"program": rowp.pay_service_area,
+						"subservice_area": rowp.subservice_area,
+						"product": rowp.pay_product if(rowp.pay_product) else rowp.product,
+						"project": rowp.project,
+						"cost_center": rowp.cost_center,
+						"account": rowp.equity_account,
+						"debit": row.net_amount,
+						"credit": 0,
+						"debit_in_account_currency": row.net_amount,
+						"credit_in_account_currency": 0,
+						"debit_in_transaction_currency": row.net_amount,
+						"credit_in_transaction_currency": 0,
+						
+					})
+					doc = frappe.get_doc(args)
+					doc.save(ignore_permissions=True)
+					doc.submit()
 			else:
-				doc = frappe.get_doc(args)
-				doc.save(ignore_permissions=True)
-				doc.submit()
+				if(self.is_return): # credit
+					debit = 0 # PKR
+					debit_in_transaction_currency = 0 # USD
+					credit = row.base_donation_amount
+					credit_in_transaction_currency = row.donation_amount # USD
+				else: # debit
+					debit = row.base_donation_amount # PKR
+					debit_in_transaction_currency = row.donation_amount  # USD
+					credit = 0
+					credit_in_transaction_currency = 0 # USD
+
+				# debit
+				""" debit = 0 if(self.is_return) else row.base_donation_amount
+				credit = row.base_donation_amount if(self.is_return) else 0 """
+				# arguements
+				args.update({
+					"party_type": "Donor",
+					"party": row.donor_id,
+					"account": row.receivable_account,
+					"debit": debit,
+					"credit": credit,
+					"debit_in_account_currency": debit_in_transaction_currency,
+					"credit_in_account_currency": credit_in_transaction_currency,
+					"debit_in_transaction_currency": debit_in_transaction_currency,
+					"credit_in_transaction_currency": credit_in_transaction_currency,
+				})
+				if(self.donor_identity == "Merchant - Known"): pass
+				else:
+					doc = frappe.get_doc(args)
+					doc.save(ignore_permissions=True)
+					doc.submit()
 		
-		if(self.donor_identity == "Merchant - Known"):
+		if (not self.unknown_to_known) and (self.donor_identity == "Merchant - Known"):
 			if(self.is_return): # credit
 				debit = 0 # PKR
 				debit_in_transaction_currency = 0 # USD
@@ -493,6 +451,9 @@ class Donation(Document):
 			if(self.is_return): # debit
 				debit = row.base_amount # account currency
 				debit_in_transaction_currency = row.amount # transaction currency
+			elif(self.unknown_to_known): # credit
+				credit = row.base_amount # account currency
+				credit_in_transaction_currency = row.amount # transaction currency
 			else: # credit
 				credit = row.base_amount # account currency
 				credit_in_transaction_currency = row.amount # transaction currency
@@ -523,7 +484,7 @@ class Donation(Document):
 			doc.submit()
 
 	def make_payment_ledger_entry(self):
-		if(self.is_return): return
+		if(self.is_return or self.unknown_to_known): return
 		args = {}
 		for row in self.payment_detail:
 			args = frappe._dict({
@@ -561,7 +522,7 @@ class Donation(Document):
 
 	def make_payment_entry(self):
 		if(self.contribution_type!="Donation"): return
-		if(self.is_return): return
+		if(self.is_return or self.unknown_to_known): return
 		args = {}
 		
 		for row in self.payment_detail:
@@ -645,7 +606,9 @@ class Donation(Document):
 				frappe.throw(error_msg, title='Return entries already exist.')
 
 	def update_status(self):
-		if(self.docstatus==1):
+		if(self.docstatus!=2 and (self.unknown_to_known)):
+			self.db_set("status", "Unknown To Known")
+		elif(self.docstatus==1):
 			status = "Paid" if(self.contribution_type == "Donation") else "Unpaid"
 			if(self.is_return): 
 				status = "Return"
@@ -656,7 +619,82 @@ class Donation(Document):
 		elif(self.docstatus==2):
 			self.db_set("status", "Cancelled")
 
-	
+	#Mubashir Bashir Start 3-12-24
+	def send_donation_emails(self):
+		"""
+		Sends email notifications to all users linked to the project when a new donation is added.
+		"""
+		for payment in self.payment_detail:
+			project_id = payment.project_id
+			if project_id:
+				project_name = frappe.db.get_value('Project', project_id, 'project_name')
+				project_users = frappe.db.sql(
+					"""
+					SELECT email, full_name
+					FROM `tabProject User`
+					WHERE parent = %s
+					""",
+					(project_id,),
+					as_dict=True,
+				)
+				
+				email_addresses = [
+					{"email": user["email"], "full_name": user["full_name"]}
+					for user in project_users if user["email"]
+				]
+
+				company_currency = frappe.db.get_value('Company', self.company, 'default_currency')
+				currency = self.currency or company_currency
+
+				for user in email_addresses:
+					formatted_amount = frappe.utils.fmt_money(payment.donation_amount, currency=currency)
+					email = user["email"]
+					full_name = user["full_name"] or "Valued Team Member"
+					subject = f"New Donation Received for Project {project_name}"
+					message = f"""
+					Dear {full_name},<br><br>
+					We are excited to inform you that a new {self.contribution_type} has been received for the project: <b>{project_name}</b>.<br><br>
+					<b>{self.contribution_type} Details:</b><br>
+					- <b>Project Name:</b> {project_name}<br>
+					- <b>Project ID:</b> {project_id}<br>
+					- <b>{self.contribution_type} Amount:</b> {formatted_amount}<br>
+					Your contribution and effort towards this project are greatly appreciated. Please feel free to reach out if you have any questions.<br><br>
+					Best regards,<br>
+					<b>{self.company}</b>
+					"""
+					frappe.sendmail(
+						recipients=email,
+						subject=subject,
+						message=message,
+					)
+			#Mubashir Bashir End 3-12-24
+
+	def update_project_allocation_check(self): #Mubarrim 08-01-2025
+		if(self.unknown_to_known): return
+		for project in self.payment_detail:
+			project_id = project.project_id
+			costing=frappe.db.get_values("Project",project_id,["estimated_costing","custom_total_allocation"])
+			estimated_cost=costing[0][0]
+			total_allocation=costing[0][1]
+			if(total_allocation >= estimated_cost):
+				frappe.db.sql(f""" 
+							Update 
+								`tabProject`
+							Set 
+								custom_allocation_check = 1
+							Where 
+								name = '{project_id}'
+								""")
+			else:
+				frappe.db.sql(f""" 
+							Update 
+								`tabProject`
+							Set 
+								custom_allocation_check = 0
+							Where 
+								name = '{project_id}'
+								""")
+
 	def before_cancel(self):
 		self.del_gl_entries()
 		self.del_payment_ledger_entry()
@@ -667,7 +705,7 @@ class Donation(Document):
 		self.del_gl_entries()
 		self.del_payment_ledger_entry()
 		self.del_payment_entry()
-		# self.del_child_table()
+		self.del_child_table()
 		self.update_status()
 		self.reset_return_to_paid()
 		self.update_project_allocation_check()
@@ -689,11 +727,13 @@ class Donation(Document):
 			frappe.db.sql(f""" delete from `tabPayment Ledger Entry` Where against_voucher_no = "{self.name}" """)
 
 	def del_child_table(self):
-		if(frappe.db.exists({"doctype": "Payment Detail", "docstatus": 1, "parent": self.name})):
-			frappe.db.sql(f""" delete from `tabPayment Detail` Where docstatus= 1 and parent = "{self.name}" """)
+		if(self.unknown_to_known):
+			for row in self.payment_detail:
+				if(frappe.db.exists({"doctype": "Payment Detail", "docstatus": 1, "parent": self.return_against, "random_id": row.random_id})):
+					frappe.db.set_value("Payment Detail", {"docstatus": 1, "parent": self.return_against, "random_id": row.random_id}, "unknown_to_known", 0)
 
-		if(frappe.db.exists({"doctype": "Deduction Breakeven", "docstatus": 1, "parent": self.name})):
-			frappe.db.sql(f""" delete from `tabDeduction Breakeven` Where docstatus= 1 and parent = "{self.name}" """)
+			# if(frappe.db.exists({"doctype": "Deduction Breakeven", "docstatus": 1, "parent": self.name})):
+			# 	frappe.db.sql(f""" delete from `tabDeduction Breakeven` Where docstatus= 1 and parent = "{self.name}" """)
 	
 	def reset_return_to_paid(self):
 		if(not self.return_against): return
@@ -705,6 +745,12 @@ class Donation(Document):
 			frappe.db.set_value("Donation", self.return_against, 'status', 'Partly Return')
 		else:
 			frappe.db.set_value("Donation", self.return_against, 'status', 'Paid')
+
+	@frappe.whitelist()
+	def record_doubtful_debt(self, values: dict):
+		from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import make_doubtful_debt
+		values = frappe._dict(values)
+		make_doubtful_debt(self, values)
 
 @frappe.whitelist()
 def get_donors_list(donation_id):
@@ -720,7 +766,10 @@ def get_donors_list(donation_id):
 
 @frappe.whitelist()
 def get_idx_list_unknown(donation_id):
-    result = frappe.db.sql(f""" select idx from `tabPayment Detail` where paid = 0 and parent='{donation_id}' """, as_dict=0)
+    result = frappe.db.sql(f""" 
+        	select idx 
+         	from `tabPayment Detail` 
+          	where paid = 0 and unknown_to_known=0 and parent='{donation_id}' """, as_dict=0)
     idx_list = sorted([r[0] for r in result])
     return idx_list
 
@@ -976,7 +1025,6 @@ def set_unknown_to_known(name, values):
 
     frappe.msgprint("Donor id, updated in [<b>Payment Detail, Deduction Breakeven, GL Entry, Payment Entry, Payment Ledger Entry</b>] accounting dimensions/doctypes.", alert=1)
 
-
 @frappe.whitelist()
 def get_total_donors_return(return_against):
 	result = frappe.db.sql(f""" 
@@ -985,7 +1033,6 @@ def get_total_donors_return(return_against):
 		where docstatus<2 and return_against='{return_against}' 
 	""")
 	return result[0][0] if(result) else 0
-
 
 """ 12-09-2024 
 Nabeel Saleem 
@@ -1007,6 +1054,7 @@ def make_return_doc(
 		doc.is_return = 1
 		doc.status = "Return"
 		doc.return_against = source.name
+		doc.reverse_against = ""
 	
 	def update_payment_detail(source_doc, target_doc, source_parent):
 		# target_doc.donation_amount = -1 * source_doc.donation_amount
@@ -1045,7 +1093,6 @@ def verify_payment_entry(doctype, reference_name, fieldname):
 		and reference_name = '{reference_name}'
 	 """)
 
-
 # akf_accounts.akf_accounts.doctype.donation.donation.cron_for_notify_overdue_tasks
 
 #Mubashir Bashir Start 9-12-24
@@ -1070,8 +1117,6 @@ def cron_for_notify_overdue_tasks():	#Mubashir
             if project and project not in processed_projects:
                 processed_projects.add(project)                
                 notify_overdue_tasks(project)
-
-
 
 @frappe.whitelist()
 def notify_overdue_tasks(project):	#Mubashir
@@ -1132,3 +1177,17 @@ def notify_overdue_tasks(project):	#Mubashir
                     except Exception as e:
                         frappe.log_error(message=str(e), title="Error in Task Overdue Notification")
 #Mubashir Bashir End 9-12-24
+
+""" Doubtful Debtors """
+@frappe.whitelist()
+def get_donation_amount(filters):
+    filters = ast.literal_eval(filters)
+    return frappe.db.sql(""" select donation_amount from `tabPayment Detail` 
+        where docstatus=1
+        and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)[0][0]
+
+# @frappe.whitelist()
+# def record_doubtful_debt(doc, values):
+# 	frappe.msgprint('under development')
+# 	doc = frappe._dict(ast.literal_eval(doc))
+# 	values = frappe._dict(ast.literal_eval(values))

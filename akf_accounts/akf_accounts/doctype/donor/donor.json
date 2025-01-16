@@ -88,6 +88,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Email",
+   "reqd": 1,
    "unique": 1
   },
   {
@@ -158,6 +159,7 @@
    "fieldname": "contact_no",
    "fieldtype": "Data",
    "label": "Contact No",
+   "reqd": 1,
    "unique": 1
   },
   {
@@ -296,7 +298,8 @@
   {
    "fieldname": "old_id",
    "fieldtype": "Data",
-   "label": "Old ID"
+   "label": "Old ID",
+   "read_only": 1
   },
   {
    "fieldname": "area",
@@ -419,7 +422,7 @@
    "link_fieldname": "donor"
   }
  ],
- "modified": "2025-01-08 14:48:55.019325",
+ "modified": "2025-01-15 10:39:14.095114",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
