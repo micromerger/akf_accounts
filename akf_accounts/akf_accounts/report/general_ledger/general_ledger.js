@@ -132,6 +132,14 @@ frappe.query_reports["General Ledger"] = {
 					label: __("Group by Party"),
 					value: "Group by Party",
 				},
+				{
+					label: __("Group by Cost Center"),
+					value: "Group by Cost Center",
+				},
+				{
+					label: __("Group by Project"),
+					value: "Group by Project",
+				},
 			],
 			"default": "Group by Voucher (Consolidated)"
 		},

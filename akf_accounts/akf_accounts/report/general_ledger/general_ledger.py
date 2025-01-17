@@ -182,7 +182,10 @@ def get_gl_entries(filters, accounting_dimensions):
 		order_by_statement = "order by posting_date, voucher_type, voucher_no"
 	if filters.get("group_by") == "Group by Account":
 		order_by_statement = "order by account, posting_date, creation"
-
+	if filters.get("group_by") == "Group by Cost Center":
+		order_by_statement = "order by cost_center, posting_date, creation"
+	if filters.get("group_by") == "Group by Project":
+		order_by_statement = "order by project, posting_date, creation"
 	if filters.get("include_default_book_entries"):
 		filters["company_fb"] = frappe.get_cached_value(
 			"Company", filters.get("company"), "default_finance_book"
