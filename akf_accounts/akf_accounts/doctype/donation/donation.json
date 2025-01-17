@@ -53,7 +53,13 @@
   "more_info_tab",
   "status",
   "amended_from",
-  "connections_tab"
+  "connections_tab",
+  "payments_tab",
+  "advance_payments_section",
+  "allocate_advances_automatically",
+  "only_include_allocated_payments",
+  "get_advances",
+  "advances"
  ],
  "fields": [
   {
@@ -373,12 +379,47 @@
    "fieldtype": "Check",
    "label": "Unknown To Known",
    "read_only": 1
+  },
+  {
+   "fieldname": "payments_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payments"
+  },
+  {
+   "fieldname": "advance_payments_section",
+   "fieldtype": "Section Break",
+   "label": "Advance Payments "
+  },
+  {
+   "default": "0",
+   "fieldname": "allocate_advances_automatically",
+   "fieldtype": "Check",
+   "label": "Allocate Advances Automatically (FIFO)"
+  },
+  {
+   "default": "0",
+   "depends_on": "allocate_advances_automatically",
+   "description": "Advance payments allocated against orders will only be fetched",
+   "fieldname": "only_include_allocated_payments",
+   "fieldtype": "Check",
+   "label": "Only Include Allocated Payments"
+  },
+  {
+   "fieldname": "get_advances",
+   "fieldtype": "Button",
+   "label": "Get Advances Received"
+  },
+  {
+   "fieldname": "advances",
+   "fieldtype": "Table",
+   "label": "Advances",
+   "options": "Sales Invoice Advance"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-16 17:24:31.282733",
+ "modified": "2025-01-17 17:26:49.886520",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
