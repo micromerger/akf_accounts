@@ -27,5 +27,17 @@ frappe.query_reports["Funds Donation Report"] = {
       fieldtype: "Link",
       options: "Project",
     },
+    {
+      fieldname: "program",
+      label: __("Service Area"),
+      fieldtype: "Link",
+      options: "Program",
+    },
+    {
+      fieldname: "subservice_area",
+      label: __("Subservice Area"),
+      fieldtype: "Link",
+      options: "Subservice Area",
+    },
   ],
 };

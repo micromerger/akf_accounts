@@ -18,7 +18,9 @@ def get_columns():
         _("Date") + ":Date:140",
         _("Donor") + ":Link/Donor:140",
         _("Fund/Class") + ":Link/Project:140",
-        _("Voucher No") + ":Select:140",
+        _("Service Area") + ":Link/Program:140",
+        _("Subservice Area") + ":Link/Subservice Area:140",
+        _("Voucher No") + ":Link/Donation:140",
         _("Manual No") + ":Data:140",
         _("Amount") + ":Currency:140",
         _("Admin Income") + ":Currency:140",
@@ -46,6 +48,10 @@ def get_conditions(filters):
         conditions += " AND pd.donor_id = %(donor)s"
     if filters.get("project"):
         conditions += " AND pd.project_id = %(project)s"
+    if filters.get("program"):
+        conditions += " AND pd.program = %(program)s"
+    if filters.get("subservice_area"):
+        conditions += " AND pd.subservice_area = %(subservice_area)s"
 
     return conditions
 
@@ -54,7 +60,7 @@ def get_query_result(filters):
     conditions = get_conditions(filters)
     result = frappe.db.sql(
         """
-        SELECT posting_date,pd.donor_id,pd.project_id,d.name,pd.receipt_number,db.donation_amount,
+        SELECT posting_date,pd.donor_id,pd.project_id,pd.program,pd.subservice_area,d.name,pd.receipt_number,db.donation_amount,
         CASE 
             WHEN db.income_type = 'Admin Income' THEN db.amount
             ELSE 0
