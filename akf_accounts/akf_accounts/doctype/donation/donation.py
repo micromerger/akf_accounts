@@ -752,6 +752,7 @@ class Donation(Document):
 		values = frappe._dict(values)
 		make_doubtful_debt(self, values)
 
+
 @frappe.whitelist()
 def get_donors_list(donation_id):
     result = frappe.db.sql(f""" select donor_id, idx from `tabPayment Detail` where base_outstanding_amount>0 and parent='{donation_id}' """, as_dict=0)

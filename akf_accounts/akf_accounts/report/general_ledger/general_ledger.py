@@ -201,7 +201,7 @@ def get_gl_entries(filters, accounting_dimensions):
 		transaction_currency_fields = (
 			"debit_in_transaction_currency, credit_in_transaction_currency, transaction_currency,"
 		)
-
+	
 	gl_entries = frappe.db.sql(
 		"""
 		select
@@ -386,7 +386,6 @@ def get_data_with_opening_closing(filters, account_details, accounting_dimension
 
 	return data
 
-
 def get_totals_dict():
 	def _get_debit_credit_dict(label):
 		return _dict(
@@ -409,6 +408,10 @@ def group_by_field(group_by):
 		return "party"
 	elif group_by in ["Group by Voucher (Consolidated)", "Group by Account"]:
 		return "account"
+	elif (group_by == "Group by Cost Center"):
+		return "cost_center"
+	elif (group_by == "Group by Project"):
+		return "project"
 	else:
 		return "voucher_no"
 

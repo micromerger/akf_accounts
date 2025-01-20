@@ -75,7 +75,6 @@ frappe.ui.form.on('Donation', {
             });
         }
     },
-
 });
 
 frappe.ui.form.on('Payment Detail', {
