@@ -81,7 +81,13 @@ frappe.ui.form.on('Payment Entry', {
 
 			frm.refresh_field('references');
 		}
-	}
+	},
+	custom_retention_money_payable: function(frm){
+		frm.call("process_accounts_retention_flow");
+	},
+	custom_retention_amount: function(frm){
+		frm.call("calculate_retention_amount");
+	},
 });
 
 frappe.ui.form.on("Payment Entry Reference", {

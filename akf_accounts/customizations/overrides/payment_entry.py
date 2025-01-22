@@ -5,7 +5,7 @@ from functools import reduce
 
 import frappe
 from frappe import ValidationError, _, qb, scrub, throw
-from frappe.utils import cint, comma_or, flt, getdate, nowdate
+from frappe.utils import cint, comma_or, flt, getdate, nowdate, get_link_to_form
 from frappe.utils.data import comma_and, fmt_money
 from pypika import Case
 from pypika.functions import Coalesce, Sum
@@ -94,6 +94,10 @@ class XPaymentEntry(AccountsController):
         self.set_status()
         self.set_total_in_words()
         self.set_cheque_leaf_issued()
+        # Nabeel Saleem, 21-01-2025
+        self.process_retention_flow()
+        # It will work with payment terms
+        self.set_payment_references()
 
     def on_submit(self):
         if self.difference_amount:
@@ -105,6 +109,7 @@ class XPaymentEntry(AccountsController):
         self.set_status()
         self.update_status(cancelled=False)
         self.set_cheque_leaf_cleared()
+        self.make_retention_journal_entry()
 
     def set_liability_account(self):
         # Auto setting liability account should only be done during 'draft' status
@@ -174,6 +179,7 @@ class XPaymentEntry(AccountsController):
         self.set_status()
         self.reverse_cheque_leaf()
         self.update_status(cancelled=True)
+        self.cancel_retention_journal_entry()
 
     def set_payment_req_status(self):
         from erpnext.accounts.doctype.payment_request.payment_request import update_payment_req_status
@@ -718,17 +724,6 @@ class XPaymentEntry(AccountsController):
                     Where name = "{self.custom_cheque_leaf}"
                 """)
 
-    # custom changes for donation
-    # def update_status(self):
-        # if(self.party_type!="Donor"): return
-        # for row in self.references:
-        #     if(row.reference_doctype=="Donation" and row.outstanding_amount>=0):
-        #         status = "Partly Paid"
-        #         if(row.outstanding_amount==0): status = "Paid"
-        #         else if(row.allocated_amount<0): status = "Return"
-        #         frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
-        #         frappe.db.set_value(row.reference_doctype, row.reference_name, "base_outstanding_amount", row.outstanding_amount)
-
 
     def update_status(self, cancelled=False):
         for row in self.references:
@@ -755,6 +750,8 @@ class XPaymentEntry(AccountsController):
                         frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "paid", 0)
                     # end...
 
+    def cancel_retention_journal_entry(self):
+        pass
 
     def set_cheque_leaf_cleared(self):
         if(self.custom_cheque_leaf):
@@ -763,6 +760,56 @@ class XPaymentEntry(AccountsController):
                 Where name = "{self.custom_cheque_leaf}"
             """)
 
+    def make_retention_journal_entry(self):
+        if(self.custom_retention_money_payable):
+            def _create_(unique_args):
+                for reference_name, allocated_amount in unique_args.items():
+                    reference_doctype = "Purchase Invoice"
+                    args = {
+                        "doctype": "Journal Entry",
+                        "entry_type": "Journal Entry",
+                        "posting_date": self.posting_date,
+                        "company": self.company,
+                        "remark": "The retention of {0} has been recorded against {1} {2}".format(fmt_money(self.custom_retention_amount, currency=self.paid_to_account_currency), "Purchase Invoice", reference_name),
+                        "accounts": [
+                            # debit
+                            {
+                                "account": self.paid_to,
+                                "party_type": self.party_type,
+                                "party": self.party,
+                                "cost_center": self.cost_center,
+                                "debit_in_account_currency": self.custom_retention_amount,
+                                "debit": self.custom_retention_amount,
+                                "reference_type": reference_doctype,
+                                "reference_name": reference_name
+                            },
+                            # credit
+                            {
+                                "account": self.custom_retention_payable_account,
+                                "party_type": self.party_type,
+                                "party": self.party,
+                                "cost_center": self.cost_center,
+                                "credit_in_account_currency": self.custom_retention_amount,
+                                "credit": self.custom_retention_amount,
+                            }
+                        ]
+                    }
+                    doc = frappe.get_doc(args)
+                    doc.insert(ignore_permissions=True)
+                    doc.submit()
+                    frappe.db.set_value("Payment Entry", self.name, "custom_journal_entry", doc.name)
+            
+            unique_args = {}
+            for row in self.references:
+                if( row.reference_doctype == "Purchase Invoice"):
+                    if(row.reference_name in unique_args):
+                        unique_args.update({f"{row.reference_name}": unique_args[row.reference_name] + row.allocated_amount})
+                    else:
+                        unique_args.update({f"{row.reference_name}": row.allocated_amount})
+            
+            _create_(unique_args)
+            self.reload()
+        
     def set_total_in_words(self):
         from frappe.utils import money_in_words
 
@@ -1595,8 +1642,64 @@ class XPaymentEntry(AccountsController):
             current_tax_fraction *= -1.0
 
         return current_tax_fraction
-
-
+    
+    def process_retention_flow(self):
+        if(self.custom_retention_money_payable):
+            self.set_default_retention_account()
+            self.validate_retention_amount()
+            self.set_unset_retention_amout()
+    
+    # .js api call
+    @frappe.whitelist()
+    def process_accounts_retention_flow(self):
+        self.set_default_retention_account()
+        self.set_unset_retention_amout()
+    
+    # .js api call
+    @frappe.whitelist()
+    def calculate_retention_amount(self):
+        self.validate_retention_amount()
+        self.set_unset_retention_amout()
+        self.set_payment_references()
+        
+    def set_default_retention_account(self):
+        default_retention_payable_account= frappe.db.get_value("Company", self.company, "custom_default_retention_payable_account")
+        if(default_retention_payable_account):
+            self.custom_retention_payable_account = default_retention_payable_account
+        else:
+            company_link = get_link_to_form("Company", self.company) if(self.company) else ""
+            frappe.throw(f"Please select company `Default Retention Payable Account` <br>{company_link}.", title="Missing Info")
+        
+    def validate_retention_amount(self):
+        if(self.custom_retention_money_payable):
+            if(self.custom_retention_amount<=0):
+                frappe.throw('Retention amount must be greater than zero.', title="Invalid Info")
+            elif(self.custom_retention_amount>=self.custom_actual_amount):
+                frappe.throw('Retention amount must be less than actual amount.', title="Invalid Info")
+    
+    def set_unset_retention_amout(self):
+        if(self.custom_retention_money_payable):
+            if((self.custom_actual_amount or 0.0)<= self.paid_amount):
+                self.custom_actual_amount = self.paid_amount
+            self.paid_amount = (self.custom_actual_amount or 0.0) - (self.custom_retention_amount or 0.0)
+        else:
+            if(self.custom_actual_amount >= self.paid_amount):
+                self.paid_amount = self.custom_actual_amount
+            self.custom_retention_amount = 0.0
+            self.custom_retention_payable_account = None
+    
+    def set_payment_references(self):
+        def get_invoice_portion(payment_term):
+            return frappe.db.get_value('Payment Term', payment_term, 'invoice_portion')
+        
+        for row in self.references:
+            if(row.payment_term):
+                invoice_portion = row.custom_invoice_portion if(row.custom_invoice_portion>0) else get_invoice_portion(row.payment_term)
+                row.custom_invoice_portion = invoice_portion
+                row.allocated_amount = (self.paid_amount * (invoice_portion/100))
+            else:
+                row.allocated_amount = self.paid_amount
+    
 def validate_inclusive_tax(tax, doc):
 	def _on_previous_row_error(row_range):
 		throw(

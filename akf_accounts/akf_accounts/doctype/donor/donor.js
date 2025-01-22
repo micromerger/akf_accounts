@@ -37,6 +37,8 @@ frappe.ui.form.on('Donor', {
 		apply_mask_on_phones(frm);
 		// End
         apply_mask_on_id_number(frm);
+        // Nabeel Saleem, 20-01-2025
+        link_with_supplier(frm)
         
 	},
     identification_type: function(frm){
@@ -184,4 +186,57 @@ function internationalPhoneValidation(phone, labelName) {
     } else {
 		return true;
     }
+}
+
+/* 
+Common Party Accounting
+
+Link donor with supplier to enable common party accounting.
+
+after that create new donation then there will be a jounal entry auto created against donation.
+*/
+function link_with_supplier(frm){
+    if (cint(frappe.defaults.get_default("enable_common_party_accounting"))) {
+        frm.add_custom_button(__('Link with Supplier'), function () {
+            show_party_link_dialog(frm);
+        }, __('Actions'));
+    }
+}
+
+function show_party_link_dialog (frm) {
+    const dialog = new frappe.ui.Dialog({
+        title: __('Select a Supplier'),
+        fields: [{
+            fieldtype: 'Link', label: __('Supplier'),
+            options: 'Supplier', fieldname: 'supplier', reqd: 1
+        }],
+        primary_action: function({ supplier }) {
+            frappe.call({
+                method: 'erpnext.accounts.doctype.party_link.party_link.create_party_link',
+                args: {
+                    primary_role: 'Donor',
+                    primary_party: frm.doc.name,
+                    secondary_party: supplier
+                },
+                freeze: true,
+                callback: function() {
+                    dialog.hide();
+                    frappe.msgprint({
+                        message: __('Successfully linked to Supplier'),
+                        alert: true
+                    });
+                },
+                error: function() {
+                    dialog.hide();
+                    frappe.msgprint({
+                        message: __('Linking to Supplier Failed. Please try again.'),
+                        title: __('Linking Failed'),
+                        indicator: 'red'
+                    });
+                }
+            });
+        },
+        primary_action_label: __('Create Link')
+    });
+    dialog.show();
 }
