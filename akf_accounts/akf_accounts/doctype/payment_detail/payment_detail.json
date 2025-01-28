@@ -47,6 +47,7 @@
   "accounts_detail_section",
   "equity_account",
   "mode_of_payment",
+  "receipt_bank",
   "account_paid_to",
   "cash_receipt_date_by_donor_desk",
   "cash_received_in_finance",
@@ -610,12 +611,19 @@
    "fieldtype": "Check",
    "label": " Unknown To Known",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.mode_of_payment==\"Cheque\"",
+   "fieldname": "receipt_bank",
+   "fieldtype": "Link",
+   "label": "Receipt Bank",
+   "options": "Bank"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-16 19:17:31.500002",
+ "modified": "2025-01-27 18:19:02.180515",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",
