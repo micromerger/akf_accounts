@@ -6,6 +6,11 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "is_group",
+  "parent_donor",
+  "column_break_htxa",
+  "donor_identity",
+  "section_break_kcib",
   "naming_series",
   "donor_type",
   "profession",
@@ -60,7 +65,14 @@
   "relationship_with_donor",
   "area",
   "co_city",
-  "co_country"
+  "co_country",
+  "lft",
+  "rgt",
+  "old_parent",
+  "accounting_tab",
+  "default_currency",
+  "column_break_ryga",
+  "default_account"
  ],
  "fields": [
   {
@@ -88,8 +100,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Email",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "image",
@@ -159,8 +170,7 @@
    "fieldname": "contact_no",
    "fieldtype": "Data",
    "label": "Contact No",
-   "reqd": 1,
-   "unique": 1
+   "mandatory_depends_on": "eval: doc.country!=undefined && doc.country!=\"\";"
   },
   {
    "fieldname": "city",
@@ -413,6 +423,85 @@
    "fieldname": "company_email_address",
    "fieldtype": "Data",
    "label": "Company Email Address"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Left",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Right",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group",
+   "read_only": 1
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "label": "Old Parent",
+   "options": "Donor"
+  },
+  {
+   "fieldname": "parent_donor",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Parent Donor",
+   "options": "Donor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_htxa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_kcib",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "accounting_tab",
+   "fieldtype": "Tab Break",
+   "label": "Accounting"
+  },
+  {
+   "default": "PKR",
+   "fieldname": "default_currency",
+   "fieldtype": "Link",
+   "label": "Default Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ryga",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "default_currency",
+   "fieldname": "default_account",
+   "fieldtype": "Link",
+   "label": "Default Account",
+   "mandatory_depends_on": "default_currency",
+   "options": "Account"
+  },
+  {
+   "default": "Known",
+   "fieldname": "donor_identity",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Donor Identity",
+   "options": "\nKnown\nUnknown\nMerchant - Known\nMerchant - Unknown",
+   "reqd": 1
   }
  ],
  "image_field": "image",
@@ -420,13 +509,18 @@
   {
    "link_doctype": "Donation",
    "link_fieldname": "donor"
+  },
+  {
+   "link_doctype": "Donor",
+   "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-01-15 10:39:14.095114",
+ "modified": "2025-01-28 19:55:30.769502",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
  "naming_rule": "By \"Naming Series\" field",
+ "nsm_parent_field": "parent_donor",
  "owner": "Administrator",
  "permissions": [
   {

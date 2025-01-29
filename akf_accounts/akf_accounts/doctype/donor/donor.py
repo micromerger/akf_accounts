@@ -25,6 +25,10 @@ class Donor(Document):
         self.verify_cnic()
         self.validate_duplicate_cnic()
         self.validate_proscribed_person()
+        self.validate_default_currency()
+        self.validate_default_account()
+        self.set_is_group()
+        
 
     def sum_up_dial_code_contact_no(self):
         if (self.country):
@@ -57,20 +61,70 @@ class Donor(Document):
         return re.match(pattern, mystr)
     
     def validate_duplicate_cnic(self):
-        # preDonor = frappe.db.get_value('Donor', {'name':['!=', self.name], 'cnic': self.cnic}, ['name', 'department', 'creation'], as_dict=1)
         # Check if CNIC matches the pattern
         if(not self.cnic): return
-        preDonor = frappe.db.sql(f"""Select name, department, creation From `tabDonor` where name!='{self.name}' and cnic='{self.cnic}' """, as_dict=1)
-        if(preDonor):
-            # get_link_to_form # (doctype: str, name: str, label: str | None = None) -> str:
-            for d in preDonor:
-                frappe.throw(f"""A donor with ID: {get_link_to_form('Donor',d.name)}, already exists created by {d.department} on {formatdate(getdate(d.creation))}.""")
+        def compare_cnic_with_other():
+            if(self.parent_donor): return
+            data = frappe.db.sql(f"""
+                Select name, department, creation 
+                From `tabDonor` 
+                Where name!='{self.name}' and parent_donor!='{self.name}' and cnic='{self.cnic}' 
+                """, as_dict=1)
+            if(data):
+                frappe.throw(f"""
+                    A donor with CNIC <b>{self.cnic}</b> exists.
+                """, title="Duplicate CNIC")
+        
+        compare_cnic_with_other()
     
     def validate_proscribed_person(self):
         formatted_cnic = str(self.cnic).replace("-", "")
         if((not self.is_new()) and frappe.db.exists("Donor", {"name": self.name, "status": "Blocked"})):
             frappe.throw("You're unable to make any change. Because, you're in proscribed person list.", title="Donor Blocked")
     
+    def validate_default_currency(self):
+        def throw_msg():
+            frappe.throw(f"Donor with currency: <b>{self.default_currency}</b> exists.", title="Registered")
+        # check for root currency, there's no child with same currency.    
+        if(self.is_group):
+            args = {
+                "parent_donor": self.name,
+                "default_currency": self.default_currency,
+                "default_account": self.default_account
+            }
+            if(frappe.db.exists("Donor", args)): throw_msg()
+        # check child currency not belong to root or any other child.
+        else:
+            # root currency with parent_donor id.
+            if(self.parent_donor):
+                args = {
+                    "name": self.parent_donor,
+                    "default_currency": self.default_currency,
+                    "default_account": self.default_account
+                }
+                if(frappe.db.exists("Donor", args)): throw_msg()
+                # child currency with parent_donor id.
+                args = {
+                    "parent_donor": self.parent_donor,
+                    "default_currency": self.default_currency,
+                    "default_account": self.default_account
+                }
+                if(frappe.db.exists("Donor", args)): throw_msg()
+        
+    @frappe.whitelist()
+    def validate_default_account(self):
+        result = frappe.db.sql(f""" Select name From `tabAccount`
+                Where 
+                    disabled=0 
+                    and is_group=0 
+                    and account_type = "Receivable" 
+                    and account_currency='{self.default_currency}' """)
+        self.default_account = result[0][0] if(result) else ""
+    
+    def set_is_group(self):
+        if(not self.parent_donor):
+            self.db_set("is_group", 1)
+        
     def after_insert(self):
         self.update_status()
         
@@ -244,6 +298,56 @@ def donor_html():
 
     frappe.msgprint(complete_table)
 
+@frappe.whitelist()
+def make_foriegn_donor(source_name, target_doc=None):
+    def validate_donor_accounting(args):
+        if(frappe.db.exists("Donor", 
+            {"name": source_name, "default_currency": args.default_currency, "default_account": args.default_account})
+           ):
+            frappe.throw(f"Donor with currency <b>{args.default_currency}</b> exists.", title="Registered")
+            
+        args.update({"parent_donor": source_name})
+        if(frappe.db.exists("Donor", args)):
+            frappe.throw(f"Donor with currency: {args.default_currency} exists.", title="Registered")
+        
+    def make_return_doc(
+        doctype: str, source_name: str, target_doc=None, args=None, return_against_rejected_qty=False):
+        from frappe.model.mapper import get_mapped_doc
+	
+        def set_missing_values(source, target):
+            doc = frappe.get_doc(target)
+            doc.is_group = 0
+            doc.parent_donor = source.name
+            doc.default_currency = args.default_currency
+            doc.default_account = args.default_account
+        
+        doclist = get_mapped_doc(
+            doctype,
+            source_name,
+            {
+                doctype: {
+                    "doctype": doctype,
+                    "validation": {
+                        # "is_group": ["=", 0],
+                    },
+                },
+                # "Payment Detail": {
+                #     "doctype": "Payment Detail",
+                #     "field_map": {"*"},
+                #     "postprocess": update_payment_detail,
+                # },
+                # "Payment Schedule": {"doctype": "Payment Schedule", "postprocess": update_terms},
+            },
+            target_doc,
+            set_missing_values,
+        )
+        return doclist
+
+    args = frappe._dict(frappe.flags.args) # e.g; {"donor": donor_id, "series_no": 1}
+    validate_donor_accounting(args)
+    return make_return_doc("Donor", source_name, target_doc, args)
+
+    
 @frappe.whitelist()
 def del_data():
     try:
