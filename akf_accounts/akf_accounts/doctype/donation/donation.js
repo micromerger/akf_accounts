@@ -264,7 +264,7 @@ function set_custom_btns(frm) {
                         }); */
                         // frm.add_custom_button(__('Reverse Donor'), function () {
                             frappe.model.open_mapped_doc({
-                                method:"akf_accounts.akf_accounts.doctype.donation.unknown_to_known.convert_unknown_to_known",
+                            method:"akf_accounts.akf_accounts.doctype.donation.unknown_to_known.convert_unknown_to_known",
                                 frm: cur_frm,
                                 args: values
                             });
@@ -396,43 +396,49 @@ function set_queries_payment_details(frm) {
 
 function set_query_donor_id(frm) {
     frm.fields_dict['payment_detail'].grid.get_field('donor_id').get_query = function (doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-
-        if (frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant") {
-            let dlist = frm.doc.unknonw_to_known == undefined ? ["in", "Unknown Donor"] : ["not in", "Unknown Donor"];
-            return {
-                filters: {
-                    donor_name: dlist,
-                    status: "Active",
-                }
-            };
-        } else if (frm.doc.donor_identity == "Known") {
-            let dlist = ["not in", "Unknown Donor"];
-            return {
-                filters: {
-                    donor_name: dlist,
-                    status: "Active",
-                }
-            };
-        }
-        else if (frm.doc.donor_identity == "Merchant - Known") {
-            let dlist = ["not in", "Unknown Donor"];
-            return {
-                filters: {
-                    donor_name: dlist,
-                    status: "Active",
-                }
-            };
-        }
-        else if (frm.doc.donor_identity == "Merchant - Unknown") {
-            let dlist = ["not in", "known Donor"];
-            return {
-                filters: {
-                    donor_name: dlist,
-                    status: "Active",
-                }
-            };
-        }
+        // var row = locals[cdt][cdn];
+        return {
+            filters: {
+                status: "Active",
+                donor_identity: frm.doc.donor_identity,
+                default_currency: frm.doc.currency,
+            }
+        };
+        // if (frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant") {
+        //     let dlist = frm.doc.unknonw_to_known == undefined ? ["in", "Unknown Donor"] : ["not in", "Unknown Donor"];
+        //     return {
+        //         filters: {
+        //             donor_name: dlist,
+        //             status: "Active",
+        //         }
+        //     };
+        // } else if (frm.doc.donor_identity == "Known") {
+        //     let dlist = ["not in", "Unknown Donor"];
+        //     return {
+        //         filters: {
+        //             donor_name: dlist,
+        //             status: "Active",
+        //         }
+        //     };
+        // }
+        // else if (frm.doc.donor_identity == "Merchant - Known") {
+        //     let dlist = ["not in", "Unknown Donor"];
+        //     return {
+        //         filters: {
+        //             donor_name: dlist,
+        //             status: "Active",
+        //         }
+        //     };
+        // }
+        // else if (frm.doc.donor_identity == "Merchant - Unknown") {
+        //     let dlist = ["not in", "known Donor"];
+        //     return {
+        //         filters: {
+        //             donor_name: dlist,
+        //             status: "Active",
+        //         }
+        //     };
+        // }
 
     };
 }
