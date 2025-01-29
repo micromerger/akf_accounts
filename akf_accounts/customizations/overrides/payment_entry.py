@@ -739,14 +739,14 @@ class XPaymentEntry(AccountsController):
                     status = "Return"
                     
                 frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
-                frappe.db.set_value(row.reference_doctype, row.reference_name, "base_outstanding_amount", row.outstanding_amount)
+                frappe.db.set_value(row.reference_doctype, row.reference_name, "outstanding_amount", row.outstanding_amount)
                 
                 if(cancelled):
                     # payment detail base-outstanding-amount
-                    details = frappe.db.get_value('Payment Detail', row.custom_donation_payment_detail, ['net_amount', 'base_outstanding_amount'], as_dict=1)
+                    details = frappe.db.get_value('Payment Detail', row.custom_donation_payment_detail, ['net_amount', 'outstanding_amount'], as_dict=1)
                     if(details):
-                        base_outstanding_amount = (details.base_outstanding_amount + row.allocated_amount)
-                        frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "base_outstanding_amount", base_outstanding_amount)
+                        outstanding_amount = (details.outstanding_amount + row.allocated_amount)
+                        frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "outstanding_amount", outstanding_amount)
                         frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "paid", 0)
                     # end...
 
@@ -1652,6 +1652,7 @@ class XPaymentEntry(AccountsController):
     # .js api call
     @frappe.whitelist()
     def process_accounts_retention_flow(self):
+        if(not self.paid_amount) or (self.paid_amount==0): return
         self.set_default_retention_account()
         self.set_unset_retention_amout()
     
@@ -1663,6 +1664,7 @@ class XPaymentEntry(AccountsController):
         self.set_payment_references()
         
     def set_default_retention_account(self):
+        
         default_retention_payable_account= frappe.db.get_value("Company", self.company, "custom_default_retention_payable_account")
         if(default_retention_payable_account):
             self.custom_retention_payable_account = default_retention_payable_account
@@ -2236,7 +2238,7 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
         exchange_rate = 1
 
     elif reference_doctype == "Donation" and ref_doc.docstatus == 1:
-        total_amount = ref_doc.get("base_total_donation")
+        total_amount = ref_doc.get("total_donation")
         if hasattr(ref_doc, "multi_currency"):
             exchange_rate = get_exchange_rate(
                 party_account_currency, company_currency, ref_doc.posting_date

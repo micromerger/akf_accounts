@@ -76,18 +76,22 @@
   "doubtful_debt_amount",
   "accounting_dimensions_section",
   "dimension_col_break",
-  "column_break_sezm",
-  "donation_amount",
-  "base_donation_amount",
-  "deduction_amount",
-  "net_amount",
-  "outstanding_amount",
-  "base_outstanding_amount",
+  "column_break_mftg",
   "paid",
   "is_return",
   "unknown_to_known",
+  "payment_entry",
   "other_info_section",
-  "payment_entry"
+  "column_break_sezm",
+  "donation_amount",
+  "deduction_amount",
+  "net_amount",
+  "outstanding_amount",
+  "company_currency_column",
+  "base_donation_amount",
+  "base_deduction_amount",
+  "base_net_amount",
+  "base_outstanding_amount"
  ],
  "fields": [
   {
@@ -133,7 +137,8 @@
   },
   {
    "fieldname": "column_break_sezm",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "label": "(Account | Transactional) Currency"
   },
   {
    "default": "0",
@@ -356,7 +361,7 @@
   {
    "fieldname": "other_info_section",
    "fieldtype": "Section Break",
-   "label": "Other Info"
+   "label": "Totals"
   },
   {
    "fieldname": "payment_entry",
@@ -618,12 +623,35 @@
    "fieldtype": "Link",
    "label": "Receipt Bank",
    "options": "Bank"
+  },
+  {
+   "fieldname": "company_currency_column",
+   "fieldtype": "Column Break",
+   "label": "Company Currency"
+  },
+  {
+   "default": "0",
+   "fieldname": "base_deduction_amount",
+   "fieldtype": "Currency",
+   "label": "Base Deduction Amount",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "base_net_amount",
+   "fieldtype": "Currency",
+   "label": "Base Net Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_mftg",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-27 18:19:02.180515",
+ "modified": "2025-01-29 16:02:50.922067",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

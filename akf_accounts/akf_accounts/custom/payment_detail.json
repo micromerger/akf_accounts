@@ -686,30 +686,6 @@
  "custom_perms": [],
  "doctype": "Payment Detail",
  "links": [],
- "property_setters": [
-  {
-   "_assign": null,
-   "_comments": null,
-   "_liked_by": null,
-   "_user_tags": null,
-   "creation": "2024-11-28 12:12:11.593499",
-   "default_value": null,
-   "doc_type": "Payment Detail",
-   "docstatus": 0,
-   "doctype_or_field": "DocType",
-   "field_name": null,
-   "idx": 0,
-   "is_system_generated": 0,
-   "modified": "2024-11-28 12:12:11.593499",
-   "modified_by": "Administrator",
-   "module": null,
-   "name": "Payment Detail-main-field_order",
-   "owner": "Administrator",
-   "property": "field_order",
-   "property_type": "Data",
-   "row_name": null,
-   "value": "[\"donor_details_section\", \"random_id\", \"donor_id\", \"donor_name\", \"cnic\", \"donor_type\", \"donation_type\", \"column_break_uwow\", \"contact_no\", \"email\", \"city\", \"address\", \"care_of_details_column\", \"co_name\", \"co_contact_no\", \"co_email\", \"co_address\", \"relationship_with_donor\", \"section_break_iela\", \"pay_service_area\", \"pay_product\", \"column_break_ibfu\", \"pay_subservice_area\", \"receipt_details_section\", \"receipt_number\", \"column_break_airg\", \"receipt_issued_by\", \"receipt_date\", \"accounts_detail_section\", \"equity_account\", \"mode_of_payment\", \"account_paid_to\", \"column_break_wlkz\", \"receivable_account\", \"transaction_no_cheque_no\", \"reference_date\", \"remarks\", \"project_location_section\", \"project_id\", \"region\", \"tehsil\", \"latitude\", \"column_break_uvmt\", \"district\", \"uc\", \"longitude\", \"accounting_dimensions_section\", \"cost_center\", \"program\", \"subservice_area\", \"product\", \"project\", \"task\", \"donor\", \"dimension_col_break\", \"inventory_scenario\", \"inventory_flag\", \"reverse_donor\", \"purchase_receipt\", \"column_break_sezm\", \"donation_amount\", \"base_donation_amount\", \"deduction_amount\", \"net_amount\", \"outstanding_amount\", \"base_outstanding_amount\", \"paid\", \"is_return\", \"other_info_section\", \"payment_entry\"]"
-  }
- ],
+ "property_setters": [],
  "sync_on_migrate": 1
 }

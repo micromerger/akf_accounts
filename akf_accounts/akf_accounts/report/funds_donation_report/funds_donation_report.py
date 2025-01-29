@@ -17,9 +17,10 @@ def get_columns():
     columns = [
         _("Date") + ":Date:140",
         _("Donor") + ":Link/Donor:140",
-        _("Fund/Class") + ":Link/Project:140",
         _("Service Area") + ":Link/Program:140",
         _("Subservice Area") + ":Link/Subservice Area:140",
+        _("Product") + ":Link/Product:140",
+        _("Fund/Class") + ":Link/Project:140",
         _("Voucher No") + ":Link/Donation:140",
         _("Manual No") + ":Data:140",
         _("Amount") + ":Currency:140",
@@ -46,21 +47,26 @@ def get_conditions(filters):
         conditions += " AND posting_date BETWEEN %(from_date)s AND %(to_date)s"
     if filters.get("donor"):
         conditions += " AND pd.donor_id = %(donor)s"
-    if filters.get("project"):
-        conditions += " AND pd.project_id = %(project)s"
     if filters.get("program"):
         conditions += " AND pd.program = %(program)s"
     if filters.get("subservice_area"):
         conditions += " AND pd.subservice_area = %(subservice_area)s"
+    if filters.get("product"):
+        conditions += " AND pd.product = %(product)s"
+    if filters.get("project"):
+        conditions += " AND pd.project_id = %(project)s"
 
     return conditions
 
 
 def get_query_result(filters):
     conditions = get_conditions(filters)
+    order_by_branches = ""
+    if filters.get("group_by_branches"):
+        order_by_branches = "ORDER BY pd.cost_center, pd.program"
     result = frappe.db.sql(
         """
-        SELECT posting_date,pd.donor_id,pd.project_id,pd.program,pd.subservice_area,d.name,pd.receipt_number,db.donation_amount,
+        SELECT posting_date,pd.donor_id,pd.program,pd.subservice_area, pd.product, pd.project_id,d.name,pd.receipt_number,db.donation_amount,
         CASE 
             WHEN db.income_type = 'Admin Income' THEN db.amount
             ELSE 0
@@ -90,8 +96,8 @@ def get_query_result(filters):
         FROM `tabDonation` d
         LEFT JOIN `tabPayment Detail` pd ON d.name = pd.parent
         LEFT JOIN `tabDeduction Breakeven` db ON d.name = db.parent
-        WHERE d.docstatus != 2
-        {0}""".format(conditions if conditions else ""),
+        WHERE d.docstatus != 2 {0}
+        {1}""".format(conditions if conditions else "",order_by_branches),
         filters,
         as_dict=0,
     )

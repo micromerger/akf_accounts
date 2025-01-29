@@ -16,7 +16,7 @@ def execute(filters=None):
 def get_columns():
     columns = [
         _("Funds") + ":Date:140",
-        _("Funds Code") + ":Link/Donor:140",
+        # _("Funds Code") + ":Link/Donor:140",
         # _("Service Area") + ":Data:140",
         # _("Balance") + ":Data:140",
     ]

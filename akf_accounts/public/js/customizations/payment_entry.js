@@ -39,7 +39,7 @@ frappe.ui.form.on('Payment Entry', {
 			}
 
             if (child.reference_doctype == "Donation") {
-				filters["status"] = ["in", ("Unpaid", "Return")];
+				filters["status"] = ["in", ["Paid", "Unpaid", "Return"]];
 			}
 
 			return {
