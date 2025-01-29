@@ -105,6 +105,7 @@ class Donor(Document):
                 if(frappe.db.exists("Donor", args)): throw_msg()
                 # child currency with parent_donor id.
                 args = {
+                    "name": ["!=", self.name],
                     "parent_donor": self.parent_donor,
                     "default_currency": self.default_currency,
                     "default_account": self.default_account
