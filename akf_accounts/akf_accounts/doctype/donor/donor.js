@@ -154,9 +154,20 @@ set_queries = {
 btns = {
     applying_btns: function (frm) {
         if (frm.doc.__islocal) return
+        btns.donation_func(frm);
         btns.foriegn_donor_func(frm);
         btns.link_with_supplier_func(frm);
 
+    },
+    donation_func: function (frm) {
+        if (frm.doc.status == "Active") {
+            frm.add_custom_button(__('Donation'), function () {
+                frappe.model.open_mapped_doc({
+                    method: "akf_accounts.akf_accounts.doctype.donor.donor.make_donation",
+                    frm: cur_frm,
+                });
+            }, __('Create'));
+        }
     },
     foriegn_donor_func: function (frm) {
         if (frm.doc.is_group == 1 || frm.doc.parent_donor == undefined) {

@@ -6,6 +6,8 @@ import frappe, re
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from erpnext.accounts.utils import get_balance_on
+from frappe.model.mapper import get_mapped_doc
+from erpnext import get_default_company, get_default_cost_center
 from frappe.utils import getdate, formatdate, get_link_to_form
 
 from akf_accounts.akf_accounts.doctype.proscribed_person.proscribed_person import process_proscribed_person_detail
@@ -28,7 +30,6 @@ class Donor(Document):
         self.validate_default_currency()
         self.validate_default_account()
         self.set_is_group()
-        
 
     def sum_up_dial_code_contact_no(self):
         if (self.country):
@@ -154,7 +155,6 @@ def get_donor_primary_contact(doctype, txt, searchfield, start, page_len, filter
         .where((dlink.link_name == donor) & (con.name.like(f"%{txt}%")))
         .run()
     )
-
 
 def verify_numbers(self, phone_regix):
     num_list = {
@@ -311,9 +311,8 @@ def make_foriegn_donor(source_name, target_doc=None):
         if(frappe.db.exists("Donor", args)):
             frappe.throw(f"Donor with currency: {args.default_currency} exists.", title="Registered")
         
-    def make_return_doc(
+    def make_donor_doc(
         doctype: str, source_name: str, target_doc=None, args=None, return_against_rejected_qty=False):
-        from frappe.model.mapper import get_mapped_doc
 	
         def set_missing_values(source, target):
             doc = frappe.get_doc(target)
@@ -346,9 +345,57 @@ def make_foriegn_donor(source_name, target_doc=None):
 
     args = frappe._dict(frappe.flags.args) # e.g; {"donor": donor_id, "series_no": 1}
     validate_donor_accounting(args)
-    return make_return_doc("Donor", source_name, target_doc, args)
+    return make_donor_doc("Donor", source_name, target_doc, args)
 
+@frappe.whitelist()
+def make_donation(source_name, target_doc=None):
     
+    def get_random_id():
+        import random
+        idx = 1
+        return int((1000 + idx) + (random.random() * 9000))
+
+    def set_missing_values(source, target):
+        doc = frappe.get_doc(target)
+        doc.donor_identity = source.donor_identity
+        doc.contribution_type = "Donation"
+        doc.company = get_default_company()
+        doc.donation_cost_center = get_default_cost_center(doc.company)
+        doc.currency = source.default_currency
+        
+        doc.append("payment_detail", {
+            "random_id": get_random_id(),
+            "donor_id": source.name,
+            "donor": source.name,
+        })
+
+    def update_payment_detail(source_doc, target_doc, source_parent):
+        # target_doc.donor_id = source_parent.name
+        frappe.msgprint(f"{source_doc}")
+        pass
+    
+    doclist = get_mapped_doc(
+        "Donor",
+        source_name,
+        {
+            "Donor": {
+                "doctype": "Donation",
+                "validation": {
+                    # "is_group": ["=", 0],
+                },
+            },
+            "Payment Detail": {
+                "doctype": "Payment Detail",
+                "postprocess": update_payment_detail,
+            },
+            # "Payment Schedule": {"doctype": "Payment Schedule", "postprocess": update_terms},
+        },
+        target_doc,
+        set_missing_values,
+    )
+    return doclist
+
+
 @frappe.whitelist()
 def del_data():
     try:
