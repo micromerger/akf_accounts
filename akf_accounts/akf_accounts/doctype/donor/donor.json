@@ -70,8 +70,9 @@
   "rgt",
   "old_parent",
   "accounting_tab",
-  "default_currency",
+  "company",
   "column_break_ryga",
+  "default_currency",
   "default_account"
  ],
  "fields": [
@@ -502,6 +503,13 @@
    "label": "Donor Identity",
    "options": "\nKnown\nUnknown\nMerchant - Known\nMerchant - Unknown",
    "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
   }
  ],
  "image_field": "image",
@@ -515,7 +523,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-01-28 19:55:30.769502",
+ "modified": "2025-01-31 15:12:25.149556",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

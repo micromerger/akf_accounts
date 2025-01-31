@@ -7,7 +7,7 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.model.document import Document
 from erpnext.accounts.utils import get_balance_on
 from frappe.model.mapper import get_mapped_doc
-from erpnext import get_default_company, get_default_cost_center, get_default_currency
+from erpnext import get_default_company, get_default_cost_center, get_company_currency
 from frappe.utils import getdate, formatdate, get_link_to_form
 
 from akf_accounts.akf_accounts.doctype.proscribed_person.proscribed_person import process_proscribed_person_detail
@@ -115,11 +115,14 @@ class Donor(Document):
         
     @frappe.whitelist()
     def validate_default_account(self):
+        if(not self.company): return
+        if(not self.default_currency): return
         result = frappe.db.sql(f""" Select name From `tabAccount`
                 Where 
                     disabled=0 
                     and is_group=0 
                     and account_type = "Receivable" 
+                    and company='{self.company}'
                     and account_currency='{self.default_currency}' """)
         self.default_account = result[0][0] if(result) else ""
     
@@ -359,10 +362,10 @@ def make_donation(source_name, target_doc=None):
         doc = frappe.get_doc(target)
         doc.donor_identity = source.donor_identity
         doc.contribution_type = "Donation"
-        doc.company = get_default_company()
+        doc.company = source.company
         doc.donation_cost_center = get_default_cost_center(doc.company)
         doc.currency = source.default_currency
-        doc.to_currency = get_default_currency()
+        doc.to_currency = get_company_currency(doc.company)
         
         doc.append("payment_detail", {
             "random_id": get_random_id(),

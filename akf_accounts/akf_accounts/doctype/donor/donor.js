@@ -84,6 +84,9 @@ frappe.ui.form.on('Donor', {
             internationalPhoneValidation(frm.doc.contact_no, labelName);
         }
     },
+    company: function (frm) {
+        frm.call("validate_default_account");
+    },
     default_currency: function (frm) {
         frm.call("validate_default_account");
     }
@@ -137,11 +140,13 @@ set_queries = {
     },
     default_account_func: function (frm) {
         frm.set_query('default_account', function (doc) {
+            const company = frm.doc.company == undefined ? "" : frm.doc.company;
             const currency = frm.doc.default_currency == undefined ? "" : frm.doc.default_currency;
             return {
                 filters: {
                     'disabled': 0,
                     'is_group': 0,
+                    'company': company,
                     'account_currency': currency,
                     'account_type': "Receivable",
                 }
