@@ -43,6 +43,9 @@ validate_taxes_and_charges,
 )
 from erpnext.setup.utils import get_exchange_rate
 
+# Nabeel Saleem, 06-02-2025
+from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import adjust_doubtful_debt
+from akf_accounts.akf_accounts.doctype.donation.updates import updating_donation
 class InvalidPaymentEntry(ValidationError):
     pass
 
@@ -107,9 +110,13 @@ class XPaymentEntry(AccountsController):
         self.update_advance_paid()
         self.update_payment_schedule()
         self.set_status()
-        self.update_status(cancelled=False)
+        # self.update_status(cancelled=False)
+        # Nabeel Saleem, 07-01-2025
+        updating_donation(self)
         self.set_cheque_leaf_cleared()
         self.make_retention_journal_entry()
+        # Nabeel Saleem, 06-01-2025
+        adjust_doubtful_debt(self)
 
     def set_liability_account(self):
         # Auto setting liability account should only be done during 'draft' status
@@ -178,8 +185,10 @@ class XPaymentEntry(AccountsController):
         self.set_payment_req_status()
         self.set_status()
         self.reverse_cheque_leaf()
-        self.update_status(cancelled=True)
+        # self.update_status(cancelled=True)
         self.cancel_retention_journal_entry()
+        # Nabeel Saleem, 07-01-2025
+        updating_donation(self, cancelled=True)
 
     def set_payment_req_status(self):
         from erpnext.accounts.doctype.payment_request.payment_request import update_payment_req_status
@@ -224,7 +233,7 @@ class XPaymentEntry(AccountsController):
         if self.payment_type == "Internal Transfer":
             return
 
-        if self.party_type in ("Customer", "Supplier"):
+        if self.party_type in ("Customer", "Supplier", "Donor"):
             self.validate_allocated_amount_with_latest_data()
         else:
             fail_message = _("Row #{0}: Allocated Amount cannot be greater than outstanding amount.")
@@ -2239,6 +2248,7 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 
     elif reference_doctype == "Donation" and ref_doc.docstatus == 1:
         total_amount = ref_doc.get("total_donation")
+        outstanding_amount = ref_doc.get("outstanding_amount")
         if hasattr(ref_doc, "multi_currency"):
             exchange_rate = get_exchange_rate(
                 party_account_currency, company_currency, ref_doc.posting_date
@@ -2246,7 +2256,7 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
         else:
             exchange_rate = 1
             outstanding_amount = get_outstanding_on_journal_entry(reference_name)
-
+        
     elif reference_doctype == "Journal Entry" and ref_doc.docstatus == 1:
         total_amount = ref_doc.get("total_amount")
         if ref_doc.multi_currency:

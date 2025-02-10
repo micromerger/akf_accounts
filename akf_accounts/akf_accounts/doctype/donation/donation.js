@@ -198,9 +198,12 @@ frappe.ui.form.on('Deduction Breakeven', {
 function set_custom_btns(frm) {
 
     function doubtful_debtors() {
-        if (frm.doc.contribution_type == "Pledge") {
+        if(frm.doc.status != "Paid" && frm.doc.contribution_type == "Pledge") {
+            frm.add_custom_button(__('Written Off Debt'), function () {
+                doubtful_debtors_dialog(frm, "Written Off", "Record Written Off", false, true);
+            });
             frm.add_custom_button(__('Doubtful Debt'), function () {
-                doubtful_debtors_dialog(frm);
+                doubtful_debtors_dialog(frm, "Doubtful Debt", "Record Doubtful Debt", true, false);
             });
         }
     }
@@ -556,14 +559,17 @@ function set_exchange_rate_msg(frm) {
 }
 
 /* Dialog for payment entry */
-function doubtful_debtors_dialog(frm) {
+function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_written_off) {
     let donors_list = []
     let idx_list;
+
     frappe.call({
         method: "akf_accounts.akf_accounts.doctype.donation.donation.get_donors_list",
         async: false,
         args: {
             donation_id: frm.doc.name,
+            is_doubtful_debt: is_doubtful_debt,
+            is_written_off: is_written_off
         },
         callback: function (r) {
             let data = r.message;
@@ -574,7 +580,7 @@ function doubtful_debtors_dialog(frm) {
     });
 
     let d = new frappe.ui.Dialog({
-        title: 'Doubtful Debt Details',
+        title: `${title} Details`,
         fields: [
             {
                 label: '',
@@ -609,12 +615,12 @@ function doubtful_debtors_dialog(frm) {
                 label: 'Donation Amount.',
                 fieldname: 'donation_amount',
                 fieldtype: 'Currency',
-                options: "",
+                options: `currency`,
                 default: 0,
                 reqd: 0,
                 read_only: 1,
                 onchange: function (val) {
-                    let donor_id = d.fields_dict.donor_id.value;
+                    // let donor_id = d.fields_dict.donor_id.value;
                     // console.log(donor_id)
                 }
             },
@@ -636,13 +642,21 @@ function doubtful_debtors_dialog(frm) {
                     let serial_no = d.fields_dict.serial_no.value;
                     if (donor_id != null && serial_no != null) {
                         frappe.call({
-                            method: "akf_accounts.akf_accounts.doctype.donation.donation.get_donation_amount",
+                            method: "akf_accounts.akf_accounts.doctype.donation.donation.get_donation_details",
                             args: {
                                 filters: { "name": frm.doc.name, "donor_id": donor_id, "idx": serial_no },
                             },
                             callback: function (r) {
-                                d.fields_dict.donation_amount.value = r.message;
+                                const data = r.message;
+                                // console.log(data);
+                                d.fields_dict.donation_amount.value = data.donation_amount;
                                 d.fields_dict.donation_amount.refresh();
+                                d.fields_dict.doubtful_amount.value = data.doubtful_debt_amount;
+                                d.fields_dict.doubtful_amount.refresh();
+                                d.fields_dict.bad_debt_expense.value = data.bad_debt_expense;
+                                d.fields_dict.bad_debt_expense.refresh();
+                                d.fields_dict.provision_doubtful_debt.value = data.provision_doubtful_debt;
+                                d.fields_dict.provision_doubtful_debt.refresh();
 
                             }
                         })
@@ -654,15 +668,21 @@ function doubtful_debtors_dialog(frm) {
                 label: 'Doubtful Amount',
                 fieldname: 'doubtful_amount',
                 fieldtype: 'Currency',
-                options: "",
+                options: `currency`,
                 default: 0,
                 reqd: 1,
                 onchange: function (val) {
                     let donation_amount = d.fields_dict.donation_amount.value;
                     let doubtful_amount = d.fields_dict.doubtful_amount.value;
-                    if (doubtful_amount > donation_amount) {
-                        frappe.msgprint("Doubtful amount must be less than or equal to donation amount!")
+                    
+                    description_msg = ""
+                    if(doubtful_amount > donation_amount){
+                        description_msg = "<small style='color: red;'>Doubtful amount should be less than Donation Amount.<small>"
+                    }else if(doubtful_amount<=0){
+                        description_msg = "<small style='color: red;'>Doubtful amount should be greater than zero.<small>" 
                     }
+                    d.fields_dict.doubtful_amount.df.description = description_msg
+                    d.fields_dict.doubtful_amount.refresh();
                 }
             },
             {
@@ -673,49 +693,63 @@ function doubtful_debtors_dialog(frm) {
                 reqd: 0,
             },
             {
-                label: 'Doubtful Debt Account',
-                fieldname: 'doubtful_debt_account',
+                label: 'Bad Debt Expense',
+                fieldname: 'bad_debt_expense',
                 fieldtype: 'Link',
                 options: "Account",
                 reqd: 1,
-                /* get_query() {
-                    let mode_of_payment = d.fields_dict.mode_of_payment.value;
-                    let account_type = mode_of_payment == "Cash" ? "Cash" : "Bank";
+                get_query() {
+                    // let mode_of_payment = d.fields_dict.mode_of_payment.value;
                     return {
                         filters: {
+                            disabled: 0,
                             is_group: 0,
+                            account_type: "Receivable",
+                            account_name: ["like", "%Bad%"],
                             company: frm.doc.company,
-                            account_type: account_type
+                            account_currency: frm.doc.currency
                         }
                     }
-                } */
+                }
+            },
+            {
+                label: '',
+                fieldname: 'col_break',
+                fieldtype: 'Column Break',
+                options: "",
+                reqd: 0
+            },
+            {
+                label: 'Provision Doubtful Debt',
+                fieldname: 'provision_doubtful_debt',
+                fieldtype: 'Link',
+                options: "Account",
+                reqd: 1,
+                get_query() {
+                    // let mode_of_payment = d.fields_dict.mode_of_payment.value;
+                    return {
+                        filters: {
+                            disabled: 0,
+                            is_group: 0,
+                            account_type: "Receivable",
+                            account_name: ["like", "%Doubt%"],
+                            company: frm.doc.company,
+                            account_currency: frm.doc.currency
+                        }
+                    }
+                }
             },
         ],
         size: 'small', // small, large, extra-large 
-        primary_action_label: 'Record Doubtful Debt',
+        primary_action_label: action_label,
         primary_action(values) {
-            if (values.paid_amount > values.outstanding_amount) {
-                frappe.msgprint("Paid amount must be less than or equal to outstanding amount!")
-            }
-            else if (values) {
-                let paid = values.paid_amount == values.outstanding_amount ? 1 : 0;
-                let outstanding_amount = values.paid_amount <= values.outstanding_amount ? (values.outstanding_amount - values.paid_amount) : 0;
-                values['paid'] = paid;
-                values['outstanding_amount'] = outstanding_amount;
-                frm.call("record_doubtful_debt", { values: values })
-                /* frappe.call({
-                    method: "akf_accounts.akf_accounts.doctype.donation.donation.record_doubtful_debt",
-                    args: {
-                        doc: frm.doc,
-                        values: values
-                    },
-                    callback: function (r) {
-                        d.hide();
-                        // frm.refresh_field("payment_detail");
-                        frm.reload_doc();
-                        // frappe.set_route("Form", "Payment Entry", r.message);
-                    }
-                }); */
+            console.log(values);
+            if (values.doubtful_amount>0 && values.doubtful_amount < values.donation_amount) {
+                const method = is_doubtful_debt?"provision_doubtful_debt": "bad_debt_written_off";
+                frm.call(method, { values: values }).then((r)=>{
+                    d.hide();
+                    frm.refresh();
+                });
             }
         }
     });
@@ -731,6 +765,8 @@ function pledge_payment_entry(frm) {
         async: false,
         args: {
             donation_id: frm.doc.name,
+            is_doubtful_debt: false, 
+            is_written_off:false
         },
         callback: function (r) {
             let data = r.message;
@@ -776,12 +812,25 @@ function pledge_payment_entry(frm) {
                 label: 'Outstanding Amount.',
                 fieldname: 'outstanding_amount',
                 fieldtype: 'Currency',
-                options: "",
+                options: "currency",
                 default: 0,
                 reqd: 0,
                 read_only: 1,
                 onchange: function (val) {
-                    let donor_id = d.fields_dict.donor_id.value;
+                    // let donor_id = d.fields_dict.donor_id.value;
+                    // console.log(donor_id)
+                }
+            },
+            {
+                label: 'Doubtful Debt Amount.',
+                fieldname: 'doubtful_debt_amount',
+                fieldtype: 'Currency',
+                options: "currency",
+                default: 0,
+                reqd: 0,
+                read_only: 1,
+                onchange: function (val) {
+                    // let donor_id = d.fields_dict.donor_id.value;
                     // console.log(donor_id)
                 }
             },
@@ -808,8 +857,12 @@ function pledge_payment_entry(frm) {
                                 filters: { "name": frm.doc.name, "donor_id": donor_id, "idx": serial_no },
                             },
                             callback: function (r) {
-                                d.fields_dict.outstanding_amount.value = r.message;
+                                const data = r.message;
+                                d.fields_dict.outstanding_amount.value = data.outstanding_amount;
                                 d.fields_dict.outstanding_amount.refresh();
+
+                                d.fields_dict.doubtful_debt_amount.value = data.doubtful_debt_amount;
+                                d.fields_dict.doubtful_debt_amount.refresh();
 
                             }
                         })
@@ -821,7 +874,7 @@ function pledge_payment_entry(frm) {
                 label: 'Paid Amount',
                 fieldname: 'paid_amount',
                 fieldtype: 'Currency',
-                options: "",
+                options: "currency",
                 default: 0,
                 reqd: 1,
                 onchange: function (val) {
@@ -1009,6 +1062,7 @@ function showHideModeOfPaymentForSingleRow(frm, row) {
     // console.log("flag: ", flag);
     frm.set_df_property('payment_detail', 'read_only', flag, frm.doc.name, 'mode_of_payment', row.name);
 }
+
 function fill_mode_of_payment_and_account(frm, row) {
 
     const donor_identity = frm.doc.donor_identity;

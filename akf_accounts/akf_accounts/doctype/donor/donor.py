@@ -399,7 +399,6 @@ def make_donation(source_name, target_doc=None):
     )
     return doclist
 
-
 @frappe.whitelist()
 def del_data():
     try:

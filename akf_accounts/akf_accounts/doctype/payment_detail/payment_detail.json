@@ -71,9 +71,11 @@
   "uc",
   "longitude",
   "doubtful_debt_details_section",
-  "doubtful_debt_account",
+  "bad_debt_expense",
+  "provision_doubtful_debt",
   "column_break_gevy",
   "doubtful_debt_amount",
+  "is_written_off",
   "accounting_dimensions_section",
   "dimension_col_break",
   "column_break_mftg",
@@ -587,21 +589,15 @@
    "label": "Doubtful Debt Details"
   },
   {
-   "fieldname": "doubtful_debt_account",
-   "fieldtype": "Link",
-   "label": "Doubtful Debt Account",
-   "options": "Account",
-   "read_only": 1
-  },
-  {
    "fieldname": "column_break_gevy",
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "doubtful_debt_account",
+   "depends_on": "provision_doubtful_debt",
    "fieldname": "doubtful_debt_amount",
    "fieldtype": "Currency",
    "label": "Doubtful Debt Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -646,12 +642,34 @@
   {
    "fieldname": "column_break_mftg",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bad_debt_expense",
+   "fieldtype": "Link",
+   "label": "Bad Debt Expense",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "provision_doubtful_debt",
+   "fieldtype": "Link",
+   "label": "Provision Doubtful Debt",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "provision_doubtful_debt",
+   "fieldname": "is_written_off",
+   "fieldtype": "Check",
+   "label": "Is Written Off",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-29 16:02:50.922067",
+ "modified": "2025-02-06 16:58:30.466236",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

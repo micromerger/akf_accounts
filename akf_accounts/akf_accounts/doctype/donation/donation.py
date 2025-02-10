@@ -138,6 +138,12 @@ class Donation(Document):
 			if(frappe.db.exists("Donor", {"name": row.donor_id, "status": "Blocked"})):
 				frappe.throw(f"<b>Row#{row.idx}</b> donor: {row.donor_id} is blocked.", title='Blocked Donor.')
 				
+		# 31-12-2024 nabeel saleem
+		def validate_donor_currency(row):
+			if(not frappe.db.exists("Donor", {"name": row.donor_id, "default_currency": self.currency})):
+				donor_id = get_link_to_form("Donor", row.donor_id)
+				frappe.throw(f"<b>Row#{row.idx}</b> donor: {donor_id} currency is not {self.currency}.", title='Currency conflict')
+
 		deduction_breakeven = self.deduction_breakeven
 		self.set("deduction_breakeven", [])
 		deduction_amount=0
@@ -146,6 +152,7 @@ class Donation(Document):
 		for row in self.payment_detail:
 			# print("payment_detail: ", row.random_id)
 			validate_active_donor(row)
+			validate_donor_currency(row)
 			verify_unique_receipt_no(row)
 			reset_mode_of_payment(row)
 			total_donation+= row.donation_amount
@@ -310,19 +317,6 @@ class Donation(Document):
 			'transaction_exchange_rate': self.exchange_rate,
 		})
 
-	def get_currency_args(self):
-		return {
-			# Company Currency
-			"debit": 0,
-			"credit": 0,
-			# Account Currency
-			"debit_in_account_currency": 0,
-			"credit_in_account_currency": 0,
-			# Transaction Currency
-			"debit_in_transaction_currency": 0,
-			"credit_in_transaction_currency": 0
-		}
-
 	def make_payment_detail_gl_entry(self):
 		
 		def get_account_currency(row):
@@ -341,7 +335,7 @@ class Donation(Document):
 				"cost_center": row.cost_center,
 				"account": row.equity_account,
 			})
-			c_args = self.get_currency_args()
+			c_args = get_currency_args()
 			args.update(c_args)
 			if(self.is_return): # debit
 				args.update({
@@ -400,7 +394,7 @@ class Donation(Document):
 
 		def receivable_entries(args):
 			# Entry against Receivable Account
-			c_args = self.get_currency_args()
+			c_args = get_currency_args()
 			args.update(c_args)
 			args.update({
 				"party_type": "Donor",
@@ -428,7 +422,7 @@ class Donation(Document):
 
 		def receivable_entry(args):
 			if (not self.unknown_to_known) and (self.donor_identity == "Merchant - Known"): 
-				c_args = self.get_currency_args()
+				c_args = get_currency_args()
 				args.update(c_args)
 				args.update({
 					"account": row.receivable_account,
@@ -464,7 +458,7 @@ class Donation(Document):
 			""" In normal case, accounts are going to be credit
 			But, in return case accounts are debit.
 				"""
-			c_args = self.get_currency_args()
+			c_args = get_currency_args()
 			args.update(c_args)
 			if(self.is_return): # debit
 				args.update({
@@ -762,22 +756,47 @@ class Donation(Document):
 			frappe.db.set_value("Donation", self.return_against, 'status', 'Paid')
 
 	@frappe.whitelist()
-	def record_doubtful_debt(self, values: dict):
-		from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import make_doubtful_debt
-		values = frappe._dict(values)
-		make_doubtful_debt(self, values)
+	def provision_doubtful_debt(self, values: dict):
+		from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import record_provision_of_doubtful_det
+		args = self.get_gl_entry_dict()
+		return record_provision_of_doubtful_det(self, args, values)
+	
+	@frappe.whitelist()
+	def bad_debt_written_off(self, values: dict):
+		from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import bad_debt_written_off
+		args = self.get_gl_entry_dict()
+		return bad_debt_written_off(self, args, values)
+
+def get_currency_args():
+	return {
+		# Company Currency
+		"debit": 0,
+		"credit": 0,
+		# Account Currency
+		"debit_in_account_currency": 0,
+		"credit_in_account_currency": 0,
+		# Transaction Currency
+		"debit_in_transaction_currency": 0,
+		"credit_in_transaction_currency": 0
+	}
 
 @frappe.whitelist()
-def get_donors_list(donation_id):
-    result = frappe.db.sql(f""" select donor_id, idx from `tabPayment Detail` where base_outstanding_amount>0 and parent='{donation_id}' """, as_dict=0)
-    donors_list = {d[0] for d in result} if(result) else []
-    idx_list = {}
-    for donor in donors_list:
-        idx_list[donor] = sorted([r[1] for r in result if(r[0]==donor)])
-    return {
-        "donors_list": sorted(list(donors_list)) if(donors_list) else [],
-        "idx_list": idx_list if(idx_list) else {},
-    }
+def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool):
+	conditions = ""
+	if(is_doubtful_debt):
+		conditions = " and ifnull(provision_doubtful_debt, '')='' "
+	if(is_written_off):
+		conditions = " and is_written_off=0 and ifnull(provision_doubtful_debt, '')!='' "
+	
+	result = frappe.db.sql(f""" select donor_id, idx from `tabPayment Detail` where base_outstanding_amount>0 and parent='{donation_id}' {conditions} """, as_dict=0)
+	donors_list = {d[0] for d in result} if(result) else []
+	idx_list = {}
+	for donor in donors_list:
+		idx_list[donor] = sorted([r[1] for r in result if(r[0]==donor)])
+	return {
+		"donors_list": sorted(list(donors_list)) if(donors_list) else [],
+		"idx_list": idx_list if(idx_list) else {},
+	}
 
 @frappe.whitelist()
 def get_idx_list_unknown(donation_id):
@@ -791,13 +810,27 @@ def get_idx_list_unknown(donation_id):
 @frappe.whitelist()
 def get_outstanding(filters):
     filters = ast.literal_eval(filters)
-    return frappe.db.sql(""" select base_outstanding_amount from `tabPayment Detail` 
+    result = frappe.db.sql(""" select outstanding_amount, doubtful_debt_amount
+        -- base_outstanding_amount
+        from `tabPayment Detail` 
         where docstatus=1
-        and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)[0][0]
+        and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)
+    args = {
+		"outstanding_amount": 0.0,
+		"doubtful_debt_amount": 0.0,
+	}
+    if(result):
+        args.update({
+			"outstanding_amount": result[0][0],
+			"doubtful_debt_amount": result[0][1],
+		})
+    return args
+
 
 @frappe.whitelist()
 def pledge_payment_entry(doc, values):
 	from frappe.utils import getdate
+	from erpnext.setup.utils import get_exchange_rate
 	curdate = getdate()
 
 	doc = frappe._dict(ast.literal_eval(doc))
@@ -805,6 +838,7 @@ def pledge_payment_entry(doc, values):
 	row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor_id': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
 
 	if(not row): frappe.throw(f"You're paying more than donation amount.")
+	exchange_rate = get_exchange_rate(doc.currency, doc.to_currency, curdate)
 	args = frappe._dict({
 		"doctype": "Payment Entry",
 		"payment_type" : "Receive",
@@ -815,14 +849,14 @@ def pledge_payment_entry(doc, values):
 		"company" : doc.company,
 		"mode_of_payment" : values.mode_of_payment,
 		"reference_no" : values.cheque_reference_no,
-		"source_exchange_rate" : 0.3,
+		"source_exchange_rate" : exchange_rate,
 		"target_exchange_rate": 1,
 		"paid_from" : row.receivable_account,
 		"paid_to" : values.account_paid_to,
 		"reference_date" : curdate,
 		"cost_center" : row.cost_center,
 		"paid_amount" : values.paid_amount ,
-		"received_amount" : values.paid_amount,
+		"received_amount" : (values.paid_amount * exchange_rate),
 		"program" : row.pay_service_area,
 		"subservice_area" : row.pay_subservice_area,
 		"product" : row.pay_product,
@@ -833,17 +867,18 @@ def pledge_payment_entry(doc, values):
 				"reference_doctype": "Donation",
 				"reference_name" : doc.name,
 				"due_date" : curdate,
-				"total_amount" : doc.base_total_donation,
-				"outstanding_amount" : values.paid_amount,
+				"total_amount" : doc.total_donation,
+				# "outstanding_amount" : values.paid_amount,			
+				"outstanding_amount" : doc.outstanding_amount,
 				"allocated_amount" : values.paid_amount,
 				"custom_donation_payment_detail": row.name
 		}]
 	})
 	_doc = frappe.get_doc(args)
 	_doc.save(ignore_permissions=True)
-	_doc.submit()
-	frappe.db.set_value("Payment Detail", row.name, "paid", values.paid)
-	frappe.db.set_value("Payment Detail", row.name, "base_outstanding_amount", values.outstanding_amount)
+	# _doc.submit()
+	# frappe.db.set_value("Payment Detail", row.name, "paid", values.paid)
+	# frappe.db.set_value("Payment Detail", row.name, "outstanding_amount", values.outstanding_amount)
 	pe_link = get_link_to_form("Payment Entry", _doc.name, "Payment Entry")
 	frappe.msgprint(f"{pe_link} has been paid successfully!", alert=True)
 	return _doc.name
@@ -1195,11 +1230,12 @@ def notify_overdue_tasks(project):	#Mubashir
 
 """ Doubtful Debtors """
 @frappe.whitelist()
-def get_donation_amount(filters):
+def get_donation_details(filters):
     filters = ast.literal_eval(filters)
-    return frappe.db.sql(""" select donation_amount from `tabPayment Detail` 
+    return frappe.db.sql(""" select donation_amount, doubtful_debt_amount, bad_debt_expense, provision_doubtful_debt
+        from `tabPayment Detail` 
         where docstatus=1
-        and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)[0][0]
+        and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
 
 # @frappe.whitelist()
 # def record_doubtful_debt(doc, values):
