@@ -102,15 +102,13 @@ class Donation(Document):
 		def set_deduction_details(row, args):
 			args.update({
 					"donor": row.donor_id,
-					"program": row.pay_service_area,
+					"service_area": row.pay_service_area,
 					"subservice_area": row.pay_subservice_area,
 					"product": row.product,
-					"program": row.pay_service_area,
-
 					"donation_amount": row.donation_amount,
 					"amount": percentage_amount,
 					"base_amount": base_amount,
-					"service_area": row.program,
+					"service_area": row.service_area,
 					"project": args.project if(args.project) else row.project,
 					
 					"cost_center": self.donation_cost_center,
@@ -230,15 +228,14 @@ class Donation(Document):
 					"max_percent": row2.max_percent,
 
 					"donor": row1.donor_id,
-					"program": row1.pay_service_area,
+					"service_area": row1.pay_service_area,
 					"subservice_area": row1.pay_subservice_area,
 					"product": row1.product,
-					"program": row1.pay_service_area,
 
 					"donation_amount": row1.donation_amount,
 					"amount": percentage_amount,
 					"base_amount": base_amount,
-					"service_area": row1.program,
+					"service_area": row1.service_area,
 					"project": row1.project,
 
 					"cost_center": row1.cost_center,
@@ -328,7 +325,7 @@ class Donation(Document):
 				"party": "",
 				"voucher_detail_no": row.name,
 				"donor": row.donor_id,
-				"program": row.pay_service_area,
+				"service_area": row.pay_service_area,
 				"subservice_area": row.subservice_area,
 				"product": row.pay_product if(row.pay_product) else row.product,
 				"project": row.project,
@@ -375,7 +372,7 @@ class Donation(Document):
 						"party": "",
 						"voucher_detail_no": row.name,
 						"donor": rowp.donor_id,
-						"program": rowp.pay_service_area,
+						"service_area": rowp.pay_service_area,
 						"subservice_area": rowp.subservice_area,
 						"product": rowp.pay_product if(rowp.pay_product) else rowp.product,
 						"project": rowp.project,
@@ -483,7 +480,7 @@ class Donation(Document):
 				"account": row.account,
 				"cost_center": row.cost_center,
 				"donor": row.donor,
-				"program": row.program,
+				"service_area": row.service_area,
 				"subservice_area": row.subservice_area,
 				"product": row.product,
 				"project": row.project,
@@ -556,7 +553,7 @@ class Donation(Document):
 				"paid_amount" : row.donation_amount,
 				"received_amount" : row.base_donation_amount,
 				"donor": row.donor_id,
-				"program" : row.pay_service_area,
+				"service_area" : row.pay_service_area,
 				"subservice_area" : row.pay_subservice_area,
 				"product": row.product,
 				"project" : row.project,
@@ -857,7 +854,7 @@ def pledge_payment_entry(doc, values):
 		"cost_center" : row.cost_center,
 		"paid_amount" : values.paid_amount ,
 		"received_amount" : (values.paid_amount * exchange_rate),
-		"program" : row.pay_service_area,
+		"service_area" : row.pay_service_area,
 		"subservice_area" : row.pay_subservice_area,
 		"product" : row.pay_product,
 		"project" : row.project,
@@ -913,7 +910,7 @@ def return_payment_entry(doc):
 			"cost_center" : row.cost_center,
 			"paid_amount" : row.outstanding_amount,
 			"received_amount" : row.outstanding_amount,
-			"program" : row.pay_service_area,
+			"service_area" : row.pay_service_area,
 			"subservice_area" : row.pay_subservice_area,
 			"product" : row.pay_product,
 			"project" : row.project,
@@ -939,12 +936,12 @@ def return_payment_entry(doc):
 	return _doc.name
 
 @frappe.whitelist()
-def get_min_max_percentage(program, account):
+def get_min_max_percentage(service_area, account):
     result = frappe.db.sql("""
         SELECT min_percent, max_percent
         FROM `tabDeduction Details`
         WHERE parent = %s AND account = %s
-    """, (program, account), as_dict=True)
+    """, (service_area, account), as_dict=True)
     if result:
         return result[0].min_percent, result[0].max_percent
     else:

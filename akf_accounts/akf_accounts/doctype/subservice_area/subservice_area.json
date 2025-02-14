@@ -14,7 +14,7 @@
    "fieldname": "service_area",
    "fieldtype": "Link",
    "label": "Service Area",
-   "options": "Program"
+   "options": "Service Area"
   },
   {
    "fieldname": "subservice_area",
@@ -25,7 +25,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-27 17:47:26.852159",
+ "modified": "2025-02-14 16:36:01.399305",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Subservice Area",

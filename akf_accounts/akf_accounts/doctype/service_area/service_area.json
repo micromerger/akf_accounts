@@ -1,12 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:program_name",
- "creation": "2024-05-22 13:33:53.342064",
+ "autoname": "field:service_name",
+ "creation": "2025-02-14 17:26:26.436925",
+ "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "program_name",
+  "service_name",
   "section_break_hrld",
   "deduction_details",
   "section_break_kkol",
@@ -14,22 +15,14 @@
  ],
  "fields": [
   {
-   "fieldname": "program_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Program Name",
-   "reqd": 1,
-   "unique": 1
+   "fieldname": "section_break_hrld",
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "deduction_details",
    "fieldtype": "Table",
    "label": "Deduction Details",
    "options": "Deduction Details"
-  },
-  {
-   "fieldname": "section_break_hrld",
-   "fieldtype": "Section Break"
   },
   {
    "fieldname": "section_break_kkol",
@@ -40,14 +33,22 @@
    "fieldtype": "Table",
    "label": "Accounts Default",
    "options": "Accounts Default"
+  },
+  {
+   "fieldname": "service_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Service Name",
+   "reqd": 1,
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-11 13:03:23.904734",
+ "modified": "2025-02-14 17:26:47.820878",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
- "name": "Program",
+ "name": "Service Area",
  "naming_rule": "By fieldname",
  "nsm_parent_field": "parent_program",
  "owner": "Administrator",

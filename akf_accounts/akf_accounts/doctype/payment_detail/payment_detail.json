@@ -111,7 +111,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Service Area",
-   "options": "Program"
+   "options": "Service Area"
   },
   {
    "fieldname": "pay_subservice_area",
@@ -669,7 +669,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-02-06 16:58:30.466236",
+ "modified": "2025-02-14 16:34:30.455760",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

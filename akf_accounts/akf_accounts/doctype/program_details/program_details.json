@@ -30,7 +30,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Service Area",
-   "options": "Program"
+   "options": "Service Area"
   },
   {
    "fieldname": "pd_subservice_area",
@@ -85,7 +85,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-12 13:36:55.366657",
+ "modified": "2025-02-14 18:49:42.765865",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",

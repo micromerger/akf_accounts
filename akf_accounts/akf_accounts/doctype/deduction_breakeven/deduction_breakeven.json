@@ -77,7 +77,7 @@
    "fieldname": "service_area",
    "fieldtype": "Link",
    "label": "Service Area",
-   "options": "Program",
+   "options": "Service Area",
    "read_only": 1
   },
   {
@@ -142,7 +142,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-24 13:41:34.951317",
+ "modified": "2025-02-14 16:32:03.256195",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Deduction Breakeven",
