@@ -92,7 +92,7 @@ frappe.ui.form.on('Payment Detail', {
     },
     pay_service_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        row.program = row.pay_service_area;
+        row.service_area = row.pay_service_area;
         frm.call("set_deduction_breakeven");  // nabeel saleem
     },
     pay_subservice_area: function (frm, cdt, cdn) {
@@ -490,11 +490,11 @@ function set_query_account(frm) {
 function set_query_project(frm) {
     frm.fields_dict['payment_detail'].grid.get_field('project_id').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
-        let program = row.pay_service_area == undefined ? ["!=", undefined] : row.pay_service_area;
+        let service_area = row.pay_service_area == undefined ? ["!=", undefined] : row.pay_service_area;
         return {
             filters: {
                 company: frm.doc.company,
-                custom_program: program,
+                custom_service_area: service_area,
                 custom_allocation_check: 0
             }
         };
