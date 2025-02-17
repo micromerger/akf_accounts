@@ -36,7 +36,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Service Area",
-   "options": "Program",
+   "options": "Service Area",
    "reqd": 1
   },
   {
@@ -122,7 +122,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-10 18:30:04.539495",
+ "modified": "2025-02-17 15:39:19.930008",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer From",
