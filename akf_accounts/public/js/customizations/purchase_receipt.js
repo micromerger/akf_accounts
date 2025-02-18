@@ -174,20 +174,20 @@ function get_html(frm) {
     $("#table_render").empty();
 
     const donorList = frm.doc.custom_program_details;
-    
+
     if (donorList) {
         var totalBalance = 0.0;
         var docstatus = frm.doc.docstatus;
-        
+
         if (!donorList || donorList.length === 0) {
-            
+
             $("#table_render").empty();
             $("#total_balance").empty();
             $("#previous").empty();
             $("#next").empty();
             frm.set_df_property('custom_donor_list_html', 'options', 'No donor records found.');
         } else if (donorList && donorList.length > 0) {
-            
+
             var currentPage = 1;
             var recordsPerPage = 5;
             var totalPages = Math.ceil(donorList.length / recordsPerPage);
@@ -365,8 +365,8 @@ function set_query_project(frm) {
         return {
             filters: {
                 company: frm.doc.company,
-                custom_program: ["!=", ""],
-                custom_program: row.pd_service_area,
+                custom_service_area: ["!=", ""],
+                custom_service_area: row.pd_service_area,
 
             }
         };
@@ -393,7 +393,7 @@ frappe.ui.form.on("Purchase Receipt Item", {
 
 });
 
-function format_currency(amount){
+function format_currency(amount) {
     const formattedAmount = amount.toLocaleString('en-US', {
         style: 'currency',
         currency: 'PKR'
