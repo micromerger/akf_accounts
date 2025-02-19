@@ -90,7 +90,7 @@ frappe.ui.form.on('Payment Entry', {
 												filters: {
 													company: frm.doc.company,
 													account_type: ["in", ["Bank", "Cash"]],
-													is_gorup: 0
+													is_group: 0
 												}
 											};
 										}
