@@ -60,36 +60,96 @@ frappe.ui.form.on('Payment Entry', {
 		triggers.paid_from_func(frm);
 
 		if (frm.doc.docstatus == 1 && frm.doc.mode_of_payment == "Postdated Cheque") {
-			frm.add_custom_button(__("Reverse Postdated Cheque"), function () {
-				// frappe.set_route("List", "Journal Entry", {"voucher_type": "Exchange Gain Or Loss", "reference_name": frm.doc.name});
-
-				let d = new frappe.ui.Dialog({
-					title: "Reverse Postdated Cheque",
-					fields: [
-						{
-							label: "Bank Account",
-							fieldname: "bank_account",
-							fieldtype: "Link",
-							options: "Account",
-							reqd: 1
-						},
-						{
-							label: "Posting Date",
-							fieldname: "posting_date",
-							fieldtype: "Date",
-							reqd: 1
-						}
-					],
-					primary_action_label: "Submit",
-					primary_action(values) {
-						console.log(values); // Log input values
-						frappe.msgprint(`Cheque Reversed: ${values.cheque_number}`);
-						d.hide();
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Payment Entry',
+					filters: {
+						custom_post_dated_cheque_entry: frm.doc.name,
+						docstatus: 1
+					},
+					fields: ['name']
+				},
+				callback: function (response) {
+					if (response.message.length > 0) {
+						console.log('A Payment Entry with this Post Dated Cheque Entry already exists.')
 					}
-				});
+					else {
+						frm.add_custom_button(__("Reverse Postdated Cheque"), function () {
+							let d = new frappe.ui.Dialog({
+								title: "Reverse Postdated Cheque",
+								fields: [
+									{
+										label: "Bank Account",
+										fieldname: "bank_account",
+										fieldtype: "Link",
+										options: "Account",
+										reqd: 1,
+										get_query: function () {
+											return {
+												filters: {
+													company: frm.doc.company,
+													account_type: ["in", ["Bank", "Cash"]],
+													is_gorup: 0
+												}
+											};
+										}
+									},
+									{
+										label: "Posting Date",
+										fieldname: "posting_date",
+										fieldtype: "Date",
+										reqd: 1
+									}
+								],
+								primary_action_label: "Submit",
+								primary_action(values) {
+									frappe.call({
+										method: 'frappe.client.get',
+										args: {
+											doctype: 'Payment Entry',
+											name: frm.doc.name
+										},
+										callback: function (response) {
+											if (response.message) {
+												let doc_data = response.message;
+												doc_data.custom_post_dated_cheque_entry = doc_data.name
 
-				d.show();
-			}, __('Create'));
+												delete doc_data.name;
+												delete doc_data.creation;
+												delete doc_data.modified;
+												delete doc_data.owner;
+
+												doc_data.references = frm.doc.references;
+												doc_data.posting_date = values.posting_date
+												doc_data.mode_of_payment = ""
+												doc_data.paid_from = doc_data.paid_to
+												doc_data.paid_to = values.bank_account
+
+												frappe.call({
+													method: 'frappe.client.insert',
+													args: {
+														doc: doc_data
+													},
+													callback: function (res) {
+														if (res.message) {
+															frappe.msgprint(__('Payment Entry created against Postdated Cheque, Successfully'));
+															frappe.set_route('Form', 'Payment Entry', res.message.name);
+														}
+													}
+												});
+											}
+										}
+									});
+									d.hide();
+								}
+							});
+							d.show();
+						}, __('Create'));
+					}
+				}
+			});
+
 		}
 	},
 	custom_cheque_leaf: function (frm) {
