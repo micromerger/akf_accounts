@@ -90,7 +90,8 @@ frappe.ui.form.on('Payment Entry', {
 												filters: {
 													company: frm.doc.company,
 													account_type: ["in", ["Bank", "Cash"]],
-													is_group: 0
+													is_group: 0,
+													account_currency: frm.doc.paid_from_account_currency
 												}
 											};
 										}
@@ -119,8 +120,9 @@ frappe.ui.form.on('Payment Entry', {
 												delete doc_data.creation;
 												delete doc_data.modified;
 												delete doc_data.owner;
+												delete doc_data.references;
 
-												doc_data.references = frm.doc.references;
+												// doc_data.references = frm.doc.references;
 												doc_data.posting_date = values.posting_date
 												doc_data.mode_of_payment = ""
 												doc_data.paid_from = doc_data.paid_to
