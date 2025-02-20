@@ -300,6 +300,13 @@ class PurchaseInvoice(BuyingController):
 		self.reset_default_field_value("rejected_warehouse", "items", "rejected_warehouse")
 		self.reset_default_field_value("set_from_warehouse", "items", "from_warehouse")
 		self.set_percentage_received()
+		self.soft_hard_financial_closure() #mubarrim
+		
+	def soft_hard_financial_closure(self): #By Mubarrim
+		for row in self.custom_program_details:
+			financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
+			if(financial_status in ["Soft","Hard"]):
+				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
 
 	def set_percentage_received(self):
 		total_billed_qty = 0.0
