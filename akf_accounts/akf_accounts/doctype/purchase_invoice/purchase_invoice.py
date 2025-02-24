@@ -53,7 +53,13 @@ class WarehouseMissingError(frappe.ValidationError):
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
 
-from akf_accounts.akf_accounts.doctype.purchase_invoice.extend_purchase_invoice import make_donor_gl_entries, delete_all_gl_entries
+# from akf_accounts.akf_accounts.doctype.purchase_invoice.extend_purchase_invoice import make_donor_gl_entries, delete_all_gl_entries
+from akf_accounts.akf_accounts.doctype.purchase_invoice.mortization import (
+	validate_donor_balance, 
+	update_stock_ledger_entry,
+	make_mortization_gl_entries,
+	delete_all_gl_entries
+)
 class PurchaseInvoice(BuyingController):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -300,10 +306,12 @@ class PurchaseInvoice(BuyingController):
 		self.reset_default_field_value("rejected_warehouse", "items", "rejected_warehouse")
 		self.reset_default_field_value("set_from_warehouse", "items", "from_warehouse")
 		self.set_percentage_received()
+		# nabeel saleem, 23-02-2025
+		validate_donor_balance(self)
 		self.soft_hard_financial_closure() #mubarrim
 		
 	def soft_hard_financial_closure(self): #By Mubarrim
-		for row in self.custom_program_details:
+		for row in self.program_details:
 			financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
 			if(financial_status in ["Soft","Hard"]):
 				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
@@ -733,7 +741,9 @@ class PurchaseInvoice(BuyingController):
 
 		self.process_common_party_accounting()
 		# Aqsa Abbasi, Nabeel Saleem
-		make_donor_gl_entries(self)
+		# make_donor_gl_entries(self)
+		# nabeel saleem, 23-02-2025
+		make_mortization_gl_entries(self)
 
 	def on_update_after_submit(self):
 		if hasattr(self, "repost_required"):
@@ -1504,6 +1514,7 @@ class PurchaseInvoice(BuyingController):
 		)
 		self.update_advance_tax_references(cancel=1)
 		# Aqsa Abbasi, Nabeel Saleem
+		# nabeel saleem, 23-02-2025
 		delete_all_gl_entries(self)
 
 	def update_project(self):

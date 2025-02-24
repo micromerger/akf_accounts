@@ -30,7 +30,7 @@ app_license = "mit"
 # include js in doctype views
 doctype_js = {
 	"Payment Entry" : "public/js/customizations/payment_entry.js",
-	"Purchase Receipt" : "public/js/customizations/purchase_receipt.js",
+	# "Purchase Receipt" : "public/js/customizations/purchase_receipt.js",
     "Purchase Invoice" : "public/js/customizations/purchase_invoice.js",
     "Asset" : "public/js/customizations/asset.js",
     "Asset Movement": "public/js/customizations/asset_movement.js",
@@ -124,7 +124,7 @@ doctype_js = {
 override_doctype_class = {
 	"Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
 	"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
-	"Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
+	# "Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
     # "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
     # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
     "Asset": "akf_accounts.customizations.extends.XAsset.AssetExtendedClass",

@@ -153,6 +153,20 @@ frappe.ui.form.on('Payment Entry', {
 			});
 
 		}
+		if(frm.doc.docstatus===0){
+			frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function() {
+				if (typeof make_dimensions_modal === "function") {
+					make_dimensions_modal(frm);
+				} else {
+					frappe.msgprint("Donation modal is not loaded.");
+				}
+				if ((typeof accounting_ledger === "function") || (typeof donor_balance_set_queries === "function")) {
+					accounting_ledger(frm);
+					donor_balance_set_queries(frm);
+				} 
+				
+			});
+		}
 	},
 	custom_cheque_leaf: function (frm) {
 		frm.set_value("payment_type", "Pay");

@@ -27,6 +27,8 @@
   "apply_tds",
   "tax_withholding_category",
   "amended_from",
+  "section_break_xist",
+  "program_details",
   "supplier_invoice_details",
   "bill_no",
   "column_break_15",
@@ -1615,13 +1617,23 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "fieldname": "section_break_xist",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "program_details",
+   "fieldtype": "Table",
+   "label": "Donor Balance",
+   "options": "Program Details"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-10 12:22:51.982173",
+ "modified": "2025-02-21 20:29:25.725818",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Purchase Invoice",

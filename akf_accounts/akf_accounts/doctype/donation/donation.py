@@ -13,6 +13,13 @@ class Donation(Document):
 		self.validate_is_return()
 		self.set_deduction_breakeven()
 		self.update_status()
+		self.soft_hard_financial_closure() #mubarrim
+		
+	def soft_hard_financial_closure(self): #By Mubarrim
+		for row in self.payment_detail:
+			financial_status=frappe.db.get_value("Project",row.project_id,"custom_financial_close")
+			if(financial_status == "Hard"):
+				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.project_id}")
 		
 	def validate_payment_details(self):
 		if(len(self.payment_detail)<1):
@@ -565,6 +572,7 @@ class Donation(Document):
 						"total_amount" : self.total_donation,
 						"outstanding_amount" : row.donation_amount,
 						"allocated_amount" : row.donation_amount,
+						"custom_donation_payment_detail": row.name,
 				}]
 			})
 			# frappe.throw(frappe.as_json(args))
