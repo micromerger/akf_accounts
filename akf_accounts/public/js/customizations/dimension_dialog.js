@@ -99,6 +99,19 @@ function get_donations(frm){
                 fieldtype: "Column Break",
             },
             {
+                label: __("Cost Center"),
+                fieldname: "cost_center",
+                fieldtype: "Link",
+                options: "Cost Center",
+                read_only: 1,
+                default: frm.doc.cost_center
+            },
+            {
+                label: __(""),
+                fieldname: "col_break",
+                fieldtype: "Column Break",
+            },
+            {
                 label: __("Get Balance"),
                 fieldname: "get_balance",
                 fieldtype: "Button",
@@ -109,7 +122,7 @@ function get_donations(frm){
                         "subservice_area": d.fields_dict.subservice_area.value,
                         "product": d.fields_dict.product.value,
                         "project": d.fields_dict.project.value,
-                        "cost_center": frm.doc.cost_center,
+                        "cost_center": d.fields_dict.project.cost_center,
                         "company": frm.doc.company,
                     }
                     const data = get_financial_stats(filters);
@@ -210,6 +223,7 @@ function get_donations(frm){
             if(details.length>0){
                 const childkey =  ("custom_program_details" in frm.doc)? "custom_program_details": "program_details";
                 frm.set_value(childkey, details);
+                frm.set_value("custom_advance_payment_by_accounting_dimension", 1);
                 d.hide();
             }else{
                 description =`<b style="color: red;">Please select a record to proceed.<b>`;
