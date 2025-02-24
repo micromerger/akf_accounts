@@ -223,7 +223,9 @@ function get_donations(frm){
             if(details.length>0){
                 const childkey =  ("custom_program_details" in frm.doc)? "custom_program_details": "program_details";
                 frm.set_value(childkey, details);
-                frm.set_value("custom_advance_payment_by_accounting_dimension", 1);
+                if("custom_advance_payment_by_accounting_dimension" in frm.doc){
+                    frm.set_value("custom_advance_payment_by_accounting_dimension", 1);
+                }
                 d.hide();
             }else{
                 description =`<b style="color: red;">Please select a record to proceed.<b>`;
