@@ -15,8 +15,8 @@ class Donation(Document):
 		self.update_status()
 		
 	def set_exchange_rate(self):
-		self.exchange_rate = get_exchange_rate(self.currency, self.to_currency, self.posting_date)
-
+		exchange_rate = get_exchange_rate(self.currency, self.to_currency, self.posting_date)
+		if(exchange_rate): self.exchange_rate = exchange_rate
 	def validate_payment_details(self):
 		if(len(self.payment_detail)<1):
 			frappe.throw("Please provide, payment details to proceed further.")
