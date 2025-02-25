@@ -308,14 +308,7 @@ class PurchaseInvoice(BuyingController):
 		self.set_percentage_received()
 		# nabeel saleem, 23-02-2025
 		validate_donor_balance(self)
-		self.soft_hard_financial_closure() #mubarrim
-		
-	def soft_hard_financial_closure(self): #By Mubarrim
-		for row in self.program_details:
-			financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
-			if(financial_status in ["Soft","Hard"]):
-				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
-
+	
 	def set_percentage_received(self):
 		total_billed_qty = 0.0
 		total_received_qty = 0.0

@@ -148,6 +148,7 @@ def make_inventory_gl_entries(self):
 		# get default inventory account
 		accounts = get_company_defaults(self.company)
 		args.update({
+			"account": accounts.default_inventory_fund_account,
 			# Company Currency
 			"credit": amount,
 			# Account Currency
@@ -166,7 +167,7 @@ def make_inventory_gl_entries(self):
 		for row in self.program_details:
 			args.update({
 				"cost_center": row.pd_cost_center,
-				"account": row.pd_account,
+				"account": row.temporary_account,
 				"service_area": row.pd_service_area,
 				"subservice_area": row.pd_subservice_area,
 				"product": row.pd_product,
@@ -181,7 +182,7 @@ def make_inventory_gl_entries(self):
 			# amount = 10-10 = 0
 			amount = itemBalance if(itemBalance<=actualBalance) else (itemBalance - actualBalance)
 			itemBalance = itemBalance - amount
-			if(itemBalance>0.0):
+			if(itemBalance==0.0 or itemBalance>0.0):
 				# function #01
 				equity_debit_gl_entry(args, row, amount)
 				# function #01

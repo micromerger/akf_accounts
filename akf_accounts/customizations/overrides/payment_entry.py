@@ -101,13 +101,7 @@ class XPaymentEntry(AccountsController):
         self.process_retention_flow()
         # It will work with payment terms
         self.set_payment_references()
-        self.soft_hard_financial_closure() #mubarrim
 		
-    def soft_hard_financial_closure(self): #By Mubarrim
-        financial_status=frappe.db.get_value("Project",self.project,"custom_financial_close")
-        if(financial_status == "Hard"):
-            frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {self.project}")
-
     def on_submit(self):
         if self.difference_amount:
             frappe.throw(_("Difference Amount must be zero"))

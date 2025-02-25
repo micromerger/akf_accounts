@@ -2,7 +2,7 @@ import frappe, ast
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 from erpnext.accounts.utils import get_balance_on
-
+from erpnext.setup.utils import get_exchange_rate
 from frappe.core.doctype.communication.email import make
 
 class Donation(Document):
@@ -13,14 +13,10 @@ class Donation(Document):
 		self.validate_is_return()
 		self.set_deduction_breakeven()
 		self.update_status()
-		self.soft_hard_financial_closure() #mubarrim
 		
-	def soft_hard_financial_closure(self): #By Mubarrim
-		for row in self.payment_detail:
-			financial_status=frappe.db.get_value("Project",row.project_id,"custom_financial_close")
-			if(financial_status == "Hard"):
-				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.project_id}")
-		
+	def set_exchange_rate(self):
+		self.exchange_rate = get_exchange_rate(self.currency, self.to_currency, self.posting_date)
+
 	def validate_payment_details(self):
 		if(len(self.payment_detail)<1):
 			frappe.throw("Please provide, payment details to proceed further.")
@@ -835,7 +831,6 @@ def get_outstanding(filters):
 @frappe.whitelist()
 def pledge_payment_entry(doc, values):
 	from frappe.utils import getdate
-	from erpnext.setup.utils import get_exchange_rate
 	curdate = getdate()
 
 	doc = frappe._dict(ast.literal_eval(doc))

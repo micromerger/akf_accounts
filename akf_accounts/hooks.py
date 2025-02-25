@@ -135,13 +135,29 @@ override_doctype_class = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Donation": {
+        "validate": "akf_accounts.utils.financial_closure.confirmation",
+        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
+	},
+    "Material Request": {
+        "validate": "akf_accounts.utils.financial_closure.confirmation",
+        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
+	},
+    "Purchase Receipt": {
+        "validate": "akf_accounts.utils.financial_closure.confirmation",
+        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
+	},
+    "Purchase Invoice": {
+        "validate": "akf_accounts.utils.financial_closure.confirmation",
+        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
+	},
+    "Payment Entry": {
+        "validate": "akf_accounts.utils.financial_closure.confirmation",
+        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
+	},
+}
+
 
 # Scheduled Tasks
 # ---------------

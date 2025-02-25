@@ -1,10 +1,4 @@
 
-
-// dimensions.events = {
-//     open_modal(frm){
-//         console.log('working');
-//     }
-// }
 function make_dimensions_modal(frm){
     if (frm.doc.docstatus == 0) {
         frm.add_custom_button(__('Donation'), () => get_donations(frm),
@@ -14,6 +8,10 @@ function make_dimensions_modal(frm){
 
 // events.get_donations
 function get_donations(frm){
+    if(frm.doc.cost_center==undefined || frm.doc.cost_center==""){
+        frappe.throw("Please select cost center to proceed.");
+        return;
+    }
     
     const d = new frappe.ui.Dialog({
         title: __("Accounting Dimensions"),
@@ -234,8 +232,8 @@ function get_donations(frm){
             d.fields_dict.html_message.refresh();
          },
         primary_action_label: __("Add Program Detail"),
-      });
-      d.show();
+    });
+    d.show();
       
 }
 
