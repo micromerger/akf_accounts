@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-02-26 17:20:58.766135",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "column_break_rrbt",
+  "certificate_name",
+  "column_break_bxdf",
+  "certificate_attachment"
+ ],
+ "fields": [
+  {
+   "columns": 6,
+   "fieldname": "certificate_name",
+   "fieldtype": "Data",
+   "label": "Certificate Name"
+  },
+  {
+   "fieldname": "column_break_bxdf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 5,
+   "fieldname": "certificate_attachment",
+   "fieldtype": "Attach",
+   "label": "Certificate Attachment"
+  },
+  {
+   "columns": 5,
+   "fieldname": "column_break_rrbt",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-02-26 17:24:04.273554",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Tax Exemption Certificates",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

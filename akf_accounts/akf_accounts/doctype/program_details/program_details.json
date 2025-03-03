@@ -16,8 +16,11 @@
   "pd_donor",
   "pd_donor_name",
   "column_break_hkup",
-  "actual_balance",
-  "temporary_account"
+  "encumbrance_project_account",
+  "encumbrance_material_request_account",
+  "amortise_designated_asset_fund_account",
+  "amortise_inventory_fund_account",
+  "actual_balance"
  ],
  "fields": [
   {
@@ -103,9 +106,30 @@
    "read_only": 1
   },
   {
-   "fieldname": "temporary_account",
+   "fieldname": "encumbrance_project_account",
    "fieldtype": "Link",
-   "label": "Temporary Account",
+   "label": "Encumbrance Project Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "encumbrance_material_request_account",
+   "fieldtype": "Link",
+   "label": "Encumbrance Material Request Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amortise_designated_asset_fund_account",
+   "fieldtype": "Link",
+   "label": "Amortise Designated Asset Fund Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amortise_inventory_fund_account",
+   "fieldtype": "Link",
+   "label": "Amortise Inventory Fund Account",
    "options": "Account",
    "read_only": 1
   }
@@ -113,7 +137,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-02-24 19:15:30.396912",
+ "modified": "2025-02-28 16:30:48.972637",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",

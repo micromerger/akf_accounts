@@ -54,7 +54,7 @@ form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
 
 # from akf_accounts.akf_accounts.doctype.purchase_invoice.extend_purchase_invoice import make_donor_gl_entries, delete_all_gl_entries
-from akf_accounts.akf_accounts.doctype.purchase_invoice.mortization import (
+from akf_accounts.utils.mortization import (
 	validate_donor_balance, 
 	update_stock_ledger_entry,
 	make_mortization_gl_entries,

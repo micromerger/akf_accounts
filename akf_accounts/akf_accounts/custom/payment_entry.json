@@ -99,7 +99,7 @@
    "is_virtual": 0,
    "label": "Donor Balance",
    "length": 0,
-   "mandatory_depends_on": null,
+   "mandatory_depends_on": "custom_advance_payment_by_accounting_dimension",
    "modified": "2025-02-24 00:52:28.342444",
    "modified_by": "Administrator",
    "module": null,

@@ -27,6 +27,7 @@
   "internal_supplier_section",
   "is_internal_supplier",
   "represents_company",
+  "is_related_party",
   "column_break_16",
   "companies",
   "column_break2",
@@ -479,6 +480,12 @@
    "fieldname": "cnic",
    "fieldtype": "Data",
    "label": "CNIC"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_related_party",
+   "fieldtype": "Check",
+   "label": "Is Related Party"
   }
  ],
  "icon": "fa fa-user",
@@ -491,7 +498,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2024-11-07 13:28:54.084252",
+ "modified": "2025-03-03 11:43:55.127668",
  "modified_by": "Administrator",
  "module": "AKF Buying",
  "name": "Supplier",

@@ -1,16 +1,18 @@
 import frappe
 from frappe.utils import get_link_to_form
 from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
+from akf_accounts.utils.accounts_defaults import get_company_defaults
 """ 
 1- make debit entry of equity/fund account. (e.g; Capital Stock - AKFP)
 2- make credit entry of Inventory account. (e.g; Inventory fund account (IFA) - AKFP)
 """
 # VALIDATIONS
 def validate_donor_balance(self):
+	if(self.is_new()): return
 	itemBalance = sum(d.amount for d in self.items)
 	donorBalance = sum(d.actual_balance for d in self.program_details)
 	if (itemBalance > donorBalance):
-		frappe.throw("Insufficient Balance: The donated amount is less than the required amount.")
+		frappe.throw("Insufficient donor balance.")
 
 # STOCK LEDGER ENTRY
 def update_stock_ledger_entry(self):
@@ -34,27 +36,6 @@ def make_mortization_gl_entries(self):
 		if (self.custom_type_of_transaction == "Asset Purchase"): make_asset_purchase_gl_entries(self)
 		elif (self.custom_type_of_transaction == "Inventory Purchase Restricted"): make_inventory_gl_entries(self)
 
-def get_company_defaults(company):
-	doc = frappe.get_doc("Company", company)  
-	
-	if (not doc.custom_default_fund):
-		form_link = get_link_to_form("Company", company)
-		frappe.throw(f"Please set account of {form_link}", title="Fund Account")
- 	
-	if (not doc.custom_default_designated_asset_fund_account):
-		form_link = get_link_to_form("Company", company)
-		frappe.throw(f"Please set account of {form_link}", title="Designated Asset Fund Account")
-
-	if (not doc.custom_default_inventory_fund_account):
-		form_link = get_link_to_form("Company", company)
-		frappe.throw(f"Please set account of {form_link}", title="Designated Inventory Fund Account")
-
-	return frappe._dict({
-		"default_fund": doc.custom_default_fund,
-		"default_designated_asset_fund_account": doc.custom_default_designated_asset_fund_account,
-		"default_inventory_fund_account": doc.custom_default_inventory_fund_account
-	})
-
 def get_gl_entry_dict(self):
 	return frappe._dict({
 		'doctype': 'GL Entry',
@@ -66,15 +47,14 @@ def get_gl_entry_dict(self):
 		'voucher_type': 'Purchase Invoice',
 		'voucher_subtype': 'Receive',
 		'voucher_no': self.name,
-		'company': self.company,
 	})
 
 def make_asset_purchase_gl_entries(self):
-	def make_default_fund(args, row, accounts, amount):
+	def make_debit_assets_entry(args, row, accounts, amount):
 		cargs = get_currency_args()
 		args.update(cargs)
 		args.update({
-			'account': accounts.default_fund,
+			'account': row.encumbrance_material_request_account,
 			'debit': amount,
 			'debit_in_account_currency': amount,
 			"debit_in_transaction_currency": amount,
@@ -84,11 +64,12 @@ def make_asset_purchase_gl_entries(self):
 		doc.insert(ignore_permissions=True)
 		doc.submit()
 	
-	def make_designated_asset_fund_account(args, row, accounts, amount):
+	def make_credit_designated_asset_entry(args, row, amount):
+		# accounts = get_company_defaults(self.company)
 		cargs = get_currency_args()
 		args.update(cargs)
 		args.update({
-			'account': accounts.default_designated_asset_fund_account,
+			'account': accounts.amortise_designated_asset_fund_account,
 			'credit': amount,
 			'credit_in_account_currency': amount,
 			"credit_in_transaction_currency": amount,
@@ -98,39 +79,54 @@ def make_asset_purchase_gl_entries(self):
 		doc.insert(ignore_permissions=True)
 		doc.submit()
 
-	def start_asset():
+	def process_asset():
 		accounts = get_company_defaults(self.company)
+		advanceBalance = sum(d.allocated_amount for d in self.advances)
 		itemBalance = sum(d.amount for d in self.items) or 0.0
+		itemBalance = (itemBalance - advanceBalance)
 		args = get_gl_entry_dict(self)
 		for row in self.program_details:
-			args.update({
+			fargs = frappe._dict({
+				"party": self.supplier,
+				"company": self.company,			
 				"cost_center": row.pd_cost_center,
-				"account": row.pd_account,
 				"service_area": row.pd_service_area,
 				"subservice_area": row.pd_subservice_area,
 				"product": row.pd_product,
 				"project": row.pd_project,
 				"donor": row.pd_donor,
+				# "account": row.amortise_inventory_fund_account,
+			}) 
+			args.update(fargs)
+			args.update({
 				"transaction_currency ": row.currency,
 				"inventory_flag": 'Purchased',
 				'remarks': 'Donation for item',
 			})
-			actualBalance = row.actual_balance
-			amount = itemBalance if(itemBalance<=actualBalance) else (itemBalance - actualBalance)
-			itemBalance = itemBalance - amount
-			# Create the GL entry for the debit account and update
-			make_default_fund(args, row, accounts, amount)
-			# Create the GL entry for the credit account and update
-			make_designated_asset_fund_account(args, row, accounts, amount)
+			balanceAmount = row.actual_balance
+			
+			if(balanceAmount<=itemBalance):
+				# itemBalance = (7000 - 5000) = 2000
+				itemBalance = (itemBalance - balanceAmount)
+				# gl entry
+				make_debit_assets_entry(args, row, amount)
+				make_credit_designated_asset_entry(args, row, amount)
+
+			elif(itemBalance>0 and balanceAmount>itemBalance):
+				# gl entry
+				make_debit_assets_entry(args, row, amount)
+				make_credit_designated_asset_entry(args, row, amount)
+				itemBalance = 0
 	
-	start_asset()
+	process_asset()
 	success_msg()
 
 def make_inventory_gl_entries(self):
-	def equity_debit_gl_entry(args, row, amount):
+	def debit_inventory_gl_entry(args, row, amount):
 		cargs = get_currency_args()
-		args.update(args)
+		args.update(cargs)
 		args.update({
+			"account": row.encumbrance_material_request_account,
 			# Company Currency
 			"debit": amount,
 			# Account Currency
@@ -142,13 +138,13 @@ def make_inventory_gl_entries(self):
 		doc.insert(ignore_permissions=True)
 		doc.submit()
 		
-	def inventory_credit_gl_entry(args, row, amount):
+	def credit_inventory_gl_entry(args, row, amount):
 		cargs = get_currency_args()
-		args.update(args)
+		args.update(cargs)
 		# get default inventory account
-		accounts = get_company_defaults(self.company)
+		# accounts = get_company_defaults(self.company)
 		args.update({
-			"account": accounts.default_inventory_fund_account,
+			"account": row.amortise_inventory_fund_account,
 			# Company Currency
 			"credit": amount,
 			# Account Currency
@@ -160,35 +156,47 @@ def make_inventory_gl_entries(self):
 		doc.insert(ignore_permissions=True)
 		doc.submit()
 		
-	def start_inventory():
+	def procsess_inventory():
 		args = get_gl_entry_dict(self)
+		advanceBalance = sum(d.allocated_amount for d in self.advances)
 		itemBalance = sum(d.amount for d in self.items) or 0.0
+		itemBalance = (itemBalance - advanceBalance)
 		# looping
 		for row in self.program_details:
-			args.update({
+			fargs = frappe._dict({
+				"party": self.supplier,
+				"company": self.company,	
 				"cost_center": row.pd_cost_center,
-				"account": row.temporary_account,
 				"service_area": row.pd_service_area,
 				"subservice_area": row.pd_subservice_area,
 				"product": row.pd_product,
 				"project": row.pd_project,
 				"donor": row.pd_donor,
+				# "account": row.amortise_inventory_fund_account,
+			}) 
+			args.update(fargs)
+			args.update({
 				"transaction_currency ": row.currency,
 				"inventory_flag": 'Purchased',
 				'remarks': 'Donation for item',
-			})
-			actualBalance = row.actual_balance 
-			# amount = 20-10 = 10
-			# amount = 10-10 = 0
-			amount = itemBalance if(itemBalance<=actualBalance) else (itemBalance - actualBalance)
-			itemBalance = itemBalance - amount
-			if(itemBalance==0.0 or itemBalance>0.0):
-				# function #01
-				equity_debit_gl_entry(args, row, amount)
-				# function #01
-				inventory_credit_gl_entry(args, row, amount)
+			}) 
+			balanceAmount = row.actual_balance
+			
+			if(balanceAmount<=itemBalance):
+				# itemBalance = (7000 - 5000) = 2000
+				itemBalance = (itemBalance - balanceAmount)
+				# gl entry
+				debit_inventory_gl_entry(args, row, balanceAmount)
+				credit_inventory_gl_entry(args, row, balanceAmount)
+			
+			elif(itemBalance>0 and balanceAmount>itemBalance):
+				# gl entry
+				debit_inventory_gl_entry(args, row, itemBalance)
+				credit_inventory_gl_entry(args, row, itemBalance)
+				itemBalance = 0
+				
 		
-	start_inventory()
+	procsess_inventory()
 	success_msg()
 
 def success_msg():
@@ -198,3 +206,9 @@ def success_msg():
 def delete_all_gl_entries(self):
 	if(frappe.db.exists("GL Entry", {"voucher_no": self.name})):
 		frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
+  
+def validate_mortization_through_payment_entry(fargs): 
+	credit = frappe.db.get_value("GL Entry", fargs, "sum(credit)") or 0.0
+	if(credit>0.0): return True
+	else: return False
+

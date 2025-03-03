@@ -8,10 +8,10 @@ function make_dimensions_modal(frm){
 
 // events.get_donations
 function get_donations(frm){
-    if(frm.doc.cost_center==undefined || frm.doc.cost_center==""){
-        frappe.throw("Please select cost center to proceed.");
-        return;
-    }
+    // if(frm.doc.cost_center==undefined || frm.doc.cost_center==""){
+    //     frappe.throw("Please select cost center to proceed.");
+    //     return;
+    // }
     
     const d = new frappe.ui.Dialog({
         title: __("Accounting Dimensions"),
@@ -80,6 +80,7 @@ function get_donations(frm){
                 fieldname: "project",
                 fieldtype: "Link",
                 options: "Project",
+                default: ("project" in frm.doc)? frm.doc.project: "",
                 reqd: 1,
                 get_query(){
                     let service_area = d.fields_dict.service_area.value;
@@ -96,7 +97,7 @@ function get_donations(frm){
                 fieldname: "col_break",
                 fieldtype: "Column Break",
             },
-            {
+            /*{
                 label: __("Cost Center"),
                 fieldname: "cost_center",
                 fieldtype: "Link",
@@ -108,7 +109,7 @@ function get_donations(frm){
                 label: __(""),
                 fieldname: "col_break",
                 fieldtype: "Column Break",
-            },
+            },*/
             {
                 label: __("Get Balance"),
                 fieldname: "get_balance",
@@ -120,14 +121,35 @@ function get_donations(frm){
                         "subservice_area": d.fields_dict.subservice_area.value,
                         "product": d.fields_dict.product.value,
                         "project": d.fields_dict.project.value,
-                        "cost_center": d.fields_dict.project.cost_center,
+                        // "cost_center": d.fields_dict.project.cost_center,
                         "company": frm.doc.company,
+                        "doctype": frm.doc.doctype,
+                        "amount": get_consuming_amount(frm.doc)
                     }
-                    const data = get_financial_stats(filters);
-                   // Update the donor_balance table's data
+                    let msg = "<p></p>";
+                    let data = [];
+                    const nofilters = get_validate_filters(filters);
+                    if(nofilters.notFound){
+                        msg = `<b style="color: red;">Please select ${nofilters.fieldname}<b>`;
+                    }else{
+                        const response = get_financial_stats(filters);
+                        
+                        if(response.length>0){
+                            // Update the donor_balance table's data
+                            data = response;
+                            // Refresh the child table grid to reflect the new data
+                            
+                        }else{
+                            data = [];
+                            msg = `<b style="color: red;">No balance found against these dimension.<b>`;
+                        }
+                        
+                    }
                     d.fields_dict.donor_balance.df.data = data;
-                    // Refresh the child table grid to reflect the new data
                     d.fields_dict.donor_balance.grid.refresh();
+
+                    d.fields_dict.html_message.df.options = msg;
+                    d.fields_dict.html_message.refresh();
                 }
             },
             {
@@ -145,6 +167,22 @@ function get_donations(frm){
                 reqd: 1,
                 fields: [
                     {
+                        fieldname: "cost_center",
+                        label: __("Cost Center"),
+                        fieldtype: "Link",
+                        options: "Cost Center",
+                        in_list_view: 1,
+                        read_only: 1,
+                    },
+                    {
+                        fieldname: "account",
+                        label: __("Account"),
+                        fieldtype: "Link",
+                        options: "Account",
+                        in_list_view: 1,
+                        read_only: 1,
+                    },
+                    {
                         fieldname: "donor",
                         label: __("Donor"),
                         fieldtype: "Link",
@@ -161,11 +199,11 @@ function get_donations(frm){
                         read_only: 1,
                     },
                     {
-                        fieldname: "account",
-                        label: __("Account"),
+                        fieldname: "temporary_account",
+                        label: __("Temporary Account"),
                         fieldtype: "Link",
                         options: "Account",
-                        in_list_view: 1,
+                        in_list_view: 0,
                         read_only: 1,
                     },
                     {
@@ -194,25 +232,31 @@ function get_donations(frm){
                 fieldtype: "HTML",
             },
         ],
+        size: 'extra-large',
         primary_action: (values) => {
             const array = values.donor_balance;
             let details = [];
             
-            if(frm.doc.cost_center==undefined){
-                d.fields_dict.html_message.df.options = `<b style="color: red;">Please select cost center to proceed.<b>`;
-                d.fields_dict.html_message.refresh();
-                return
-            }
+            // if(frm.doc.cost_center==undefined){
+            //     d.fields_dict.html_message.df.options = `<b style="color: red;">Please select cost center to proceed.<b>`;
+            //     d.fields_dict.html_message.refresh();
+            //     return
+            // }
+            console.log(array);
             array.forEach(row => {
                 if(row.__checked){
                     details.push({
-                        "pd_cost_center": frm.doc.cost_center,
+                        "pd_cost_center": row.cost_center,
                         "pd_account": row.account,
                         "pd_service_area": values.service_area,
                         "pd_subservice_area": values.subservice_area,
                         "pd_product": values.product,
                         "pd_project": values.project,
                         "pd_donor": row.donor,
+                        "encumbrance_project_account": row.encumbrance_project_account,
+                        "encumbrance_material_request_account": row.encumbrance_material_request_account,
+                        "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
+                        "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
                         "actual_balance": row.balance,
                     });
                 }
@@ -237,10 +281,26 @@ function get_donations(frm){
       
 }
 
+function get_validate_filters(filters){
+    var noFilters = false;
+    var fieldname = '';
+    for(const key in filters){
+        noFilters = ['', null].includes(filters[key]);
+        if(noFilters){
+            fieldname = key;
+            break;
+        }   
+    }
+
+    return {
+        "notFound": noFilters,
+        "fieldname": fieldname
+    }
+}
 function get_financial_stats(filters){
     let data = [];
     frappe.call({
-        method: "akf_projects.customizations.overrides.project.financial_stats.get_donor_transactions",
+        method: "akf_accounts.utils.dimensional_donor_balance.get_donor_balance",
         async: false,
         args: {
             filters: filters 
@@ -252,6 +312,29 @@ function get_financial_stats(filters){
     });
     return data
 }
+
+function get_consuming_amount(doc){
+    if("accounts" in doc){
+        let amount = 0.0;
+        const array = doc.accounts;
+        array.forEach(row=>{
+            amount += row.budget_amount;
+        });
+        return amount;
+    }
+    else if("items" in doc){
+        let amount = 0.0;
+        const array = doc.items;
+        array.forEach(row=>{
+            amount += row.amount;
+        });
+        return amount;
+    }else if("paid_amount" in doc){
+        return doc.paid_amount;
+    }
+    return 0.0;
+}
+
 
 function accounting_ledger(frm) {
     if(frm.doc.docstatus == 1) {

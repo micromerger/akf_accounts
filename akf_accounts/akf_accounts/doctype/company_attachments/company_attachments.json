@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-03-03 11:15:11.139771",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "attachment_name",
+  "column_break_cvaf",
+  "attach_file"
+ ],
+ "fields": [
+  {
+   "fieldname": "attachment_name",
+   "fieldtype": "Data",
+   "label": "Attachment Name"
+  },
+  {
+   "fieldname": "column_break_cvaf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attach_file",
+   "fieldtype": "Attach",
+   "label": "Attach File"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-03-03 11:15:37.174621",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Company Attachments",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

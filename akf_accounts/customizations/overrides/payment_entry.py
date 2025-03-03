@@ -46,1671 +46,1684 @@ from erpnext.setup.utils import get_exchange_rate
 # Nabeel Saleem, 06-02-2025
 from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import adjust_doubtful_debt
 from akf_accounts.akf_accounts.doctype.donation.updates import updating_donation
+# Nabeel Saleem, 25-02-2025
+from akf_accounts.customizations.overrides.payment_mortization import (
+	validate_donor_balance,
+	make_mortization_gl_entries,
+	delete_all_gl_entries
+)
+
 class InvalidPaymentEntry(ValidationError):
-    pass
+	pass
 
 class XPaymentEntry(AccountsController):
-    def __init__(self, *args, **kwargs):
-        super(XPaymentEntry, self).__init__(*args, **kwargs)
-        if not self.is_new():
-            self.setup_party_account_field()
+	def __init__(self, *args, **kwargs):
+		super(XPaymentEntry, self).__init__(*args, **kwargs)
+		if not self.is_new():
+			self.setup_party_account_field()
 
-    def setup_party_account_field(self):
-        self.party_account_field = None
-        self.party_account = None
-        self.party_account_currency = None
+	def setup_party_account_field(self):
+		self.party_account_field = None
+		self.party_account = None
+		self.party_account_currency = None
 
-        if self.payment_type == "Receive":
-            self.party_account_field = "paid_from"
-            self.party_account = self.paid_from
-            self.party_account_currency = self.paid_from_account_currency
+		if self.payment_type == "Receive":
+			self.party_account_field = "paid_from"
+			self.party_account = self.paid_from
+			self.party_account_currency = self.paid_from_account_currency
 
-        elif self.payment_type == "Pay":
-            self.party_account_field = "paid_to"
-            self.party_account = self.paid_to
-            self.party_account_currency = self.paid_to_account_currency
+		elif self.payment_type == "Pay":
+			self.party_account_field = "paid_to"
+			self.party_account = self.paid_to
+			self.party_account_currency = self.paid_to_account_currency
 
-    def validate(self):
-        self.setup_party_account_field()
-        self.set_missing_values()
-        self.set_liability_account()
-        self.set_missing_ref_details(force=True)
-        self.validate_payment_type()
-        self.validate_party_details()
-        self.set_exchange_rate()
-        self.validate_mandatory()
-        self.validate_reference_documents()
-        self.set_tax_withholding()
-        self.set_amounts()
-        self.validate_amounts()
-        self.apply_taxes()
-        self.set_amounts_after_tax()
-        self.clear_unallocated_reference_document_rows()
-        self.validate_transaction_reference()
-        self.set_title()
-        self.set_remarks()
-        self.validate_duplicate_entry()
-        self.validate_payment_type_with_outstanding()
-        self.validate_allocated_amount()
-        self.validate_paid_invoices()
-        self.ensure_supplier_is_not_blocked()
-        self.set_status()
-        self.set_total_in_words()
-        self.set_cheque_leaf_issued()
-        # Nabeel Saleem, 21-01-2025
-        self.process_retention_flow()
-        # It will work with payment terms
-        self.set_payment_references()
+	def validate(self):
+		self.setup_party_account_field()
+		self.set_missing_values()
+		self.set_liability_account()
+		self.set_missing_ref_details(force=True)
+		self.validate_payment_type()
+		self.validate_party_details()
+		self.set_exchange_rate()
+		self.validate_mandatory()
+		self.validate_reference_documents()
+		self.set_tax_withholding()
+		self.set_amounts()
+		self.validate_amounts()
+		self.apply_taxes()
+		self.set_amounts_after_tax()
+		self.clear_unallocated_reference_document_rows()
+		self.validate_transaction_reference()
+		self.set_title()
+		self.set_remarks()
+		self.validate_duplicate_entry()
+		self.validate_payment_type_with_outstanding()
+		self.validate_allocated_amount()
+		self.validate_paid_invoices()
+		self.ensure_supplier_is_not_blocked()
+		self.set_status()
+		self.set_total_in_words()
+		self.set_cheque_leaf_issued()
+		# Nabeel Saleem, 21-01-2025
+		self.process_retention_flow()
+		# It will work with payment terms
+		self.set_payment_references()
+		# Nabeel Saleem, 25-02-2025
+		validate_donor_balance(self)
+
+	def on_submit(self):
+		if self.difference_amount:
+			frappe.throw(_("Difference Amount must be zero"))
+		self.make_gl_entries()
+		self.update_outstanding_amounts()
+		self.update_advance_paid()
+		self.update_payment_schedule()
+		self.set_status()
+		# self.update_status(cancelled=False)
+		# Nabeel Saleem, 07-01-2025
+		updating_donation(self)
+		self.set_cheque_leaf_cleared()
+		self.make_retention_journal_entry()
+		# Nabeel Saleem, 06-01-2025
+		adjust_doubtful_debt(self)
+		# Nabeel Saleem, 25-02-2025
+		make_mortization_gl_entries(self)
+
+	def set_liability_account(self):
+		# Auto setting liability account should only be done during 'draft' status
+		if self.docstatus > 0 or self.payment_type == "Internal Transfer":
+			return
+
+		if not frappe.db.get_value(
+			"Company", self.company, "book_advance_payments_in_separate_party_account"
+		):
+			return
+
+		# Important to set this flag for the gl building logic to work properly
+		self.book_advance_payments_in_separate_party_account = True
+		account_type = frappe.get_value(
+			"Account", {"name": self.party_account, "company": self.company}, "account_type"
+		)
+
+		if (account_type == "Payable" and self.party_type == "Customer") or (
+			account_type == "Receivable" and self.party_type == "Supplier"
+		):
+			return
+
+		if self.references:
+			allowed_types = frozenset(["Sales Order", "Purchase Order"])
+			reference_types = set([x.reference_doctype for x in self.references])
+
+			# If there are referencers other than `allowed_types`, treat this as a normal payment entry
+			if reference_types - allowed_types:
+				self.book_advance_payments_in_separate_party_account = False
+				return
+
+		liability_account = get_party_account(
+			self.party_type, self.party, self.company, include_advance=True
+		)[1]
+
+		self.set(self.party_account_field, liability_account)
+
+		frappe.msgprint(
+			_(
+				"Book Advance Payments as Liability option is chosen. Paid From account changed from {0} to {1}."
+			).format(
+				frappe.bold(self.party_account),
+				frappe.bold(liability_account),
+			),
+			alert=True,
+		)
+
+	def on_cancel(self):
+		self.ignore_linked_doctypes = (
+			"GL Entry",
+			"Stock Ledger Entry",
+			"Payment Ledger Entry",
+			"Repost Payment Ledger",
+			"Repost Payment Ledger Items",
+			"Repost Accounting Ledger",
+			"Repost Accounting Ledger Items",
+			"Unreconcile Payment",
+			"Unreconcile Payment Entries",
+		)
+		super(XPaymentEntry, self).on_cancel()
+		self.make_gl_entries(cancel=1)
+		self.update_outstanding_amounts()
+		self.update_advance_paid()
+		self.delink_advance_entry_references()
+		self.update_payment_schedule(cancel=1)
+		self.set_payment_req_status()
+		self.set_status()
+		self.reverse_cheque_leaf()
+		# self.update_status(cancelled=True)
+		self.cancel_retention_journal_entry()
+		# Nabeel Saleem, 07-01-2025
+		updating_donation(self, cancelled=True)
+		# Nabeel Saleem, 25-02-2025
+		delete_all_gl_entries(self)
+
+	def set_payment_req_status(self):
+		from erpnext.accounts.doctype.payment_request.payment_request import update_payment_req_status
+
+		update_payment_req_status(self, None)
+
+	def update_outstanding_amounts(self):
+		self.set_missing_ref_details(force=True)
+
+	def validate_duplicate_entry(self):
+		reference_names = []
+		for d in self.get("references"):
+			if (d.reference_doctype, d.reference_name, d.payment_term) in reference_names:
+				frappe.throw(
+					_("Row #{0}: Duplicate entry in References {1} {2}").format(
+						d.idx, d.reference_doctype, d.reference_name
+					)
+				)
+			reference_names.append((d.reference_doctype, d.reference_name, d.payment_term))
+
+	def set_bank_account_data(self):
+		if self.bank_account:
+			bank_data = get_bank_account_details(self.bank_account)
+
+			field = "paid_from" if self.payment_type == "Pay" else "paid_to"
+
+			self.bank = bank_data.bank
+			self.bank_account_no = bank_data.bank_account_no
+
+			if not self.get(field):
+				self.set(field, bank_data.account)
+
+	def validate_payment_type_with_outstanding(self):
+		total_outstanding = sum(d.allocated_amount for d in self.get("references"))
+		if total_outstanding < 0 and self.party_type == "Customer" and self.payment_type == "Receive":
+			frappe.throw(
+				_("Cannot receive from customer against negative outstanding"),
+				title=_("Incorrect Payment Type"),
+			)
+
+	def validate_allocated_amount(self):
+		if self.payment_type == "Internal Transfer":
+			return
+
+		if self.party_type in ("Customer", "Supplier", "Donor"):
+			self.validate_allocated_amount_with_latest_data()
+		else:
+			fail_message = _("Row #{0}: Allocated Amount cannot be greater than outstanding amount.")
+			for d in self.get("references"):
+				if (flt(d.allocated_amount)) > 0 and flt(d.allocated_amount) > flt(d.outstanding_amount):
+					frappe.throw(fail_message.format(d.idx))
+
+				# Check for negative outstanding invoices as well
+				if flt(d.allocated_amount) < 0 and flt(d.allocated_amount) < flt(d.outstanding_amount):
+					frappe.throw(fail_message.format(d.idx))
+
+	def term_based_allocation_enabled_for_reference(
+		self, reference_doctype: str, reference_name: str
+	) -> bool:
+		if (
+			reference_doctype
+			and reference_doctype in ["Sales Invoice", "Sales Order", "Purchase Order", "Purchase Invoice"]
+			and reference_name
+		):
+			if template := frappe.db.get_value(reference_doctype, reference_name, "payment_terms_template"):
+				return frappe.db.get_value(
+					"Payment Terms Template", template, "allocate_payment_based_on_payment_terms"
+				)
+		return False
+
+	def validate_allocated_amount_with_latest_data(self):
+		if self.references:
+			uniq_vouchers = set([(x.reference_doctype, x.reference_name) for x in self.references])
+			vouchers = [frappe._dict({"voucher_type": x[0], "voucher_no": x[1]}) for x in uniq_vouchers]
+			latest_references = get_outstanding_reference_documents(
+				{
+					"posting_date": self.posting_date,
+					"company": self.company,
+					"party_type": self.party_type,
+					"payment_type": self.payment_type,
+					"party": self.party,
+					"party_account": self.paid_from if self.payment_type == "Receive" else self.paid_to,
+					"get_outstanding_invoices": True,
+					"get_orders_to_be_billed": True,
+					"vouchers": vouchers,
+					"book_advance_payments_in_separate_party_account": self.book_advance_payments_in_separate_party_account,
+				},
+				validate=True,
+			)
+			
+			# Group latest_references by (voucher_type, voucher_no)
+			latest_lookup = {}
+			for d in latest_references:
+				d = frappe._dict(d)
+				latest_lookup.setdefault((d.voucher_type, d.voucher_no), frappe._dict())[d.payment_term] = d
+
+			for idx, d in enumerate(self.get("references"), start=1):
+				latest = latest_lookup.get((d.reference_doctype, d.reference_name)) or frappe._dict()
+				# If term based allocation is enabled, throw
+				if (
+					d.payment_term is None or d.payment_term == ""
+				) and self.term_based_allocation_enabled_for_reference(
+					d.reference_doctype, d.reference_name
+				):
+					frappe.throw(
+						_(
+							"{0} has Payment Term based allocation enabled. Select a Payment Term for Row #{1} in Payment References section"
+						).format(frappe.bold(d.reference_name), frappe.bold(idx))
+					)
+
+				# if no payment template is used by invoice and has a custom term(no `payment_term`), then invoice outstanding will be in 'None' key
+				latest = latest.get(d.payment_term) or latest.get(None)
+				# The reference has already been fully paid
+				if not latest:
+					frappe.throw(
+						_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
+					)
+				# The reference has already been partly paid
+				elif (
+					latest.outstanding_amount < latest.invoice_amount
+					and flt(d.outstanding_amount, d.precision("outstanding_amount"))
+					!= flt(latest.outstanding_amount, d.precision("outstanding_amount"))
+					and d.payment_term == ""
+				):
+					frappe.throw(
+						_(
+							"{0} {1} has already been partly paid. Please use the 'Get Outstanding Invoice' or the 'Get Outstanding Orders' button to get the latest outstanding amounts."
+						).format(_(d.reference_doctype), d.reference_name)
+					)
+
+				fail_message = _("Row #{0}: Allocated Amount cannot be greater than outstanding amount.")
+
+				if (
+					d.payment_term
+					and (
+						(flt(d.allocated_amount)) > 0
+						and latest.payment_term_outstanding
+						and (flt(d.allocated_amount) > flt(latest.payment_term_outstanding))
+					)
+					and self.term_based_allocation_enabled_for_reference(d.reference_doctype, d.reference_name)
+				):
+					frappe.throw(
+						_(
+							"Row #{0}: Allocated amount:{1} is greater than outstanding amount:{2} for Payment Term {3}"
+						).format(
+							d.idx, d.allocated_amount, latest.payment_term_outstanding, d.payment_term
+						)
+					)
+
+				if (flt(d.allocated_amount)) > 0 and flt(d.allocated_amount) > flt(latest.outstanding_amount):
+					frappe.throw(fail_message.format(d.idx))
+
+				# Check for negative outstanding invoices as well
+				if flt(d.allocated_amount) < 0 and flt(d.allocated_amount) < flt(latest.outstanding_amount):
+					frappe.throw(fail_message.format(d.idx))
+
+	def delink_advance_entry_references(self):
+		for reference in self.references:
+			if reference.reference_doctype in ("Sales Invoice", "Purchase Invoice"):
+				doc = frappe.get_doc(reference.reference_doctype, reference.reference_name)
+				doc.delink_advance_entries(self.name)
+
+	def set_missing_values(self):
+		if self.payment_type == "Internal Transfer":
+			for field in (
+				"party",
+				"party_balance",
+				"total_allocated_amount",
+				"base_total_allocated_amount",
+				"unallocated_amount",
+			):
+				self.set(field, None)
+			self.references = []
+		else:
+			if not self.party_type:
+				frappe.throw(_("Party Type is mandatory"))
+
+			if not self.party:
+				frappe.throw(_("Party is mandatory"))
+
+			_party_name = "title" if self.party_type == "Shareholder" else self.party_type.lower() + "_name"
+
+			if frappe.db.has_column(self.party_type, _party_name):
+				self.party_name = frappe.db.get_value(self.party_type, self.party, _party_name)
+			else:
+				self.party_name = frappe.db.get_value(self.party_type, self.party, "name")
+
+		if self.party:
+			if not self.party_balance:
+				self.party_balance = get_balance_on(
+					party_type=self.party_type, party=self.party, date=self.posting_date, company=self.company
+				)
+
+			if not self.party_account:
+				party_account = get_party_account(self.party_type, self.party, self.company)
+				self.set(self.party_account_field, party_account)
+				self.party_account = party_account
+
+		if self.paid_from and not (self.paid_from_account_currency or self.paid_from_account_balance):
+			acc = get_account_details(self.paid_from, self.posting_date, self.cost_center)
+			self.paid_from_account_currency = acc.account_currency
+			self.paid_from_account_balance = acc.account_balance
+
+		if self.paid_to and not (self.paid_to_account_currency or self.paid_to_account_balance):
+			acc = get_account_details(self.paid_to, self.posting_date, self.cost_center)
+			self.paid_to_account_currency = acc.account_currency
+			self.paid_to_account_balance = acc.account_balance
+
+		self.party_account_currency = (
+			self.paid_from_account_currency
+			if self.payment_type == "Receive"
+			else self.paid_to_account_currency
+		)
+
+	def set_missing_ref_details(
+		self,
+		force: bool = False,
+		update_ref_details_only_for: list | None = None,
+		ref_exchange_rate: float | None = None,
+	) -> None:
+		for d in self.get("references"):
+			if d.allocated_amount:
+				if update_ref_details_only_for and (
+					not (d.reference_doctype, d.reference_name) in update_ref_details_only_for
+				):
+					continue
+
+				ref_details = get_reference_details(
+					d.reference_doctype, d.reference_name, self.party_account_currency
+				)
+				if ref_exchange_rate:
+					ref_details.update({"exchange_rate": ref_exchange_rate})
+
+				for field, value in ref_details.items():
+					if d.exchange_gain_loss:
+						# for cases where gain/loss is booked into invoice
+						# exchange_gain_loss is calculated from invoice & populated
+						# and row.exchange_rate is already set to payment entry's exchange rate
+						# refer -> `update_reference_in_payment_entry()` in utils.py
+						continue
+
+					if field == "exchange_rate" or not d.get(field) or force:
+						d.db_set(field, value)
+
+	def validate_payment_type(self):
+		if self.payment_type not in ("Receive", "Pay", "Internal Transfer"):
+			frappe.throw(_("Payment Type must be one of Receive, Pay and Internal Transfer"))
+
+	def validate_party_details(self):
+		if self.party:
+			if not frappe.db.exists(self.party_type, self.party):
+				frappe.throw(_("{0} {1} does not exist").format(_(self.party_type), self.party))
+
+	def set_exchange_rate(self, ref_doc=None):
+		self.set_source_exchange_rate(ref_doc)
+		self.set_target_exchange_rate(ref_doc)
+
+	def set_source_exchange_rate(self, ref_doc=None):
+		if self.paid_from:
+			if self.paid_from_account_currency == self.company_currency:
+				self.source_exchange_rate = 1
+			else:
+				if ref_doc:
+					if self.paid_from_account_currency == ref_doc.currency:
+						self.source_exchange_rate = ref_doc.get("exchange_rate") or ref_doc.get("conversion_rate")
+
+			if not self.source_exchange_rate:
+				self.source_exchange_rate = get_exchange_rate(
+					self.paid_from_account_currency, self.company_currency, self.posting_date
+				)
+
+	def set_target_exchange_rate(self, ref_doc=None):
+		if self.paid_from_account_currency == self.paid_to_account_currency:
+			self.target_exchange_rate = self.source_exchange_rate
+		elif self.paid_to and not self.target_exchange_rate:
+			if ref_doc:
+				if self.paid_to_account_currency == ref_doc.currency:
+					self.target_exchange_rate = ref_doc.get("exchange_rate") or ref_doc.get("conversion_rate")
+
+			if not self.target_exchange_rate:
+				self.target_exchange_rate = get_exchange_rate(
+					self.paid_to_account_currency, self.company_currency, self.posting_date
+				)
+
+	def validate_mandatory(self):
+		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
+			if not self.get(field):
+				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
+
+	def validate_reference_documents(self):
+		valid_reference_doctypes = self.get_valid_reference_doctypes()
+
+		if not valid_reference_doctypes:
+			return
+
+		for d in self.get("references"):
+			if not d.allocated_amount:
+				continue
+			if d.reference_doctype not in valid_reference_doctypes:
+				frappe.throw(
+					_("Reference Doctype must be one of {0}").format(
+						comma_or((_(d) for d in valid_reference_doctypes))
+					)
+				)
+
+			elif d.reference_name:
+				if not frappe.db.exists(d.reference_doctype, d.reference_name):
+					frappe.throw(_("{0} {1} does not exist").format(d.reference_doctype, d.reference_name))
+				else:
+					ref_doc = frappe.get_doc(d.reference_doctype, d.reference_name)
+
+					if d.reference_doctype != "Journal Entry":
+						if self.party != ref_doc.get(scrub(self.party_type)):
+							frappe.throw(
+								_("{0} {1} is not associated with {2} {3}").format(
+									_(d.reference_doctype), d.reference_name, _(self.party_type), self.party
+								)
+							)
+					else:
+						self.validate_journal_entry()
+
+					if d.reference_doctype in frappe.get_hooks("invoice_doctypes"):
+						if self.party_type == "Customer":
+							ref_party_account = (
+								get_party_account_based_on_invoice_discounting(d.reference_name) or ref_doc.debit_to
+							)
+						elif self.party_type == "Supplier":
+							ref_party_account = ref_doc.credit_to
+						elif self.party_type == "Employee":
+							ref_party_account = ref_doc.payable_account
+
+						if (
+							ref_party_account != self.party_account
+							and not self.book_advance_payments_in_separate_party_account
+						):
+							frappe.throw(
+								_("{0} {1} is associated with {2}, but Party Account is {3}").format(
+									_(d.reference_doctype), d.reference_name, ref_party_account, self.party_account
+								)
+							)
+
+						if ref_doc.doctype == "Purchase Invoice" and ref_doc.get("on_hold"):
+							frappe.throw(
+								_("{0} {1} is on hold").format(_(d.reference_doctype), d.reference_name),
+								title=_("Invalid Purchase Invoice"),
+							)
+
+					if ref_doc.docstatus != 1:
+						frappe.throw(_("{0} {1} must be submitted").format(_(d.reference_doctype), d.reference_name))
+
+	def get_valid_reference_doctypes(self):
+		if self.party_type == "Customer":
+			return ("Sales Order", "Sales Invoice", "Journal Entry", "Dunning")
+		elif self.party_type == "Supplier":
+			return ("Purchase Order", "Purchase Invoice", "Journal Entry")
+		elif self.party_type == "Shareholder":
+			return ("Journal Entry",)
+		elif self.party_type == "Employee":
+			return ("Journal Entry",)
+
+
+	def validate_paid_invoices(self):
+		no_oustanding_refs = {}
+
+		for d in self.get("references"):
+			if not d.allocated_amount:
+				continue
+
+			if d.reference_doctype in ("Sales Invoice", "Purchase Invoice"):
+				outstanding_amount, is_return = frappe.get_cached_value(
+					d.reference_doctype, d.reference_name, ["outstanding_amount", "is_return"]
+				)
+				if outstanding_amount <= 0 and not is_return:
+					no_oustanding_refs.setdefault(d.reference_doctype, []).append(d)
+
+		for reference_doctype, references in no_oustanding_refs.items():
+			frappe.msgprint(
+				_(
+					"References {0} of type {1} had no outstanding amount left before submitting the Payment Entry. Now they have a negative outstanding amount."
+				).format(
+					frappe.bold(comma_and([d.reference_name for d in references])),
+					_(reference_doctype),
+				)
+				+ "<br><br>"
+				+ _("If this is undesirable please cancel the corresponding Payment Entry."),
+				title=_("Warning"),
+				indicator="orange",
+			)
+
+	def validate_journal_entry(self):
+		for d in self.get("references"):
+			if d.allocated_amount and d.reference_doctype == "Journal Entry":
+				je_accounts = frappe.db.sql(
+					"""select debit, credit from `tabJournal Entry Account`
+					where account = %s and party=%s and docstatus = 1 and parent = %s
+					and (reference_type is null or reference_type in ("", "Sales Order", "Purchase Order"))
+					""",
+					(self.party_account, self.party, d.reference_name),
+					as_dict=True,
+				)
+
+				if not je_accounts:
+					frappe.throw(
+						_(
+							"Row #{0}: Journal Entry {1} does not have account {2} or already matched against another voucher"
+						).format(d.idx, d.reference_name, self.party_account)
+					)
+				else:
+					dr_or_cr = "debit" if self.payment_type == "Receive" else "credit"
+					valid = False
+					for jvd in je_accounts:
+						if flt(jvd[dr_or_cr]) > 0:
+							valid = True
+					if not valid:
+						frappe.throw(
+							_("Against Journal Entry {0} does not have any unmatched {1} entry").format(
+								d.reference_name, _(dr_or_cr)
+							)
+						)
+
+	def update_payment_schedule(self, cancel=0):
+		invoice_payment_amount_map = {}
+		invoice_paid_amount_map = {}
+
+		for ref in self.get("references"):
+			if ref.payment_term and ref.reference_name:
+				key = (ref.payment_term, ref.reference_name, ref.reference_doctype)
+				invoice_payment_amount_map.setdefault(key, 0.0)
+				invoice_payment_amount_map[key] += ref.allocated_amount
+
+				if not invoice_paid_amount_map.get(key):
+					payment_schedule = frappe.get_all(
+						"Payment Schedule",
+						filters={"parent": ref.reference_name},
+						fields=[
+							"paid_amount",
+							"payment_amount",
+							"payment_term",
+							"discount",
+							"outstanding",
+							"discount_type",
+						],
+					)
+					for term in payment_schedule:
+						invoice_key = (term.payment_term, ref.reference_name, ref.reference_doctype)
+						invoice_paid_amount_map.setdefault(invoice_key, {})
+						invoice_paid_amount_map[invoice_key]["outstanding"] = term.outstanding
+						if not (term.discount_type and term.discount):
+							continue
+
+						if term.discount_type == "Percentage":
+							invoice_paid_amount_map[invoice_key]["discounted_amt"] = ref.total_amount * (
+								term.discount / 100
+							)
+						else:
+							invoice_paid_amount_map[invoice_key]["discounted_amt"] = term.discount
+
+		for idx, (key, allocated_amount) in enumerate(invoice_payment_amount_map.items(), 1):
+			if not invoice_paid_amount_map.get(key):
+				frappe.throw(_("Payment term {0} not used in {1}").format(key[0], key[1]))
+
+			allocated_amount = self.get_allocated_amount_in_transaction_currency(
+				allocated_amount, key[2], key[1]
+			)
+
+			outstanding = flt(invoice_paid_amount_map.get(key, {}).get("outstanding"))
+			discounted_amt = flt(invoice_paid_amount_map.get(key, {}).get("discounted_amt"))
+
+			if cancel:
+				frappe.db.sql(
+					"""
+					UPDATE `tabPayment Schedule`
+					SET
+						paid_amount = `paid_amount` - %s,
+						discounted_amount = `discounted_amount` - %s,
+						outstanding = `outstanding` + %s
+					WHERE parent = %s and payment_term = %s""",
+					(allocated_amount - discounted_amt, discounted_amt, allocated_amount, key[1], key[0]),
+				)
+			else:
+				if allocated_amount > outstanding:
+					frappe.throw(
+						_("Row #{0}: Cannot allocate more than {1} against payment term {2}").format(
+							idx, fmt_money(outstanding), key[0]
+						)
+					)
+
+				if allocated_amount and outstanding:
+					frappe.db.sql(
+						"""
+						UPDATE `tabPayment Schedule`
+						SET
+							paid_amount = `paid_amount` + %s,
+							discounted_amount = `discounted_amount` + %s,
+							outstanding = `outstanding` - %s
+						WHERE parent = %s and payment_term = %s""",
+						(allocated_amount - discounted_amt, discounted_amt, allocated_amount, key[1], key[0]),
+					)
+
+	def get_allocated_amount_in_transaction_currency(
+		self, allocated_amount, reference_doctype, reference_docname
+	):
+		"""
+		Payment Entry could be in base currency while reference's payment schedule
+		is always in transaction currency.
+		E.g.
+		* SI with base=INR and currency=USD
+		* SI with payment schedule in USD
+		* PE in INR (accounting done in base currency)
+		"""
+		ref_currency, ref_exchange_rate = frappe.db.get_value(
+			reference_doctype, reference_docname, ["currency", "conversion_rate"]
+		)
+		is_single_currency = self.paid_from_account_currency == self.paid_to_account_currency
+		# PE in different currency
+		reference_is_multi_currency = self.paid_from_account_currency != ref_currency
+
+		if not (is_single_currency and reference_is_multi_currency):
+			return allocated_amount
+
+		allocated_amount = flt(
+			allocated_amount / ref_exchange_rate, self.precision("total_allocated_amount")
+		)
+
+		return allocated_amount
+
+	def set_status(self):
+		if self.docstatus == 2:
+			self.status = "Cancelled"
+		elif self.docstatus == 1:
+			self.status = "Submitted"
+		else:
+			self.status = "Draft"
+
+		self.db_set("status", self.status, update_modified=True)
+
+	def reverse_cheque_leaf(self):
+		if(self.custom_cheque_leaf):
+			frappe.db.sql(f""" Update `tabCheque Leaf`
+					Set status="On Hand", voucher_type="", voucher_no="", 
+					voucher_status="", party_type="", party="", cheque_date=null, amount=0, remarks=""
+					Where name = "{self.custom_cheque_leaf}"
+				""")
+
+
+	def update_status(self, cancelled=False):
+		for row in self.references:
+			if (row.reference_doctype == "Donation") and (row.outstanding_amount >= 0):
+				if (row.outstanding_amount == 0 ):
+					status = "Paid"
+				elif(row.total_amount == row.outstanding_amount):
+					status = "Unpaid"
+				elif(row.outstanding_amount>0):
+					status = "Partly Paid"
+					
+				if(frappe.db.exists(row.reference_doctype, {"docstatus": 1,"name": row.reference_name, "is_return": 1})):
+					status = "Return"
+					
+				frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
+				frappe.db.set_value(row.reference_doctype, row.reference_name, "outstanding_amount", row.outstanding_amount)
+				
+				if(cancelled):
+					# payment detail base-outstanding-amount
+					details = frappe.db.get_value('Payment Detail', row.custom_donation_payment_detail, ['net_amount', 'outstanding_amount'], as_dict=1)
+					if(details):
+						outstanding_amount = (details.outstanding_amount + row.allocated_amount)
+						frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "outstanding_amount", outstanding_amount)
+						frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "paid", 0)
+					# end...
+
+	def cancel_retention_journal_entry(self):
+		pass
+
+	def set_cheque_leaf_cleared(self):
+		if(self.custom_cheque_leaf):
+			frappe.db.sql(f""" Update `tabCheque Leaf`
+				Set status="Cleared", voucher_status="Submitted"
+				Where name = "{self.custom_cheque_leaf}"
+			""")
+
+	def make_retention_journal_entry(self):
+		if(self.custom_retention_money_payable):
+			def _create_(unique_args):
+				for reference_name, allocated_amount in unique_args.items():
+					reference_doctype = "Purchase Invoice"
+					args = {
+						"doctype": "Journal Entry",
+						"entry_type": "Journal Entry",
+						"posting_date": self.posting_date,
+						"company": self.company,
+						"remark": "The retention of {0} has been recorded against {1} {2}".format(fmt_money(self.custom_retention_amount, currency=self.paid_to_account_currency), "Purchase Invoice", reference_name),
+						"accounts": [
+							# debit
+							{
+								"account": self.paid_to,
+								"party_type": self.party_type,
+								"party": self.party,
+								"cost_center": self.cost_center,
+								"debit_in_account_currency": self.custom_retention_amount,
+								"debit": self.custom_retention_amount,
+								"reference_type": reference_doctype,
+								"reference_name": reference_name
+							},
+							# credit
+							{
+								"account": self.custom_retention_payable_account,
+								"party_type": self.party_type,
+								"party": self.party,
+								"cost_center": self.cost_center,
+								"credit_in_account_currency": self.custom_retention_amount,
+								"credit": self.custom_retention_amount,
+							}
+						]
+					}
+					doc = frappe.get_doc(args)
+					doc.insert(ignore_permissions=True)
+					doc.submit()
+					frappe.db.set_value("Payment Entry", self.name, "custom_journal_entry", doc.name)
+			
+			unique_args = {}
+			for row in self.references:
+				if( row.reference_doctype == "Purchase Invoice"):
+					if(row.reference_name in unique_args):
+						unique_args.update({f"{row.reference_name}": unique_args[row.reference_name] + row.allocated_amount})
+					else:
+						unique_args.update({f"{row.reference_name}": row.allocated_amount})
+			
+			_create_(unique_args)
+			self.reload()
 		
-    def on_submit(self):
-        if self.difference_amount:
-            frappe.throw(_("Difference Amount must be zero"))
-        self.make_gl_entries()
-        self.update_outstanding_amounts()
-        self.update_advance_paid()
-        self.update_payment_schedule()
-        self.set_status()
-        # self.update_status(cancelled=False)
-        # Nabeel Saleem, 07-01-2025
-        updating_donation(self)
-        self.set_cheque_leaf_cleared()
-        self.make_retention_journal_entry()
-        # Nabeel Saleem, 06-01-2025
-        adjust_doubtful_debt(self)
-
-    def set_liability_account(self):
-        # Auto setting liability account should only be done during 'draft' status
-        if self.docstatus > 0 or self.payment_type == "Internal Transfer":
-            return
-
-        if not frappe.db.get_value(
-            "Company", self.company, "book_advance_payments_in_separate_party_account"
-        ):
-            return
-
-        # Important to set this flag for the gl building logic to work properly
-        self.book_advance_payments_in_separate_party_account = True
-        account_type = frappe.get_value(
-            "Account", {"name": self.party_account, "company": self.company}, "account_type"
-        )
-
-        if (account_type == "Payable" and self.party_type == "Customer") or (
-            account_type == "Receivable" and self.party_type == "Supplier"
-        ):
-            return
-
-        if self.references:
-            allowed_types = frozenset(["Sales Order", "Purchase Order"])
-            reference_types = set([x.reference_doctype for x in self.references])
-
-            # If there are referencers other than `allowed_types`, treat this as a normal payment entry
-            if reference_types - allowed_types:
-                self.book_advance_payments_in_separate_party_account = False
-                return
-
-        liability_account = get_party_account(
-            self.party_type, self.party, self.company, include_advance=True
-        )[1]
-
-        self.set(self.party_account_field, liability_account)
-
-        frappe.msgprint(
-            _(
-                "Book Advance Payments as Liability option is chosen. Paid From account changed from {0} to {1}."
-            ).format(
-                frappe.bold(self.party_account),
-                frappe.bold(liability_account),
-            ),
-            alert=True,
-        )
-
-    def on_cancel(self):
-        self.ignore_linked_doctypes = (
-            "GL Entry",
-            "Stock Ledger Entry",
-            "Payment Ledger Entry",
-            "Repost Payment Ledger",
-            "Repost Payment Ledger Items",
-            "Repost Accounting Ledger",
-            "Repost Accounting Ledger Items",
-            "Unreconcile Payment",
-            "Unreconcile Payment Entries",
-        )
-        super(XPaymentEntry, self).on_cancel()
-        self.make_gl_entries(cancel=1)
-        self.update_outstanding_amounts()
-        self.update_advance_paid()
-        self.delink_advance_entry_references()
-        self.update_payment_schedule(cancel=1)
-        self.set_payment_req_status()
-        self.set_status()
-        self.reverse_cheque_leaf()
-        # self.update_status(cancelled=True)
-        self.cancel_retention_journal_entry()
-        # Nabeel Saleem, 07-01-2025
-        updating_donation(self, cancelled=True)
-
-    def set_payment_req_status(self):
-        from erpnext.accounts.doctype.payment_request.payment_request import update_payment_req_status
-
-        update_payment_req_status(self, None)
-
-    def update_outstanding_amounts(self):
-        self.set_missing_ref_details(force=True)
-
-    def validate_duplicate_entry(self):
-        reference_names = []
-        for d in self.get("references"):
-            if (d.reference_doctype, d.reference_name, d.payment_term) in reference_names:
-                frappe.throw(
-                    _("Row #{0}: Duplicate entry in References {1} {2}").format(
-                        d.idx, d.reference_doctype, d.reference_name
-                    )
-                )
-            reference_names.append((d.reference_doctype, d.reference_name, d.payment_term))
-
-    def set_bank_account_data(self):
-        if self.bank_account:
-            bank_data = get_bank_account_details(self.bank_account)
-
-            field = "paid_from" if self.payment_type == "Pay" else "paid_to"
-
-            self.bank = bank_data.bank
-            self.bank_account_no = bank_data.bank_account_no
-
-            if not self.get(field):
-                self.set(field, bank_data.account)
-
-    def validate_payment_type_with_outstanding(self):
-        total_outstanding = sum(d.allocated_amount for d in self.get("references"))
-        if total_outstanding < 0 and self.party_type == "Customer" and self.payment_type == "Receive":
-            frappe.throw(
-                _("Cannot receive from customer against negative outstanding"),
-                title=_("Incorrect Payment Type"),
-            )
-
-    def validate_allocated_amount(self):
-        if self.payment_type == "Internal Transfer":
-            return
-
-        if self.party_type in ("Customer", "Supplier", "Donor"):
-            self.validate_allocated_amount_with_latest_data()
-        else:
-            fail_message = _("Row #{0}: Allocated Amount cannot be greater than outstanding amount.")
-            for d in self.get("references"):
-                if (flt(d.allocated_amount)) > 0 and flt(d.allocated_amount) > flt(d.outstanding_amount):
-                    frappe.throw(fail_message.format(d.idx))
-
-                # Check for negative outstanding invoices as well
-                if flt(d.allocated_amount) < 0 and flt(d.allocated_amount) < flt(d.outstanding_amount):
-                    frappe.throw(fail_message.format(d.idx))
-
-    def term_based_allocation_enabled_for_reference(
-        self, reference_doctype: str, reference_name: str
-    ) -> bool:
-        if (
-            reference_doctype
-            and reference_doctype in ["Sales Invoice", "Sales Order", "Purchase Order", "Purchase Invoice"]
-            and reference_name
-        ):
-            if template := frappe.db.get_value(reference_doctype, reference_name, "payment_terms_template"):
-                return frappe.db.get_value(
-                    "Payment Terms Template", template, "allocate_payment_based_on_payment_terms"
-                )
-        return False
-
-    def validate_allocated_amount_with_latest_data(self):
-        if self.references:
-            uniq_vouchers = set([(x.reference_doctype, x.reference_name) for x in self.references])
-            vouchers = [frappe._dict({"voucher_type": x[0], "voucher_no": x[1]}) for x in uniq_vouchers]
-            latest_references = get_outstanding_reference_documents(
-                {
-                    "posting_date": self.posting_date,
-                    "company": self.company,
-                    "party_type": self.party_type,
-                    "payment_type": self.payment_type,
-                    "party": self.party,
-                    "party_account": self.paid_from if self.payment_type == "Receive" else self.paid_to,
-                    "get_outstanding_invoices": True,
-                    "get_orders_to_be_billed": True,
-                    "vouchers": vouchers,
-                    "book_advance_payments_in_separate_party_account": self.book_advance_payments_in_separate_party_account,
-                },
-                validate=True,
-            )
-            
-            # Group latest_references by (voucher_type, voucher_no)
-            latest_lookup = {}
-            for d in latest_references:
-                d = frappe._dict(d)
-                latest_lookup.setdefault((d.voucher_type, d.voucher_no), frappe._dict())[d.payment_term] = d
-
-            for idx, d in enumerate(self.get("references"), start=1):
-                latest = latest_lookup.get((d.reference_doctype, d.reference_name)) or frappe._dict()
-                # If term based allocation is enabled, throw
-                if (
-                    d.payment_term is None or d.payment_term == ""
-                ) and self.term_based_allocation_enabled_for_reference(
-                    d.reference_doctype, d.reference_name
-                ):
-                    frappe.throw(
-                        _(
-                            "{0} has Payment Term based allocation enabled. Select a Payment Term for Row #{1} in Payment References section"
-                        ).format(frappe.bold(d.reference_name), frappe.bold(idx))
-                    )
-
-                # if no payment template is used by invoice and has a custom term(no `payment_term`), then invoice outstanding will be in 'None' key
-                latest = latest.get(d.payment_term) or latest.get(None)
-                # The reference has already been fully paid
-                if not latest:
-                    frappe.throw(
-                        _("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
-                    )
-                # The reference has already been partly paid
-                elif (
-                    latest.outstanding_amount < latest.invoice_amount
-                    and flt(d.outstanding_amount, d.precision("outstanding_amount"))
-                    != flt(latest.outstanding_amount, d.precision("outstanding_amount"))
-                    and d.payment_term == ""
-                ):
-                    frappe.throw(
-                        _(
-                            "{0} {1} has already been partly paid. Please use the 'Get Outstanding Invoice' or the 'Get Outstanding Orders' button to get the latest outstanding amounts."
-                        ).format(_(d.reference_doctype), d.reference_name)
-                    )
-
-                fail_message = _("Row #{0}: Allocated Amount cannot be greater than outstanding amount.")
-
-                if (
-                    d.payment_term
-                    and (
-                        (flt(d.allocated_amount)) > 0
-                        and latest.payment_term_outstanding
-                        and (flt(d.allocated_amount) > flt(latest.payment_term_outstanding))
-                    )
-                    and self.term_based_allocation_enabled_for_reference(d.reference_doctype, d.reference_name)
-                ):
-                    frappe.throw(
-                        _(
-                            "Row #{0}: Allocated amount:{1} is greater than outstanding amount:{2} for Payment Term {3}"
-                        ).format(
-                            d.idx, d.allocated_amount, latest.payment_term_outstanding, d.payment_term
-                        )
-                    )
-
-                if (flt(d.allocated_amount)) > 0 and flt(d.allocated_amount) > flt(latest.outstanding_amount):
-                    frappe.throw(fail_message.format(d.idx))
-
-                # Check for negative outstanding invoices as well
-                if flt(d.allocated_amount) < 0 and flt(d.allocated_amount) < flt(latest.outstanding_amount):
-                    frappe.throw(fail_message.format(d.idx))
-
-    def delink_advance_entry_references(self):
-        for reference in self.references:
-            if reference.reference_doctype in ("Sales Invoice", "Purchase Invoice"):
-                doc = frappe.get_doc(reference.reference_doctype, reference.reference_name)
-                doc.delink_advance_entries(self.name)
-
-    def set_missing_values(self):
-        if self.payment_type == "Internal Transfer":
-            for field in (
-                "party",
-                "party_balance",
-                "total_allocated_amount",
-                "base_total_allocated_amount",
-                "unallocated_amount",
-            ):
-                self.set(field, None)
-            self.references = []
-        else:
-            if not self.party_type:
-                frappe.throw(_("Party Type is mandatory"))
-
-            if not self.party:
-                frappe.throw(_("Party is mandatory"))
-
-            _party_name = "title" if self.party_type == "Shareholder" else self.party_type.lower() + "_name"
-
-            if frappe.db.has_column(self.party_type, _party_name):
-                self.party_name = frappe.db.get_value(self.party_type, self.party, _party_name)
-            else:
-                self.party_name = frappe.db.get_value(self.party_type, self.party, "name")
-
-        if self.party:
-            if not self.party_balance:
-                self.party_balance = get_balance_on(
-                    party_type=self.party_type, party=self.party, date=self.posting_date, company=self.company
-                )
-
-            if not self.party_account:
-                party_account = get_party_account(self.party_type, self.party, self.company)
-                self.set(self.party_account_field, party_account)
-                self.party_account = party_account
-
-        if self.paid_from and not (self.paid_from_account_currency or self.paid_from_account_balance):
-            acc = get_account_details(self.paid_from, self.posting_date, self.cost_center)
-            self.paid_from_account_currency = acc.account_currency
-            self.paid_from_account_balance = acc.account_balance
-
-        if self.paid_to and not (self.paid_to_account_currency or self.paid_to_account_balance):
-            acc = get_account_details(self.paid_to, self.posting_date, self.cost_center)
-            self.paid_to_account_currency = acc.account_currency
-            self.paid_to_account_balance = acc.account_balance
-
-        self.party_account_currency = (
-            self.paid_from_account_currency
-            if self.payment_type == "Receive"
-            else self.paid_to_account_currency
-        )
-
-    def set_missing_ref_details(
-        self,
-        force: bool = False,
-        update_ref_details_only_for: list | None = None,
-        ref_exchange_rate: float | None = None,
-    ) -> None:
-        for d in self.get("references"):
-            if d.allocated_amount:
-                if update_ref_details_only_for and (
-                    not (d.reference_doctype, d.reference_name) in update_ref_details_only_for
-                ):
-                    continue
-
-                ref_details = get_reference_details(
-                    d.reference_doctype, d.reference_name, self.party_account_currency
-                )
-                if ref_exchange_rate:
-                    ref_details.update({"exchange_rate": ref_exchange_rate})
-
-                for field, value in ref_details.items():
-                    if d.exchange_gain_loss:
-                        # for cases where gain/loss is booked into invoice
-                        # exchange_gain_loss is calculated from invoice & populated
-                        # and row.exchange_rate is already set to payment entry's exchange rate
-                        # refer -> `update_reference_in_payment_entry()` in utils.py
-                        continue
-
-                    if field == "exchange_rate" or not d.get(field) or force:
-                        d.db_set(field, value)
-
-    def validate_payment_type(self):
-        if self.payment_type not in ("Receive", "Pay", "Internal Transfer"):
-            frappe.throw(_("Payment Type must be one of Receive, Pay and Internal Transfer"))
-
-    def validate_party_details(self):
-        if self.party:
-            if not frappe.db.exists(self.party_type, self.party):
-                frappe.throw(_("{0} {1} does not exist").format(_(self.party_type), self.party))
-
-    def set_exchange_rate(self, ref_doc=None):
-        self.set_source_exchange_rate(ref_doc)
-        self.set_target_exchange_rate(ref_doc)
-
-    def set_source_exchange_rate(self, ref_doc=None):
-        if self.paid_from:
-            if self.paid_from_account_currency == self.company_currency:
-                self.source_exchange_rate = 1
-            else:
-                if ref_doc:
-                    if self.paid_from_account_currency == ref_doc.currency:
-                        self.source_exchange_rate = ref_doc.get("exchange_rate") or ref_doc.get("conversion_rate")
-
-            if not self.source_exchange_rate:
-                self.source_exchange_rate = get_exchange_rate(
-                    self.paid_from_account_currency, self.company_currency, self.posting_date
-                )
-
-    def set_target_exchange_rate(self, ref_doc=None):
-        if self.paid_from_account_currency == self.paid_to_account_currency:
-            self.target_exchange_rate = self.source_exchange_rate
-        elif self.paid_to and not self.target_exchange_rate:
-            if ref_doc:
-                if self.paid_to_account_currency == ref_doc.currency:
-                    self.target_exchange_rate = ref_doc.get("exchange_rate") or ref_doc.get("conversion_rate")
-
-            if not self.target_exchange_rate:
-                self.target_exchange_rate = get_exchange_rate(
-                    self.paid_to_account_currency, self.company_currency, self.posting_date
-                )
-
-    def validate_mandatory(self):
-        for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
-            if not self.get(field):
-                frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
-
-    def validate_reference_documents(self):
-        valid_reference_doctypes = self.get_valid_reference_doctypes()
-
-        if not valid_reference_doctypes:
-            return
-
-        for d in self.get("references"):
-            if not d.allocated_amount:
-                continue
-            if d.reference_doctype not in valid_reference_doctypes:
-                frappe.throw(
-                    _("Reference Doctype must be one of {0}").format(
-                        comma_or((_(d) for d in valid_reference_doctypes))
-                    )
-                )
-
-            elif d.reference_name:
-                if not frappe.db.exists(d.reference_doctype, d.reference_name):
-                    frappe.throw(_("{0} {1} does not exist").format(d.reference_doctype, d.reference_name))
-                else:
-                    ref_doc = frappe.get_doc(d.reference_doctype, d.reference_name)
-
-                    if d.reference_doctype != "Journal Entry":
-                        if self.party != ref_doc.get(scrub(self.party_type)):
-                            frappe.throw(
-                                _("{0} {1} is not associated with {2} {3}").format(
-                                    _(d.reference_doctype), d.reference_name, _(self.party_type), self.party
-                                )
-                            )
-                    else:
-                        self.validate_journal_entry()
-
-                    if d.reference_doctype in frappe.get_hooks("invoice_doctypes"):
-                        if self.party_type == "Customer":
-                            ref_party_account = (
-                                get_party_account_based_on_invoice_discounting(d.reference_name) or ref_doc.debit_to
-                            )
-                        elif self.party_type == "Supplier":
-                            ref_party_account = ref_doc.credit_to
-                        elif self.party_type == "Employee":
-                            ref_party_account = ref_doc.payable_account
-
-                        if (
-                            ref_party_account != self.party_account
-                            and not self.book_advance_payments_in_separate_party_account
-                        ):
-                            frappe.throw(
-                                _("{0} {1} is associated with {2}, but Party Account is {3}").format(
-                                    _(d.reference_doctype), d.reference_name, ref_party_account, self.party_account
-                                )
-                            )
-
-                        if ref_doc.doctype == "Purchase Invoice" and ref_doc.get("on_hold"):
-                            frappe.throw(
-                                _("{0} {1} is on hold").format(_(d.reference_doctype), d.reference_name),
-                                title=_("Invalid Purchase Invoice"),
-                            )
-
-                    if ref_doc.docstatus != 1:
-                        frappe.throw(_("{0} {1} must be submitted").format(_(d.reference_doctype), d.reference_name))
-
-    def get_valid_reference_doctypes(self):
-        if self.party_type == "Customer":
-            return ("Sales Order", "Sales Invoice", "Journal Entry", "Dunning")
-        elif self.party_type == "Supplier":
-            return ("Purchase Order", "Purchase Invoice", "Journal Entry")
-        elif self.party_type == "Shareholder":
-            return ("Journal Entry",)
-        elif self.party_type == "Employee":
-            return ("Journal Entry",)
-
-
-    def validate_paid_invoices(self):
-        no_oustanding_refs = {}
-
-        for d in self.get("references"):
-            if not d.allocated_amount:
-                continue
-
-            if d.reference_doctype in ("Sales Invoice", "Purchase Invoice"):
-                outstanding_amount, is_return = frappe.get_cached_value(
-                    d.reference_doctype, d.reference_name, ["outstanding_amount", "is_return"]
-                )
-                if outstanding_amount <= 0 and not is_return:
-                    no_oustanding_refs.setdefault(d.reference_doctype, []).append(d)
-
-        for reference_doctype, references in no_oustanding_refs.items():
-            frappe.msgprint(
-                _(
-                    "References {0} of type {1} had no outstanding amount left before submitting the Payment Entry. Now they have a negative outstanding amount."
-                ).format(
-                    frappe.bold(comma_and([d.reference_name for d in references])),
-                    _(reference_doctype),
-                )
-                + "<br><br>"
-                + _("If this is undesirable please cancel the corresponding Payment Entry."),
-                title=_("Warning"),
-                indicator="orange",
-            )
-
-    def validate_journal_entry(self):
-        for d in self.get("references"):
-            if d.allocated_amount and d.reference_doctype == "Journal Entry":
-                je_accounts = frappe.db.sql(
-                    """select debit, credit from `tabJournal Entry Account`
-                    where account = %s and party=%s and docstatus = 1 and parent = %s
-                    and (reference_type is null or reference_type in ("", "Sales Order", "Purchase Order"))
-                    """,
-                    (self.party_account, self.party, d.reference_name),
-                    as_dict=True,
-                )
-
-                if not je_accounts:
-                    frappe.throw(
-                        _(
-                            "Row #{0}: Journal Entry {1} does not have account {2} or already matched against another voucher"
-                        ).format(d.idx, d.reference_name, self.party_account)
-                    )
-                else:
-                    dr_or_cr = "debit" if self.payment_type == "Receive" else "credit"
-                    valid = False
-                    for jvd in je_accounts:
-                        if flt(jvd[dr_or_cr]) > 0:
-                            valid = True
-                    if not valid:
-                        frappe.throw(
-                            _("Against Journal Entry {0} does not have any unmatched {1} entry").format(
-                                d.reference_name, _(dr_or_cr)
-                            )
-                        )
-
-    def update_payment_schedule(self, cancel=0):
-        invoice_payment_amount_map = {}
-        invoice_paid_amount_map = {}
-
-        for ref in self.get("references"):
-            if ref.payment_term and ref.reference_name:
-                key = (ref.payment_term, ref.reference_name, ref.reference_doctype)
-                invoice_payment_amount_map.setdefault(key, 0.0)
-                invoice_payment_amount_map[key] += ref.allocated_amount
-
-                if not invoice_paid_amount_map.get(key):
-                    payment_schedule = frappe.get_all(
-                        "Payment Schedule",
-                        filters={"parent": ref.reference_name},
-                        fields=[
-                            "paid_amount",
-                            "payment_amount",
-                            "payment_term",
-                            "discount",
-                            "outstanding",
-                            "discount_type",
-                        ],
-                    )
-                    for term in payment_schedule:
-                        invoice_key = (term.payment_term, ref.reference_name, ref.reference_doctype)
-                        invoice_paid_amount_map.setdefault(invoice_key, {})
-                        invoice_paid_amount_map[invoice_key]["outstanding"] = term.outstanding
-                        if not (term.discount_type and term.discount):
-                            continue
-
-                        if term.discount_type == "Percentage":
-                            invoice_paid_amount_map[invoice_key]["discounted_amt"] = ref.total_amount * (
-                                term.discount / 100
-                            )
-                        else:
-                            invoice_paid_amount_map[invoice_key]["discounted_amt"] = term.discount
-
-        for idx, (key, allocated_amount) in enumerate(invoice_payment_amount_map.items(), 1):
-            if not invoice_paid_amount_map.get(key):
-                frappe.throw(_("Payment term {0} not used in {1}").format(key[0], key[1]))
-
-            allocated_amount = self.get_allocated_amount_in_transaction_currency(
-                allocated_amount, key[2], key[1]
-            )
-
-            outstanding = flt(invoice_paid_amount_map.get(key, {}).get("outstanding"))
-            discounted_amt = flt(invoice_paid_amount_map.get(key, {}).get("discounted_amt"))
-
-            if cancel:
-                frappe.db.sql(
-                    """
-                    UPDATE `tabPayment Schedule`
-                    SET
-                        paid_amount = `paid_amount` - %s,
-                        discounted_amount = `discounted_amount` - %s,
-                        outstanding = `outstanding` + %s
-                    WHERE parent = %s and payment_term = %s""",
-                    (allocated_amount - discounted_amt, discounted_amt, allocated_amount, key[1], key[0]),
-                )
-            else:
-                if allocated_amount > outstanding:
-                    frappe.throw(
-                        _("Row #{0}: Cannot allocate more than {1} against payment term {2}").format(
-                            idx, fmt_money(outstanding), key[0]
-                        )
-                    )
-
-                if allocated_amount and outstanding:
-                    frappe.db.sql(
-                        """
-                        UPDATE `tabPayment Schedule`
-                        SET
-                            paid_amount = `paid_amount` + %s,
-                            discounted_amount = `discounted_amount` + %s,
-                            outstanding = `outstanding` - %s
-                        WHERE parent = %s and payment_term = %s""",
-                        (allocated_amount - discounted_amt, discounted_amt, allocated_amount, key[1], key[0]),
-                    )
-
-    def get_allocated_amount_in_transaction_currency(
-        self, allocated_amount, reference_doctype, reference_docname
-    ):
-        """
-        Payment Entry could be in base currency while reference's payment schedule
-        is always in transaction currency.
-        E.g.
-        * SI with base=INR and currency=USD
-        * SI with payment schedule in USD
-        * PE in INR (accounting done in base currency)
-        """
-        ref_currency, ref_exchange_rate = frappe.db.get_value(
-            reference_doctype, reference_docname, ["currency", "conversion_rate"]
-        )
-        is_single_currency = self.paid_from_account_currency == self.paid_to_account_currency
-        # PE in different currency
-        reference_is_multi_currency = self.paid_from_account_currency != ref_currency
-
-        if not (is_single_currency and reference_is_multi_currency):
-            return allocated_amount
-
-        allocated_amount = flt(
-            allocated_amount / ref_exchange_rate, self.precision("total_allocated_amount")
-        )
-
-        return allocated_amount
-
-    def set_status(self):
-        if self.docstatus == 2:
-            self.status = "Cancelled"
-        elif self.docstatus == 1:
-            self.status = "Submitted"
-        else:
-            self.status = "Draft"
-
-        self.db_set("status", self.status, update_modified=True)
-
-    def reverse_cheque_leaf(self):
-        if(self.custom_cheque_leaf):
-            frappe.db.sql(f""" Update `tabCheque Leaf`
-                    Set status="On Hand", voucher_type="", voucher_no="", 
-                    voucher_status="", party_type="", party="", cheque_date=null, amount=0, remarks=""
-                    Where name = "{self.custom_cheque_leaf}"
-                """)
-
-
-    def update_status(self, cancelled=False):
-        for row in self.references:
-            if (row.reference_doctype == "Donation") and (row.outstanding_amount >= 0):
-                if (row.outstanding_amount == 0 ):
-                    status = "Paid"
-                elif(row.total_amount == row.outstanding_amount):
-                    status = "Unpaid"
-                elif(row.outstanding_amount>0):
-                    status = "Partly Paid"
-                    
-                if(frappe.db.exists(row.reference_doctype, {"docstatus": 1,"name": row.reference_name, "is_return": 1})):
-                    status = "Return"
-                    
-                frappe.db.set_value(row.reference_doctype, row.reference_name, "status", status)
-                frappe.db.set_value(row.reference_doctype, row.reference_name, "outstanding_amount", row.outstanding_amount)
-                
-                if(cancelled):
-                    # payment detail base-outstanding-amount
-                    details = frappe.db.get_value('Payment Detail', row.custom_donation_payment_detail, ['net_amount', 'outstanding_amount'], as_dict=1)
-                    if(details):
-                        outstanding_amount = (details.outstanding_amount + row.allocated_amount)
-                        frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "outstanding_amount", outstanding_amount)
-                        frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "paid", 0)
-                    # end...
-
-    def cancel_retention_journal_entry(self):
-        pass
-
-    def set_cheque_leaf_cleared(self):
-        if(self.custom_cheque_leaf):
-            frappe.db.sql(f""" Update `tabCheque Leaf`
-                Set status="Cleared", voucher_status="Submitted"
-                Where name = "{self.custom_cheque_leaf}"
-            """)
-
-    def make_retention_journal_entry(self):
-        if(self.custom_retention_money_payable):
-            def _create_(unique_args):
-                for reference_name, allocated_amount in unique_args.items():
-                    reference_doctype = "Purchase Invoice"
-                    args = {
-                        "doctype": "Journal Entry",
-                        "entry_type": "Journal Entry",
-                        "posting_date": self.posting_date,
-                        "company": self.company,
-                        "remark": "The retention of {0} has been recorded against {1} {2}".format(fmt_money(self.custom_retention_amount, currency=self.paid_to_account_currency), "Purchase Invoice", reference_name),
-                        "accounts": [
-                            # debit
-                            {
-                                "account": self.paid_to,
-                                "party_type": self.party_type,
-                                "party": self.party,
-                                "cost_center": self.cost_center,
-                                "debit_in_account_currency": self.custom_retention_amount,
-                                "debit": self.custom_retention_amount,
-                                "reference_type": reference_doctype,
-                                "reference_name": reference_name
-                            },
-                            # credit
-                            {
-                                "account": self.custom_retention_payable_account,
-                                "party_type": self.party_type,
-                                "party": self.party,
-                                "cost_center": self.cost_center,
-                                "credit_in_account_currency": self.custom_retention_amount,
-                                "credit": self.custom_retention_amount,
-                            }
-                        ]
-                    }
-                    doc = frappe.get_doc(args)
-                    doc.insert(ignore_permissions=True)
-                    doc.submit()
-                    frappe.db.set_value("Payment Entry", self.name, "custom_journal_entry", doc.name)
-            
-            unique_args = {}
-            for row in self.references:
-                if( row.reference_doctype == "Purchase Invoice"):
-                    if(row.reference_name in unique_args):
-                        unique_args.update({f"{row.reference_name}": unique_args[row.reference_name] + row.allocated_amount})
-                    else:
-                        unique_args.update({f"{row.reference_name}": row.allocated_amount})
-            
-            _create_(unique_args)
-            self.reload()
-        
-    def set_total_in_words(self):
-        from frappe.utils import money_in_words
-
-        if self.payment_type in ("Pay", "Internal Transfer"):
-            base_amount = abs(self.base_paid_amount)
-            amount = abs(self.paid_amount)
-            currency = self.paid_from_account_currency
-        elif self.payment_type == "Receive":
-            base_amount = abs(self.base_received_amount)
-            amount = abs(self.received_amount)
-            currency = self.paid_to_account_currency
-
-        self.base_in_words = money_in_words(base_amount, self.company_currency)
-        self.in_words = money_in_words(amount, currency)
-
-    def set_cheque_leaf_issued(self):
-        if (self.custom_cheque_leaf):
-            frappe.db.sql(f""" Update `tabCheque Leaf`
-                    Set status="Issued", voucher_type="Payment Entry", voucher_no="{self.name}", 
-                    voucher_status="Draft", party_type="{self.party_type}", party="{self.party}", cheque_date="{self.reference_date}", amount="{self.paid_amount}", remarks="{self.remarks}"
-                    Where name = "{self.custom_cheque_leaf}"
-                """)
-    
-    def set_tax_withholding(self):
-        if not self.party_type == "Supplier":
-            return
-
-        if not self.apply_tax_withholding_amount:
-            return
-
-        order_amount = self.get_order_net_total()
-
-        net_total = flt(order_amount) + flt(self.unallocated_amount)
-
-        # Adding args as purchase invoice to get TDS amount
-        args = frappe._dict(
-            {
-                "company": self.company,
-                "doctype": "Payment Entry",
-                "supplier": self.party,
-                "posting_date": self.posting_date,
-                "net_total": net_total,
-            }
-        )
-
-        tax_withholding_details = get_party_tax_withholding_details(args, self.tax_withholding_category)
-
-        if not tax_withholding_details:
-            return
-
-        tax_withholding_details.update(
-            {"cost_center": self.cost_center or erpnext.get_default_cost_center(self.company)}
-        )
-
-        accounts = []
-        for d in self.taxes:
-            if d.account_head == tax_withholding_details.get("account_head"):
-
-                # Preserve user updated included in paid amount
-                if d.included_in_paid_amount:
-                    tax_withholding_details.update({"included_in_paid_amount": d.included_in_paid_amount})
-
-                d.update(tax_withholding_details)
-            accounts.append(d.account_head)
-
-        if not accounts or tax_withholding_details.get("account_head") not in accounts:
-            self.append("taxes", tax_withholding_details)
-
-        to_remove = [
-            d
-            for d in self.taxes
-            if not d.tax_amount and d.account_head == tax_withholding_details.get("account_head")
-        ]
-
-        for d in to_remove:
-            self.remove(d)
-
-    def get_order_net_total(self):
-        if self.party_type == "Supplier":
-            doctype = "Purchase Order"
-        else:
-            doctype = "Sales Order"
-
-        docnames = [d.reference_name for d in self.references if d.reference_doctype == doctype]
-
-        tax_withholding_net_total = frappe.db.get_value(
-            doctype, {"name": ["in", docnames]}, ["sum(base_tax_withholding_net_total)"]
-        )
-
-        return tax_withholding_net_total
-
-    def apply_taxes(self):
-        self.initialize_taxes()
-        self.determine_exclusive_rate()
-        self.calculate_taxes()
-
-    def set_amounts(self):
-        self.set_received_amount()
-        self.set_amounts_in_company_currency()
-        self.set_total_allocated_amount()
-        self.set_unallocated_amount()
-        self.set_difference_amount()
-
-    def validate_amounts(self):
-        self.validate_received_amount()
-
-    def validate_received_amount(self):
-        if self.paid_from_account_currency == self.paid_to_account_currency:
-            if self.paid_amount < self.received_amount:
-                frappe.throw(_("Received Amount cannot be greater than Paid Amount"))
-
-    def set_received_amount(self):
-        self.base_received_amount = self.base_paid_amount
-        if (
-            self.paid_from_account_currency == self.paid_to_account_currency
-            and not self.payment_type == "Internal Transfer"
-        ):
-            self.received_amount = self.paid_amount
-
-    def set_amounts_after_tax(self):
-        applicable_tax = 0
-        base_applicable_tax = 0
-        for tax in self.get("taxes"):
-            if not tax.included_in_paid_amount:
-                amount = -1 * tax.tax_amount if tax.add_deduct_tax == "Deduct" else tax.tax_amount
-                base_amount = (
-                    -1 * tax.base_tax_amount if tax.add_deduct_tax == "Deduct" else tax.base_tax_amount
-                )
-
-                applicable_tax += amount
-                base_applicable_tax += base_amount
-
-        self.paid_amount_after_tax = flt(
-            flt(self.paid_amount) + flt(applicable_tax), self.precision("paid_amount_after_tax")
-        )
-        self.base_paid_amount_after_tax = flt(
-            flt(self.paid_amount_after_tax) * flt(self.source_exchange_rate),
-            self.precision("base_paid_amount_after_tax"),
-        )
-
-        self.received_amount_after_tax = flt(
-            flt(self.received_amount) + flt(applicable_tax), self.precision("paid_amount_after_tax")
-        )
-        self.base_received_amount_after_tax = flt(
-            flt(self.received_amount_after_tax) * flt(self.target_exchange_rate),
-            self.precision("base_paid_amount_after_tax"),
-        )
-
-    def set_amounts_in_company_currency(self):
-        self.base_paid_amount, self.base_received_amount, self.difference_amount = 0, 0, 0
-        if self.paid_amount:
-            self.base_paid_amount = flt(
-                flt(self.paid_amount) * flt(self.source_exchange_rate), self.precision("base_paid_amount")
-            )
-
-        if self.received_amount:
-            self.base_received_amount = flt(
-                flt(self.received_amount) * flt(self.target_exchange_rate),
-                self.precision("base_received_amount"),
-            )
-
-    def calculate_base_allocated_amount_for_reference(self, d) -> float:
-        base_allocated_amount = 0
-        if d.reference_doctype in frappe.get_hooks("advance_payment_doctypes"):
-            # When referencing Sales/Purchase Order, use the source/target exchange rate depending on payment type.
-            # This is so there are no Exchange Gain/Loss generated for such doctypes
-
-            exchange_rate = 1
-            if self.payment_type == "Receive":
-                exchange_rate = self.source_exchange_rate
-            elif self.payment_type == "Pay":
-                exchange_rate = self.target_exchange_rate
-
-            base_allocated_amount += flt(
-                flt(d.allocated_amount) * flt(exchange_rate), self.precision("base_paid_amount")
-            )
-        else:
-
-            # Use source/target exchange rate, so no difference amount is calculated.
-            # then update exchange gain/loss amount in reference table
-            # if there is an exchange gain/loss amount in reference table, submit a JE for that
-
-            exchange_rate = 1
-            if self.payment_type == "Receive":
-                exchange_rate = self.source_exchange_rate
-            elif self.payment_type == "Pay":
-                exchange_rate = self.target_exchange_rate
-
-            base_allocated_amount += flt(
-                flt(d.allocated_amount) * flt(exchange_rate), self.precision("base_paid_amount")
-            )
-
-            # on rare case, when `exchange_rate` is unset, gain/loss amount is incorrectly calculated
-            # for base currency transactions
-            if d.exchange_rate is None:
-                d.exchange_rate = 1
-
-            allocated_amount_in_pe_exchange_rate = flt(
-                flt(d.allocated_amount) * flt(d.exchange_rate), self.precision("base_paid_amount")
-            )
-            d.exchange_gain_loss = base_allocated_amount - allocated_amount_in_pe_exchange_rate
-        return base_allocated_amount
-
-    def set_total_allocated_amount(self):
-        if self.payment_type == "Internal Transfer":
-            return
-
-        total_allocated_amount, base_total_allocated_amount = 0, 0
-        for d in self.get("references"):
-            if d.allocated_amount:
-                total_allocated_amount += flt(d.allocated_amount)
-                base_total_allocated_amount += self.calculate_base_allocated_amount_for_reference(d)
-
-        self.total_allocated_amount = abs(total_allocated_amount)
-        self.base_total_allocated_amount = abs(base_total_allocated_amount)
-
-    def set_unallocated_amount(self):
-        self.unallocated_amount = 0
-        if self.party:
-            total_deductions = sum(flt(d.amount) for d in self.get("deductions"))
-            included_taxes = self.get_included_taxes()
-            if (
-                self.payment_type == "Receive"
-                and self.base_total_allocated_amount < self.base_received_amount + total_deductions
-                and self.total_allocated_amount
-                < flt(self.paid_amount) + (total_deductions / self.source_exchange_rate)
-            ):
-                self.unallocated_amount = (
-                    self.base_received_amount + total_deductions - self.base_total_allocated_amount
-                ) / self.source_exchange_rate
-                self.unallocated_amount -= included_taxes
-            elif (
-                self.payment_type == "Pay"
-                and self.base_total_allocated_amount < (self.base_paid_amount - total_deductions)
-                and self.total_allocated_amount
-                < flt(self.received_amount) + (total_deductions / self.target_exchange_rate)
-            ):
-                self.unallocated_amount = (
-                    self.base_paid_amount - (total_deductions + self.base_total_allocated_amount)
-                ) / self.target_exchange_rate
-                self.unallocated_amount -= included_taxes
-
-    def set_difference_amount(self):
-        base_unallocated_amount = flt(self.unallocated_amount) * (
-            flt(self.source_exchange_rate)
-            if self.payment_type == "Receive"
-            else flt(self.target_exchange_rate)
-        )
-
-        base_party_amount = flt(self.base_total_allocated_amount) + flt(base_unallocated_amount)
-        included_taxes = self.get_included_taxes()
-
-        if self.payment_type == "Receive":
-            self.difference_amount = base_party_amount - self.base_received_amount + included_taxes
-        elif self.payment_type == "Pay":
-            self.difference_amount = self.base_paid_amount - base_party_amount - included_taxes
-        else:
-            self.difference_amount = self.base_paid_amount - flt(self.base_received_amount) - included_taxes
-
-        total_deductions = sum(flt(d.amount) for d in self.get("deductions"))
-
-        self.difference_amount = flt(
-            self.difference_amount - total_deductions, self.precision("difference_amount")
-        )
-
-    def get_included_taxes(self):
-        included_taxes = 0
-        for tax in self.get("taxes"):
-            if tax.included_in_paid_amount:
-                if tax.add_deduct_tax == "Add":
-                    included_taxes += tax.base_tax_amount
-                else:
-                    included_taxes -= tax.base_tax_amount
-
-        return included_taxes
+	def set_total_in_words(self):
+		from frappe.utils import money_in_words
+
+		if self.payment_type in ("Pay", "Internal Transfer"):
+			base_amount = abs(self.base_paid_amount)
+			amount = abs(self.paid_amount)
+			currency = self.paid_from_account_currency
+		elif self.payment_type == "Receive":
+			base_amount = abs(self.base_received_amount)
+			amount = abs(self.received_amount)
+			currency = self.paid_to_account_currency
+
+		self.base_in_words = money_in_words(base_amount, self.company_currency)
+		self.in_words = money_in_words(amount, currency)
+
+	def set_cheque_leaf_issued(self):
+		if (self.custom_cheque_leaf):
+			frappe.db.sql(f""" Update `tabCheque Leaf`
+					Set status="Issued", voucher_type="Payment Entry", voucher_no="{self.name}", 
+					voucher_status="Draft", party_type="{self.party_type}", party="{self.party}", cheque_date="{self.reference_date}", amount="{self.paid_amount}", remarks="{self.remarks}"
+					Where name = "{self.custom_cheque_leaf}"
+				""")
+	
+	def set_tax_withholding(self):
+		if not self.party_type == "Supplier":
+			return
+
+		if not self.apply_tax_withholding_amount:
+			return
+
+		order_amount = self.get_order_net_total()
+
+		net_total = flt(order_amount) + flt(self.unallocated_amount)
+
+		# Adding args as purchase invoice to get TDS amount
+		args = frappe._dict(
+			{
+				"company": self.company,
+				"doctype": "Payment Entry",
+				"supplier": self.party,
+				"posting_date": self.posting_date,
+				"net_total": net_total,
+			}
+		)
+
+		tax_withholding_details = get_party_tax_withholding_details(args, self.tax_withholding_category)
+
+		if not tax_withholding_details:
+			return
+
+		tax_withholding_details.update(
+			{"cost_center": self.cost_center or erpnext.get_default_cost_center(self.company)}
+		)
+
+		accounts = []
+		for d in self.taxes:
+			if d.account_head == tax_withholding_details.get("account_head"):
+
+				# Preserve user updated included in paid amount
+				if d.included_in_paid_amount:
+					tax_withholding_details.update({"included_in_paid_amount": d.included_in_paid_amount})
+
+				d.update(tax_withholding_details)
+			accounts.append(d.account_head)
+
+		if not accounts or tax_withholding_details.get("account_head") not in accounts:
+			self.append("taxes", tax_withholding_details)
+
+		to_remove = [
+			d
+			for d in self.taxes
+			if not d.tax_amount and d.account_head == tax_withholding_details.get("account_head")
+		]
+
+		for d in to_remove:
+			self.remove(d)
+
+	def get_order_net_total(self):
+		if self.party_type == "Supplier":
+			doctype = "Purchase Order"
+		else:
+			doctype = "Sales Order"
+
+		docnames = [d.reference_name for d in self.references if d.reference_doctype == doctype]
+
+		tax_withholding_net_total = frappe.db.get_value(
+			doctype, {"name": ["in", docnames]}, ["sum(base_tax_withholding_net_total)"]
+		)
+
+		return tax_withholding_net_total
+
+	def apply_taxes(self):
+		self.initialize_taxes()
+		self.determine_exclusive_rate()
+		self.calculate_taxes()
+
+	def set_amounts(self):
+		self.set_received_amount()
+		self.set_amounts_in_company_currency()
+		self.set_total_allocated_amount()
+		self.set_unallocated_amount()
+		self.set_difference_amount()
+
+	def validate_amounts(self):
+		self.validate_received_amount()
+
+	def validate_received_amount(self):
+		if self.paid_from_account_currency == self.paid_to_account_currency:
+			if self.paid_amount < self.received_amount:
+				frappe.throw(_("Received Amount cannot be greater than Paid Amount"))
+
+	def set_received_amount(self):
+		self.base_received_amount = self.base_paid_amount
+		if (
+			self.paid_from_account_currency == self.paid_to_account_currency
+			and not self.payment_type == "Internal Transfer"
+		):
+			self.received_amount = self.paid_amount
+
+	def set_amounts_after_tax(self):
+		applicable_tax = 0
+		base_applicable_tax = 0
+		for tax in self.get("taxes"):
+			if not tax.included_in_paid_amount:
+				amount = -1 * tax.tax_amount if tax.add_deduct_tax == "Deduct" else tax.tax_amount
+				base_amount = (
+					-1 * tax.base_tax_amount if tax.add_deduct_tax == "Deduct" else tax.base_tax_amount
+				)
+
+				applicable_tax += amount
+				base_applicable_tax += base_amount
+
+		self.paid_amount_after_tax = flt(
+			flt(self.paid_amount) + flt(applicable_tax), self.precision("paid_amount_after_tax")
+		)
+		self.base_paid_amount_after_tax = flt(
+			flt(self.paid_amount_after_tax) * flt(self.source_exchange_rate),
+			self.precision("base_paid_amount_after_tax"),
+		)
+
+		self.received_amount_after_tax = flt(
+			flt(self.received_amount) + flt(applicable_tax), self.precision("paid_amount_after_tax")
+		)
+		self.base_received_amount_after_tax = flt(
+			flt(self.received_amount_after_tax) * flt(self.target_exchange_rate),
+			self.precision("base_paid_amount_after_tax"),
+		)
+
+	def set_amounts_in_company_currency(self):
+		self.base_paid_amount, self.base_received_amount, self.difference_amount = 0, 0, 0
+		if self.paid_amount:
+			self.base_paid_amount = flt(
+				flt(self.paid_amount) * flt(self.source_exchange_rate), self.precision("base_paid_amount")
+			)
+
+		if self.received_amount:
+			self.base_received_amount = flt(
+				flt(self.received_amount) * flt(self.target_exchange_rate),
+				self.precision("base_received_amount"),
+			)
+
+	def calculate_base_allocated_amount_for_reference(self, d) -> float:
+		base_allocated_amount = 0
+		if d.reference_doctype in frappe.get_hooks("advance_payment_doctypes"):
+			# When referencing Sales/Purchase Order, use the source/target exchange rate depending on payment type.
+			# This is so there are no Exchange Gain/Loss generated for such doctypes
+
+			exchange_rate = 1
+			if self.payment_type == "Receive":
+				exchange_rate = self.source_exchange_rate
+			elif self.payment_type == "Pay":
+				exchange_rate = self.target_exchange_rate
+
+			base_allocated_amount += flt(
+				flt(d.allocated_amount) * flt(exchange_rate), self.precision("base_paid_amount")
+			)
+		else:
+
+			# Use source/target exchange rate, so no difference amount is calculated.
+			# then update exchange gain/loss amount in reference table
+			# if there is an exchange gain/loss amount in reference table, submit a JE for that
+
+			exchange_rate = 1
+			if self.payment_type == "Receive":
+				exchange_rate = self.source_exchange_rate
+			elif self.payment_type == "Pay":
+				exchange_rate = self.target_exchange_rate
+
+			base_allocated_amount += flt(
+				flt(d.allocated_amount) * flt(exchange_rate), self.precision("base_paid_amount")
+			)
+
+			# on rare case, when `exchange_rate` is unset, gain/loss amount is incorrectly calculated
+			# for base currency transactions
+			if d.exchange_rate is None:
+				d.exchange_rate = 1
+
+			allocated_amount_in_pe_exchange_rate = flt(
+				flt(d.allocated_amount) * flt(d.exchange_rate), self.precision("base_paid_amount")
+			)
+			d.exchange_gain_loss = base_allocated_amount - allocated_amount_in_pe_exchange_rate
+		return base_allocated_amount
+
+	def set_total_allocated_amount(self):
+		if self.payment_type == "Internal Transfer":
+			return
+
+		total_allocated_amount, base_total_allocated_amount = 0, 0
+		for d in self.get("references"):
+			if d.allocated_amount:
+				total_allocated_amount += flt(d.allocated_amount)
+				base_total_allocated_amount += self.calculate_base_allocated_amount_for_reference(d)
+
+		self.total_allocated_amount = abs(total_allocated_amount)
+		self.base_total_allocated_amount = abs(base_total_allocated_amount)
+
+	def set_unallocated_amount(self):
+		self.unallocated_amount = 0
+		if self.party:
+			total_deductions = sum(flt(d.amount) for d in self.get("deductions"))
+			included_taxes = self.get_included_taxes()
+			if (
+				self.payment_type == "Receive"
+				and self.base_total_allocated_amount < self.base_received_amount + total_deductions
+				and self.total_allocated_amount
+				< flt(self.paid_amount) + (total_deductions / self.source_exchange_rate)
+			):
+				self.unallocated_amount = (
+					self.base_received_amount + total_deductions - self.base_total_allocated_amount
+				) / self.source_exchange_rate
+				self.unallocated_amount -= included_taxes
+			elif (
+				self.payment_type == "Pay"
+				and self.base_total_allocated_amount < (self.base_paid_amount - total_deductions)
+				and self.total_allocated_amount
+				< flt(self.received_amount) + (total_deductions / self.target_exchange_rate)
+			):
+				self.unallocated_amount = (
+					self.base_paid_amount - (total_deductions + self.base_total_allocated_amount)
+				) / self.target_exchange_rate
+				self.unallocated_amount -= included_taxes
+
+	def set_difference_amount(self):
+		base_unallocated_amount = flt(self.unallocated_amount) * (
+			flt(self.source_exchange_rate)
+			if self.payment_type == "Receive"
+			else flt(self.target_exchange_rate)
+		)
+
+		base_party_amount = flt(self.base_total_allocated_amount) + flt(base_unallocated_amount)
+		included_taxes = self.get_included_taxes()
+
+		if self.payment_type == "Receive":
+			self.difference_amount = base_party_amount - self.base_received_amount + included_taxes
+		elif self.payment_type == "Pay":
+			self.difference_amount = self.base_paid_amount - base_party_amount - included_taxes
+		else:
+			self.difference_amount = self.base_paid_amount - flt(self.base_received_amount) - included_taxes
+
+		total_deductions = sum(flt(d.amount) for d in self.get("deductions"))
+
+		self.difference_amount = flt(
+			self.difference_amount - total_deductions, self.precision("difference_amount")
+		)
+
+	def get_included_taxes(self):
+		included_taxes = 0
+		for tax in self.get("taxes"):
+			if tax.included_in_paid_amount:
+				if tax.add_deduct_tax == "Add":
+					included_taxes += tax.base_tax_amount
+				else:
+					included_taxes -= tax.base_tax_amount
+
+		return included_taxes
 
 	# Paid amount is auto allocated in the reference document by default.
 	# Clear the reference document which doesn't have allocated amount on validate so that form can be loaded fast
-    def clear_unallocated_reference_document_rows(self):
-        self.set("references", self.get("references", {"allocated_amount": ["not in", [0, None, ""]]}))
-        frappe.db.sql(
-            """delete from `tabPayment Entry Reference`
-            where parent = %s and allocated_amount = 0""",
-            self.name,
-        )
+	def clear_unallocated_reference_document_rows(self):
+		self.set("references", self.get("references", {"allocated_amount": ["not in", [0, None, ""]]}))
+		frappe.db.sql(
+			"""delete from `tabPayment Entry Reference`
+			where parent = %s and allocated_amount = 0""",
+			self.name,
+		)
 
-    def set_title(self):
-        if frappe.flags.in_import and self.title:
-            # do not set title dynamically if title exists during data import.
-            return
+	def set_title(self):
+		if frappe.flags.in_import and self.title:
+			# do not set title dynamically if title exists during data import.
+			return
 
-        if self.payment_type in ("Receive", "Pay"):
-            self.title = self.party
-        else:
-            self.title = self.paid_from + " - " + self.paid_to
+		if self.payment_type in ("Receive", "Pay"):
+			self.title = self.party
+		else:
+			self.title = self.paid_from + " - " + self.paid_to
 
-    def validate_transaction_reference(self):
-        bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
-        bank_account_type = frappe.get_cached_value("Account", bank_account, "account_type")
+	def validate_transaction_reference(self):
+		bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
+		bank_account_type = frappe.get_cached_value("Account", bank_account, "account_type")
 
-        if bank_account_type == "Bank":
-            if not self.reference_no or not self.reference_date:
-                frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
+		if bank_account_type == "Bank":
+			if not self.reference_no or not self.reference_date:
+				frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
 
-    def set_remarks(self):
-        if self.custom_remarks:
-            return
+	def set_remarks(self):
+		if self.custom_remarks:
+			return
 
-        if self.payment_type == "Internal Transfer":
-            remarks = [
-                _("Amount {0} {1} transferred from {2} to {3}").format(
-                    _(self.paid_from_account_currency), self.paid_amount, self.paid_from, self.paid_to
-                )
-            ]
-        else:
+		if self.payment_type == "Internal Transfer":
+			remarks = [
+				_("Amount {0} {1} transferred from {2} to {3}").format(
+					_(self.paid_from_account_currency), self.paid_amount, self.paid_from, self.paid_to
+				)
+			]
+		else:
 
-            remarks = [
-                _("Amount {0} {1} {2} {3}").format(
-                    _(self.party_account_currency),
-                    self.paid_amount if self.payment_type == "Receive" else self.received_amount,
-                    _("received from") if self.payment_type == "Receive" else _("to"),
-                    self.party,
-                )
-            ]
+			remarks = [
+				_("Amount {0} {1} {2} {3}").format(
+					_(self.party_account_currency),
+					self.paid_amount if self.payment_type == "Receive" else self.received_amount,
+					_("received from") if self.payment_type == "Receive" else _("to"),
+					self.party,
+				)
+			]
 
-        if self.reference_no:
-            remarks.append(
-                _("Transaction reference no {0} dated {1}").format(self.reference_no, self.reference_date)
-            )
+		if self.reference_no:
+			remarks.append(
+				_("Transaction reference no {0} dated {1}").format(self.reference_no, self.reference_date)
+			)
 
-        if self.payment_type in ["Receive", "Pay"]:
-            for d in self.get("references"):
-                if d.allocated_amount:
-                    remarks.append(
-                        _("Amount {0} {1} against {2} {3}").format(
-                            _(self.party_account_currency), d.allocated_amount, d.reference_doctype, d.reference_name
-                        )
-                    )
+		if self.payment_type in ["Receive", "Pay"]:
+			for d in self.get("references"):
+				if d.allocated_amount:
+					remarks.append(
+						_("Amount {0} {1} against {2} {3}").format(
+							_(self.party_account_currency), d.allocated_amount, d.reference_doctype, d.reference_name
+						)
+					)
 
-        for d in self.get("deductions"):
-            if d.amount:
-                remarks.append(
-                    _("Amount {0} {1} deducted against {2}").format(_(self.company_currency), d.amount, d.account)
-                )
+		for d in self.get("deductions"):
+			if d.amount:
+				remarks.append(
+					_("Amount {0} {1} deducted against {2}").format(_(self.company_currency), d.amount, d.account)
+				)
 
-        self.set("remarks", "\n".join(remarks))
+		self.set("remarks", "\n".join(remarks))
 
-    def build_gl_map(self):
-        if self.payment_type in ("Receive", "Pay") and not self.get("party_account_field"):
-            self.setup_party_account_field()
+	def build_gl_map(self):
+		if self.payment_type in ("Receive", "Pay") and not self.get("party_account_field"):
+			self.setup_party_account_field()
 
-        gl_entries = []
-        self.add_party_gl_entries(gl_entries)
-        self.add_bank_gl_entries(gl_entries)
-        self.add_deductions_gl_entries(gl_entries)
-        self.add_tax_gl_entries(gl_entries)
-        add_regional_gl_entries(gl_entries, self)
-        return gl_entries
+		gl_entries = []
+		self.add_party_gl_entries(gl_entries)
+		self.add_bank_gl_entries(gl_entries)
+		self.add_deductions_gl_entries(gl_entries)
+		self.add_tax_gl_entries(gl_entries)
+		add_regional_gl_entries(gl_entries, self)
+		return gl_entries
 
-    def make_gl_entries(self, cancel=0, adv_adj=0):
-        gl_entries = self.build_gl_map()
-        gl_entries = process_gl_map(gl_entries)
-        make_gl_entries(gl_entries, cancel=cancel, adv_adj=adv_adj)
-        if cancel:
-            cancel_exchange_gain_loss_journal(frappe._dict(doctype=self.doctype, name=self.name))
-        else:
-            self.make_exchange_gain_loss_journal()
+	def make_gl_entries(self, cancel=0, adv_adj=0):
+		gl_entries = self.build_gl_map()
+		gl_entries = process_gl_map(gl_entries)
+		make_gl_entries(gl_entries, cancel=cancel, adv_adj=adv_adj)
+		if cancel:
+			cancel_exchange_gain_loss_journal(frappe._dict(doctype=self.doctype, name=self.name))
+		else:
+			self.make_exchange_gain_loss_journal()
 
-        self.make_advance_gl_entries(cancel=cancel)
+		self.make_advance_gl_entries(cancel=cancel)
 
-    def add_party_gl_entries(self, gl_entries):
-        if self.party_account:
-            if self.payment_type == "Receive":
-                against_account = self.paid_to
-            else:
-                against_account = self.paid_from
+	def add_party_gl_entries(self, gl_entries):
+		if self.party_account:
+			if self.payment_type == "Receive":
+				against_account = self.paid_to
+			else:
+				against_account = self.paid_from
 
-            party_gl_dict = self.get_gl_dict(
-                {
-                    "account": self.party_account,
-                    "party_type": self.party_type,
-                    "party": self.party,
-                    "against": against_account,
-                    "account_currency": self.party_account_currency,
-                    "cost_center": self.cost_center,
-                },
-                item=self,
-            )
+			party_gl_dict = self.get_gl_dict(
+				{
+					"account": self.party_account,
+					"party_type": self.party_type,
+					"party": self.party,
+					"against": against_account,
+					"account_currency": self.party_account_currency,
+					"cost_center": self.cost_center,
+				},
+				item=self,
+			)
 
-            dr_or_cr = "credit" if self.payment_type == "Receive" else "debit"
-            if self.book_advance_payments_in_separate_party_account:
-                gle = party_gl_dict.copy()
+			dr_or_cr = "credit" if self.payment_type == "Receive" else "debit"
+			if self.book_advance_payments_in_separate_party_account:
+				gle = party_gl_dict.copy()
 
-                if self.payment_type == "Receive":
-                    amount = self.base_paid_amount
-                else:
-                    amount = self.base_received_amount
+				if self.payment_type == "Receive":
+					amount = self.base_paid_amount
+				else:
+					amount = self.base_received_amount
 
-                exchange_rate = self.get_exchange_rate()
-                amount_in_account_currency = amount * exchange_rate
-                gle.update(
-                    {
-                        dr_or_cr: amount,
-                        dr_or_cr + "_in_account_currency": amount_in_account_currency,
-                        "against_voucher_type": "Payment Entry",
-                        "against_voucher": self.name,
-                        "cost_center": self.cost_center,
-                    }
-                )
-                gl_entries.append(gle)
-            else:
-                for d in self.get("references"):
-                    # re-defining dr_or_cr for every reference in order to avoid the last value affecting calculation of reverse
-                    dr_or_cr = "credit" if self.payment_type == "Receive" else "debit"
-                    cost_center = self.cost_center
-                    if d.reference_doctype == "Sales Invoice" and not cost_center:
-                        cost_center = frappe.db.get_value(d.reference_doctype, d.reference_name, "cost_center")
+				exchange_rate = self.get_exchange_rate()
+				amount_in_account_currency = amount * exchange_rate
+				gle.update(
+					{
+						dr_or_cr: amount,
+						dr_or_cr + "_in_account_currency": amount_in_account_currency,
+						"against_voucher_type": "Payment Entry",
+						"against_voucher": self.name,
+						"cost_center": self.cost_center,
+					}
+				)
+				gl_entries.append(gle)
+			else:
+				for d in self.get("references"):
+					# re-defining dr_or_cr for every reference in order to avoid the last value affecting calculation of reverse
+					dr_or_cr = "credit" if self.payment_type == "Receive" else "debit"
+					cost_center = self.cost_center
+					if d.reference_doctype == "Sales Invoice" and not cost_center:
+						cost_center = frappe.db.get_value(d.reference_doctype, d.reference_name, "cost_center")
 
-                    gle = party_gl_dict.copy()
+					gle = party_gl_dict.copy()
 
-                    allocated_amount_in_company_currency = self.calculate_base_allocated_amount_for_reference(d)
-                    reverse_dr_or_cr = 0
+					allocated_amount_in_company_currency = self.calculate_base_allocated_amount_for_reference(d)
+					reverse_dr_or_cr = 0
 
-                    if d.reference_doctype in ["Sales Invoice", "Purchase Invoice"]:
-                        is_return = frappe.db.get_value(d.reference_doctype, d.reference_name, "is_return")
-                        payable_party_types = get_party_types_from_account_type("Payable")
-                        receivable_party_types = get_party_types_from_account_type("Receivable")
-                        if is_return and self.party_type in receivable_party_types and (self.payment_type == "Pay"):
-                            reverse_dr_or_cr = 1
-                        elif (
-                            is_return and self.party_type in payable_party_types and (self.payment_type == "Receive")
-                        ):
-                            reverse_dr_or_cr = 1
+					if d.reference_doctype in ["Sales Invoice", "Purchase Invoice"]:
+						is_return = frappe.db.get_value(d.reference_doctype, d.reference_name, "is_return")
+						payable_party_types = get_party_types_from_account_type("Payable")
+						receivable_party_types = get_party_types_from_account_type("Receivable")
+						if is_return and self.party_type in receivable_party_types and (self.payment_type == "Pay"):
+							reverse_dr_or_cr = 1
+						elif (
+							is_return and self.party_type in payable_party_types and (self.payment_type == "Receive")
+						):
+							reverse_dr_or_cr = 1
 
-                        if is_return and not reverse_dr_or_cr:
-                            dr_or_cr = "debit" if dr_or_cr == "credit" else "credit"
+						if is_return and not reverse_dr_or_cr:
+							dr_or_cr = "debit" if dr_or_cr == "credit" else "credit"
 
-                    gle.update(
-                        {
-                            dr_or_cr: abs(allocated_amount_in_company_currency),
-                            dr_or_cr + "_in_account_currency": abs(d.allocated_amount),
-                            "against_voucher_type": d.reference_doctype,
-                            "against_voucher": d.reference_name,
-                            "cost_center": cost_center,
-                        }
-                    )
-                    gl_entries.append(gle)
+					gle.update(
+						{
+							dr_or_cr: abs(allocated_amount_in_company_currency),
+							dr_or_cr + "_in_account_currency": abs(d.allocated_amount),
+							"against_voucher_type": d.reference_doctype,
+							"against_voucher": d.reference_name,
+							"cost_center": cost_center,
+						}
+					)
+					gl_entries.append(gle)
 
-                if self.unallocated_amount:
-                    dr_or_cr = "credit" if self.payment_type == "Receive" else "debit"
-                    exchange_rate = self.get_exchange_rate()
-                    base_unallocated_amount = self.unallocated_amount * exchange_rate
+				if self.unallocated_amount:
+					dr_or_cr = "credit" if self.payment_type == "Receive" else "debit"
+					exchange_rate = self.get_exchange_rate()
+					base_unallocated_amount = self.unallocated_amount * exchange_rate
 
-                    gle = party_gl_dict.copy()
-                    gle.update(
-                        {
-                            dr_or_cr + "_in_account_currency": self.unallocated_amount,
-                            dr_or_cr: base_unallocated_amount,
-                        }
-                    )
+					gle = party_gl_dict.copy()
+					gle.update(
+						{
+							dr_or_cr + "_in_account_currency": self.unallocated_amount,
+							dr_or_cr: base_unallocated_amount,
+						}
+					)
 
-                    gl_entries.append(gle)
+					gl_entries.append(gle)
 
-    def make_advance_gl_entries(
-        self, entry: object | dict = None, cancel: bool = 0, update_outstanding: str = "Yes"
+	def make_advance_gl_entries(
+		self, entry: object | dict = None, cancel: bool = 0, update_outstanding: str = "Yes"
 	):
-        gl_entries = []
-        self.add_advance_gl_entries(gl_entries, entry)
+		gl_entries = []
+		self.add_advance_gl_entries(gl_entries, entry)
 
-        if cancel:
-            make_reverse_gl_entries(gl_entries, partial_cancel=True)
-        else:
-            make_gl_entries(gl_entries, update_outstanding=update_outstanding)
+		if cancel:
+			make_reverse_gl_entries(gl_entries, partial_cancel=True)
+		else:
+			make_gl_entries(gl_entries, update_outstanding=update_outstanding)
 
-    def add_advance_gl_entries(self, gl_entries: list, entry: object | dict | None):
-        """
-        If 'entry' is passed, GL enties only for that reference is added.
-        """
-        if self.book_advance_payments_in_separate_party_account:
-            references = [x for x in self.get("references")]
-            if entry:
-                references = [x for x in self.get("references") if x.name == entry.name]
+	def add_advance_gl_entries(self, gl_entries: list, entry: object | dict | None):
+		"""
+		If 'entry' is passed, GL enties only for that reference is added.
+		"""
+		if self.book_advance_payments_in_separate_party_account:
+			references = [x for x in self.get("references")]
+			if entry:
+				references = [x for x in self.get("references") if x.name == entry.name]
 
-            for ref in references:
-                if ref.reference_doctype in ("Sales Invoice", "Purchase Invoice", "Journal Entry"):
-                    self.add_advance_gl_for_reference(gl_entries, ref)
+			for ref in references:
+				if ref.reference_doctype in ("Sales Invoice", "Purchase Invoice", "Journal Entry"):
+					self.add_advance_gl_for_reference(gl_entries, ref)
 
-    def add_advance_gl_for_reference(self, gl_entries, invoice):
-        args_dict = {
-            "party_type": self.party_type,
-            "party": self.party,
-            "account_currency": self.party_account_currency,
-            "cost_center": self.cost_center,
-            "voucher_type": "Payment Entry",
-            "voucher_no": self.name,
-            "voucher_detail_no": invoice.name,
-        }
+	def add_advance_gl_for_reference(self, gl_entries, invoice):
+		args_dict = {
+			"party_type": self.party_type,
+			"party": self.party,
+			"account_currency": self.party_account_currency,
+			"cost_center": self.cost_center,
+			"voucher_type": "Payment Entry",
+			"voucher_no": self.name,
+			"voucher_detail_no": invoice.name,
+		}
 
-        posting_date = frappe.db.get_value(
-            invoice.reference_doctype, invoice.reference_name, "posting_date"
-        )
+		posting_date = frappe.db.get_value(
+			invoice.reference_doctype, invoice.reference_name, "posting_date"
+		)
 
-        if getdate(posting_date) < getdate(self.posting_date):
-            posting_date = self.posting_date
+		if getdate(posting_date) < getdate(self.posting_date):
+			posting_date = self.posting_date
 
-        dr_or_cr = "credit" if invoice.reference_doctype == "Sales Invoice" else "debit"
-        args_dict["account"] = invoice.account
-        args_dict[dr_or_cr] = invoice.allocated_amount
-        args_dict[dr_or_cr + "_in_account_currency"] = invoice.allocated_amount
-        args_dict.update(
-            {
-                "against_voucher_type": invoice.reference_doctype,
-                "against_voucher": invoice.reference_name,
-                "posting_date": posting_date,
-            }
-        )
-        gle = self.get_gl_dict(
-            args_dict,
-            item=self,
-        )
-        gl_entries.append(gle)
+		dr_or_cr = "credit" if invoice.reference_doctype == "Sales Invoice" else "debit"
+		args_dict["account"] = invoice.account
+		args_dict[dr_or_cr] = invoice.allocated_amount
+		args_dict[dr_or_cr + "_in_account_currency"] = invoice.allocated_amount
+		args_dict.update(
+			{
+				"against_voucher_type": invoice.reference_doctype,
+				"against_voucher": invoice.reference_name,
+				"posting_date": posting_date,
+			}
+		)
+		gle = self.get_gl_dict(
+			args_dict,
+			item=self,
+		)
+		gl_entries.append(gle)
 
-        args_dict[dr_or_cr] = 0
-        args_dict[dr_or_cr + "_in_account_currency"] = 0
-        dr_or_cr = "debit" if dr_or_cr == "credit" else "credit"
-        args_dict["account"] = self.party_account
-        args_dict[dr_or_cr] = invoice.allocated_amount
-        args_dict[dr_or_cr + "_in_account_currency"] = invoice.allocated_amount
-        args_dict.update(
-            {
-                "against_voucher_type": "Payment Entry",
-                "against_voucher": self.name,
-            }
-        )
-        gle = self.get_gl_dict(
-            args_dict,
-            item=self,
-        )
-        gl_entries.append(gle)
+		args_dict[dr_or_cr] = 0
+		args_dict[dr_or_cr + "_in_account_currency"] = 0
+		dr_or_cr = "debit" if dr_or_cr == "credit" else "credit"
+		args_dict["account"] = self.party_account
+		args_dict[dr_or_cr] = invoice.allocated_amount
+		args_dict[dr_or_cr + "_in_account_currency"] = invoice.allocated_amount
+		args_dict.update(
+			{
+				"against_voucher_type": "Payment Entry",
+				"against_voucher": self.name,
+			}
+		)
+		gle = self.get_gl_dict(
+			args_dict,
+			item=self,
+		)
+		gl_entries.append(gle)
 
-    def add_bank_gl_entries(self, gl_entries):
-        if self.payment_type in ("Pay", "Internal Transfer"):
-            gl_entries.append(
-                self.get_gl_dict(
-                    {
-                        "account": self.paid_from,
-                        "account_currency": self.paid_from_account_currency,
-                        "against": self.party if self.payment_type == "Pay" else self.paid_to,
-                        "credit_in_account_currency": self.paid_amount,
-                        "credit": self.base_paid_amount,
-                        "cost_center": self.cost_center,
-                        "post_net_value": True,
-                    },
-                    item=self,
-                )
-            )
-        if self.payment_type in ("Receive", "Internal Transfer"):
-            gl_entries.append(
-                self.get_gl_dict(
-                    {
-                        "account": self.paid_to,
-                        "account_currency": self.paid_to_account_currency,
-                        "against": self.party if self.payment_type == "Receive" else self.paid_from,
-                        "debit_in_account_currency": self.received_amount,
-                        "debit": self.base_received_amount,
-                        "cost_center": self.cost_center,
-                    },
-                    item=self,
-                )
-            )
+	def add_bank_gl_entries(self, gl_entries):
+		if self.payment_type in ("Pay", "Internal Transfer"):
+			gl_entries.append(
+				self.get_gl_dict(
+					{
+						"account": self.paid_from,
+						"account_currency": self.paid_from_account_currency,
+						"against": self.party if self.payment_type == "Pay" else self.paid_to,
+						"credit_in_account_currency": self.paid_amount,
+						"credit": self.base_paid_amount,
+						"cost_center": self.cost_center,
+						"post_net_value": True,
+					},
+					item=self,
+				)
+			)
+		if self.payment_type in ("Receive", "Internal Transfer"):
+			gl_entries.append(
+				self.get_gl_dict(
+					{
+						"account": self.paid_to,
+						"account_currency": self.paid_to_account_currency,
+						"against": self.party if self.payment_type == "Receive" else self.paid_from,
+						"debit_in_account_currency": self.received_amount,
+						"debit": self.base_received_amount,
+						"cost_center": self.cost_center,
+					},
+					item=self,
+				)
+			)
 
-    def add_tax_gl_entries(self, gl_entries):
-        for d in self.get("taxes"):
-            account_currency = get_account_currency(d.account_head)
-            if account_currency != self.company_currency:
-                frappe.throw(_("Currency for {0} must be {1}").format(d.account_head, self.company_currency))
+	def add_tax_gl_entries(self, gl_entries):
+		for d in self.get("taxes"):
+			account_currency = get_account_currency(d.account_head)
+			if account_currency != self.company_currency:
+				frappe.throw(_("Currency for {0} must be {1}").format(d.account_head, self.company_currency))
 
-            if self.payment_type in ("Pay", "Internal Transfer"):
-                dr_or_cr = "debit" if d.add_deduct_tax == "Add" else "credit"
-                rev_dr_or_cr = "credit" if dr_or_cr == "debit" else "debit"
-                against = self.party or self.paid_from
-            elif self.payment_type == "Receive":
-                dr_or_cr = "credit" if d.add_deduct_tax == "Add" else "debit"
-                rev_dr_or_cr = "credit" if dr_or_cr == "debit" else "debit"
-                against = self.party or self.paid_to
+			if self.payment_type in ("Pay", "Internal Transfer"):
+				dr_or_cr = "debit" if d.add_deduct_tax == "Add" else "credit"
+				rev_dr_or_cr = "credit" if dr_or_cr == "debit" else "debit"
+				against = self.party or self.paid_from
+			elif self.payment_type == "Receive":
+				dr_or_cr = "credit" if d.add_deduct_tax == "Add" else "debit"
+				rev_dr_or_cr = "credit" if dr_or_cr == "debit" else "debit"
+				against = self.party or self.paid_to
 
-            payment_account = self.get_party_account_for_taxes()
-            tax_amount = d.tax_amount
-            base_tax_amount = d.base_tax_amount
+			payment_account = self.get_party_account_for_taxes()
+			tax_amount = d.tax_amount
+			base_tax_amount = d.base_tax_amount
 
-            gl_entries.append(
-                self.get_gl_dict(
-                    {
-                        "account": d.account_head,
-                        "against": against,
-                        dr_or_cr: tax_amount,
-                        dr_or_cr + "_in_account_currency": base_tax_amount
-                        if account_currency == self.company_currency
-                        else d.tax_amount,
-                        "cost_center": d.cost_center,
-                        "post_net_value": True,
-                    },
-                    account_currency,
-                    item=d,
-                )
-            )
+			gl_entries.append(
+				self.get_gl_dict(
+					{
+						"account": d.account_head,
+						"against": against,
+						dr_or_cr: tax_amount,
+						dr_or_cr + "_in_account_currency": base_tax_amount
+						if account_currency == self.company_currency
+						else d.tax_amount,
+						"cost_center": d.cost_center,
+						"post_net_value": True,
+					},
+					account_currency,
+					item=d,
+				)
+			)
 
-            if not d.included_in_paid_amount:
-                if get_account_currency(payment_account) != self.company_currency:
-                    if self.payment_type == "Receive":
-                        exchange_rate = self.target_exchange_rate
-                    elif self.payment_type in ["Pay", "Internal Transfer"]:
-                        exchange_rate = self.source_exchange_rate
-                    base_tax_amount = flt((tax_amount / exchange_rate), self.precision("paid_amount"))
+			if not d.included_in_paid_amount:
+				if get_account_currency(payment_account) != self.company_currency:
+					if self.payment_type == "Receive":
+						exchange_rate = self.target_exchange_rate
+					elif self.payment_type in ["Pay", "Internal Transfer"]:
+						exchange_rate = self.source_exchange_rate
+					base_tax_amount = flt((tax_amount / exchange_rate), self.precision("paid_amount"))
 
-                gl_entries.append(
-                    self.get_gl_dict(
-                        {
-                            "account": payment_account,
-                            "against": against,
-                            rev_dr_or_cr: tax_amount,
-                            rev_dr_or_cr + "_in_account_currency": base_tax_amount
-                            if account_currency == self.company_currency
-                            else d.tax_amount,
-                            "cost_center": self.cost_center,
-                            "post_net_value": True,
-                        },
-                        account_currency,
-                        item=d,
-                    )
-                )
+				gl_entries.append(
+					self.get_gl_dict(
+						{
+							"account": payment_account,
+							"against": against,
+							rev_dr_or_cr: tax_amount,
+							rev_dr_or_cr + "_in_account_currency": base_tax_amount
+							if account_currency == self.company_currency
+							else d.tax_amount,
+							"cost_center": self.cost_center,
+							"post_net_value": True,
+						},
+						account_currency,
+						item=d,
+					)
+				)
 
-    def add_deductions_gl_entries(self, gl_entries):
-        for d in self.get("deductions"):
-            if d.amount:
-                account_currency = get_account_currency(d.account)
-                if account_currency != self.company_currency:
-                    frappe.throw(_("Currency for {0} must be {1}").format(d.account, self.company_currency))
+	def add_deductions_gl_entries(self, gl_entries):
+		for d in self.get("deductions"):
+			if d.amount:
+				account_currency = get_account_currency(d.account)
+				if account_currency != self.company_currency:
+					frappe.throw(_("Currency for {0} must be {1}").format(d.account, self.company_currency))
 
-                gl_entries.append(
-                    self.get_gl_dict(
-                        {
-                            "account": d.account,
-                            "account_currency": account_currency,
-                            "against": self.party or self.paid_from,
-                            "debit_in_account_currency": d.amount,
-                            "debit": d.amount,
-                            "cost_center": d.cost_center,
-                        },
-                        item=d,
-                    )
-                )
+				gl_entries.append(
+					self.get_gl_dict(
+						{
+							"account": d.account,
+							"account_currency": account_currency,
+							"against": self.party or self.paid_from,
+							"debit_in_account_currency": d.amount,
+							"debit": d.amount,
+							"cost_center": d.cost_center,
+						},
+						item=d,
+					)
+				)
 
-    def get_party_account_for_taxes(self):
-        if self.payment_type == "Receive":
-            return self.paid_to
-        elif self.payment_type in ("Pay", "Internal Transfer"):
-            return self.paid_from
+	def get_party_account_for_taxes(self):
+		if self.payment_type == "Receive":
+			return self.paid_to
+		elif self.payment_type in ("Pay", "Internal Transfer"):
+			return self.paid_from
 
-    def update_advance_paid(self):
-        if self.payment_type in ("Receive", "Pay") and self.party:
-            for d in self.get("references"):
-                if d.allocated_amount and d.reference_doctype in frappe.get_hooks("advance_payment_doctypes"):
-                    frappe.get_doc(
-                        d.reference_doctype, d.reference_name, for_update=True
-                    ).set_total_advance_paid()
+	def update_advance_paid(self):
+		if self.payment_type in ("Receive", "Pay") and self.party:
+			for d in self.get("references"):
+				if d.allocated_amount and d.reference_doctype in frappe.get_hooks("advance_payment_doctypes"):
+					frappe.get_doc(
+						d.reference_doctype, d.reference_name, for_update=True
+					).set_total_advance_paid()
 
-    def on_recurring(self, reference_doc, auto_repeat_doc):
-        self.reference_no = reference_doc.name
-        self.reference_date = nowdate()
+	def on_recurring(self, reference_doc, auto_repeat_doc):
+		self.reference_no = reference_doc.name
+		self.reference_date = nowdate()
 
-    def calculate_deductions(self, tax_details):
-        return {
-            "account": tax_details["tax"]["account_head"],
-            "cost_center": frappe.get_cached_value("Company", self.company, "cost_center"),
-            "amount": self.total_allocated_amount * (tax_details["tax"]["rate"] / 100),
-        }
+	def calculate_deductions(self, tax_details):
+		return {
+			"account": tax_details["tax"]["account_head"],
+			"cost_center": frappe.get_cached_value("Company", self.company, "cost_center"),
+			"amount": self.total_allocated_amount * (tax_details["tax"]["rate"] / 100),
+		}
 
-    def set_gain_or_loss(self, account_details=None):
-        if not self.difference_amount:
-            self.set_difference_amount()
+	def set_gain_or_loss(self, account_details=None):
+		if not self.difference_amount:
+			self.set_difference_amount()
 
-        row = {"amount": self.difference_amount}
+		row = {"amount": self.difference_amount}
 
-        if account_details:
-            row.update(account_details)
+		if account_details:
+			row.update(account_details)
 
-        if not row.get("amount"):
-            # if no difference amount
-            return
+		if not row.get("amount"):
+			# if no difference amount
+			return
 
-        self.append("deductions", row)
-        self.set_unallocated_amount()
+		self.append("deductions", row)
+		self.set_unallocated_amount()
 
-    def get_exchange_rate(self):
-        return self.source_exchange_rate if self.payment_type == "Receive" else self.target_exchange_rate
+	def get_exchange_rate(self):
+		return self.source_exchange_rate if self.payment_type == "Receive" else self.target_exchange_rate
 
-    def initialize_taxes(self):
-        for tax in self.get("taxes"):
-            validate_taxes_and_charges(tax)
-            validate_inclusive_tax(tax, self)
+	def initialize_taxes(self):
+		for tax in self.get("taxes"):
+			validate_taxes_and_charges(tax)
+			validate_inclusive_tax(tax, self)
 
-            tax_fields = ["total", "tax_fraction_for_current_item", "grand_total_fraction_for_current_item"]
+			tax_fields = ["total", "tax_fraction_for_current_item", "grand_total_fraction_for_current_item"]
 
-            if tax.charge_type != "Actual":
-                tax_fields.append("tax_amount")
+			if tax.charge_type != "Actual":
+				tax_fields.append("tax_amount")
 
-            for fieldname in tax_fields:
-                tax.set(fieldname, 0.0)
+			for fieldname in tax_fields:
+				tax.set(fieldname, 0.0)
 
-        self.paid_amount_after_tax = self.base_paid_amount
+		self.paid_amount_after_tax = self.base_paid_amount
 
-    def determine_exclusive_rate(self):
-        if not any(cint(tax.included_in_paid_amount) for tax in self.get("taxes")):
-            return
+	def determine_exclusive_rate(self):
+		if not any(cint(tax.included_in_paid_amount) for tax in self.get("taxes")):
+			return
 
-        cumulated_tax_fraction = 0
-        for i, tax in enumerate(self.get("taxes")):
-            tax.tax_fraction_for_current_item = self.get_current_tax_fraction(tax)
-            if i == 0:
-                tax.grand_total_fraction_for_current_item = 1 + tax.tax_fraction_for_current_item
-            else:
-                tax.grand_total_fraction_for_current_item = (
-                    self.get("taxes")[i - 1].grand_total_fraction_for_current_item
-                    + tax.tax_fraction_for_current_item
-                )
+		cumulated_tax_fraction = 0
+		for i, tax in enumerate(self.get("taxes")):
+			tax.tax_fraction_for_current_item = self.get_current_tax_fraction(tax)
+			if i == 0:
+				tax.grand_total_fraction_for_current_item = 1 + tax.tax_fraction_for_current_item
+			else:
+				tax.grand_total_fraction_for_current_item = (
+					self.get("taxes")[i - 1].grand_total_fraction_for_current_item
+					+ tax.tax_fraction_for_current_item
+				)
 
-            cumulated_tax_fraction += tax.tax_fraction_for_current_item
+			cumulated_tax_fraction += tax.tax_fraction_for_current_item
 
-        self.paid_amount_after_tax = flt(self.base_paid_amount / (1 + cumulated_tax_fraction))
+		self.paid_amount_after_tax = flt(self.base_paid_amount / (1 + cumulated_tax_fraction))
 
-    def calculate_taxes(self):
-        self.total_taxes_and_charges = 0.0
-        self.base_total_taxes_and_charges = 0.0
+	def calculate_taxes(self):
+		self.total_taxes_and_charges = 0.0
+		self.base_total_taxes_and_charges = 0.0
 
-        actual_tax_dict = dict(
-            [
-                [tax.idx, flt(tax.tax_amount, tax.precision("tax_amount"))]
-                for tax in self.get("taxes")
-                if tax.charge_type == "Actual"
-            ]
-        )
+		actual_tax_dict = dict(
+			[
+				[tax.idx, flt(tax.tax_amount, tax.precision("tax_amount"))]
+				for tax in self.get("taxes")
+				if tax.charge_type == "Actual"
+			]
+		)
 
-        for i, tax in enumerate(self.get("taxes")):
-            current_tax_amount = self.get_current_tax_amount(tax)
+		for i, tax in enumerate(self.get("taxes")):
+			current_tax_amount = self.get_current_tax_amount(tax)
 
-            if tax.charge_type == "Actual":
-                actual_tax_dict[tax.idx] -= current_tax_amount
-                if i == len(self.get("taxes")) - 1:
-                    current_tax_amount += actual_tax_dict[tax.idx]
+			if tax.charge_type == "Actual":
+				actual_tax_dict[tax.idx] -= current_tax_amount
+				if i == len(self.get("taxes")) - 1:
+					current_tax_amount += actual_tax_dict[tax.idx]
 
-            tax.tax_amount = current_tax_amount
-            tax.base_tax_amount = current_tax_amount
+			tax.tax_amount = current_tax_amount
+			tax.base_tax_amount = current_tax_amount
 
-            if tax.add_deduct_tax == "Deduct":
-                current_tax_amount *= -1.0
-            else:
-                current_tax_amount *= 1.0
+			if tax.add_deduct_tax == "Deduct":
+				current_tax_amount *= -1.0
+			else:
+				current_tax_amount *= 1.0
 
-            if i == 0:
-                tax.total = flt(self.paid_amount_after_tax + current_tax_amount, self.precision("total", tax))
-            else:
-                tax.total = flt(
-                    self.get("taxes")[i - 1].total + current_tax_amount, self.precision("total", tax)
-                )
+			if i == 0:
+				tax.total = flt(self.paid_amount_after_tax + current_tax_amount, self.precision("total", tax))
+			else:
+				tax.total = flt(
+					self.get("taxes")[i - 1].total + current_tax_amount, self.precision("total", tax)
+				)
 
-            tax.base_total = tax.total
+			tax.base_total = tax.total
 
-            if self.payment_type == "Pay":
-                if tax.currency != self.paid_to_account_currency:
-                    self.total_taxes_and_charges += flt(current_tax_amount / self.target_exchange_rate)
-                else:
-                    self.total_taxes_and_charges += current_tax_amount
-            elif self.payment_type == "Receive":
-                if tax.currency != self.paid_from_account_currency:
-                    self.total_taxes_and_charges += flt(current_tax_amount / self.source_exchange_rate)
-                else:
-                    self.total_taxes_and_charges += current_tax_amount
+			if self.payment_type == "Pay":
+				if tax.currency != self.paid_to_account_currency:
+					self.total_taxes_and_charges += flt(current_tax_amount / self.target_exchange_rate)
+				else:
+					self.total_taxes_and_charges += current_tax_amount
+			elif self.payment_type == "Receive":
+				if tax.currency != self.paid_from_account_currency:
+					self.total_taxes_and_charges += flt(current_tax_amount / self.source_exchange_rate)
+				else:
+					self.total_taxes_and_charges += current_tax_amount
 
-            self.base_total_taxes_and_charges += tax.base_tax_amount
+			self.base_total_taxes_and_charges += tax.base_tax_amount
 
-        if self.get("taxes"):
-            self.paid_amount_after_tax = self.get("taxes")[-1].base_total
+		if self.get("taxes"):
+			self.paid_amount_after_tax = self.get("taxes")[-1].base_total
 
-    def get_current_tax_amount(self, tax):
-        tax_rate = tax.rate
+	def get_current_tax_amount(self, tax):
+		tax_rate = tax.rate
 
-        # To set row_id by default as previous row.
-        if tax.charge_type in ["On Previous Row Amount", "On Previous Row Total"]:
-            if tax.idx == 1:
-                frappe.throw(
-                    _(
-                        "Cannot select charge type as 'On Previous Row Amount' or 'On Previous Row Total' for first row"
-                    )
-                )
+		# To set row_id by default as previous row.
+		if tax.charge_type in ["On Previous Row Amount", "On Previous Row Total"]:
+			if tax.idx == 1:
+				frappe.throw(
+					_(
+						"Cannot select charge type as 'On Previous Row Amount' or 'On Previous Row Total' for first row"
+					)
+				)
 
-            if not tax.row_id:
-                tax.row_id = tax.idx - 1
+			if not tax.row_id:
+				tax.row_id = tax.idx - 1
 
-        if tax.charge_type == "Actual":
-            current_tax_amount = flt(tax.tax_amount, self.precision("tax_amount", tax))
-        elif tax.charge_type == "On Paid Amount":
-            current_tax_amount = (tax_rate / 100.0) * self.paid_amount_after_tax
-        elif tax.charge_type == "On Previous Row Amount":
-            current_tax_amount = (tax_rate / 100.0) * self.get("taxes")[cint(tax.row_id) - 1].tax_amount
+		if tax.charge_type == "Actual":
+			current_tax_amount = flt(tax.tax_amount, self.precision("tax_amount", tax))
+		elif tax.charge_type == "On Paid Amount":
+			current_tax_amount = (tax_rate / 100.0) * self.paid_amount_after_tax
+		elif tax.charge_type == "On Previous Row Amount":
+			current_tax_amount = (tax_rate / 100.0) * self.get("taxes")[cint(tax.row_id) - 1].tax_amount
 
-        elif tax.charge_type == "On Previous Row Total":
-            current_tax_amount = (tax_rate / 100.0) * self.get("taxes")[cint(tax.row_id) - 1].total
+		elif tax.charge_type == "On Previous Row Total":
+			current_tax_amount = (tax_rate / 100.0) * self.get("taxes")[cint(tax.row_id) - 1].total
 
-        return current_tax_amount
+		return current_tax_amount
 
-    def get_current_tax_fraction(self, tax):
-        current_tax_fraction = 0
+	def get_current_tax_fraction(self, tax):
+		current_tax_fraction = 0
 
-        if cint(tax.included_in_paid_amount):
-            tax_rate = tax.rate
+		if cint(tax.included_in_paid_amount):
+			tax_rate = tax.rate
 
-            if tax.charge_type == "On Paid Amount":
-                current_tax_fraction = tax_rate / 100.0
-            elif tax.charge_type == "On Previous Row Amount":
-                current_tax_fraction = (tax_rate / 100.0) * self.get("taxes")[
-                    cint(tax.row_id) - 1
-                ].tax_fraction_for_current_item
-            elif tax.charge_type == "On Previous Row Total":
-                current_tax_fraction = (tax_rate / 100.0) * self.get("taxes")[
-                    cint(tax.row_id) - 1
-                ].grand_total_fraction_for_current_item
+			if tax.charge_type == "On Paid Amount":
+				current_tax_fraction = tax_rate / 100.0
+			elif tax.charge_type == "On Previous Row Amount":
+				current_tax_fraction = (tax_rate / 100.0) * self.get("taxes")[
+					cint(tax.row_id) - 1
+				].tax_fraction_for_current_item
+			elif tax.charge_type == "On Previous Row Total":
+				current_tax_fraction = (tax_rate / 100.0) * self.get("taxes")[
+					cint(tax.row_id) - 1
+				].grand_total_fraction_for_current_item
 
-        if getattr(tax, "add_deduct_tax", None) and tax.add_deduct_tax == "Deduct":
-            current_tax_fraction *= -1.0
+		if getattr(tax, "add_deduct_tax", None) and tax.add_deduct_tax == "Deduct":
+			current_tax_fraction *= -1.0
 
-        return current_tax_fraction
-    
-    def process_retention_flow(self):
-        if(self.custom_retention_money_payable):
-            self.set_default_retention_account()
-            self.validate_retention_amount()
-            self.set_unset_retention_amout()
-    
-    # .js api call
-    @frappe.whitelist()
-    def process_accounts_retention_flow(self):
-        if(not self.paid_amount) or (self.paid_amount==0): return
-        self.set_default_retention_account()
-        self.set_unset_retention_amout()
-    
-    # .js api call
-    @frappe.whitelist()
-    def calculate_retention_amount(self):
-        self.validate_retention_amount()
-        self.set_unset_retention_amout()
-        self.set_payment_references()
-        
-    def set_default_retention_account(self):
-        
-        default_retention_payable_account= frappe.db.get_value("Company", self.company, "custom_default_retention_payable_account")
-        if(default_retention_payable_account):
-            self.custom_retention_payable_account = default_retention_payable_account
-        else:
-            company_link = get_link_to_form("Company", self.company) if(self.company) else ""
-            frappe.throw(f"Please select company `Default Retention Payable Account` <br>{company_link}.", title="Missing Info")
-        
-    def validate_retention_amount(self):
-        if(self.custom_retention_money_payable):
-            if(self.custom_retention_amount<=0):
-                frappe.throw('Retention amount must be greater than zero.', title="Invalid Info")
-            elif(self.custom_retention_amount>=self.custom_actual_amount):
-                frappe.throw('Retention amount must be less than actual amount.', title="Invalid Info")
-    
-    def set_unset_retention_amout(self):
-        if(self.custom_retention_money_payable):
-            if((self.custom_actual_amount or 0.0)<= self.paid_amount):
-                self.custom_actual_amount = self.paid_amount
-            self.paid_amount = (self.custom_actual_amount or 0.0) - (self.custom_retention_amount or 0.0)
-        else:
-            if(self.custom_actual_amount >= self.paid_amount):
-                self.paid_amount = self.custom_actual_amount
-            self.custom_retention_amount = 0.0
-            self.custom_retention_payable_account = None
-    
-    def set_payment_references(self):
-        def get_invoice_portion(payment_term):
-            return frappe.db.get_value('Payment Term', payment_term, 'invoice_portion')
-        
-        for row in self.references:
-            if(row.payment_term):
-                invoice_portion = row.custom_invoice_portion if(row.custom_invoice_portion>0) else get_invoice_portion(row.payment_term)
-                row.custom_invoice_portion = invoice_portion
-                row.allocated_amount = (self.paid_amount * (invoice_portion/100))
-            else:
-                row.allocated_amount = self.paid_amount
-    
+		return current_tax_fraction
+	
+	def process_retention_flow(self):
+		if(self.custom_retention_money_payable):
+			self.set_default_retention_account()
+			self.validate_retention_amount()
+			self.set_unset_retention_amout()
+	
+	# .js api call
+	@frappe.whitelist()
+	def process_accounts_retention_flow(self):
+		if(not self.paid_amount) or (self.paid_amount==0): return
+		self.set_default_retention_account()
+		self.set_unset_retention_amout()
+	
+	# .js api call
+	@frappe.whitelist()
+	def calculate_retention_amount(self):
+		self.validate_retention_amount()
+		self.set_unset_retention_amout()
+		self.set_payment_references()
+		
+	def set_default_retention_account(self):
+		
+		default_retention_payable_account= frappe.db.get_value("Company", self.company, "custom_default_retention_payable_account")
+		if(default_retention_payable_account):
+			self.custom_retention_payable_account = default_retention_payable_account
+		else:
+			company_link = get_link_to_form("Company", self.company) if(self.company) else ""
+			frappe.throw(f"Please select company `Default Retention Payable Account` <br>{company_link}.", title="Missing Info")
+		
+	def validate_retention_amount(self):
+		if(self.custom_retention_money_payable):
+			if(self.custom_retention_amount<=0):
+				frappe.throw('Retention amount must be greater than zero.', title="Invalid Info")
+			elif(self.custom_retention_amount>=self.custom_actual_amount):
+				frappe.throw('Retention amount must be less than actual amount.', title="Invalid Info")
+	
+	def set_unset_retention_amout(self):
+		if(self.custom_retention_money_payable):
+			if((self.custom_actual_amount or 0.0)<= self.paid_amount):
+				self.custom_actual_amount = self.paid_amount
+			self.paid_amount = (self.custom_actual_amount or 0.0) - (self.custom_retention_amount or 0.0)
+		else:
+			if(self.custom_actual_amount >= self.paid_amount):
+				self.paid_amount = self.custom_actual_amount
+			self.custom_retention_amount = 0.0
+			self.custom_retention_payable_account = None
+	
+	def set_payment_references(self):
+		def get_invoice_portion(payment_term):
+			return frappe.db.get_value('Payment Term', payment_term, 'invoice_portion')
+		
+		for row in self.references:
+			if(row.payment_term):
+				invoice_portion = row.custom_invoice_portion if(row.custom_invoice_portion>0) else get_invoice_portion(row.payment_term)
+				row.custom_invoice_portion = invoice_portion
+				row.allocated_amount = (self.paid_amount * (invoice_portion/100))
+			else:
+				row.allocated_amount = self.paid_amount
+	
 def validate_inclusive_tax(tax, doc):
 	def _on_previous_row_error(row_range):
 		throw(
@@ -2209,108 +2222,108 @@ def get_company_defaults(company):
 
 # custom changes
 def get_outstanding_on_journal_entry(name):
-    gl = frappe.qb.DocType("GL Entry")
-    res = (
-        frappe.qb.from_(gl)
-        .select(
-            Case()
-            .when(
-                ((gl.party_type == "Donor") | (gl.party_type == "Customer")),
-                Coalesce(Sum(gl.debit_in_account_currency - gl.credit_in_account_currency), 0),
-            )
-            .else_(Coalesce(Sum(gl.credit_in_account_currency - gl.debit_in_account_currency), 0))
-            .as_("outstanding_amount")
-        )
-        .where(
-            (Coalesce(gl.party_type, "") != "")
-            & (gl.is_cancelled == 0)
-            & ((gl.voucher_no == name) | (gl.against_voucher == name))
-        )
-    ).run(as_dict=True)
+	gl = frappe.qb.DocType("GL Entry")
+	res = (
+		frappe.qb.from_(gl)
+		.select(
+			Case()
+			.when(
+				((gl.party_type == "Donor") | (gl.party_type == "Customer")),
+				Coalesce(Sum(gl.debit_in_account_currency - gl.credit_in_account_currency), 0),
+			)
+			.else_(Coalesce(Sum(gl.credit_in_account_currency - gl.debit_in_account_currency), 0))
+			.as_("outstanding_amount")
+		)
+		.where(
+			(Coalesce(gl.party_type, "") != "")
+			& (gl.is_cancelled == 0)
+			& ((gl.voucher_no == name) | (gl.against_voucher == name))
+		)
+	).run(as_dict=True)
 
-    outstanding_amount = res[0].get("outstanding_amount", 0) if res else 0
-    
-    return outstanding_amount
+	outstanding_amount = res[0].get("outstanding_amount", 0) if res else 0
+	
+	return outstanding_amount
 
 
 @frappe.whitelist()
 def get_reference_details(reference_doctype, reference_name, party_account_currency):
-    total_amount = outstanding_amount = exchange_rate = account = None
+	total_amount = outstanding_amount = exchange_rate = account = None
 
-    ref_doc = frappe.get_doc(reference_doctype, reference_name)
-    company_currency = ref_doc.get("company_currency") or erpnext.get_company_currency(
-        ref_doc.company
-    )
-    # frappe.throw(f"{company_currency}")
-    if reference_doctype == "Dunning":
-        total_amount = outstanding_amount = ref_doc.get("dunning_amount")
-        exchange_rate = 1
+	ref_doc = frappe.get_doc(reference_doctype, reference_name)
+	company_currency = ref_doc.get("company_currency") or erpnext.get_company_currency(
+		ref_doc.company
+	)
+	# frappe.throw(f"{company_currency}")
+	if reference_doctype == "Dunning":
+		total_amount = outstanding_amount = ref_doc.get("dunning_amount")
+		exchange_rate = 1
 
-    elif reference_doctype == "Donation" and ref_doc.docstatus == 1:
-        total_amount = ref_doc.get("total_donation")
-        outstanding_amount = ref_doc.get("outstanding_amount")
-        if hasattr(ref_doc, "multi_currency"):
-            exchange_rate = get_exchange_rate(
-                party_account_currency, company_currency, ref_doc.posting_date
-            )
-        else:
-            exchange_rate = 1
-            outstanding_amount = get_outstanding_on_journal_entry(reference_name)
-        
-    elif reference_doctype == "Journal Entry" and ref_doc.docstatus == 1:
-        total_amount = ref_doc.get("total_amount")
-        if ref_doc.multi_currency:
-            exchange_rate = get_exchange_rate(
-                party_account_currency, company_currency, ref_doc.posting_date
-            )
-        else:
-            exchange_rate = 1
-            outstanding_amount = get_outstanding_on_journal_entry(reference_name)
+	elif reference_doctype == "Donation" and ref_doc.docstatus == 1:
+		total_amount = ref_doc.get("total_donation")
+		outstanding_amount = ref_doc.get("outstanding_amount")
+		if hasattr(ref_doc, "multi_currency"):
+			exchange_rate = get_exchange_rate(
+				party_account_currency, company_currency, ref_doc.posting_date
+			)
+		else:
+			exchange_rate = 1
+			outstanding_amount = get_outstanding_on_journal_entry(reference_name)
+		
+	elif reference_doctype == "Journal Entry" and ref_doc.docstatus == 1:
+		total_amount = ref_doc.get("total_amount")
+		if ref_doc.multi_currency:
+			exchange_rate = get_exchange_rate(
+				party_account_currency, company_currency, ref_doc.posting_date
+			)
+		else:
+			exchange_rate = 1
+			outstanding_amount = get_outstanding_on_journal_entry(reference_name)
 
-    elif reference_doctype != "Journal Entry":
-        if not total_amount:
-            if party_account_currency == company_currency:
-                # for handling cases that don't have multi-currency (base field)
-                total_amount = (
-                    ref_doc.get("base_rounded_total")
-                    or ref_doc.get("rounded_total")
-                    or ref_doc.get("base_grand_total")
-                    or ref_doc.get("grand_total")
-                )
-                exchange_rate = 1
-            else:
-                total_amount = ref_doc.get("rounded_total") or ref_doc.get("grand_total")
-        if not exchange_rate:
+	elif reference_doctype != "Journal Entry":
+		if not total_amount:
+			if party_account_currency == company_currency:
+				# for handling cases that don't have multi-currency (base field)
+				total_amount = (
+					ref_doc.get("base_rounded_total")
+					or ref_doc.get("rounded_total")
+					or ref_doc.get("base_grand_total")
+					or ref_doc.get("grand_total")
+				)
+				exchange_rate = 1
+			else:
+				total_amount = ref_doc.get("rounded_total") or ref_doc.get("grand_total")
+		if not exchange_rate:
 			# Get the exchange rate from the original ref doc
 			# or get it based on the posting date of the ref doc.
-            exchange_rate = ref_doc.get("conversion_rate") or get_exchange_rate(
-                party_account_currency, company_currency, ref_doc.posting_date
-            )
+			exchange_rate = ref_doc.get("conversion_rate") or get_exchange_rate(
+				party_account_currency, company_currency, ref_doc.posting_date
+			)
 
-        if reference_doctype in ("Sales Invoice", "Purchase Invoice"):
-            outstanding_amount = ref_doc.get("outstanding_amount")
-            account = (
-                ref_doc.get("debit_to") if reference_doctype == "Sales Invoice" else ref_doc.get("credit_to")
-            )
-        else:
-            outstanding_amount = flt(total_amount) - flt(ref_doc.get("advance_paid"))
+		if reference_doctype in ("Sales Invoice", "Purchase Invoice"):
+			outstanding_amount = ref_doc.get("outstanding_amount")
+			account = (
+				ref_doc.get("debit_to") if reference_doctype == "Sales Invoice" else ref_doc.get("credit_to")
+			)
+		else:
+			outstanding_amount = flt(total_amount) - flt(ref_doc.get("advance_paid"))
 
-    else:
-        # Get the exchange rate based on the posting date of the ref doc.
-        exchange_rate = get_exchange_rate(party_account_currency, company_currency, ref_doc.posting_date)
+	else:
+		# Get the exchange rate based on the posting date of the ref doc.
+		exchange_rate = get_exchange_rate(party_account_currency, company_currency, ref_doc.posting_date)
 
-    res = frappe._dict(
-        {
-            "due_date": ref_doc.get("due_date"),
-            "total_amount": flt(total_amount),
-            "outstanding_amount": flt(outstanding_amount),
-            "exchange_rate": flt(exchange_rate),
-            "bill_no": ref_doc.get("bill_no"),
-        }
-    )
-    if account:
-        res.update({"account": account})
-    return res
+	res = frappe._dict(
+		{
+			"due_date": ref_doc.get("due_date"),
+			"total_amount": flt(total_amount),
+			"outstanding_amount": flt(outstanding_amount),
+			"exchange_rate": flt(exchange_rate),
+			"bill_no": ref_doc.get("bill_no"),
+		}
+	)
+	if account:
+		res.update({"account": account})
+	return res
 
 
 @frappe.whitelist()

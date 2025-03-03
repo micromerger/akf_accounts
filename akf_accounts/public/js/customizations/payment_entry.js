@@ -153,16 +153,16 @@ frappe.ui.form.on('Payment Entry', {
 			});
 
 		}
-		if(frm.doc.docstatus===0){
+		if(frm.doc.docstatus<2){
 			frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function() {
-				if (typeof make_dimensions_modal === "function") {
+				if (typeof make_dimensions_modal === "function" && frm.doc.docstatus==0) {
 					make_dimensions_modal(frm);
-				} else {
+					donor_balance_set_queries(frm);
+				} else if(frm.doc.docstatus==0){
 					frappe.msgprint("Donation modal is not loaded.");
 				}
-				if ((typeof accounting_ledger === "function") || (typeof donor_balance_set_queries === "function")) {
+				if (((typeof accounting_ledger === "function") || (typeof donor_balance_set_queries === "function")) && frm.doc.docstatus==1) {
 					accounting_ledger(frm);
-					donor_balance_set_queries(frm);
 				} 
 				
 			});

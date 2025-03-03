@@ -1,6 +1,6 @@
 import frappe
 from frappe.utils import get_link_to_form
-def confirmation(doc, method=None): # By Mubarrim
+def confirmation(doc, method=None): # By Nabeel Saleem
 	child_table= []
 	if(doc.doctype in ["Donation", "Material Request", "Purchase Receipt", "Purchase Invoice", "Payment Entry"]):
 		if(hasattr(doc, "payment_detail")): child_table = doc.payment_detail
