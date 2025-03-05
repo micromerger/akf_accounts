@@ -153,20 +153,7 @@ frappe.ui.form.on('Payment Entry', {
 			});
 
 		}
-		if(frm.doc.docstatus<2 && !frm.doc.__islocal && frm.doc.custom_advance_payment_by_accounting_dimension){
-			frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function() {
-				if (typeof make_dimensions_modal === "function" && frm.doc.docstatus==0) {
-					make_dimensions_modal(frm);
-					donor_balance_set_queries(frm);
-				} else if(frm.doc.docstatus==0){
-					frappe.msgprint("Donation modal is not loaded.");
-				}
-				if (((typeof accounting_ledger === "function") || (typeof donor_balance_set_queries === "function")) && frm.doc.docstatus==1) {
-					accounting_ledger(frm);
-				} 
-				
-			});
-		}
+		frm.trigger("open_dimension_dialog");
 	},
 	custom_cheque_leaf: function (frm) {
 		frm.set_value("payment_type", "Pay");
@@ -197,6 +184,25 @@ frappe.ui.form.on('Payment Entry', {
 	custom_retention_amount: function (frm) {
 		frm.call("calculate_retention_amount");
 	},
+	custom_advance_payment_by_accounting_dimension: function(frm){
+		frm.trigger("open_dimension_dialog");
+	},
+	open_dimension_dialog: function(frm){
+		if(frm.doc.docstatus<2 && !frm.doc.__islocal && frm.doc.custom_advance_payment_by_accounting_dimension){
+			frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function() {
+				if (typeof make_dimensions_modal === "function" && frm.doc.docstatus==0) {
+					make_dimensions_modal(frm);
+					donor_balance_set_queries(frm);
+				} else if(frm.doc.docstatus==0){
+					frappe.msgprint("Donation modal is not loaded.");
+				}
+				if (((typeof accounting_ledger === "function") || (typeof donor_balance_set_queries === "function")) && frm.doc.docstatus==1) {
+					accounting_ledger(frm);
+				} 
+				
+			});
+		}
+	}
 });
 
 frappe.ui.form.on("Payment Entry Reference", {
