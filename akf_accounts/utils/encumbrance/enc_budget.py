@@ -1,6 +1,6 @@
 import frappe
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import get_link_to_form, getdate
+from frappe.utils import get_link_to_form, getdate, fmt_money
 from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 from akf_accounts.utils.accounts_defaults import get_company_defaults
 
@@ -15,7 +15,7 @@ def validate_donor_balance(self):
 	if(donorBalnce<=0.0):
 		frappe.throw("Balance is required to proceed further.", title='Donor Balance')
 	if(accountsBalance>donorBalnce):
-		frappe.throw("Budget amount exceeding the available donor balance.", title='Budget Accounts')
+		frappe.throw(f"Budget amount <b>Rs.{fmt_money(accountsBalance)}</b> exceeding the available balance <b>Rs.{fmt_money(donorBalnce)}</b>.", title='Budget Accounts')
 
 # GL ENTRIES ################################
 def make_project_encumbrance_gl_entries(self):

@@ -8,10 +8,10 @@ function make_dimensions_modal(frm){
 
 // events.get_donations
 function get_donations(frm){
-    // if(frm.doc.cost_center==undefined || frm.doc.cost_center==""){
-    //     frappe.throw("Please select cost center to proceed.");
-    //     return;
-    // }
+    if(["", undefined].includes(frm.doc.cost_center)){
+        frappe.throw("Please select cost center to proceed.");
+        return;
+    }
     
     const d = new frappe.ui.Dialog({
         title: __("Accounting Dimensions"),
@@ -82,6 +82,7 @@ function get_donations(frm){
                 options: "Project",
                 default: ("project" in frm.doc)? frm.doc.project: "",
                 reqd: 1,
+                read_only: ["", undefined].includes(frm.doc.project)?0:1,
                 get_query(){
                     let service_area = d.fields_dict.service_area.value;
                     return{
@@ -97,7 +98,7 @@ function get_donations(frm){
                 fieldname: "col_break",
                 fieldtype: "Column Break",
             },
-            /*{
+            {
                 label: __("Cost Center"),
                 fieldname: "cost_center",
                 fieldtype: "Link",
@@ -109,19 +110,19 @@ function get_donations(frm){
                 label: __(""),
                 fieldname: "col_break",
                 fieldtype: "Column Break",
-            },*/
+            },            
             {
                 label: __("Get Balance"),
                 fieldname: "get_balance",
                 fieldtype: "Button",
-                options: "",
+                options: ``,
                 click(){
                     const filters = {
                         "service_area": d.fields_dict.service_area.value,
                         "subservice_area": d.fields_dict.subservice_area.value,
                         "product": d.fields_dict.product.value,
                         "project": d.fields_dict.project.value,
-                        // "cost_center": d.fields_dict.project.cost_center,
+                        "cost_center": d.fields_dict.project.cost_center,
                         "company": frm.doc.company,
                         "doctype": frm.doc.doctype,
                         "amount": get_consuming_amount(frm.doc)

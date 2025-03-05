@@ -50,8 +50,8 @@ frappe.ui.form.on('Budget', {
 	set_null_value: function(frm) {
 		if(frm.doc.budget_against == 'Cost Center') {
 			frm.set_value('project', null)
-		} else {
-			console.log(frm.doc.encumbrance);
+		} else if(!frm.doc.encumbrance) {
+			// console.log(frm.doc.encumbrance);
 			frm.set_value('cost_center', null)
 		}
 	},

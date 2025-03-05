@@ -153,7 +153,7 @@ frappe.ui.form.on('Payment Entry', {
 			});
 
 		}
-		if(frm.doc.docstatus<2){
+		if(frm.doc.docstatus<2 && !frm.doc.__islocal && frm.doc.custom_advance_payment_by_accounting_dimension){
 			frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function() {
 				if (typeof make_dimensions_modal === "function" && frm.doc.docstatus==0) {
 					make_dimensions_modal(frm);

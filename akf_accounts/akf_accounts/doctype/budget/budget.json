@@ -55,12 +55,13 @@
    "reqd": 1
   },
   {
-   "depends_on": "eval:doc.budget_against == 'Cost Center';",
+   "depends_on": "eval:doc.budget_against == 'Cost Center' || doc.encumbrance;",
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "in_global_search": 1,
    "in_standard_filter": 1,
    "label": "Cost Center",
+   "mandatory_depends_on": "eval: doc.encumbrance",
    "options": "Cost Center"
   },
   {
@@ -216,7 +217,8 @@
    "fieldname": "program_details",
    "fieldtype": "Table",
    "mandatory_depends_on": "encumbrance",
-   "options": "Program Details"
+   "options": "Program Details",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -229,7 +231,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-28 16:45:38.232944",
+ "modified": "2025-03-05 11:38:17.103132",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Budget",
