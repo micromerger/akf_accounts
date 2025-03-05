@@ -87,6 +87,7 @@ def make_asset_purchase_gl_entries(self):
 		args = get_gl_entry_dict(self)
 		for row in self.program_details:
 			fargs = frappe._dict({
+				"party_type": "Supplier",
 				"party": self.supplier,
 				"company": self.company,			
 				"cost_center": row.pd_cost_center,
@@ -164,6 +165,7 @@ def make_inventory_gl_entries(self):
 		# looping
 		for row in self.program_details:
 			fargs = frappe._dict({
+				"party_type": "Supplier",
 				"party": self.supplier,
 				"company": self.company,	
 				"cost_center": row.pd_cost_center,
