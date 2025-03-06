@@ -161,7 +161,6 @@ doc_events = {
 
 # Scheduled Tasks
 # ---------------
-
 scheduler_events = {
 
       "cron": {
