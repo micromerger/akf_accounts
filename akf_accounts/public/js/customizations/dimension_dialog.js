@@ -122,7 +122,7 @@ function get_donations(frm){
                         "subservice_area": d.fields_dict.subservice_area.value,
                         "product": d.fields_dict.product.value,
                         "project": d.fields_dict.project.value,
-                        "cost_center": d.fields_dict.project.cost_center,
+                        "cost_center": d.fields_dict.cost_center.value,
                         "company": frm.doc.company,
                         "doctype": frm.doc.doctype,
                         "amount": get_consuming_amount(frm.doc)

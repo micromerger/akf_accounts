@@ -15,6 +15,7 @@ def validate_donor_balance(self):
 		frappe.throw(f"Item amount: <b>Rs.{fmt_money(item_amount)}</b> exceeding the available balance: <b>Rs.{fmt_money(donor_balance)}</b>.", title='Donor Balance')
 
 def make_encumbrance_material_request_gl_entries(self):
+	validate_donor_balance(self)
 	args = frappe._dict({
 			'doctype': 'GL Entry',
 			'posting_date': self.transaction_date,
