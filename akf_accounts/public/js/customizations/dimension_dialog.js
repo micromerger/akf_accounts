@@ -321,7 +321,7 @@ function get_consuming_amount(doc){
         array.forEach(row=>{
             amount += row.budget_amount;
         });
-        return amount;
+        return (amount==null)? 0:amount;
     }
     else if("items" in doc){
         let amount = 0.0;
@@ -329,9 +329,9 @@ function get_consuming_amount(doc){
         array.forEach(row=>{
             amount += row.amount;
         });
-        return amount;
+        return (amount==null)? 0:amount;
     }else if("paid_amount" in doc){
-        return doc.paid_amount;
+        return (doc.paid_amount==null)? 0:amount;
     }
     return 0.0;
 }
