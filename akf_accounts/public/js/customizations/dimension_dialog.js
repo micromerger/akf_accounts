@@ -331,7 +331,7 @@ function get_consuming_amount(doc){
         });
         return (amount==null)? 0:amount;
     }else if("paid_amount" in doc){
-        return (doc.paid_amount==null)? 0:amount;
+        return (doc.paid_amount==null)? 0:doc.paid_amount;
     }
     return 0.0;
 }
