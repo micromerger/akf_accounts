@@ -28,6 +28,7 @@ def get_company_defaults(company):
 		"default_fund": doc.custom_default_fund,
 		"default_designated_asset_fund_account": doc.custom_default_designated_asset_fund_account,
 		"default_inventory_fund_account": doc.custom_default_inventory_fund_account,
+		"default_inventory_asset_account": doc.custom_default_inventory_asset_account,
 		"encumbrance_project_account": doc.custom_encumbrance_project_account,
 		"encumbrance_material_request_account": doc.custom_encumbrance_material_request_account,
 	})

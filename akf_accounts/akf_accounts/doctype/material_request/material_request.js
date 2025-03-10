@@ -388,7 +388,7 @@ frappe.ui.form.on('Material Request', {
 
 	make_purchase_receipt: function (frm) {
 		frappe.model.open_mapped_doc({
-			method: "akf_stock.akf_stock.doctype.material_request.material_request.make_purchase_receipt",
+			method: "akf_accounts.akf_accounts.doctype.material_request.material_request.make_purchase_receipt",
 			frm: frm,
 			args: { default_supplier: null },
 			run_link_triggers: true

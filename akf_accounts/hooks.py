@@ -32,8 +32,8 @@ doctype_js = {
 	"Payment Entry" : "public/js/customizations/payment_entry.js",
 	# "Purchase Receipt" : "public/js/customizations/purchase_receipt.js",
     "Purchase Invoice" : "public/js/customizations/purchase_invoice.js",
-    "Asset" : "public/js/customizations/asset.js",
-    "Asset Movement": "public/js/customizations/asset_movement.js",
+    # "Asset" : "public/js/customizations/asset.js",
+    # "Asset Movement": "public/js/customizations/asset_movement.js",
 	
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -127,7 +127,7 @@ override_doctype_class = {
 	# "Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
     # "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
     # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
-    "Asset": "akf_accounts.customizations.extends.XAsset.AssetExtendedClass",
+    # "Asset": "akf_accounts.customizations.extends.XAsset.AssetExtendedClass",
     # "Asset Movement": "akf_accounts.customizations.extends.XAssetMovement.AssetMovementExtendedClass"
    
 }

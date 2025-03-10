@@ -155,18 +155,25 @@ frappe.ui.form.on('Payment Entry', {
 		}
 		frm.trigger("open_dimension_dialog");
 	},
-	custom_cheque_leaf: function (frm) {
-		frm.set_value("payment_type", "Pay");
-		frm.set_value("reference_no", frm.doc.custom_cheque_leaf);
-		frm.set_df_property("payment_type", "read_only", 1);
-		frm.set_df_property("reference_no", "read_only", 1);
+	party_type: function(frm){
+		if(frm.doc.party_type == "Donor" && frm.doc.payment_type=="Pay"){
+			frm.set_value("payment_type", "Pay");
+			frm.set_value("reference_no", frm.doc.custom_cheque_leaf);
 
-		if (frm.doc.custom_cheque_leaf == "") {
-			frm.set_df_property("payment_type", "read_only", 0);
-			frm.set_df_property("reference_no", "read_only", 0);
+			frm.set_df_property("reference_no", "hidden", 1);
+			frm.set_df_property("payment_type", "read_only", 1);
+		}else{
 			frm.set_value("reference_no", "");
+			frm.set_df_property("payment_type", "read_only", 0);
+			frm.set_df_property("reference_no", "hidden", 0);
 		}
-
+	},
+	custom_cheque_leaf: function (frm) {
+		if ([undefined, ""].includes(frm.doc.custom_cheque_leaf)) {
+			frm.set_value("reference_no", "");
+		}else{
+			frm.set_value("reference_no", frm.doc.custom_cheque_leaf);
+		}
 	},
 	paid_amount: function (frm) {
 		if (frm.doc.party_type == "Donor") {
