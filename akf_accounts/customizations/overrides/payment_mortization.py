@@ -2,12 +2,18 @@ import frappe
 from frappe.utils import get_link_to_form, fmt_money
 from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 from akf_accounts.utils.accounts_defaults import get_company_defaults
+from erpnext.accounts.utils import get_company_default
 """ 
 1- make debit entry of equity/fund account. (e.g; Capital Stock - AKFP)
 2- make credit entry of Inventory account. (e.g; Inventory fund account (IFA) - AKFP)
 """
 # VALIDATIONS
 def validate_donor_balance(self):
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
+		self.set("custom_advance_payment_by_accounting_dimension", 0)
+		self.set("custom_transaction_type", "")
+		self.set("custom_program_details", [])
+		return
 	if (hasattr(self, "custom_advance_payment_by_accounting_dimension")):
 		if(self.custom_advance_payment_by_accounting_dimension):
 			paid_amount = self.paid_amount
@@ -17,6 +23,8 @@ def validate_donor_balance(self):
 
 # GL ENTRY
 def make_mortization_gl_entries(self):
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
+		return
 	if (hasattr(self, "custom_advance_payment_by_accounting_dimension")):
 		if (hasattr(self, "custom_transaction_type")):
 			if (self.custom_transaction_type == "Asset Purchase"): make_asset_purchase_gl_entries(self)
@@ -175,6 +183,8 @@ def success_msg():
 
 # It will use on on_cancel() function.
 def delete_all_gl_entries(self):
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
+		return
 	if (hasattr(self, "custom_advance_payment_by_accounting_dimension")):
 		if(frappe.db.exists("GL Entry", {"voucher_no": self.name})):
 			frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)

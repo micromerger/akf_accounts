@@ -1626,14 +1626,15 @@
    "fieldname": "program_details",
    "fieldtype": "Table",
    "label": "Donor Balance",
-   "options": "Program Details"
+   "options": "Program Details",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-21 20:29:25.725818",
+ "modified": "2025-03-12 15:24:22.889859",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Purchase Invoice",

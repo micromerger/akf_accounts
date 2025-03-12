@@ -2,6 +2,7 @@ import frappe
 from frappe.utils import get_link_to_form
 from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 from akf_accounts.utils.accounts_defaults import get_company_defaults
+from erpnext.accounts.utils import get_company_default
 """ 
 1- make debit entry of equity/fund account. (e.g; Capital Stock - AKFP)
 2- make credit entry of Inventory account. (e.g; Inventory fund account (IFA) - AKFP)
@@ -9,6 +10,9 @@ from akf_accounts.utils.accounts_defaults import get_company_defaults
 # VALIDATIONS
 def validate_donor_balance(self):
 	if(self.is_new()): return
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
+		self.set("program_details", [])
+		return
 	itemBalance = sum(d.amount for d in self.items)
 	donorBalance = sum(d.actual_balance for d in self.program_details)
 	if (itemBalance > donorBalance):
@@ -16,6 +20,7 @@ def validate_donor_balance(self):
 
 # STOCK LEDGER ENTRY
 def update_stock_ledger_entry(self):
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): return
 	for row in self.items:
 		if(hasattr(row, "custom_new") and hasattr(row, "custom_used")):
 			if(frappe.db.exists("Stock Ledger Entry", 
@@ -32,6 +37,7 @@ def update_stock_ledger_entry(self):
 
 # GL ENTRY
 def make_mortization_gl_entries(self):
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): return
 	if (hasattr(self, "custom_type_of_transaction")):
 		if (self.custom_type_of_transaction == "Asset Purchase"): make_asset_purchase_gl_entries(self)
 		elif (self.custom_type_of_transaction == "Inventory Purchase Restricted"): make_inventory_gl_entries(self)
@@ -206,6 +212,7 @@ def success_msg():
 
 # It will use on on_cancel() function.
 def delete_all_gl_entries(self):
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): return
 	if(frappe.db.exists("GL Entry", {"voucher_no": self.name})):
 		frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
   

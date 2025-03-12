@@ -1,11 +1,14 @@
 import frappe
 from frappe.utils import get_link_to_form, fmt_money
 from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
-# from akf_accounts.utils.accounts_defaults import get_company_defaults
+from erpnext.accounts.utils import get_company_default
 
 def validate_donor_balance(self):
 	if(self.is_new()): return
-	# if(not self.program_details): return
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
+		self.set("program_details", [])
+		return
+
 	donor_balance = sum([d.actual_balance for d in self.program_details])
 	item_amount = sum([d.amount for d in self.items])
 
@@ -15,6 +18,7 @@ def validate_donor_balance(self):
 		frappe.throw(f"Item amount: <b>Rs.{fmt_money(item_amount)}</b> exceeding the available balance: <b>Rs.{fmt_money(donor_balance)}</b>.", title='Donor Balance')
 
 def make_encumbrance_material_request_gl_entries(self):
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): return
 	validate_donor_balance(self)
 	args = frappe._dict({
 			'doctype': 'GL Entry',
@@ -85,4 +89,3 @@ def make_credit_gl_entry(company, args, row, amount):
 def cancel_encumbrance_material_request_gl_entries(self):
 	if(frappe.db.exists('GL Entry', {'against_voucher': self.name})):
 		frappe.db.sql(f""" Delete from `tabGL Entry` where against_voucher = '{self.name}' """)
-	

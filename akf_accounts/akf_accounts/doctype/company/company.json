@@ -90,6 +90,7 @@
   "depreciation_cost_center",
   "capital_work_in_progress_account",
   "asset_received_but_not_billed",
+  "akfp_accounts_tab",
   "buying_and_selling_tab",
   "sales_settings",
   "default_buying_terms",
@@ -801,6 +802,11 @@
    "fieldtype": "Table MultiSelect",
    "label": "Legal & Tax Advisor Contact Details",
    "options": "Company Contacts"
+  },
+  {
+   "fieldname": "akfp_accounts_tab",
+   "fieldtype": "Tab Break",
+   "label": "AKFP Accounts"
   }
  ],
  "icon": "fa fa-building",
@@ -808,7 +814,7 @@
  "image_field": "company_logo",
  "is_tree": 1,
  "links": [],
- "modified": "2025-03-03 11:37:33.270079",
+ "modified": "2025-03-11 12:47:02.825475",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Company",

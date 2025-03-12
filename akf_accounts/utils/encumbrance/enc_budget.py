@@ -3,12 +3,15 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.utils import get_link_to_form, getdate, fmt_money
 from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 from akf_accounts.utils.accounts_defaults import get_company_defaults
+from erpnext.accounts.utils import get_company_default
 
 # VALIDATION ################################
 def validate_donor_balance(self):
 	if(self.is_new()): return
 	if(not self.encumbrance): return
- 
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
+		self.set("program_details", [])
+		return
 	accountsBalance = sum([d.budget_amount for d in self.accounts]) or 0.0
 	donorBalnce = sum([d.actual_balance for d in self.program_details]) or 0.0
 
@@ -20,6 +23,7 @@ def validate_donor_balance(self):
 # GL ENTRIES ################################
 def make_project_encumbrance_gl_entries(self):
 	if(self.budget_against!="Project"): return
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): return
 	# consumed amount
 	consumed_amount = sum([d.budget_amount for d in self.accounts]) or 0.0
 	# looping for gl entry
@@ -106,6 +110,7 @@ def make_credit_temporary_encumbrance_project(self, row, amount):
 	doc.submit()
 	
 def cancel_project_encumbrance_gl_entries(self):
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): return
 	if(frappe.db.exists('GL Entry', {'against_voucher': self.name})):
 		frappe.db.sql(f""" Delete from `tabGL Entry` where against_voucher = '{self.name}' """)
 

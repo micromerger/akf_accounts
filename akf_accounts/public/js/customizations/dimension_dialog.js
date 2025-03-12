@@ -1,6 +1,8 @@
 
 function make_dimensions_modal(frm){
-    if (frm.doc.docstatus == 0) {
+    let enable_accounting_dimensions = frappe.defaults.get_default("custom_enable_accounting_dimensions_dialog");
+    enable_accounting_dimensions = enable_accounting_dimensions==undefined?false: true;
+    if (enable_accounting_dimensions && frm.doc.docstatus == 0) {
         frm.add_custom_button(__('Donation'), () => get_donations(frm),
             __("Get Balances"));
     }
