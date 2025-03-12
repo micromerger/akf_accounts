@@ -1,11 +1,13 @@
 
 function make_dimensions_modal(frm){
-    let enable_accounting_dimensions = frappe.defaults.get_default("custom_enable_accounting_dimensions_dialog");
-    enable_accounting_dimensions = enable_accounting_dimensions==undefined?false: true;
-    if (enable_accounting_dimensions && frm.doc.docstatus == 0) {
-        frm.add_custom_button(__('Donation'), () => get_donations(frm),
-            __("Get Balances"));
-    }
+    frappe.db.get_value('Company', frm.doc.company, 'custom_enable_accounting_dimensions_dialog')
+    .then(r => {
+        const enable_accounting_dimensions = r.message.custom_enable_accounting_dimensions_dialog; // Open
+        if (enable_accounting_dimensions && frm.doc.docstatus == 0) {
+            frm.add_custom_button(__('Donation'), () => get_donations(frm),
+                __("Get Balances"));
+        }
+    });
 };
 
 // events.get_donations
@@ -300,6 +302,7 @@ function get_validate_filters(filters){
         "fieldname": fieldname
     }
 }
+
 function get_financial_stats(filters){
     let data = [];
     frappe.call({
@@ -337,7 +340,6 @@ function get_consuming_amount(doc){
     }
     return 0.0;
 }
-
 
 function accounting_ledger(frm) {
     if(frm.doc.docstatus == 1) {
