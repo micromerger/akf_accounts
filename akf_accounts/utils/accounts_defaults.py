@@ -35,7 +35,6 @@ def get_company_defaults(company):
 	if (not doc.custom_default_income):
 		frappe.throw(f"Please set account of {form_link}", title="Default Income Account")
 
-
 	return frappe._dict({
 		"default_fund": doc.custom_default_fund,
 		"default_designated_asset_fund_account": doc.custom_default_designated_asset_fund_account,
@@ -50,5 +49,5 @@ def get_company_defaults(company):
 		"default_inventory_fund_account": doc.custom_default_inventory_fund_account,
 		"default_inventory_account": doc.default_inventory_account,
 		# Income (In Transit)
-		"default_income": doc.custom_default_income
+		"default_income": doc.custom_default_income,
 	})

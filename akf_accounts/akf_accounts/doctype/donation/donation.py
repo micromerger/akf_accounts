@@ -27,7 +27,7 @@ class Donation(Document):
 				min_percentage, max_percentage = get_min_max_percentage(row.service_area, row.account)
 				if min_percentage is not None and max_percentage is not None:
 					if row.percentage < min_percentage or row.percentage > max_percentage:
-						frappe.throw(f"Percentage for account '{row.account}' must be between {min_percentage}% and {max_percentage}%.")
+						frappe.throw(f"Row#{row.idx}; Percentage for account '{row.account}' must be between {min_percentage}% and {max_percentage}%.")
 
 	def validate_pledge_contribution_type(self):
 		if(self.contribution_type!="Pledge"):

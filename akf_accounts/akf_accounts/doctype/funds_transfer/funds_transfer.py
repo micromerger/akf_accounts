@@ -951,8 +951,6 @@ class FundsTransfer(Document):
 				})
 		return result
 
-
-
 @frappe.whitelist()
 def donor_list_data_funds_transfer(doc):
     try:
@@ -1267,25 +1265,6 @@ def donor_list_data_funds_transfer_previous(doc):
         "total_balance": total_balance,
         "donor_list": donor_list  
     }
-
-
-# @frappe.whitelist()
-# def get_service_areas(doctype, txt, searchfield, start, page_len, filters):
-#     filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
-#     company = filters.get('company')
-#     service_area = filters.get('service_area')
-
-#     query = """
-#         SELECT name
-#         FROM `tabProgram` as p
-#         WHERE EXISTS (
-#             SELECT 1
-#             FROM `tabAccounts Default` as ad
-#             WHERE ad.parent = p.name AND company=%s
-#         ) 
-#     """
-
-#     return frappe.db.sql(query, (company))
 
 @frappe.whitelist()
 def get_service_areas(doc):

@@ -56,7 +56,7 @@ def get_donor_balance(filters=None):
 
 def get_conditions(filters, accounts):
 	conditions = " and company = %(company)s " if(filters.get('company')) else ""
-	conditions = " and cost_center = %(cost_center)s " if(filters.get('cost_center')) else ""
+	conditions += " and cost_center = %(cost_center)s " if(filters.get('cost_center')) else ""
 	conditions += " and service_area = %(service_area)s " if(filters.get('service_area')) else ""
 	conditions += " and subservice_area = %(subservice_area)s " if(filters.get('subservice_area')) else ""
 	conditions += " and product = %(product)s " if(filters.get('product')) else ""

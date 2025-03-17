@@ -12,8 +12,11 @@ function make_dimensions_modal(frm){
 
 // events.get_donations
 function get_donations(frm){
+    if(!["", undefined].includes(frm.doc.from_cost_center)){
+        frm.doc.cost_center = frm.doc.from_cost_center;
+    }
     if(["", undefined].includes(frm.doc.cost_center)){
-        frappe.throw("Please select cost center to proceed.");
+        frappe.throw("Please select cost-center to proceed.");
         return;
     }
     
@@ -247,28 +250,47 @@ function get_donations(frm){
             //     d.fields_dict.html_message.refresh();
             //     return
             // }
-            console.log(array);
+            
             array.forEach(row => {
                 if(row.__checked){
-                    details.push({
-                        "pd_cost_center": row.cost_center,
-                        "pd_account": row.account,
-                        "pd_service_area": values.service_area,
-                        "pd_subservice_area": values.subservice_area,
-                        "pd_product": values.product,
-                        "pd_project": values.project,
-                        "pd_donor": row.donor,
-                        "encumbrance_project_account": row.encumbrance_project_account,
-                        "encumbrance_material_request_account": row.encumbrance_material_request_account,
-                        "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
-                        "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
-                        "actual_balance": row.balance,
-                    });
+                    if("funds_transfer_from" in frm.doc){
+                        details.push({
+                            "ff_company": frm.doc.company,
+                            "ff_cost_center": row.cost_center,
+                            "ff_account": row.account,
+                            "ff_service_area": values.service_area,
+                            "ff_subservice_area": values.subservice_area,
+                            "ff_product": values.product,
+                            "project": values.project,
+                            "ff_donor": row.donor,
+                            // "encumbrance_project_account": row.encumbrance_project_account,
+                            // "encumbrance_material_request_account": row.encumbrance_material_request_account,
+                            // "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
+                            // "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
+                            "ff_balance_amount": row.balance,
+                        });
+                    }else{
+                        details.push({
+                            "pd_cost_center": row.cost_center,
+                            "pd_account": row.account,
+                            "pd_service_area": values.service_area,
+                            "pd_subservice_area": values.subservice_area,
+                            "pd_product": values.product,
+                            "pd_project": values.project,
+                            "pd_donor": row.donor,
+                            "encumbrance_project_account": row.encumbrance_project_account,
+                            "encumbrance_material_request_account": row.encumbrance_material_request_account,
+                            "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
+                            "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
+                            "actual_balance": row.balance,
+                        });
+                    }
                 }
             });
             let description = '';
             if(details.length>0){
-                const childkey =  ("custom_program_details" in frm.doc)? "custom_program_details": "program_details";
+                let childkey =  ("custom_program_details" in frm.doc)? "custom_program_details": "program_details";
+                if("funds_transfer_from" in frm.doc){ childkey = "funds_transfer_from"; }
                 frm.set_value(childkey, details);
                 if("custom_advance_payment_by_accounting_dimension" in frm.doc){
                     frm.set_value("custom_advance_payment_by_accounting_dimension", 1);

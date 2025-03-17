@@ -25,18 +25,18 @@ frappe.ui.form.on("Funds Transfer", {
         // console.log(!frm.is_new());
         // console.log(!frm.doc.__islocal);
 
-        if (!frm.is_new() && !frm.doc.__islocal) {
-            get_html(frm);
-        }
+        // if (!frm.is_new() && !frm.doc.__islocal) {
+        //     get_html(frm);
+        // }
 
         if (frm.doc.docstatus === 1) {  
             set_custom_btns(frm);
         }
-        
+        frm.trigger("open_dimension_dialog"); // Nabeel Saleem, 12-03-2025
     },
     on_submit: function(frm){
         // if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase"].includes(frm.doc.custom_type_of_transaction)) {
-            get_html(frm);
+            // get_html(frm);
         // }
         
         },
@@ -74,6 +74,23 @@ frappe.ui.form.on("Funds Transfer", {
         update_ft_cost_center_in_children(frm);
         frm.call("set_deduction_breakeven");
     },
+    open_dimension_dialog: function (frm) { // Nabeel Saleem, 12-03-2025
+		if (!frm.doc.__islocal) {
+			frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function () {
+				if (typeof make_dimensions_modal === "function" && (typeof donor_balance_set_queries === "function")) {
+                    make_dimensions_modal(frm);
+                    // donor_balance_set_queries(frm);
+				} else {
+					frappe.msgprint("Donation modal is not loaded.");
+				}
+				if ((typeof accounting_ledger === "function")) {
+					if (frm.doc.docstatus == 1) {
+						accounting_ledger(frm);
+					}
+				}
+			});
+		}
+	}
 });
 
 function handle_transaction_type_logic(frm) {
@@ -862,54 +879,4 @@ function format_currency(amount){
     return formattedAmount.replace('PKR', 'Rs.');
 }
 
-//Backup Perfect Function Muavia
-// frappe.ui.form.on("Funds Transfer To", {
-//     funds_transfer_to_add: function(frm, cdt, cdn) {
-//         const cost_center = frm.doc.custom_cost_center; 
-//         const row = frappe.get_doc(cdt, cdn);
-//         frappe.model.set_value(row.doctype, row.name, "ft_cost_center", cost_center); 
-//     }
-// });
-
-
-
-  // frappe.call({
-        //     method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_area",
-        //     args: {
-        //         doc: frm.doc,
-        //     },
-        //     callback: function(r) {
-        //         console.log("SERVICE AREA QUERYYY!!!");
-        //         console.log(r.message);
-        //     }
-        // });
-    
-// function set_query_service_area_transfer_from(frm){
-//     frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
-//         var row = locals[cdt][cdn];
-//         return {
-//             filters: {
-//                 company: ["!=", ""],
-//                 // company: row.ff_company,
-//             }
-//         };
-//     };
-// }
-
-
-// function set_query_service_area_transfer_from(frm){
-//     frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
-//         var row = locals[cdt][cdn];
-//         console.log("Queryyyyyyyyyyy");
-        
-//         console.log("Query: akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_area");
-//         console.log("Company filter:", row.ff_company);
-//         return {
-//             query: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_area",
-//             filters: {
-//                 company: row.ff_company
-//             }
-//         };
-//     };
-// }
 
