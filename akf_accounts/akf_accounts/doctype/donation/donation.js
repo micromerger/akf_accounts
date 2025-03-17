@@ -649,7 +649,7 @@ function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_
                             callback: function (r) {
                                 const data = r.message;
                                 // console.log(data);
-                                d.fields_dict.donation_amount.value = data.donation_amount;
+                                d.fields_dict.donation_amount.value = data.outstanding_amount;
                                 d.fields_dict.donation_amount.refresh();
                                 d.fields_dict.doubtful_amount.value = data.doubtful_debt_amount;
                                 d.fields_dict.doubtful_amount.refresh();
