@@ -1232,7 +1232,7 @@ def notify_overdue_tasks(project):	#Mubashir
 @frappe.whitelist()
 def get_donation_details(filters):
     filters = ast.literal_eval(filters)
-    return frappe.db.sql(""" select donation_amount, outstanding_amount doubtful_debt_amount, bad_debt_expense, provision_doubtful_debt
+    return frappe.db.sql(""" select donation_amount, outstanding_amount, doubtful_debt_amount, bad_debt_expense, provision_doubtful_debt
         from `tabPayment Detail` 
         where docstatus=1
         and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
