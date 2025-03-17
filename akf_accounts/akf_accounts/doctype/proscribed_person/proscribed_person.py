@@ -75,9 +75,9 @@ def get_donor(cnic):
 # Process to block the donor...
 def process_proscribed_person_detail(cnic, status="Blocked"):
 	donor_ids = get_donor(cnic)
-	for Id in donor_ids:
-		active_or_block_donor(Id, status=status)
+	for row in donor_ids:
+		active_or_block_donor(row.name, status=status)
 		set_donor_in_proscribed_person(cnic)
-		add_user_tags_gl_entry(Id, status=status)
-		add_user_tags_stock_ledger_entry(Id, status=status)
+		add_user_tags_gl_entry(row.name, status=status)
+		add_user_tags_stock_ledger_entry(row.name, status=status)
 	
