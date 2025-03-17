@@ -30,13 +30,14 @@ def active_or_block_donor(donor_id, status="Blocked"):
 	if(donor_id): frappe.db.set_value("Donor", donor_id, "status", status)
 # 2
 def set_donor_in_proscribed_person(cnic):
-	cnic = str(cnic).replace("-", "")
-	name = frappe.db.get_value("Proscribed Person", {"cnic": cnic}, "name")
+	# cnic = str(cnic).replace("-", "")
+	# name = frappe.db.get_value("Proscribed Person", {"cnic": cnic}, "name")
 	if(name):
-		donor_id = get_donor(cnic)
-		donor_name = frappe.db.get_value("Donor", donor_id, "donor_name")
-		frappe.db.set_value("Proscribed Person", name, "donor", donor_id)
-		frappe.db.set_value("Proscribed Person", name, "donor_name", donor_name)
+		pass
+		# donor_id = get_donor(cnic)
+		# donor_name = frappe.db.get_value("Donor", donor_id, "donor_name")
+		# frappe.db.set_value("Proscribed Person", name, "donor", donor_id)
+		# frappe.db.set_value("Proscribed Person", name, "donor_name", donor_name)
 # 3
 def add_user_tags_gl_entry(donor_id, status="Blocked"):
 	if(donor_id):
