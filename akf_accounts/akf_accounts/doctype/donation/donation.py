@@ -279,7 +279,8 @@ class Donation(Document):
 		# currency exchange calculation...
 		self.total_donation = total_donation
 		self.total_deduction = deduction_amount
-		self.outstanding_amount = (self.total_donation - deduction_amount)
+		# self.outstanding_amount = (self.total_donation - deduction_amount)
+		self.outstanding_amount = self.total_donation
 		self.net_amount = (self.total_donation - deduction_amount)
 		# base amount calculation...
 		self.base_total_donation  = self.apply_currecny_exchange(self.total_donation)

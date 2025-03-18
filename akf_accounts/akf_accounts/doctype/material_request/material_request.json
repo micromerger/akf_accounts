@@ -13,6 +13,7 @@
   "material_request_type",
   "customer",
   "budget",
+  "purpose",
   "encumbrance",
   "column_break_2",
   "transaction_date",
@@ -400,13 +401,18 @@
    "fieldtype": "Check",
    "label": "Encumbrance",
    "read_only": 1
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose"
   }
  ],
  "icon": "fa fa-ticket",
  "idx": 70,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-05 23:24:59.105606",
+ "modified": "2025-03-14 14:57:38.486631",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Material Request",

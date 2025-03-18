@@ -711,18 +711,59 @@ erpnext.asset.restore_asset = function(frm) {
 };
 
 erpnext.asset.transfer_asset = function() {
-	frappe.call({
-		method: "erpnext.assets.doctype.asset.asset.make_asset_movement",
-		freeze: true,
-		args:{
-			"assets": [{ name: cur_frm.doc.name }],
-			"purpose": "Transfer"
-		},
-		callback: function (r) {
-			if (r.message) {
-				var doc = frappe.model.sync(r.message)[0];
-				frappe.set_route("Form", doc.doctype, doc.name);
+	frappe.prompt(
+		[
+			{
+				label: __('Cost Center (Asset In Transit)'),
+				fieldname: 'in_transit_cost_center',
+				fieldtype: 'Link',
+				options: 'Cost Center',
+				reqd: 1,
+				get_query: () => {
+					return {
+						filters: {
+							'company': cur_frm.doc.company,
+							'is_group': 0,
+							'name': ['like', ('in', '%Transit%')]
+						}
+					}
+				}
+			},
+			{
+				label: __('Location (Asset In Transit)'),
+				fieldname: 'in_transit_location',
+				fieldtype: 'Link',
+				options: 'Location',
+				reqd: 1,
+				get_query: () => {
+					return {
+						filters: {
+							'is_container': 1,
+							'location_name': ['like', ('in', '%Transit%')]
+						}
+					}
+				}
 			}
-		}
-	});
+		],
+		(values) => {
+			frappe.call({
+				method: "akf_accounts.akf_accounts.doctype.asset.asset.make_asset_movement",
+				freeze: true,
+				args:{
+					"assets": [{ name: cur_frm.doc.name }],
+					"purpose": "Transfer",
+					"args": values
+				},
+				callback: function (r) {
+					if (r.message) {
+						var doc = frappe.model.sync(r.message)[0];
+						frappe.set_route("Form", doc.doctype, doc.name);
+					}
+				}
+			});
+		},
+		__('Asset In Transit Transfer'),
+		__("Create Asset Movement")
+	)
+	
 };

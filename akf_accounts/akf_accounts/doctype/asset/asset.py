@@ -1005,11 +1005,14 @@ def make_journal_entry(asset_name):
 
 
 @frappe.whitelist()
-def make_asset_movement(assets, purpose=None):
+def make_asset_movement(assets, purpose=None, args=None):
 	import json
-
+	git
 	if isinstance(assets, str):
 		assets = json.loads(assets)
+
+	if isinstance(args, str):
+		args = json.loads(args)
 
 	if len(assets) == 0:
 		frappe.throw(_("Atleast one asset has to be selected."))
@@ -1019,12 +1022,17 @@ def make_asset_movement(assets, purpose=None):
 	for asset in assets:
 		asset = frappe.get_doc("Asset", asset.get("name"))
 		asset_movement.company = asset.get("company")
+		asset_movement.purpose = purpose # Nabeel Saleem, 14-03-2025		
+		asset_movement.add_to_transit = 1 # Nabeel Saleem, 14-03-2025
 		asset_movement.append(
 			"assets",
 			{
 				"asset": asset.get("name"),
 				"source_location": asset.get("location"),
+				"in_transit_location": args.get("in_transit_location"),
+				"source_cost_center": asset.get("cost_center"),
 				"from_employee": asset.get("custodian"),
+				"in_transit_cost_center": args.get("in_transit_cost_center")
 			},
 		)
 
