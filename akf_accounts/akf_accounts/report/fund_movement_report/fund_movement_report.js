@@ -1,5 +1,4 @@
-// Copyright (c) 2024, Nabeel Saleem and contributors
-// For license information, please see license.txt
+// Mubashir Bashir 17-03-2025
 
 frappe.query_reports["Fund Movement Report"] = {
 	"filters": [
@@ -17,12 +16,6 @@ frappe.query_reports["Fund Movement Report"] = {
 			"fieldtype": "Link",
 			"options": "Cost Center"
 		},
-		// {
-		// 	"fieldname":"program",
-		// 	"label": __("Service Area"),
-		// 	"fieldtype": "Link",
-		// 	"options": "Program"
-		// },
 		{
 			"fieldname":"project",
 			"label": __("Project"),
@@ -34,58 +27,36 @@ frappe.query_reports["Fund Movement Report"] = {
 			"label": __("Fiscal Year"),
 			"fieldtype": "Link",
 			"options": "Fiscal Year",
-			"required": 1
-		},
-		// {
-		// 	"fieldname":"from_date",
-		// 	"label": __("From Date"),
-		// 	"fieldtype": "Date",
-		// 	"default": get_default_from_date(),
-		// 	"reqd": 1,
-		// },
-		// {
-		// 	"fieldname":"to_date",
-		// 	"label": __("To Date"),
-		// 	"fieldtype": "Date",
-		// 	"default": get_default_to_date(),
-		// 	"reqd": 1,
-		// }
-	]
+			"reqd": 1,
+			"default": ""
+		},		
+	],
+	"onload": function(report) {
+		setTimeout(() => {
+			get_current_fiscal_year();
+		}, 500);
+	}
 };
 
+function get_current_fiscal_year() {
+	let today = frappe.datetime.get_today();
 
-function get_default_from_date() {
-	const today = new Date();
-	const day = today.getDate();
-	const month = today.getMonth();
-	const year = today.getFullYear();
+	frappe.db.get_list("Fiscal Year", {
+		filters: [
+			["year_start_date", "<=", today],
+			["year_end_date", ">=", today]
+		],
+		fields: ["name"],
+		limit: 1
+	}).then((res) => {
+		if (res.length > 0) {
+			let fiscal_year = res[0].name;
+			console.log("Fiscal Year is", fiscal_year);
 
-	let from_date;
-
-	if (day > 20) {
-		from_date = new Date(year, month, 22).toISOString().split("T")[0];
-	} else {
-		from_date = new Date(year, month - 1, 22).toISOString().split("T")[0];
-	}
-
-	console.log("Calculated from_date:", from_date);
-	return from_date;
-}
-
-function get_default_to_date() {
-	const today = new Date();
-	const day = today.getDate();
-	const month = today.getMonth();
-	const year = today.getFullYear();
-
-	let to_date;
-
-	if (day > 20) {
-		to_date = new Date(year, month + 1, 21).toISOString().split("T")[0];
-	} else {
-		to_date = new Date(year, month, 21).toISOString().split("T")[0];
-	}
-
-	console.log("Calculated to_date:", to_date);
-	return to_date;
+			// Ensure the filter is available before setting it
+			setTimeout(() => {
+				frappe.query_report.set_filter_value("fiscal_year", fiscal_year);
+			}, 500);
+		}
+	});
 }
