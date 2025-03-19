@@ -123,10 +123,10 @@ def get_data(filters):
         FROM `tabGL Entry`
         WHERE {gl_where_clause}
         AND project != ''
-        GROUP BY cost_center, service_area, subservice_area, product, project
         """,
         gl_query_params,
         as_dict=True
+        # GROUP BY cost_center, service_area, subservice_area, product, project
     )
 
     accounts = {acc.name: acc.account_type for acc in frappe.get_all("Account", fields=["name", "account_type"])}
