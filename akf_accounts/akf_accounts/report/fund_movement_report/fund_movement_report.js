@@ -13,8 +13,30 @@ frappe.query_reports["Fund Movement Report"] = {
 		{
 			"fieldname":"cost_center",
 			"label": __("Cost Center"),
+			"fieldtype": "MultiSelectList",
+			get_data: function(txt) {
+				return frappe.db.get_link_options('Cost Center', txt, {
+					company: frappe.query_report.get_filter_value("company")
+				});
+			}
+		},
+		{
+			"fieldname":"service_area",
+			"label": __("Service Area"),
 			"fieldtype": "Link",
-			"options": "Cost Center"
+			"options": "Service Area"
+		},
+		{
+			"fieldname":"subservice_area",
+			"label": __("Subservice Area"),
+			"fieldtype": "Link",
+			"options": "Subservice Area"
+		},
+		{
+			"fieldname":"product",
+			"label": __("Product"),
+			"fieldtype": "Link",
+			"options": "Product"
 		},
 		{
 			"fieldname":"project",

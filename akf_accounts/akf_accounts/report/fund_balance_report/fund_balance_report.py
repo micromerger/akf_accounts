@@ -1,5 +1,4 @@
-# Copyright (c) 2024, Nabeel Saleem and contributors
-# For license information, please see license.txt
+# Mubashir Bashir 19-03-2025
 
 import frappe
 from frappe import _
@@ -15,6 +14,7 @@ def execute(filters=None):
 
 def get_columns():
     columns = [
+        _("Company") + ":Link/Company:140",
         _("Account") + ":Link/Account:140",
         _("Branch") + ":Link/Cost Center:140",
         _("Service Area") + ":Link/Program:140",
@@ -35,7 +35,8 @@ def get_conditions(filters):
     conditions = ""
 
     if filters.get("branch"):
-        conditions += " AND gle.cost_center = %(branch)s"
+        branches = ", ".join([f"'{b}'" for b in filters.get("branch")])
+        conditions += f" AND gle.cost_center IN ({branches})"
     if filters.get("service_area"):
         conditions += " AND gle.program = %(service_area)s"
     if filters.get("subservice_area"):
@@ -51,7 +52,7 @@ def get_query_result(filters):
     result = frappe.db.sql(
         """
         SELECT 
-			gle.account,gle.cost_center,gle.program,gle.subservice_area,proj.project_name, gle.project, (SUM(gle.debit)-SUM(gle.credit)) 
+			gle.company, gle.account,gle.cost_center,gle.program,gle.subservice_area,proj.project_name, gle.project, SUM(gle.credit)-SUM(gle.debit)
         FROM 
             `tabGL Entry` gle
         LEFT JOIN 
@@ -61,7 +62,7 @@ def get_query_result(filters):
         WHERE
             acc.root_type = 'Equity' {0}
         Group By
-            gle.account,gle.cost_center,gle.project""".format(conditions if conditions else ""
+            gle.account, gle.cost_center, gle.project""".format(conditions if conditions else ""
         ),
         filters,
         as_dict=0,
