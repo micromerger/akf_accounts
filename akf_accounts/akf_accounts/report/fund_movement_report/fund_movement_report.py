@@ -75,7 +75,7 @@ def get_data(filters):
         INNER JOIN `tabPayment Detail` AS pd ON pd.parent = d.name
         INNER JOIN `tabDeduction Breakeven` AS db ON db.parent = d.name AND db.random_id = pd.random_id
         WHERE {where_clause}
-        GROUP BY db.income_type, d.donation_cost_center, pd.service_area, pd.subservice_area, pd.product, pd.project_id
+        ORDER BY db.income_type, d.donation_cost_center, pd.service_area, pd.subservice_area, pd.product, pd.project_id
         """,
         query_params,
         as_dict=True
@@ -93,7 +93,10 @@ def get_data(filters):
             'restricted_income': 0, 'admin_income': 0,
             'endowment': 0, 'fund_raising': 0
         })
-        balance_data[key][entry["income_type"].lower().replace(" ", "_")] = entry["amount"]
+        if entry["income_type"]:
+            balance_data[key][entry["income_type"].lower().replace(" ", "_")] = entry["amount"]
+        else:
+            balance_data[key]["unknown_income_type"] = entry["amount"]
 
     # Dynamic WHERE clause for gl_entries query
     gl_where_conditions = ["company = %(company)s", "docstatus = 1", "posting_date <= %(end_date)s"]
@@ -123,10 +126,10 @@ def get_data(filters):
         FROM `tabGL Entry`
         WHERE {gl_where_clause}
         AND project != ''
+        ORDER BY cost_center, service_area, subservice_area, product, project
         """,
         gl_query_params,
         as_dict=True
-        # GROUP BY cost_center, service_area, subservice_area, product, project
     )
 
     accounts = {acc.name: acc.account_type for acc in frappe.get_all("Account", fields=["name", "account_type"])}

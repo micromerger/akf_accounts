@@ -56,7 +56,7 @@ frappe.query_reports["Fund Movement Report"] = {
 	"onload": function(report) {
 		setTimeout(() => {
 			get_current_fiscal_year();
-		}, 500);
+		}, 300);
 	}
 };
 
@@ -78,7 +78,7 @@ function get_current_fiscal_year() {
 			// Ensure the filter is available before setting it
 			setTimeout(() => {
 				frappe.query_report.set_filter_value("fiscal_year", fiscal_year);
-			}, 500);
+			}, 300);
 		}
 	});
 }
