@@ -744,7 +744,7 @@ function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_
         primary_action_label: action_label,
         primary_action(values) {
             console.log(values);
-            if (values.doubtful_amount>0 && values.doubtful_amount <= values.outstanding_amount) {
+            if (values.doubtful_amount>0 && values.doubtful_amount <= values.donation_amount) {
                 const method = is_doubtful_debt?"provision_doubtful_debt": "bad_debt_written_off";
                 frm.call(method, { values: values }).then((r)=>{
                     d.hide();
