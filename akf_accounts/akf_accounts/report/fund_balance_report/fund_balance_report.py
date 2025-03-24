@@ -60,7 +60,7 @@ def get_query_result(filters):
         RIGHT JOIN 
             `tabProject` proj ON gle.project = proj.name
         WHERE
-            acc.root_type = 'Equity' {0}
+            acc.root_type = 'Equity' {0} and gle.docstatus = 1
         Group By
             gle.account, gle.cost_center, gle.project""".format(conditions if conditions else ""
         ),
