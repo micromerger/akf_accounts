@@ -783,13 +783,14 @@ def get_currency_args():
 	}
 
 @frappe.whitelist()
-def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool):
+def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool, is_payment_entry: bool):
 	conditions = ""
 	if(is_doubtful_debt):
 		conditions = " and ifnull(provision_doubtful_debt, '')='' "
 	if(is_written_off):
 		conditions = " and is_written_off=0 and ifnull(provision_doubtful_debt, '')!='' "
-	
+	if(is_payment_entry):
+		conditions = " and is_written_off=0 "
 	result = frappe.db.sql(f""" select donor_id, idx from `tabPayment Detail` where base_outstanding_amount>0 and parent='{donation_id}' {conditions} """, as_dict=0)
 	donors_list = {d[0] for d in result} if(result) else []
 	idx_list = {}

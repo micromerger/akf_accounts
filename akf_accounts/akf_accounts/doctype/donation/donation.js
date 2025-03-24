@@ -569,7 +569,8 @@ function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_
         args: {
             donation_id: frm.doc.name,
             is_doubtful_debt: is_doubtful_debt,
-            is_written_off: is_written_off
+            is_written_off: is_written_off,
+            is_payment_entry: false
         },
         callback: function (r) {
             let data = r.message;
@@ -766,7 +767,8 @@ function pledge_payment_entry(frm) {
         args: {
             donation_id: frm.doc.name,
             is_doubtful_debt: false, 
-            is_written_off:true
+            is_written_off:false,
+            is_payment_entry: true
         },
         callback: function (r) {
             let data = r.message;
