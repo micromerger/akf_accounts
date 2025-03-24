@@ -26,6 +26,14 @@ def make_asset_movement_gl_entries(self):
 				"credit": total_asset_cost,
 				"credit_in_account_currency": total_asset_cost,
 				"credit_in_transaction_currency": total_asset_cost,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"donor": row.donor,
+				"task": row.task,
+				"inventory_flag": row.inventory_flag,
+				"inventory_scenario":row.inventory_scenario
 			})
 		else:
 			args.update({
@@ -33,6 +41,14 @@ def make_asset_movement_gl_entries(self):
 				"debit": total_asset_cost,
 				"debit_in_account_currency": total_asset_cost,
 				"debit_in_transaction_currency": total_asset_cost,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"donor": row.donor,
+				"task": row.task,
+				"inventory_flag": row.inventory_flag,
+				"inventory_scenario":row.inventory_scenario
 			})
 		doc = frappe.get_doc(args)
 		doc.insert(ignore_permissions=True)
@@ -51,6 +67,14 @@ def make_asset_movement_gl_entries(self):
 				"debit": total_asset_cost,
 				"debit_in_account_currency": total_asset_cost,
 				"debit_in_transaction_currency": total_asset_cost,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"donor": row.donor,
+				"task": row.task,
+				"inventory_flag": row.inventory_flag,
+				"inventory_scenario":row.inventory_scenario
 			})
 		else:
 			args.update({
@@ -58,6 +82,14 @@ def make_asset_movement_gl_entries(self):
 				"credit": total_asset_cost,
 				"credit_in_account_currency": total_asset_cost,
 				"credit_in_transaction_currency": total_asset_cost,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"donor": row.donor,
+				"task": row.task,
+				"inventory_flag": row.inventory_flag,
+				"inventory_scenario":row.inventory_scenario
 			})
 			
 		doc = frappe.get_doc(args)
@@ -77,6 +109,14 @@ def make_asset_movement_gl_entries(self):
 			"debit": total_asset_cost,
 			"debit_in_account_currency": total_asset_cost,
 			"debit_in_transaction_currency": total_asset_cost,
+			"service_area": row.service_area,
+			"subservice_area": row.subservice_area,
+			"product": row.product,
+			"project": row.project,
+			"donor": row.donor,
+			"task": row.task,
+			"inventory_flag": row.inventory_flag,
+			"inventory_scenario":row.inventory_scenario
 		})
 		doc = frappe.get_doc(args)
 		doc.insert(ignore_permissions=True)
@@ -95,6 +135,14 @@ def make_asset_movement_gl_entries(self):
 				"debit": total_asset_cost,
 				"debit_in_account_currency": total_asset_cost,
 				"debit_in_transaction_currency": total_asset_cost,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"donor": row.donor,
+				"task": row.task,
+				"inventory_flag": row.inventory_flag,
+				"inventory_scenario":row.inventory_scenario
 			})
 		else:
 			args.update({
@@ -102,6 +150,14 @@ def make_asset_movement_gl_entries(self):
 				"credit": total_asset_cost,
 				"credit_in_account_currency": total_asset_cost,
 				"credit_in_transaction_currency": total_asset_cost,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"donor": row.donor,
+				"task": row.task,
+				"inventory_flag": row.inventory_flag,
+				"inventory_scenario":row.inventory_scenario
 			})
 		doc = frappe.get_doc(args)
 		doc.insert(ignore_permissions=True)
@@ -120,6 +176,14 @@ def make_asset_movement_gl_entries(self):
 				"credit": total_asset_cost,
 				"credit_in_account_currency": total_asset_cost,
 				"credit_in_transaction_currency": total_asset_cost,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"donor": row.donor,
+				"task": row.task,
+				"inventory_flag": row.inventory_flag,
+				"inventory_scenario":row.inventory_scenario
 			})
 		else:
 			args.update({
@@ -127,6 +191,14 @@ def make_asset_movement_gl_entries(self):
 				"debit": total_asset_cost,
 				"debit_in_account_currency": total_asset_cost,
 				"debit_in_transaction_currency": total_asset_cost,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"donor": row.donor,
+				"task": row.task,
+				"inventory_flag": row.inventory_flag,
+				"inventory_scenario":row.inventory_scenario
 			})
 		doc = frappe.get_doc(args)
 		doc.insert(ignore_permissions=True)

@@ -36,7 +36,7 @@ frappe.ui.form.on('Budget', {
 	refresh: function(frm) {
 		frm.trigger("toggle_reqd_fields");
 		frm.trigger("open_dimension_dialog"); // Nabeel Saleem, 26-02-2025
-		frm.trigger("add_create_btns");
+		// frm.trigger("add_create_btns");
 	},
 
 	budget_against: function(frm) {
@@ -77,7 +77,7 @@ frappe.ui.form.on('Budget', {
 		}
 	},
 
-	add_create_btns: function(frm){ // Nabeel Saleem, 27-02-2025
+	/*add_create_btns: function(frm){ // Nabeel Saleem, 27-02-2025
 		if(frm.doc.docstatus == 1) {
 			frm.add_custom_button(__('Material Request'), function () {
 				frappe.model.open_mapped_doc({
@@ -88,5 +88,5 @@ frappe.ui.form.on('Budget', {
 				});
 			}, __("Create"));
 		}
-	}
+	}*/
 });

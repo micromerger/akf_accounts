@@ -766,7 +766,7 @@ function pledge_payment_entry(frm) {
         args: {
             donation_id: frm.doc.name,
             is_doubtful_debt: false, 
-            is_written_off:false
+            is_written_off:true
         },
         callback: function (r) {
             let data = r.message;

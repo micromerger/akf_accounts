@@ -61,6 +61,7 @@ def get_conditions(filters, accounts):
 	conditions += " and subservice_area = %(subservice_area)s " if(filters.get('subservice_area')) else ""
 	conditions += " and product = %(product)s " if(filters.get('product')) else ""
 	conditions += " and project = %(project)s " if(filters.get('project')) else ""
+	conditions += " and donor = %(donor)s " if(filters.get('donor')) else ""
 	
 	doctype = filters.get('doctype')
 	
@@ -75,3 +76,30 @@ def get_conditions(filters, accounts):
 
 	return conditions
 
+@frappe.whitelist()
+def get_link_records(filters):
+	from erpnext.accounts.utils import get_fiscal_year
+	if(isinstance(filters, str)):
+		filters = frappe.json.loads(filters)
+		
+	purchase_receipt = frappe.db.get_value("Purchase Invoice Item", {"parent": filters.get("name")}, "purchase_receipt")
+	material_request = frappe.db.get_value("Purchase Receipt Item", {"parent": purchase_receipt}, "material_request")
+	payment_entry = frappe.db.get_list("Payment Entry Reference", filters={"reference_name": filters.get("name")}, fields=["parent"])
+	args = {
+			"docstatus": 1,
+			"encumbrance": 1,
+			"company": filters.get("company"),
+			# "cost_center": filters.get("cost_center"),	
+			"project": filters.get("project"),
+			"fiscal_year": get_fiscal_year(filters.get("posting_date"))[0]
+		}
+	# frappe.throw(frappe.as_json(args))
+	budget = frappe.db.get_value("Budget", args, "name")
+
+	return {
+		"purchase_receipt": purchase_receipt,
+		"material_request": material_request,
+		"budget": budget,
+		"payment_entry": payment_entry
+	}
+	

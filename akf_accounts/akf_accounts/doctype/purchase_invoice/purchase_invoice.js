@@ -203,6 +203,7 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 
 		this.frm.set_df_property("tax_withholding_category", "hidden", doc.apply_tds ? 0 : 1);
 		erpnext.accounts.unreconcile_payment.add_unreconcile_btn(me.frm);
+		this.frm.trigger("change_donor");
 	}
 
 	unblock_invoice() {
@@ -431,6 +432,15 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 			frm: cur_frm
 		})
 	}
+	// To override Common Party concept Nabeel Saleem, 19-03-2025
+	change_donor() {
+		frappe.require("/assets/akf_accounts/js/customizations/change_donor_dialog.js", function () {
+			if (typeof make_change_donor_dialog === "function") {
+				make_change_donor_dialog(cur_frm);
+			}
+		});
+	}
+
 };
 
 cur_frm.script_manager.make(erpnext.accounts.PurchaseInvoice);

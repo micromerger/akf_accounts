@@ -561,7 +561,7 @@ frappe.ui.form.on('Material Request', {
 				}
 			});
 		}
-	}
+	},
 });
 
 frappe.ui.form.on("Material Request Item", {

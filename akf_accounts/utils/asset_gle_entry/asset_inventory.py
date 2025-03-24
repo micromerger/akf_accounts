@@ -59,11 +59,12 @@ def get_gl_entry_dict(self):
 		# 'transaction_currency': self.currency,
 		# 'transaction_exchange_rate': self.exchange_rate,
 		# Accounting Dimensions
-		"donor": self.donor,
-		"service_area": self.program,
+		"cost_center": self.cost_center,
+		"service_area": self.service_area,
 		"subservice_area": self.subservice_area,
 		"product": self.product,
-		"cost_center": self.cost_center,
+		"project": self.project,
+		"donor": self.donor,
 	})
 
 	

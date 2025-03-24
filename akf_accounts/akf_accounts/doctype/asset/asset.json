@@ -30,6 +30,7 @@
   "disposal_date",
   "accounting_dimensions_section",
   "cost_center",
+  "project",
   "dimension_col_break",
   "purchase_details_section",
   "purchase_receipt",
@@ -546,6 +547,12 @@
    "label": "Additional Asset Cost",
    "options": "Company:company:default_currency",
    "read_only": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
   }
  ],
  "idx": 72,
@@ -589,7 +596,7 @@
    "link_fieldname": "target_asset"
   }
  ],
- "modified": "2024-01-15 17:35:49.226603",
+ "modified": "2025-03-20 14:49:14.053387",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Asset",

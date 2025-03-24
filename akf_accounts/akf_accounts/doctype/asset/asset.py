@@ -1007,7 +1007,6 @@ def make_journal_entry(asset_name):
 @frappe.whitelist()
 def make_asset_movement(assets, purpose=None, args=None):
 	import json
-	git
 	if isinstance(assets, str):
 		assets = json.loads(assets)
 
