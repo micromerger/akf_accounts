@@ -15,13 +15,15 @@ def execute(filters=None):
 
 def get_columns():
     columns = [
+        _("Company") + ":Link/Company:140",
+        _("Branch") + ":Link/Cost Center:140",
         _("Code") + ":Data:140",
-        # _("Date") + ":Date:140",
-        # _("Status") + ":Data:140",
-        # _("Status Date") + ":Date:140",
-        # _("Prepared By") + ":Data:140",
-        # _("Approved By") + ":Data:140",
-        # _("Amount") + ":Data:140",
+        _("Date") + ":Date:140",
+        _("Status") + ":Data:140",
+        _("Status Date") + ":Date:140",
+        _("Prepared By") + ":Data:140",
+        _("Approved By") + ":Data:140",
+        _("Amount") + ":Currency:140",
     ]
     return columns
 
@@ -34,16 +36,12 @@ def get_data(filters):
 def get_conditions(filters):
     conditions = ""
 
-    # if filters.get("company"):
-    #     conditions += " AND company = %(company)s"
-    # if filters.get("applicant"):
-    #     conditions += " AND applicant = %(applicant)s"
-    # if filters.get("branch"):
-    #     conditions += " AND branch = %(branch)s"
-    # if filters.get("loan_type"):
-    #     conditions += " AND loan_type = %(loan_category)s"
-    # if filters.get("repayment_start_date"):
-    #     conditions += " AND repayment_start_date = %(repayment_start_date)s"
+    if filters.get("company"):
+        conditions += " AND company = %(company)s"
+    if filters.get("cost_center"):
+        conditions += " AND cost_center = %(cost_center)s"
+    if filters.get("status"):
+        conditions += " AND status = %(status)s"
 
     return conditions
 
@@ -53,9 +51,9 @@ def get_query_result(filters):
     result = frappe.db.sql(
         """
         SELECT 
-			name            
+			company, cost_center, name, posting_date, status, modified, owner, modified_by, paid_amount            
         FROM 
-            `tabGL Entry`
+            `tabPayment Entry`
         WHERE
             docstatus != 2
         {0}

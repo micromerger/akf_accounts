@@ -24,7 +24,7 @@ frappe.query_reports["Fund Balance Report"] = {
 			fieldname: "service_area",
 			label: __("Service Area"),
 			fieldtype: "Link",
-			options: "Program",
+			options: "Service Area",
 		},
 		{
 			fieldname: "subservice_area",
