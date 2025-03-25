@@ -84,7 +84,7 @@ class FundsTransfer(Document):
 				('project', "project"),
 				('cost_center', "ff_cost_center"),
 				('product', "ff_product"),
-				('program', "ff_service_area"),
+				('service_area', "ff_service_area"),
 				('company', "ff_company"),
 				('account', "ff_account")]:
 				value2 = row.get(field2)
@@ -102,7 +102,7 @@ class FundsTransfer(Document):
 					ifnull((sum(distinct gl.credit) - sum(distinct gl.debit)),0) as total_balance,
 					gl.donor,
 					(select donor_name from `tabDonor` where name=gl.donor) as donor_name,
-					gl.program,
+					gl.service_area,
 					gl.subservice_area,
 					gl.project,
 					gl.cost_center,
@@ -238,7 +238,7 @@ class FundsTransfer(Document):
 						'credit_in_transaction_currency': 0.0,
 						'transaction_exchange_rate': 1,
 						'project': row.project,
-						'program': row.ff_service_area,
+						'service_area': row.ff_service_area,
 						'subservice_area': row.ff_subservice_area,
 						'product': row.ff_product,      
 						'donor': row.ff_donor,
@@ -286,7 +286,7 @@ class FundsTransfer(Document):
 					'credit_in_transaction_currency': 0.0,
 					'transaction_exchange_rate': 1,
 					'project': row.project,
-					'program': row.ft_service_area,
+					'service_area': row.ft_service_area,
 					'subservice_area': row.ft_subservice_area,
 					'product': row.ft_product,      
 					'donor': row.ft_donor,
@@ -475,7 +475,7 @@ class FundsTransfer(Document):
 							'credit_in_transaction_currency': 0.0,
 							'transaction_exchange_rate': 1,
 							'project': prev_project,
-							'program': prev_program,
+							'service_area': prev_program,
 							'party_type': 'Donor',
 							'party': prev_donor,
 							'subservice_area': prev_subservice_area,
@@ -514,7 +514,7 @@ class FundsTransfer(Document):
 							'credit_in_transaction_currency': ftt_amount,
 							'transaction_exchange_rate': 1,
 							'project': new_project,
-							'program': new_program,
+							'service_area': new_program,
 							'party_type': 'Donor',
 							'party': new_donor,
 							'subservice_area': new_subservice_area,
@@ -675,7 +675,7 @@ class FundsTransfer(Document):
 							'credit_in_transaction_currency': 0.0,
 							'transaction_exchange_rate': 1,
 							'project': prev_project,
-							'program': prev_program,
+							'service_area': prev_program,
 							'party_type': 'Donor',
 							'party': prev_donor,
 							'subservice_area': prev_subservice_area,
@@ -714,7 +714,7 @@ class FundsTransfer(Document):
 							'credit_in_transaction_currency': ftt_amount,
 							'transaction_exchange_rate': 1,
 							'project': new_project,
-							'program': new_program,
+							'service_area': new_program,
 							'party_type': 'Donor',
 							'party': new_donor,
 							'subservice_area': new_subservice_area,
@@ -812,7 +812,7 @@ class FundsTransfer(Document):
 				('project', p.project),
 				('cost_center', p.ff_cost_center),
 				('product', p.ff_product),
-				('program', p.ff_service_area),
+				('service_area', p.ff_service_area),
 				('company', p.ff_company),
 				('account', p.ff_account)
 			]:
@@ -831,7 +831,7 @@ class FundsTransfer(Document):
 					SELECT 
 						SUM(credit - debit) AS total_balance,
 						donor,
-						program,
+						service_area,
 						subservice_area,
 						project,
 						cost_center,
@@ -842,7 +842,7 @@ class FundsTransfer(Document):
 					WHERE 
 						is_cancelled = 'No'
 						{f'AND {condition}' if condition else ''}
-					GROUP BY donor, program, subservice_area, project, cost_center, product, company, account
+					GROUP BY donor, service_area, subservice_area, project, cost_center, product, company, account
 					HAVING total_balance >= 0
 					ORDER BY total_balance DESC
 				""", as_dict=True)
@@ -853,7 +853,7 @@ class FundsTransfer(Document):
 			match_found = False
 
 			for entry in donor_entries:
-				if ((entry.get('program') == p.ff_service_area or (not entry.get('program') and not p.ff_service_area)) and
+				if ((entry.get('service_area') == p.ff_service_area or (not entry.get('service_area') and not p.ff_service_area)) and
 					(entry.get('subservice_area') == p.ff_subservice_area or (not entry.get('subservice_area') and not p.ff_subservice_area)) and
 					(entry.get('project') == p.project or (not entry.get('project') and not p.project)) and
 					(entry.get('cost_center') == p.ff_cost_center or (not entry.get('cost_center') and not p.ff_cost_center)) and
@@ -863,7 +863,7 @@ class FundsTransfer(Document):
 
 					entry_key = (
 						entry.get('donor'), 
-						entry.get('program'), 
+						entry.get('service_area'), 
 						entry.get('subservice_area'), 
 						entry.get('project'),
 						entry.get('cost_center'),
@@ -976,7 +976,7 @@ def donor_list_data_funds_transfer(doc):
             ('gl.project', "project"),
             ('gl.cost_center', "ff_cost_center"),
             ('gl.product', "ff_product"),
-            ('gl.program', "ff_service_area"),
+            ('gl.service_area', "ff_service_area"),
             ('gl.company', "ff_company"),
             ('gl.account', "ff_account")]:
             value2 = funds_from_row.get(field2)
@@ -994,7 +994,7 @@ def donor_list_data_funds_transfer(doc):
                 ifnull((sum(distinct gl.credit) - sum(distinct gl.debit)),0) as total_balance,
                 gl.donor,
                 (select donor_name from `tabDonor` where name=gl.donor) as donor_name,
-                gl.program,
+                gl.service_area,
                 gl.subservice_area,
                 gl.project,
                 gl.cost_center,
@@ -1030,7 +1030,7 @@ def donor_list_data_funds_transfer(doc):
         for entry in donor_entries:
             entry_key = (
                 entry.get('donor'), 
-                entry.get('program'), 
+                entry.get('service_area'), 
                 entry.get('subservice_area'), 
                 entry.get('project'),
                 entry.get('cost_center'),
@@ -1141,7 +1141,7 @@ def donor_list_data_funds_transfer_previous(doc):
             ('project', p.project),
             ('cost_center', p.ff_cost_center),
             ('product', p.ff_product),
-            ('program', p.ff_service_area),
+            ('service_area', p.ff_service_area),
             ('company', p.ff_company),
             ('account', p.ff_account)
         ]:
@@ -1157,7 +1157,7 @@ def donor_list_data_funds_transfer_previous(doc):
             SELECT 
                 SUM(credit - debit) AS total_balance,
                 donor,
-                program,
+                service_area,
                 subservice_area,
                 project,
                 cost_center,
@@ -1169,7 +1169,7 @@ def donor_list_data_funds_transfer_previous(doc):
                 is_cancelled = 'No'
                 {f'AND {condition}' if condition else ''}
                
-            GROUP BY donor, program, subservice_area, project, cost_center, product, company, account
+            GROUP BY donor, service_area, subservice_area, project, cost_center, product, company, account
            
             ORDER BY total_balance DESC
         """
@@ -1184,7 +1184,7 @@ def donor_list_data_funds_transfer_previous(doc):
         match_found = False
 
         for entry in donor_entries:
-            if ((entry.get('program') == p.ff_service_area or (not entry.get('program') and not p.ff_service_area)) and
+            if ((entry.get('service_area') == p.ff_service_area or (not entry.get('service_area') and not p.ff_service_area)) and
                 (entry.get('subservice_area') == p.ff_subservice_area or (not entry.get('subservice_area') and not p.ff_subservice_area)) and
                 (entry.get('project') == p.project or (not entry.get('project') and not p.project)) and
                 (entry.get('cost_center') == p.ff_cost_center or (not entry.get('cost_center') and not p.ff_cost_center)) and
@@ -1194,7 +1194,7 @@ def donor_list_data_funds_transfer_previous(doc):
                 
                 entry_key = (
                     entry.get('donor'), 
-                    entry.get('program'), 
+                    entry.get('service_area'), 
                     entry.get('subservice_area'), 
                     entry.get('project'),
                     entry.get('cost_center'),

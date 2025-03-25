@@ -2500,7 +2500,6 @@ def set_accounting_dimensions(pe, doc):
         pe.cost_center = row.pd_cost_center
         pe.donor = row.pd_donor
         break
-    # frappe.throw(f"{pe}")
     return pe
     
         
