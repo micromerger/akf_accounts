@@ -1,9 +1,5 @@
-# Copyright (c) 2024, Nabeel Saleem and contributors
-# For license information, please see license.txt
-
 import frappe
 from frappe import _
-
 
 @frappe.whitelist(allow_guest=True)
 def execute(filters=None):
@@ -12,54 +8,63 @@ def execute(filters=None):
     data = get_data(filters)
     return columns, data
 
-
 def get_columns():
     columns = [
-        _("Fund") + ":Data:140",
-        # _("Expense") + ":Data:140",
-        # _("Income") + ":Data:140",
-        # _("Difference") + ":Data:140",
+        _("Branch") + ":Data:140",
+        _("Fund Class") + ":Link/Project:140",
+        _("Income") + ":Currency:140",
+        _("Expense") + ":Currency:140",
+        _("Difference") + ":Currency:140",
     ]
     return columns
 
-
 def get_data(filters):
     result = get_query_result(filters)
-    return result
 
+    total_income = sum(row[2] for row in result)
+    total_expense = sum(row[3] for row in result)
+    total_difference = sum(row[4] for row in result)
+
+    total_row = ("","Total:", total_income, total_expense, total_difference)
+    result = list(result) + [total_row]
+
+    return result
 
 def get_conditions(filters):
     conditions = ""
 
-    # if filters.get("company"):
-    #     conditions += " AND company = %(company)s"
-    # if filters.get("applicant"):
-    #     conditions += " AND applicant = %(applicant)s"
-    # if filters.get("branch"):
-    #     conditions += " AND branch = %(branch)s"
-    # if filters.get("loan_type"):
-    #     conditions += " AND loan_type = %(loan_category)s"
-    # if filters.get("repayment_start_date"):
-    #     conditions += " AND repayment_start_date = %(repayment_start_date)s"
+    if filters.get("company"):
+        conditions += " AND gle.company = %(company)s"
+    if filters.get("branch"):
+        conditions += " AND gle.cost_center = %(branch)s"
 
     return conditions
-
 
 def get_query_result(filters):
     conditions = get_conditions(filters)
     result = frappe.db.sql(
         """
-        SELECT 
-			name
-        FROM 
-            `tabGL Entry`
-        WHERE
-            docstatus != 2
-        {0}
-    """.format(
-            conditions if conditions else ""
-        ),
-        filters,
-        as_dict=0,
-    )
+            SELECT
+                gle.cost_center,
+                gle.project,
+                SUM(gle.credit),
+                SUM(gle.debit),
+                SUM(gle.credit - gle.debit)
+            FROM 
+                `tabGL Entry` gle
+            LEFT JOIN
+                `tabAccount` ac ON gle.account = ac.name
+            WHERE
+                is_cancelled = 0
+                AND ac.root_type in ('Expense','Income')
+                AND ifnull(gle.project,"") != ""
+                {0}
+            GROUP BY 
+                gle.cost_center, gle.project
+            ORDER BY 
+                gle.cost_center, gle.project
+        """.format(
+                conditions if conditions else ""
+            ), filters, as_dict=0 )
+    
     return result

@@ -1,9 +1,5 @@
-# Copyright (c) 2024, Nabeel Saleem and contributors
-# For license information, please see license.txt
-
 import frappe
 from frappe import _
-
 
 @frappe.whitelist(allow_guest=True)
 def execute(filters=None):
@@ -12,56 +8,72 @@ def execute(filters=None):
     data = get_data(filters)
     return columns, data
 
-
 def get_columns():
     columns = [
+        _("Cost Center") + ":Data:140",
+        _("Fund Class") + ":Link/Project:140",
+        _("Voucher Type") + ":Data:140",
         _("Voucher No") + ":Data:140",
-        # _("Donor") + ":Data:140",
-        # _("Fund") + ":Data:140",
-        # _("Expense") + ":Data:140",
-        # _("Income") + ":Data:140",
-        # _("Difference") + ":Data:140",
+        _("Donor") + ":Link/Donor:140",
+        _("Income") + ":Currency:140",
+        _("Expense") + ":Currency:140",
+        _("Difference") + ":Currency:140",
     ]
-    return columns
 
+    return columns
 
 def get_data(filters):
     result = get_query_result(filters)
-    return result
 
+    total_income = sum(row[5] for row in result)
+    total_expense = sum(row[6] for row in result)
+    total_difference = sum(row[7] for row in result)
+
+    total_row = ("", "", "", "","Total:", total_income, total_expense, total_difference)
+    result = list(result) + [total_row]
+
+    return result
 
 def get_conditions(filters):
     conditions = ""
 
-    # if filters.get("company"):
-    #     conditions += " AND company = %(company)s"
-    # if filters.get("applicant"):
-    #     conditions += " AND applicant = %(applicant)s"
-    # if filters.get("branch"):
-    #     conditions += " AND branch = %(branch)s"
-    # if filters.get("loan_type"):
-    #     conditions += " AND loan_type = %(loan_category)s"
-    # if filters.get("repayment_start_date"):
-    #     conditions += " AND repayment_start_date = %(repayment_start_date)s"
+    if filters.get("company"):
+        conditions += " AND company = %(company)s"
+    if filters.get("branch"):
+        conditions += " AND cost_center = %(branch)s"
+    if filters.get("fund"):
+        conditions += " AND project = %(fund)s"
 
     return conditions
-
 
 def get_query_result(filters):
     conditions = get_conditions(filters)
     result = frappe.db.sql(
         """
         SELECT 
-			name
+            cost_center, 
+            project, 
+            voucher_type, 
+            voucher_no, 
+            donor, 
+            sum(credit), 
+            sum(debit), 
+            sum(credit-debit)
         FROM 
             `tabGL Entry`
-        WHERE
-            docstatus != 2
-        {0}
-    """.format(
-            conditions if conditions else ""
-        ),
-        filters,
-        as_dict=0,
-    )
+        Where 
+            is_cancelled=0
+            AND ifnull(project, "") != ""
+            AND account in (SELECT name FROM `tabAccount` WHERE root_type in ('Income', 'Expense'))
+            {0}
+        GROUP BY 
+            cost_center, project, voucher_type, voucher_no
+        ORDER BY
+            cost_center,voucher_type
+        """.format(
+                conditions if conditions else ""
+            ),
+            filters,
+            as_dict=0,
+        )
     return result
