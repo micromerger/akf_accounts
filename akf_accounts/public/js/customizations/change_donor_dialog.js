@@ -357,7 +357,7 @@ function make_change_donor_dialog(frm){
                             d.fields_dict.error_message.df.options = `<b style="color: red;">New-Balance must be greater than Existing-Balance.<b>`;
                             d.fields_dict.error_message.refresh();
                         }
-                        // d.hide();
+                        d.hide();
                     }
                 });
                 d.show();
