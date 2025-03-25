@@ -577,8 +577,8 @@ function set_query_project_transfer_from(frm){
         return {
             filters: {
                 // company: frm.doc.company,
-                custom_program: ["!=", ""],
-                custom_program: row.ff_service_area,
+                custom_service_area: ["!=", ""],
+                custom_service_area: row.ff_service_area,
                 
             }
         };

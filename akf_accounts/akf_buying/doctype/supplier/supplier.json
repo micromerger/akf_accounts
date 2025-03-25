@@ -50,6 +50,7 @@
   "column_break_44",
   "supplier_primary_address",
   "primary_address",
+  "state",
   "column_break_mglr",
   "supplier_primary_contact",
   "mobile_no",
@@ -486,6 +487,14 @@
    "fieldname": "is_related_party",
    "fieldtype": "Check",
    "label": "Is Related Party"
+  },
+  {
+   "fetch_from": "supplier_primary_address.state",
+   "fieldname": "state",
+   "fieldtype": "Link",
+   "label": "State/Province",
+   "options": "Province",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-user",
@@ -498,7 +507,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-03-03 11:43:55.127668",
+ "modified": "2025-03-24 15:47:07.914226",
  "modified_by": "Administrator",
  "module": "AKF Buying",
  "name": "Supplier",

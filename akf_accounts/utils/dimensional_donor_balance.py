@@ -84,12 +84,13 @@ def get_link_records(filters):
 		
 	purchase_receipt = frappe.db.get_value("Purchase Invoice Item", {"parent": filters.get("name")}, "purchase_receipt")
 	material_request = frappe.db.get_value("Purchase Receipt Item", {"parent": purchase_receipt}, "material_request")
-	payment_entry = frappe.db.get_list("Payment Entry Reference", filters={"reference_name": filters.get("name")}, fields=["parent"])
+	payment_entry = frappe.db.sql("""Select parent from `tabPayment Entry Reference` where docstatus=1 and reference_name=%(name)s """, filters, as_dict=1)
+	payment_entry = ",".join([d.parent for d in payment_entry])
 	args = {
 			"docstatus": 1,
 			"encumbrance": 1,
 			"company": filters.get("company"),
-			# "cost_center": filters.get("cost_center"),	
+			# "cost_center": filters.get("cost_center"),
 			"project": filters.get("project"),
 			"fiscal_year": get_fiscal_year(filters.get("posting_date"))[0]
 		}

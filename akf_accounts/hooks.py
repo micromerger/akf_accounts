@@ -212,10 +212,11 @@ scheduler_events = {
 # ------------------------------
 #
 # /home/frappe/frappe-bench/apps/akf_accounts/akf_accounts/customizations/extends/XAsset.py
-# override_whitelisted_methods = {
+override_whitelisted_methods = {
+    "erpnext.accounts.doctype.payment_entry.payment_entry.get_payment_entry": "akf_accounts.customizations.overrides.payment_entry.get_payment_entry" 
 # 	# "frappe.desk.doctype.event.event.get_events": "akf_accounts.event.get_events"
 #      "erpnext.assets.doctype.asset.depreciation.post_depreciation_entries": "akf_accounts.customizations.extends.XAsset.post_depreciation_entries_extended"
-# }
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

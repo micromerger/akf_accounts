@@ -2343,7 +2343,7 @@ def get_payment_entry(
 		100.0 + over_billing_allowance
 	):
 		frappe.throw(_("Can only make payment against unbilled {0}").format(_(dt)))
-
+	
 	if not party_type:
 		party_type = set_party_type(dt)
 
@@ -2424,8 +2424,7 @@ def get_payment_entry(
 			"Payment Terms Template",
 			doc.payment_terms_template,
 			"allocate_payment_based_on_payment_terms",
-		):
-
+		): 
 			for reference in get_reference_as_per_payment_terms(
 				doc.payment_schedule, dt, dn, doc, grand_total, outstanding_amount, party_account_currency
 			):
@@ -2474,7 +2473,7 @@ def get_payment_entry(
 	pe.set_missing_ref_details()
 
 	update_accounting_dimensions(pe, doc)
-
+	set_accounting_dimensions(pe, doc)
 	if party_account and bank:
 		pe.set_exchange_rate(ref_doc=doc)
 		pe.set_amounts()
@@ -2489,9 +2488,22 @@ def get_payment_entry(
 			)
 
 		pe.set_difference_amount()
-
+	
 	return pe
-
+# Nabeel Saleem, 24-03-2025
+def set_accounting_dimensions(pe, doc):
+    for row in doc.program_details:
+        pe.service_area = row.pd_service_area
+        pe.subservice_area = row.pd_subservice_area
+        pe.product = row.pd_product
+        pe.project = row.pd_project
+        pe.cost_center = row.pd_cost_center
+        pe.donor = row.pd_donor
+        break
+    # frappe.throw(f"{pe}")
+    return pe
+    
+        
 
 def update_accounting_dimensions(pe, doc):
 	"""
