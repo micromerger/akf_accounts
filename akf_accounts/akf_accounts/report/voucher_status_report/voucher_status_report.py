@@ -1,5 +1,4 @@
-# Copyright (c) 2024, Nabeel Saleem and contributors
-# For license information, please see license.txt
+# Developer Mubashir Bashir, 25-03-2025
 
 import frappe
 from frappe import _
@@ -19,6 +18,7 @@ def get_columns():
         _("Branch") + ":Link/Cost Center:140",
         _("Code") + ":Data:140",
         _("Date") + ":Date:140",
+        _("Payment Type") + ":Date:140",
         _("Status") + ":Data:140",
         _("Status Date") + ":Date:140",
         _("Prepared By") + ":Data:140",
@@ -29,9 +29,34 @@ def get_columns():
 
 
 def get_data(filters):
-    result = get_query_result(filters)
-    return result
+    conditions = get_conditions(filters)
+    result = frappe.db.sql(
+        """
+        SELECT 
+            company, cost_center, name, posting_date, payment_type, status, modified, owner, modified_by, paid_amount            
+        FROM 
+            `tabPayment Entry`
+        WHERE
+            docstatus != 2
+        {0}
+    """.format(
+            conditions if conditions else ""
+        ),
+        filters,
+        as_list=True, 
+    )
 
+    total_amount = sum(row[-1] for row in result) if result else 0
+
+    num_columns = len(result[0]) if result else 10
+    total_row = ["" for _ in range(num_columns)]
+    
+    total_row[-2] = "<b>Total</b>"
+    total_row[-1] = total_amount
+
+    result.append(total_row)
+
+    return result
 
 def get_conditions(filters):
     conditions = ""
@@ -44,23 +69,3 @@ def get_conditions(filters):
         conditions += " AND status = %(status)s"
 
     return conditions
-
-
-def get_query_result(filters):
-    conditions = get_conditions(filters)
-    result = frappe.db.sql(
-        """
-        SELECT 
-			company, cost_center, name, posting_date, status, modified, owner, modified_by, paid_amount            
-        FROM 
-            `tabPayment Entry`
-        WHERE
-            docstatus != 2
-        {0}
-    """.format(
-            conditions if conditions else ""
-        ),
-        filters,
-        as_dict=0,
-    )
-    return result

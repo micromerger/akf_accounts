@@ -1,5 +1,4 @@
-// Copyright (c) 2024, Nabeel Saleem and contributors
-// For license information, please see license.txt
+// Developer Mubashir Bashir, 25-03-2025
 
 frappe.query_reports["Voucher Status Report"] = {
 	"filters": [
