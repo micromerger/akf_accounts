@@ -99,9 +99,9 @@ def get_data(filters):
             'endowment': 0, 'fund_raising': 0
         })
         if entry["income_type"]:
-            balance_data[key][entry["income_type"].lower().replace(" ", "_")] = entry["amount"]
+            balance_data[key][entry["income_type"].lower().replace(" ", "_")] += entry["amount"]
         else:
-            balance_data[key]["unknown_income_type"] = entry["amount"]
+            balance_data[key]["unknown_income_type"] += entry["amount"]
 
     # Dynamic WHERE clause for gl_entries query
     gl_where_conditions = ["company = %(company)s", "docstatus = 1", "posting_date <= %(end_date)s"]
