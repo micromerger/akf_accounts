@@ -3,18 +3,18 @@
 frappe.query_reports["Sales tax-fbr template Report"] = {
 	"filters": [
 		{
-			"fielname": "supplier",
+			"fieldname": "supplier",
 			"label": __("Supplier"),
 			"fieldtype": "Link",
 			"options": "Supplier"
 		},
 		{
-			"fielname": "from_date",
+			"fieldname": "from_date",
 			"label": __("From Date"),
 			"fieldtype": "Date",
 		},
 		{
-			"fielname": "to_date",
+			"fieldname": "to_date",
 			"label": __("To Date"),
 			"fieldtype": "Date",
 		},

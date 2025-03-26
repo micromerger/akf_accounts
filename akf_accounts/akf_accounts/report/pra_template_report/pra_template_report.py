@@ -53,6 +53,9 @@ def get_data(filters):
 
 def get_payment_entry_conditions(filters):
     conditions = ""
+    
+    if filters.get("supplier"):
+        conditions += "AND s.name = %(supplier)s"
 
     if filters.get("from_date") and filters.get("to_date"):
         conditions += "AND pe.posting_date BETWEEN %(from_date)s AND %(to_date)s"
@@ -60,13 +63,14 @@ def get_payment_entry_conditions(filters):
         conditions += "AND pe.posting_date >= %(from_date)s"
     elif filters.get("to_date"):
         conditions += "AND pe.posting_date <= %(to_date)s"
-    if filters.get("supplier"):
-        conditions += "AND s.name = %(supplier)s"
 
     return conditions
 
 def get_purchase_invoice_conditions(filters):
     conditions = ""
+            
+    if filters.get("supplier"):
+        conditions += "AND pi.supplier = %(supplier)s"
 
     if filters.get("from_date") and filters.get("to_date"):
         conditions += "AND pi.posting_date BETWEEN %(from_date)s AND %(to_date)s"
@@ -74,8 +78,5 @@ def get_purchase_invoice_conditions(filters):
         conditions += "AND pi.posting_date >= %(from_date)s"
     elif filters.get("to_date"):
         conditions += "AND pi.posting_date <= %(to_date)s"
-        
-    if filters.get("supplier"):
-        conditions += "AND pi.supplier = %(supplier)s"
 
     return conditions
