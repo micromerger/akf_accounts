@@ -74,5 +74,8 @@ def get_purchase_invoice_conditions(filters):
         conditions += "AND pi.posting_date >= %(from_date)s"
     elif filters.get("to_date"):
         conditions += "AND pi.posting_date <= %(to_date)s"
+        
+    if filters.get("supplier"):
+        conditions += "AND pi.supplier = %(supplier)s"
 
     return conditions

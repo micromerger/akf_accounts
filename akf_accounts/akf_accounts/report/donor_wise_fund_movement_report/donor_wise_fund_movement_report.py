@@ -80,7 +80,7 @@ def get_data(filters):
         INNER JOIN `tabPayment Detail` AS pd ON pd.parent = d.name
         INNER JOIN `tabDeduction Breakeven` AS db ON db.parent = d.name AND db.random_id = pd.random_id
         WHERE {where_clause} AND db.donor != ''
-        ORDER BY db.donor, db.income_type, d.donation_cost_center, pd.service_area, pd.subservice_area, pd.product, pd.project_id
+        GROUP BY db.donor, d.company, d.donation_cost_center, pd.service_area, pd.subservice_area, pd.product, pd.project_id, db.income_type
         """,
         query_params,
         as_dict=True

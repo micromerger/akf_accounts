@@ -70,12 +70,12 @@ def get_data(filters):
 
     income_data = frappe.db.sql(
         f"""
-        SELECT db.income_type, SUM(db.amount) AS amount, d.donation_cost_center, pd.service_area, pd.subservice_area, pd.product, pd.project_id
+        SELECT db.income_type, db.amount, d.donation_cost_center, pd.service_area, pd.subservice_area, pd.product, pd.project_id
         FROM `tabDonation` AS d
         INNER JOIN `tabPayment Detail` AS pd ON pd.parent = d.name
         INNER JOIN `tabDeduction Breakeven` AS db ON db.parent = d.name AND db.random_id = pd.random_id
         WHERE {where_clause}
-        ORDER BY db.income_type, d.donation_cost_center, pd.service_area, pd.subservice_area, pd.product, pd.project_id
+        GROUP BY d.company, d.donation_cost_center, pd.service_area, pd.subservice_area, pd.product, pd.project_id, db.income_type
         """,
         query_params,
         as_dict=True
@@ -95,8 +95,10 @@ def get_data(filters):
         })
         if entry["income_type"]:
             balance_data[key][entry["income_type"].lower().replace(" ", "_")] = entry["amount"]
+
         else:
             balance_data[key]["unknown_income_type"] = entry["amount"]
+        
 
     # Dynamic WHERE clause for gl_entries query
     gl_where_conditions = ["company = %(company)s", "docstatus = 1", "posting_date <= %(end_date)s"]
