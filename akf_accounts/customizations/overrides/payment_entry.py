@@ -20,9 +20,10 @@ from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import (
 get_party_account_based_on_invoice_discounting,
 )
 from erpnext.accounts.doctype.journal_entry.journal_entry import get_default_bank_cash_account
-from erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category import (
-get_party_tax_withholding_details,
-)
+# from erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category import (
+# get_party_tax_withholding_details,
+# )
+from akf_accounts.customizations.overrides.tax_withholding_category import get_party_tax_withholding_details #mubarrim
 from erpnext.accounts.general_ledger import (
 make_gl_entries,
 make_reverse_gl_entries,
@@ -560,7 +561,7 @@ class XPaymentEntry(AccountsController):
 		elif self.party_type == "Shareholder":
 			return ("Journal Entry",)
 		elif self.party_type == "Employee":
-			return ("Journal Entry",)
+			return ("Journal Entry", "Expense Claim")
 
 
 	def validate_paid_invoices(self):
@@ -878,14 +879,14 @@ class XPaymentEntry(AccountsController):
 		)
 
 		tax_withholding_details = get_party_tax_withholding_details(args, self.tax_withholding_category)
-
+		
 		if not tax_withholding_details:
 			return
 
 		tax_withholding_details.update(
 			{"cost_center": self.cost_center or erpnext.get_default_cost_center(self.company)}
 		)
-
+		
 		accounts = []
 		for d in self.taxes:
 			if d.account_head == tax_withholding_details.get("account_head"):
@@ -896,16 +897,16 @@ class XPaymentEntry(AccountsController):
 
 				d.update(tax_withholding_details)
 			accounts.append(d.account_head)
-
+		
 		if not accounts or tax_withholding_details.get("account_head") not in accounts:
 			self.append("taxes", tax_withholding_details)
-
+		
 		to_remove = [
 			d
 			for d in self.taxes
 			if not d.tax_amount and d.account_head == tax_withholding_details.get("account_head")
 		]
-
+		
 		for d in to_remove:
 			self.remove(d)
 
@@ -1541,7 +1542,7 @@ class XPaymentEntry(AccountsController):
 
 			for fieldname in tax_fields:
 				tax.set(fieldname, 0.0)
-
+		
 		self.paid_amount_after_tax = self.base_paid_amount
 
 	def determine_exclusive_rate(self):
