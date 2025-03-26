@@ -20,10 +20,10 @@ from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import (
 get_party_account_based_on_invoice_discounting,
 )
 from erpnext.accounts.doctype.journal_entry.journal_entry import get_default_bank_cash_account
-# from erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category import (
-# get_party_tax_withholding_details,
-# )
-from akf_accounts.customizations.overrides.tax_withholding_category import get_party_tax_withholding_details #mubarrim
+from erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category import (
+get_party_tax_withholding_details,
+)
+# from akf_accounts.customizations.overrides.tax_withholding_category import get_party_tax_withholding_details #mubarrim
 from erpnext.accounts.general_ledger import (
 make_gl_entries,
 make_reverse_gl_entries,
