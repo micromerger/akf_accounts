@@ -235,7 +235,7 @@ def get_tax_row_for_tds(tax_details, tax_amount):
 		"category": "Total",
 		"charge_type": "Actual",
 		"tax_amount": tax_amount,
-		"rate": tax_details.rate,
+		"custom_wh_rate": tax_details.rate,
 		"add_deduct_tax": "Deduct",
 		"description": tax_details.description,
 		"account_head": tax_details.account_head,
