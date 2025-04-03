@@ -899,11 +899,10 @@ function pledge_payment_entry(frm) {
                 onchange: function (val) {
                     let remaining_amount = d.fields_dict.remaining_amount.value;
                     let paid_amount = d.fields_dict.paid_amount.value;
-                    if (paid_amount > remaining_amount) {
-                        // frappe.msgprint("Paid amount must be less than or equal to remaining amount!");
-                        d.fields_dict.paid_amount.df.description = `<b style="color: red;">Paid amount is exceeding remaining amount.<b>`;
-                        d.fields_dict.paid_amount.refresh();
-                    }
+
+                    const description = (paid_amount > remaining_amount)? `<b style="color: red;">Paid amount is exceeding remaining amount.<b>`: "<b></b>";  
+                    d.fields_dict.paid_amount.df.description = description;
+                    d.fields_dict.paid_amount.refresh();
                 }
             },
             {
@@ -997,9 +996,9 @@ function pledge_payment_entry(frm) {
         size: 'small', // small, large, extra-large 
         primary_action_label: 'Create Payment Entry',
         primary_action(values) {
+            let description = "<b></b>";
             if (values.paid_amount > values.remaining_amount) {
-                d.fields_dict.paid_amount.df.description = `<b style="color: red;">Paid amount is exceeding remaining amount.<b>`;
-                d.fields_dict.paid_amount.refresh();
+                description = `<b style="color: red;">Paid amount is exceeding remaining amount.<b>`
             }
             else if (values) {
                 let paid = values.paid_amount == values.outstanding_amount ? 1 : 0;
@@ -1020,6 +1019,9 @@ function pledge_payment_entry(frm) {
                     }
                 });
             }
+              
+            d.fields_dict.paid_amount.df.description = description;
+            d.fields_dict.paid_amount.refresh();
         }
     });
     d.show();
