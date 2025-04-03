@@ -900,7 +900,7 @@ function pledge_payment_entry(frm) {
                     let remaining_amount = d.fields_dict.remaining_amount.value;
                     let paid_amount = d.fields_dict.paid_amount.value;
                     if (paid_amount > remaining_amount) {
-                        frappe.msgprint("Paid amount must be less than or equal to remaining amount!");
+                        // frappe.msgprint("Paid amount must be less than or equal to remaining amount!");
                         d.fields_dict.paid_amount.df.options = `<b style="color: red;">Paid amount is exceeding remaining amount.<b>`;
                         d.fields_dict.paid_amount.refresh();
                     }
