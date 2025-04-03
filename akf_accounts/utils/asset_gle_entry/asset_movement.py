@@ -213,6 +213,10 @@ def make_asset_movement_gl_entries(self):
 	def process_asset_movement():
 		args = get_gl_entry_dict(self)
 		for row in self.assets:
+			args.update({
+       			'against_voucher_type': 'Asset',
+				'against_voucher': row.asset
+			})
 			credit_default_asset_account(args, row)
 			debit_default_designated_asset_fund_account(args, row)
 			debit_asset_in_transit_account(args, row)
@@ -229,8 +233,6 @@ def get_gl_entry_dict(self):
 		'posting_date': getdate(self.transaction_date),
 		'transaction_date': getdate(self.transaction_date),
 		'against': f"Asset Movement: {self.name}",
-		'against_voucher_type': 'Asset Movement',
-		'against_voucher': self.name,
 		'voucher_type': 'Asset Movement',
 		'voucher_no': self.name,
 		'voucher_subtype': f'{self.purpose}, asset moved between branches. ',
@@ -240,12 +242,6 @@ def get_gl_entry_dict(self):
 		# 'is_advance': 'No',
 		# 'transaction_currency': self.currency,
 		# 'transaction_exchange_rate': self.exchange_rate,
-		# Accounting Dimensions
-		# "donor": self.donor,
-		# "service_area": self.program,
-		# "subservice_area": self.subservice_area,
-		# "product": self.product,
-		# "cost_center": self.cost_center,
 	})
 	
 # It will use on on_cancel() function.
@@ -253,7 +249,6 @@ def delete_all_gl_entries(self):
 	if(not get_company_default(self.company, "custom_enable_asset_accounting", ignore_validation=True)): return
 	if(frappe.db.exists("GL Entry", {"voucher_no": self.name})):
 		frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
-
 
 # End Transit Process
 @frappe.whitelist()
@@ -307,4 +302,3 @@ def make_asset_movement_end_transit_entry(source_name, target_doc=None):
 	)
 
 	return doclist
-
