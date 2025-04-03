@@ -794,11 +794,14 @@ def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool, is
 		# conditions = " and is_written_off=0 "
 	result = frappe.db.sql(f""" 
                 Select 
-                	donor_id, idx, 
+                	donor_id, idx, (outstanding_amount-doubtful_debt_amount) as outstanding
                 From 
                 	`tabPayment Detail` 
                 Where
-                	(outstanding_amount-doubtful_debt_amount)>0 and parent='{donation_id}' {conditions} """, as_dict=0)
+                	outstanding_amount>0 and parent='{donation_id}' {conditions} 
+                Having 
+                	outstanding
+                """, as_dict=0)
 				
 	donors_list = {d[0] for d in result} if(result) else []
 	idx_list = {}
