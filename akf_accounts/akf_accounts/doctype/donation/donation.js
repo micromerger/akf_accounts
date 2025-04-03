@@ -777,7 +777,7 @@ function pledge_payment_entry(frm) {
             idx_list = data['idx_list'];
         }
     });
-
+    
     let d = new frappe.ui.Dialog({
         title: 'Payment Details',
         fields: [
@@ -865,6 +865,10 @@ function pledge_payment_entry(frm) {
 
                                 d.fields_dict.doubtful_debt_amount.value = data.doubtful_debt_amount;
                                 d.fields_dict.doubtful_debt_amount.refresh();
+
+                                d.fields_dict.paid_amount.value = data.remaining_amount;
+                                d.fields_dict.paid_amount.refresh();
+                                
 
                             }
                         })
