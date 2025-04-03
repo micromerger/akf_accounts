@@ -825,7 +825,7 @@ def get_idx_list_unknown(donation_id):
 def get_outstanding(filters):
     filters = ast.literal_eval(filters)
     result = frappe.db.sql(""" select outstanding_amount, doubtful_debt_amount,
-        (case when written_off=1 then (outstanding_amount-doubtful_debt_amount) else 0 end) remaining_amount
+        (case when is_written_off=1 then (outstanding_amount-doubtful_debt_amount) else 0 end) remaining_amount
         -- base_outstanding_amount
         from `tabPayment Detail` 
         where docstatus=1
