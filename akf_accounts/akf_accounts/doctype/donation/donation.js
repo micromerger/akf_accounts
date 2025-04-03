@@ -837,6 +837,19 @@ function pledge_payment_entry(frm) {
                 }
             },
             {
+                label: 'Remaining Amount.',
+                fieldname: 'remaining_amount',
+                fieldtype: 'Currency',
+                options: "currency",
+                default: 0,
+                reqd: 0,
+                read_only: 1,
+                onchange: function (val) {
+                    // let donor_id = d.fields_dict.donor_id.value;
+                    // console.log(donor_id)
+                }
+            },
+            {
                 label: '',
                 fieldname: 'col_break',
                 fieldtype: 'Column Break',
@@ -866,8 +879,8 @@ function pledge_payment_entry(frm) {
                                 d.fields_dict.doubtful_debt_amount.value = data.doubtful_debt_amount;
                                 d.fields_dict.doubtful_debt_amount.refresh();
 
-                                d.fields_dict.paid_amount.value = data.remaining_amount;
-                                d.fields_dict.paid_amount.refresh();
+                                d.fields_dict.remaining_amount.value = data.remaining_amount;
+                                d.fields_dict.remaining_amount.refresh();
                                 
 
                             }
@@ -884,10 +897,10 @@ function pledge_payment_entry(frm) {
                 default: 0,
                 reqd: 1,
                 onchange: function (val) {
-                    let outstanding_amount = d.fields_dict.outstanding_amount.value;
+                    let remaining_amount = d.fields_dict.remaining_amount.value;
                     let paid_amount = d.fields_dict.paid_amount.value;
-                    if (paid_amount > outstanding_amount) {
-                        frappe.msgprint("Paid amount must be less than or equal to outstanding amount!")
+                    if (paid_amount > remaining_amount) {
+                        frappe.msgprint("Paid amount must be less than or equal to remaining amount!")
                     }
                 }
             },
@@ -982,8 +995,8 @@ function pledge_payment_entry(frm) {
         size: 'small', // small, large, extra-large 
         primary_action_label: 'Create Payment Entry',
         primary_action(values) {
-            if (values.paid_amount > values.outstanding_amount) {
-                frappe.msgprint("Paid amount must be less than or equal to outstanding amount!")
+            if (values.paid_amount > values.remaining_amount) {
+                frappe.msgprint("Paid amount must be less than or equal to remaining amount!")
             }
             else if (values) {
                 let paid = values.paid_amount == values.outstanding_amount ? 1 : 0;
