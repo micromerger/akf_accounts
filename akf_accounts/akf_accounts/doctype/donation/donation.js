@@ -899,7 +899,7 @@ function pledge_payment_entry(frm) {
                 onchange: function (val) {
                     let remaining_amount = d.fields_dict.remaining_amount.value;
                     let paid_amount = d.fields_dict.paid_amount.value;
-
+                    remaining_amount = (remaining_amount==0)? d.fields_dict.outstanding_amount:remaining_amount;
                     const description = (paid_amount > remaining_amount)? `<b style="color: red;">Paid amount is exceeding remaining amount.<b>`: "<b></b>";  
                     d.fields_dict.paid_amount.df.description = description;
                     d.fields_dict.paid_amount.refresh();
