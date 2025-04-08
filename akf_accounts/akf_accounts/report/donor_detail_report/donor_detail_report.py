@@ -15,49 +15,23 @@ def execute(filters=None):
 
 def get_columns():
     columns = [
-        # _("Code") + ":Date:140",
-        _("Donor Name") + ":Data:140",
-        # _("Account") + ":Data:140",
+        _("Code") + ":Link/Donor:280",
+        _("Donor Name") + ":Data:280",
+        _("Account") + ":Data:280",
     ]
     return columns
 
 
 def get_data(filters):
-    result = get_query_result(filters)
-    return result
-
-
-def get_conditions(filters):
-    conditions = ""
-
-    # if filters.get("company"):
-    #     conditions += " AND company = %(company)s"
-    # if filters.get("applicant"):
-    #     conditions += " AND applicant = %(applicant)s"
-    # if filters.get("branch"):
-    #     conditions += " AND branch = %(branch)s"
-    # if filters.get("loan_type"):
-    #     conditions += " AND loan_type = %(loan_category)s"
-    # if filters.get("repayment_start_date"):
-    #     conditions += " AND repayment_start_date = %(repayment_start_date)s"
-
-    return conditions
-
-
-# code
-# account
-
-
-def get_query_result(filters):
     conditions = get_conditions(filters)
     result = frappe.db.sql(
         """
         SELECT 
-			donor_name            
+			name, donor_name, default_account            
         FROM 
             `tabDonor`
         WHERE
-            docstatus != 2
+            status = 'Active'
         {0}
     """.format(
             conditions if conditions else ""
@@ -66,3 +40,14 @@ def get_query_result(filters):
         as_dict=0,
     )
     return result
+
+
+def get_conditions(filters):
+    conditions = ""
+
+    if filters.get("donor"):
+        conditions += " AND name = %(donor)s"
+
+    return conditions
+
+

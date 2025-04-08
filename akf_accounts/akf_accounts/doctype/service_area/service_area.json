@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "service_name",
+  "type",
   "column_break_rsrf",
   "disabled",
   "section_break_hrld",
@@ -53,11 +54,18 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Restricted\nUnrestricted",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-17 12:00:02.541390",
+ "modified": "2025-04-07 16:17:30.417714",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Service Area",
