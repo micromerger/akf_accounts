@@ -109,7 +109,7 @@ def get_fund_data(filters, fund_type):
             gle.company, gle.cost_center, sa.name AS service_area_name,
             SUM(CASE WHEN gle.posting_date < %(from_date)s THEN gle.credit - gle.debit ELSE 0 END) AS opening_balance,
             SUM(CASE WHEN gle.voucher_type = 'Payment Entry' AND gle.posting_date BETWEEN %(from_date)s AND %(to_date)s THEN gle.credit - gle.debit ELSE 0 END) AS receipts,
-            SUM(CASE WHEN acc.root_type = 'Expense' AND gle.posting_date BETWEEN %(from_date)s AND %(to_date)s THEN gle.credit - gle.debit ELSE 0 END) AS expenditure,
+            SUM(CASE WHEN acc.root_type = 'Expense' AND gle.posting_date BETWEEN %(from_date)s AND %(to_date)s THEN gle.debit - gle.credit ELSE 0 END) AS expenditure,
             SUM(CASE WHEN gle.voucher_type = 'Funds Transfer' AND gle.posting_date BETWEEN %(from_date)s AND %(to_date)s THEN gle.debit ELSE 0 END) AS funds_transfer_sent,
             SUM(CASE WHEN gle.voucher_type = 'Funds Transfer' AND gle.posting_date BETWEEN %(from_date)s AND %(to_date)s THEN gle.credit ELSE 0 END) AS funds_transfer_receive,
             SUM(CASE WHEN gle.posting_date <= %(to_date)s THEN gle.credit - gle.debit ELSE 0 END) AS closing_balance

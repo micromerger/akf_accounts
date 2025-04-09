@@ -37,14 +37,14 @@ frappe.query_reports["FP Summary"] = {
 			"label": __("From Date"),
 			"fieldtype": "Date",
 			"default": frappe.datetime.get_today(),
-			"req": 1
+			"reqd": 1
 		},	
 		{
 			"fieldname":"to_date",
 			"label": __("To Date"),
 			"fieldtype": "Date",
 			"default": frappe.datetime.get_today(),
-			"req": 1
+			"reqd": 1
 		},	
 	]
 };
