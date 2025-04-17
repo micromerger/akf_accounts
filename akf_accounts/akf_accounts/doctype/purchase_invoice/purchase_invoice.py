@@ -60,6 +60,10 @@ from akf_accounts.utils.mortization import (
 	make_mortization_gl_entries,
 	delete_all_gl_entries
 )
+from akf_accounts.utils.purchase_on_behalf_of import (
+	make_on_behalf_of_gl_entries
+)
+
 class PurchaseInvoice(BuyingController):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -736,7 +740,9 @@ class PurchaseInvoice(BuyingController):
 		# Aqsa Abbasi, Nabeel Saleem
 		# make_donor_gl_entries(self)
 		# nabeel saleem, 23-02-2025
-		make_mortization_gl_entries(self)
+		# make_mortization_gl_entries(self)
+		# nabeel saleem, 11-04-2025
+		make_on_behalf_of_gl_entries(self)
 
 	def on_update_after_submit(self):
 		if hasattr(self, "repost_required"):

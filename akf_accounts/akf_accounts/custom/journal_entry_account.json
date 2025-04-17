@@ -545,7 +545,7 @@
    "property": "options",
    "property_type": "Text",
    "row_name": null,
-   "value": "\nDonation\nSales Invoice\nPurchase Invoice\nJournal Entry\nSales Order\nPurchase Order\nExpense Claim\nAsset\nLoan\nPayroll Entry\nEmployee Advance\nExchange Rate Revaluation\nInvoice Discounting\nFees\nFull and Final Statement\nPayment Entry\nLoan Interest Accrual"
+   "value": "\nDonation\nSales Invoice\nPurchase Invoice\nJournal Entry\nSales Order\nPurchase Order\nExpense Claim\nAsset\nLoan\nPayroll Entry\nEmployee Advance\nExchange Rate Revaluation\nInvoice Discounting\nFees\nFull and Final Statement\nPayment Entry\nLoan Interest Accrual\nGratuity"
   }
  ],
  "sync_on_migrate": 1

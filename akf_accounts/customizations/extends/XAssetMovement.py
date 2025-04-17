@@ -26,16 +26,6 @@ class AssetMovementExtendedClass(AssetMovement):
         debit_account1 = company.custom_default_regional_inventory_fund_account     #Asset worth debited
         debit_account2 = company.accumulated_depreciation_account                 #Asset worth debited
         debit_account3 = company.custom_default_asset_nbv_account                 #Asset worth debited
-        # frappe.msgprint(frappe.as_json("credit_account1"))
-        # frappe.msgprint(frappe.as_json(credit_account1))
-        # frappe.msgprint(frappe.as_json("credit_account2"))
-        # frappe.msgprint(frappe.as_json(credit_account2))
-        # frappe.msgprint(frappe.as_json("debit_account1"))
-        # frappe.msgprint(frappe.as_json(debit_account1))
-        # frappe.msgprint(frappe.as_json("debit_account2"))
-        # frappe.msgprint(frappe.as_json(debit_account2))
-        # frappe.msgprint(frappe.as_json("debit_account3"))
-        # frappe.msgprint(frappe.as_json(debit_account3))
 
         if not credit_account1 or not debit_account1 or not debit_account2 or not debit_account3:
             frappe.throw(_("The company does not have the required accounts configured."))

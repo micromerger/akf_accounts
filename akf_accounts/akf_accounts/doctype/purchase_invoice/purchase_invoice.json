@@ -113,6 +113,28 @@
   "pricing_rules",
   "raw_materials_supplied",
   "supplied_items",
+  "expense_for_tab",
+  "on_behalf_of",
+  "section_break_hfys",
+  "purchasing_branch",
+  "purchasing_supplier",
+  "purchasing_supplier_name",
+  "purchasing_customer",
+  "column_break_ilgw",
+  "receiving_branch",
+  "receiving_supplier",
+  "receiving_supplier_name",
+  "receiving_customer",
+  "expense_by_branch_accounts_section",
+  "expense_account",
+  "column_break_mntf",
+  "equity_account",
+  "column_break_dzva",
+  "income_account",
+  "expense_for_branch_accounts_section",
+  "inter_branch_receivable_account",
+  "column_break_ulcj",
+  "inter_branch_payable_account",
   "payments_tab",
   "payments_section",
   "mode_of_payment",
@@ -1628,13 +1650,141 @@
    "label": "Donor Balance",
    "options": "Program Details",
    "read_only": 1
+  },
+  {
+   "fieldname": "expense_for_tab",
+   "fieldtype": "Tab Break",
+   "label": "Expense For"
+  },
+  {
+   "default": "0",
+   "fieldname": "on_behalf_of",
+   "fieldtype": "Check",
+   "label": "On Behalf Of"
+  },
+  {
+   "fieldname": "expense_by_branch_accounts_section",
+   "fieldtype": "Section Break",
+   "label": "Expense on Behalf (Accounts)"
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Expense Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_mntf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "equity_account",
+   "fieldtype": "Link",
+   "label": "Equity Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "income_account",
+   "fieldtype": "Link",
+   "label": "Income Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "expense_for_branch_accounts_section",
+   "fieldtype": "Section Break",
+   "label": "Receivable & Payable  (Accounts)"
+  },
+  {
+   "fieldname": "column_break_ulcj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_hfys",
+   "fieldtype": "Section Break",
+   "label": "Branches Info"
+  },
+  {
+   "fieldname": "column_break_ilgw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inter_branch_receivable_account",
+   "fieldtype": "Link",
+   "label": "Inter Branch Receivable Account (Branch B Customer)",
+   "options": "Account"
+  },
+  {
+   "fieldname": "inter_branch_payable_account",
+   "fieldtype": "Link",
+   "label": "Inter Branch Payable Account (Branch A Supplier))",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_dzva",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "purchasing_branch",
+   "fieldtype": "Link",
+   "label": "Purchasing Branch",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "receiving_branch",
+   "fieldtype": "Link",
+   "label": "Receiving Branch",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "purchasing_supplier",
+   "fieldtype": "Link",
+   "label": "Purchasing Supplier",
+   "options": "Supplier",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchasing_customer",
+   "fieldtype": "Link",
+   "label": "Purchasing Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receiving_supplier",
+   "fieldtype": "Link",
+   "label": "Receiving Supplier",
+   "options": "Supplier",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receiving_customer",
+   "fieldtype": "Link",
+   "label": "Receiving Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "purchasing_supplier.supplier_name",
+   "fetch_if_empty": 1,
+   "fieldname": "purchasing_supplier_name",
+   "fieldtype": "Data",
+   "label": "Purchasing Supplier Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "receiving_supplier.supplier_name",
+   "fetch_if_empty": 1,
+   "fieldname": "receiving_supplier_name",
+   "fieldtype": "Data",
+   "label": "Receiving Supplier Name",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-12 15:24:22.889859",
+ "modified": "2025-04-11 17:55:31.499778",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Purchase Invoice",

@@ -62,8 +62,11 @@ def get_conditions(filters):
 def get_query_result(filters):
     conditions = get_conditions(filters)
     order_by_branches = ""
+    group_by_branches = ""
     if filters.get("group_by_branches"):
         order_by_branches = "ORDER BY pd.cost_center, pd.program"
+        # group_by_branches = "GROUP BY pd.cost_center,pd.program"
+
     result = frappe.db.sql(
         """
         SELECT posting_date,pd.donor_id,pd.program,pd.subservice_area, pd.product, pd.project_id,d.name,pd.receipt_number,db.donation_amount,

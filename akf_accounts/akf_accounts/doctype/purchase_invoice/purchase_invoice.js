@@ -204,6 +204,7 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 		this.frm.set_df_property("tax_withholding_category", "hidden", doc.apply_tds ? 0 : 1);
 		erpnext.accounts.unreconcile_payment.add_unreconcile_btn(me.frm);
 		this.frm.trigger("change_donor");
+		this.frm.trigger("expense_on_behalf_of");
 	}
 
 	unblock_invoice() {
@@ -437,6 +438,14 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 		frappe.require("/assets/akf_accounts/js/customizations/change_donor_dialog.js", function () {
 			if (typeof make_change_donor_dialog === "function") {
 				make_change_donor_dialog(cur_frm);
+			}
+		});
+	}
+	
+	expense_on_behalf_of(){
+		frappe.require("/assets/akf_accounts/js/customizations/expense_on_behalf_of.js", function () {
+			if (typeof make_expense_on_behalf_of === "function") {
+				make_expense_on_behalf_of(cur_frm);
 			}
 		});
 	}
@@ -698,4 +707,27 @@ frappe.ui.form.on("Purchase Invoice", {
 			});
 		}
 	},
+	purchasing_branch: function(frm){
+		set_supplier_and_customer(frm, frm.doc.purchasing_branch, "purchasing_supplier", "purchasing_customer");
+	},
+	receiving_branch: function(frm){
+		set_supplier_and_customer(frm, frm.doc.receiving_branch, "receiving_supplier", "receiving_customer");
+	},
 })
+
+function set_supplier_and_customer(frm, cost_center, sfield, cfield){
+	const pb = (cost_center=="")? false: true;
+	if(pb){
+		frappe.db.get_value('Supplier', {"cost_center": cost_center}, 'name')
+		.then(r => {
+			frm.set_value(sfield, r.message.name);
+		});
+		frappe.db.get_value('Customer', {"cost_center": cost_center}, 'name')
+		.then(r => {
+			frm.set_value(cfield, r.message.name);
+		});
+	}else{
+		frm.set_value(sfield, null);
+		frm.set_value(cfield, null);
+	}
+}

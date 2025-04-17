@@ -19,6 +19,20 @@ class XAssetInvenPurchase(PurchaseReceipt):
 		self.set_dimensions()
 		self.get_balance_dimensions(is_valid=True)
 		self.validate_balance_limit()
+		self.soft_hard_financial_closure() #mubarrim
+		
+	def soft_hard_financial_closure(self): #By Mubarrim
+		for row in self.custom_program_details:
+			financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
+			if(financial_status in ["Soft","Hard"]):
+				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
+
+		for row in self.items:
+			if row.project:
+				financial_status=frappe.db.get_value("Project",row.project,"custom_financial_close")
+				if(financial_status in ["Soft","Hard"]):
+					frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.project}")
+
 
 	def on_submit(self):
 		super().on_submit()

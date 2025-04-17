@@ -22,7 +22,6 @@ class XAssetInvenPurchase(XPurchaseReceipt):
         # frappe.msgprint("This is on_submit extended code. ")
         self.delete_all_gl_entries()
 
-        
     def delete_all_gl_entries(self):
         frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
 
@@ -84,6 +83,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
             'project': self.project,
             'company': self.company,
         })
+    
     def create_donor_gl_entries_from_purchase_receipt(self):
         inventory_account = frappe.db.get_value("Company", {"name": self.company}, "custom_default_inventory_fund_account")
         last_donor_not_fully_used = None
@@ -480,6 +480,7 @@ class XAssetInvenPurchase(XPurchaseReceipt):
                 frappe.msgprint(f"The last donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
             frappe.msgprint("GL Entries created successfully.")
+    
     def donor_list_data_from_purchase_receipt(self):
         donor_list = []
         total_amount = 0
@@ -540,7 +541,6 @@ class XAssetInvenPurchase(XPurchaseReceipt):
             "total_amount": total_amount,
             "donor_list": donor_list  
         }
-    
 
 @frappe.whitelist()
 def donor_list_data(doc):
