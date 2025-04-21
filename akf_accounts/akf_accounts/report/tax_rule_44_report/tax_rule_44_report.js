@@ -46,5 +46,10 @@ frappe.query_reports["Tax Rule 44 Report"] = {
 			"options": "Supplier\nAccount",
 			"default": "Supplier"
 		},
+		{
+			"fieldname":"deposit_date",
+			"label": __("Deposit Date"),
+			"fieldtype": "Date"
+		},
 	]
 };

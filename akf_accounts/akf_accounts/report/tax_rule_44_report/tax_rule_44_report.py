@@ -122,6 +122,8 @@ def get_conditions(filters):
         conditions += " AND gle.cost_center = %(branch)s"
     if filters.get("account"):
         conditions += " AND gle.account = %(account)s"
+    if filters.get("deposit_date"):
+        conditions += " AND pe.custom_deposit_date = %(deposit_date)s"
 
     return conditions
 
