@@ -181,7 +181,7 @@ def get_query_result_for_account(filters):
                 pe.paid_amount,
                 atc.tax_amount,
                 gle.posting_date, 
-                atc.rate, 
+                atc.custom_wh_rate, 
                 pe.tax_withholding_category, 
                 pe.reference_no, 
                 atc.tax_amount, 
