@@ -2493,17 +2493,18 @@ def get_payment_entry(
 	return pe
 # Nabeel Saleem, 24-03-2025
 def set_accounting_dimensions(pe, doc):
-    for row in doc.program_details:
-        pe.service_area = row.pd_service_area
-        pe.subservice_area = row.pd_subservice_area
-        pe.product = row.pd_product
-        pe.project = row.pd_project
-        pe.cost_center = row.pd_cost_center
-        pe.donor = row.pd_donor
-        break
-    return pe
-    
-        
+	if(not hasattr(doc, "program_details")): return
+	for row in doc.program_details:
+		pe.service_area = row.pd_service_area
+		pe.subservice_area = row.pd_subservice_area
+		pe.product = row.pd_product
+		pe.project = row.pd_project
+		pe.cost_center = row.pd_cost_center
+		pe.donor = row.pd_donor
+		break
+	return pe
+	
+		
 
 def update_accounting_dimensions(pe, doc):
 	"""
