@@ -125,7 +125,7 @@ class XPaymentEntry(AccountsController):
 		# self.update_status(cancelled=False)
 		# Nabeel Saleem, 07-01-2025
 		updating_donation(self)
-		validate_cheque_leaf(self)
+		self.validate_cheque_leaf()
 		self.set_cheque_leaf_cleared()
 		self.make_retention_journal_entry()
 		# Nabeel Saleem, 06-01-2025
