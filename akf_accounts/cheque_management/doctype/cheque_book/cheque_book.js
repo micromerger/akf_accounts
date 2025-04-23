@@ -11,7 +11,7 @@ frappe.ui.form.on("Cheque Book", {
       __("New Cheque Book"),
       function () {
         if(frm.doc.branch==undefined || frm.doc.branch==""){
-            frappe.msgprint("Branch is required in `` to proceed.", title="Bank Account")
+            frappe.msgprint("Branch is required to proceed.", title="Bank Account")
         }else{
           frappe.call({
             method:
