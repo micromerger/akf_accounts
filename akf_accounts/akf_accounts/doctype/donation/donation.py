@@ -340,22 +340,22 @@ class Donation(Document):
 			args.update(c_args)
 			if(self.is_return): # debit
 				args.update({
-        			"debit": row.base_net_amount,
+					"debit": row.base_net_amount,
 					"debit_in_account_currency": row.net_amount if(get_account_currency(row)) else row.base_net_amount,
 					"debit_in_transaction_currency": row.net_amount,
-           		})
+		   		})
 			elif(self.unknown_to_known): # credit
 				args.update({
-        			"credit": row.base_net_amount,
+					"credit": row.base_net_amount,
 					"credit_in_account_currency": row.net_amount if(get_account_currency(row)) else row.base_net_amount,
 					"credit_in_transaction_currency": row.net_amount,
-           		})
+		   		})
 			else: # credit
 				args.update({
-        			"credit": row.base_net_amount,
+					"credit": row.base_net_amount,
 					"credit_in_account_currency": row.net_amount if(get_account_currency(row)) else row.base_net_amount,
 					"credit_in_transaction_currency": row.net_amount,
-           		})
+		   		})
 
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
@@ -594,6 +594,25 @@ class Donation(Document):
 			doc.submit()
 
 	def validate_is_return(self):
+		def stop_exceeding_donation_amount(row):
+			result = frappe.db.sql(f"""
+				select donation_amount 
+				from `tabPayment Detail` 
+				where 
+					docstatus=1
+					and donor_id='{row.donor_id}'
+					and pay_service_area='{row.pay_service_area}'
+					and pay_subservice_area='{row.pay_subservice_area}'
+					and pay_product='{row.pay_product}'
+					and project_id='{row.project_id}'
+					and random_id = '{row.random_id}'
+					and parent= '{self.return_against}'
+			""")
+			if(result):
+				donation_amount = result[0][0]
+				if(row.donation_amount>donation_amount):
+					frappe.throw(f" <b>Row #{row.idx}: </b> [{row.donor_name}]<br>, donation return amount is exceeding the actual donation.", title='Return Donation')
+		
 		if(self.is_return): 
 			# if(len(self.payment_detail)>1):
 				# frappe.throw('Only [1] donor is allowed.', title='Is Return (Credit Note)')
@@ -613,6 +632,8 @@ class Donation(Document):
 						and pd.random_id = '{row.random_id}'
 						and pd.parent!= '{self.name}' """)):
 					error_msg += f" <b>Row #{row.idx}: </b> [{row.donor_name}]<br>"
+				stop_exceeding_donation_amount(row)
+			
 			if(error_msg!=""):	
 				frappe.throw(error_msg, title='Return entries already exist.')
 
@@ -793,15 +814,15 @@ def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool, is
 		pass
 		# conditions = " and is_written_off=0 "
 	result = frappe.db.sql(f""" 
-                Select 
-                	donor_id, idx, (outstanding_amount-doubtful_debt_amount) as remaining_amount
-                From 
-                	`tabPayment Detail` 
-                Where
-                	outstanding_amount>0 and parent='{donation_id}' {conditions} 
-                Having 
-                	remaining_amount
-                """, as_dict=0)
+				Select 
+					donor_id, idx, (outstanding_amount-doubtful_debt_amount) as remaining_amount
+				From 
+					`tabPayment Detail` 
+				Where
+					outstanding_amount>0 and parent='{donation_id}' {conditions} 
+				Having 
+					remaining_amount
+				""", as_dict=0)
 				
 	donors_list = {d[0] for d in result} if(result) else []
 	idx_list = {}
@@ -814,33 +835,33 @@ def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool, is
 
 @frappe.whitelist()
 def get_idx_list_unknown(donation_id):
-    result = frappe.db.sql(f""" 
-        	select idx 
-         	from `tabPayment Detail` 
-          	where paid = 0 and unknown_to_known=0 and parent='{donation_id}' """, as_dict=0)
-    idx_list = sorted([r[0] for r in result])
-    return idx_list
+	result = frappe.db.sql(f""" 
+			select idx 
+		 	from `tabPayment Detail` 
+		  	where paid = 0 and unknown_to_known=0 and parent='{donation_id}' """, as_dict=0)
+	idx_list = sorted([r[0] for r in result])
+	return idx_list
 
 @frappe.whitelist()
 def get_outstanding(filters):
-    filters = ast.literal_eval(filters)
-    result = frappe.db.sql(""" select outstanding_amount, doubtful_debt_amount,
-        (case when is_written_off=1 then (outstanding_amount-doubtful_debt_amount) else 0 end) remaining_amount
-        -- base_outstanding_amount
-        from `tabPayment Detail` 
-        where docstatus=1
-        and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)
-    args = {
+	filters = ast.literal_eval(filters)
+	result = frappe.db.sql(""" select outstanding_amount, doubtful_debt_amount,
+		(case when is_written_off=1 then (outstanding_amount-doubtful_debt_amount) else 0 end) remaining_amount
+		-- base_outstanding_amount
+		from `tabPayment Detail` 
+		where docstatus=1
+		and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)
+	args = {
 		"outstanding_amount": 0.0,
 		"doubtful_debt_amount": 0.0,
 	}
-    if(result):
-        args.update({
+	if(result):
+		args.update({
 			"outstanding_amount": result[0][0],
 			"doubtful_debt_amount": result[0][1],
 			"remaining_amount": result[0][2],
 		})
-    return args
+	return args
 
 
 @frappe.whitelist()
@@ -955,140 +976,140 @@ def return_payment_entry(doc):
 
 @frappe.whitelist()
 def get_min_max_percentage(service_area, account):
-    result = frappe.db.sql("""
-        SELECT min_percent, max_percent
-        FROM `tabDeduction Details`
-        WHERE parent = %s AND account = %s
-    """, (service_area, account), as_dict=True)
-    if result:
-        return result[0].min_percent, result[0].max_percent
-    else:
-        return None, None
+	result = frappe.db.sql("""
+		SELECT min_percent, max_percent
+		FROM `tabDeduction Details`
+		WHERE parent = %s AND account = %s
+	""", (service_area, account), as_dict=True)
+	if result:
+		return result[0].min_percent, result[0].max_percent
+	else:
+		return None, None
 
 @frappe.whitelist()
 def set_unknown_to_known(name, values):
-    
-    """  
-    => Update donor information in these doctypes.
-        Donation
-        Payment Detail [child table]
-        GL Entry
-        Payment Ledger Entry
-        Payment Entry
-    """ 
-    import ast
-    values = frappe._dict(ast.literal_eval(values))
-    
-    pid = frappe.db.get_value("Payment Detail", 
-        {"parent": name, "idx": values.serial_no}, ["name", "payment_entry"], as_dict=1)
+	
+	"""  
+	=> Update donor information in these doctypes.
+		Donation
+		Payment Detail [child table]
+		GL Entry
+		Payment Ledger Entry
+		Payment Entry
+	""" 
+	import ast
+	values = frappe._dict(ast.literal_eval(values))
+	
+	pid = frappe.db.get_value("Payment Detail", 
+		{"parent": name, "idx": values.serial_no}, ["name", "payment_entry"], as_dict=1)
 
-    if(not pid): frappe.throw(f"Payment Detail Serial No: {values.serial_no}", title="Not Found")
-    
-    info = frappe.db.get_value("Donor", values.donor, "*", as_dict=1)
+	if(not pid): frappe.throw(f"Payment Detail Serial No: {values.serial_no}", title="Not Found")
+	
+	info = frappe.db.get_value("Donor", values.donor, "*", as_dict=1)
 
-    # Update Payment Details
-    frappe.db.sql(f""" 
-        Update 
-            `tabPayment Detail`
-        Set 
-            reverse_donor = 'Unknown To Known', 
-            donor_id = '{info.name}', donor_name='{info.donor_name}',
-            donor = '{info.name}',
-            donor_type='{info.donor_type if (info.donor_type) else ""}', 
-            contact_no='{info.contact_no if (info.contact_no) else "" }',  
-            address= '{info.address if (info.address) else "" }', 
-            email='{info.email if (info.email) else ""}',
-            city = '{info.city if(info.city) else ""}'
-        Where 
-            docstatus=1
-            and parent = '{name}'
-            and name = '{pid.name}'
-     """)
+	# Update Payment Details
+	frappe.db.sql(f""" 
+		Update 
+			`tabPayment Detail`
+		Set 
+			reverse_donor = 'Unknown To Known', 
+			donor_id = '{info.name}', donor_name='{info.donor_name}',
+			donor = '{info.name}',
+			donor_type='{info.donor_type if (info.donor_type) else ""}', 
+			contact_no='{info.contact_no if (info.contact_no) else "" }',  
+			address= '{info.address if (info.address) else "" }', 
+			email='{info.email if (info.email) else ""}',
+			city = '{info.city if(info.city) else ""}'
+		Where 
+			docstatus=1
+			and parent = '{name}'
+			and name = '{pid.name}'
+	 """)
 
-    # Update gl entry for debit
-    frappe.db.sql(f""" 
-    Update 
-        `tabGL Entry`
-    Set 
-        party = '{info.name}',
-        donor = '{info.name}',
-        reverse_donor = 'Unknown To Known'
-    Where 
-        docstatus=1
-        and ifnull(party, "")!=""
-        and voucher_no = '{name}'
-        and voucher_detail_no = '{pid.name}'
-    """)
+	# Update gl entry for debit
+	frappe.db.sql(f""" 
+	Update 
+		`tabGL Entry`
+	Set 
+		party = '{info.name}',
+		donor = '{info.name}',
+		reverse_donor = 'Unknown To Known'
+	Where 
+		docstatus=1
+		and ifnull(party, "")!=""
+		and voucher_no = '{name}'
+		and voucher_detail_no = '{pid.name}'
+	""")
 
-    # Update gl entry for credit
-    frappe.db.sql(f""" 
-    Update 
-        `tabGL Entry`
-    Set 
-        donor = '{info.name}',
-        reverse_donor = 'Unknown To Known'
-    Where 
-        docstatus=1
-        and voucher_no = '{name}'
-        and voucher_detail_no = '{pid.name}'
-    """)
+	# Update gl entry for credit
+	frappe.db.sql(f""" 
+	Update 
+		`tabGL Entry`
+	Set 
+		donor = '{info.name}',
+		reverse_donor = 'Unknown To Known'
+	Where 
+		docstatus=1
+		and voucher_no = '{name}'
+		and voucher_detail_no = '{pid.name}'
+	""")
 
-    frappe.db.sql(f""" 
-    Update 
-        `tabDeduction Breakeven`
-    Set
-        donor = '{info.name}',
-        reverse_donor = 'Unknown To Known'
-    Where 
-        docstatus=1
-        and parent = '{name}'
-        and payment_detail_id = '{values.serial_no}'
-    """)
+	frappe.db.sql(f""" 
+	Update 
+		`tabDeduction Breakeven`
+	Set
+		donor = '{info.name}',
+		reverse_donor = 'Unknown To Known'
+	Where 
+		docstatus=1
+		and parent = '{name}'
+		and payment_detail_id = '{values.serial_no}'
+	""")
 
-    frappe.db.sql(f""" 
-    Update 
-        `tabGL Entry`
-    Set 
-        donor = '{info.name}',
-        reverse_donor = 'Unknown To Known'
-    Where 
-        docstatus=1
-        and voucher_no = '{name}'
-        and voucher_detail_no in (select name from `tabDeduction Breakeven` where docstatus=1 and parent = '{name}' and payment_detail_id = '{values.serial_no}')
-    """)
+	frappe.db.sql(f""" 
+	Update 
+		`tabGL Entry`
+	Set 
+		donor = '{info.name}',
+		reverse_donor = 'Unknown To Known'
+	Where 
+		docstatus=1
+		and voucher_no = '{name}'
+		and voucher_detail_no in (select name from `tabDeduction Breakeven` where docstatus=1 and parent = '{name}' and payment_detail_id = '{values.serial_no}')
+	""")
 
-    frappe.db.sql(f""" 
-    Update 
-        `tabPayment Ledger Entry`
-    Set 
-        donor = '{info.name}', party = '{info.name}', reverse_donor = 'Unknown To Known'
-    Where 
-        docstatus=1
-        and against_voucher_no = '{name}'
-    """)
+	frappe.db.sql(f""" 
+	Update 
+		`tabPayment Ledger Entry`
+	Set 
+		donor = '{info.name}', party = '{info.name}', reverse_donor = 'Unknown To Known'
+	Where 
+		docstatus=1
+		and against_voucher_no = '{name}'
+	""")
 
-    frappe.db.sql(f""" 
-    Update 
-        `tabPayment Entry`
-    Set 
-        party = '{info.name}', party_name= '{info.donor_name}', donor='{info.name}', reverse_donor = 'Unknown To Known'
-    Where 
-        docstatus=1
-        and name = '{pid.payment_entry}'
-    """)
+	frappe.db.sql(f""" 
+	Update 
+		`tabPayment Entry`
+	Set 
+		party = '{info.name}', party_name= '{info.donor_name}', donor='{info.name}', reverse_donor = 'Unknown To Known'
+	Where 
+		docstatus=1
+		and name = '{pid.payment_entry}'
+	""")
 
-    frappe.db.sql(f""" 
-    Update 
-        `tabGL Entry`
-    Set 
-        party = '{info.name}', donor='{info.name}', reverse_donor = 'Unknown To Known'
-    Where 
-        docstatus=1
-        and voucher_no = '{pid.payment_entry}'
-    """)
+	frappe.db.sql(f""" 
+	Update 
+		`tabGL Entry`
+	Set 
+		party = '{info.name}', donor='{info.name}', reverse_donor = 'Unknown To Known'
+	Where 
+		docstatus=1
+		and voucher_no = '{pid.payment_entry}'
+	""")
 
 
-    frappe.msgprint("Donor id, updated in [<b>Payment Detail, Deduction Breakeven, GL Entry, Payment Entry, Payment Ledger Entry</b>] accounting dimensions/doctypes.", alert=1)
+	frappe.msgprint("Donor id, updated in [<b>Payment Detail, Deduction Breakeven, GL Entry, Payment Entry, Payment Ledger Entry</b>] accounting dimensions/doctypes.", alert=1)
 
 @frappe.whitelist()
 def get_total_donors_return(return_against):
@@ -1164,93 +1185,93 @@ def verify_payment_entry(doctype, reference_name, fieldname):
 @frappe.whitelist()
 def cron_for_notify_overdue_tasks():	#Mubashir
 
-    processed_projects = set()    
-    donation_docs = frappe.get_all(
-        'Donation',
-        filters={
-            'docstatus': 1,
-            'contribution_type': 'Donation',
-        },
-        fields=['name'] 
-    )
-    
-    for donation in donation_docs:
-        donation_doc = frappe.get_doc('Donation', donation['name'])
-        for payment in donation_doc.payment_detail:
-            project = payment.get('project')
-            
-            if project and project not in processed_projects:
-                processed_projects.add(project)                
-                notify_overdue_tasks(project)
+	processed_projects = set()    
+	donation_docs = frappe.get_all(
+		'Donation',
+		filters={
+			'docstatus': 1,
+			'contribution_type': 'Donation',
+		},
+		fields=['name'] 
+	)
+	
+	for donation in donation_docs:
+		donation_doc = frappe.get_doc('Donation', donation['name'])
+		for payment in donation_doc.payment_detail:
+			project = payment.get('project')
+			
+			if project and project not in processed_projects:
+				processed_projects.add(project)                
+				notify_overdue_tasks(project)
 
 @frappe.whitelist()
 def notify_overdue_tasks(project):	#Mubashir
-    """
-    Notify users with the 'Project Manager' role about overdue tasks related to a specific project.
-    """
-    project_name = frappe.db.get_value("Project", project, "project_name") or project
+	"""
+	Notify users with the 'Project Manager' role about overdue tasks related to a specific project.
+	"""
+	project_name = frappe.db.get_value("Project", project, "project_name") or project
 
-    overdue_tasks = frappe.get_all(
-        "Task",
-        filters={
-            "project": project,
-            "status": "Overdue"
-        },
-        fields=["name", "subject", "status", "exp_end_date"]
-    )
+	overdue_tasks = frappe.get_all(
+		"Task",
+		filters={
+			"project": project,
+			"status": "Overdue"
+		},
+		fields=["name", "subject", "status", "exp_end_date"]
+	)
 
-    if overdue_tasks:
-        task_details = "".join(
-            f"<li><b>{task['subject']}</b> (Status: {task['status']}, Due Date: {task['exp_end_date']})</li>"
-            for task in overdue_tasks
-        )
-        project_users = frappe.get_all(
-            "Project User",
-            filters={"parent": project},
-            fields=["email", "full_name"]
-        )
+	if overdue_tasks:
+		task_details = "".join(
+			f"<li><b>{task['subject']}</b> (Status: {task['status']}, Due Date: {task['exp_end_date']})</li>"
+			for task in overdue_tasks
+		)
+		project_users = frappe.get_all(
+			"Project User",
+			filters={"parent": project},
+			fields=["email", "full_name"]
+		)
 
-        for user in project_users:
-            email = user.get("email")
-            full_name = user.get("full_name", "Project Manager")
+		for user in project_users:
+			email = user.get("email")
+			full_name = user.get("full_name", "Project Manager")
 
-            # Check if the user has the 'Project Manager' role
-            if email:
-                roles = frappe.get_all(
-                    "Has Role",
-                    filters={"parent": email, "role": "Projects Manager"},
-                    fields=["role"]
-                )
-                if roles:
-                    subject = f"Overdue Tasks Alert for Project: {project_name}"
-                    message = f"""
-                    Dear {full_name},<br><br>
-                    The following tasks in the project <b>{project_name}</b> are overdue:<br>
-                    <ul>{task_details}</ul>
-                    Please take necessary actions to resolve these tasks.<br><br>
-                    Regards,<br>
-                    Project Management System
-                    """
-                    print(f'sending email to {email}')
-                    try:
-                        frappe.sendmail(
-                            recipients=email,
-                            subject=subject,
-                            message=message
-                        )
-                        print(f'email sent to {email}')
-                    except Exception as e:
-                        frappe.log_error(message=str(e), title="Error in Task Overdue Notification")
+			# Check if the user has the 'Project Manager' role
+			if email:
+				roles = frappe.get_all(
+					"Has Role",
+					filters={"parent": email, "role": "Projects Manager"},
+					fields=["role"]
+				)
+				if roles:
+					subject = f"Overdue Tasks Alert for Project: {project_name}"
+					message = f"""
+					Dear {full_name},<br><br>
+					The following tasks in the project <b>{project_name}</b> are overdue:<br>
+					<ul>{task_details}</ul>
+					Please take necessary actions to resolve these tasks.<br><br>
+					Regards,<br>
+					Project Management System
+					"""
+					print(f'sending email to {email}')
+					try:
+						frappe.sendmail(
+							recipients=email,
+							subject=subject,
+							message=message
+						)
+						print(f'email sent to {email}')
+					except Exception as e:
+						frappe.log_error(message=str(e), title="Error in Task Overdue Notification")
 #Mubashir Bashir End 9-12-24
 
 """ Doubtful Debtors """
 @frappe.whitelist()
 def get_donation_details(filters):
-    filters = ast.literal_eval(filters)
-    return frappe.db.sql(""" select donation_amount, outstanding_amount, doubtful_debt_amount, bad_debt_expense, provision_doubtful_debt
-        from `tabPayment Detail` 
-        where docstatus=1
-        and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
+	filters = ast.literal_eval(filters)
+	return frappe.db.sql(""" select donation_amount, outstanding_amount, doubtful_debt_amount, bad_debt_expense, provision_doubtful_debt
+		from `tabPayment Detail` 
+		where docstatus=1
+		and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
 
 # @frappe.whitelist()
 # def record_doubtful_debt(doc, values):
