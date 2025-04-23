@@ -11,8 +11,9 @@ frappe.ui.form.on("Cheque Book", {
       __("New Cheque Book"),
       function () {
         if(frm.doc.branch==undefined || frm.doc.branch==""){
-            frappe.msgprint("Branch is required to proceed.", title="Bank Account")
+            error_msg = 'In `Bank Account`, a branch-code is required to proceed further.';
         }else{
+          error_msg = ``;
           frappe.call({
             method:
               "akf_accounts.cheque_management.doctype.cheque_book.cheque_book.create_cheque_leaf",
@@ -38,6 +39,7 @@ frappe.ui.form.on("Cheque Book", {
             },
           });
         }
+        frm.set_intro(error_msg, 'red');
       },
       __("Create")
     );
