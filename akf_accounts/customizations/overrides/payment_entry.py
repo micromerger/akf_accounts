@@ -104,6 +104,8 @@ class XPaymentEntry(AccountsController):
 		self.ensure_supplier_is_not_blocked()
 		self.set_status()
 		self.set_total_in_words()
+		# Nabeel Saleem, 23-04-2025
+		self.validate_cheque_leaf()		
 		self.set_cheque_leaf_issued()
 		# Nabeel Saleem, 21-01-2025
 		self.process_retention_flow()
@@ -848,6 +850,12 @@ class XPaymentEntry(AccountsController):
 		self.base_in_words = money_in_words(base_amount, self.company_currency)
 		self.in_words = money_in_words(amount, currency)
 
+	def validate_cheque_leaf(self):	
+		if (self.custom_cheque_leaf):	
+			leafStatus = frappe.db.get_value("Cheque Leaf", {"name": self.custom_cheque_leaf, "status": ["!=", "On Hold"]}, "status")
+			if(leafStatus):
+				frappe.throw(f"Cheque leaf is <b>{leafStatus}</b>.", title="Cheque/Reference No")
+			
 	def set_cheque_leaf_issued(self):
 		if (self.custom_cheque_leaf):
 			frappe.db.sql(f""" Update `tabCheque Leaf`
