@@ -156,7 +156,8 @@ frappe.ui.form.on('Payment Entry', {
 		frm.trigger("open_dimension_dialog");
 	},
 	party_type: function(frm){
-		if(frm.doc.party_type == "Donor" && frm.doc.payment_type=="Pay"){
+		// if(frm.doc.party_type == "Donor" && frm.doc.payment_type=="Pay"){
+		if(frm.doc.mode_of_payment == "Cheque" && frm.doc.payment_type=="Pay"){
 			frm.set_value("payment_type", "Pay");
 			frm.set_value("reference_no", frm.doc.custom_cheque_leaf);
 

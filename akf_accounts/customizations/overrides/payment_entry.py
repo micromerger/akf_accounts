@@ -853,7 +853,7 @@ class XPaymentEntry(AccountsController):
 
 	def validate_cheque_leaf(self):	
 		if (self.custom_cheque_leaf):	
-			leafStatus = frappe.db.get_value("Cheque Leaf", {"name": self.custom_cheque_leaf, "status": ["!=", "On Hold"]}, "status")
+			leafStatus = frappe.db.get_value("Cheque Leaf", {"name": self.custom_cheque_leaf, "status": ["in", ["On Hold", "Issued"]]}, "status")
 			if(leafStatus):
 				frappe.throw(f"Cheque leaf is <b>{leafStatus}</b>.", title="Cheque/Reference No")
 			
