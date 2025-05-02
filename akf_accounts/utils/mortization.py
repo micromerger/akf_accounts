@@ -13,8 +13,8 @@ def validate_donor_balance(self):
 	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
 		self.set("program_details", [])
 		return
-	# itemBalance = sum(d.amount for d in self.items)
-	itemBalance = sum(d.price_list_rate for d in self.items)
+	itemBalance = sum(d.amount for d in self.items)
+	# itemBalance = sum(d.price_list_rate for d in self.items)
 	donorBalance = sum(d.actual_balance for d in self.program_details)
 	if (itemBalance > donorBalance):
 		frappe.throw("Insufficient donor balance.")
