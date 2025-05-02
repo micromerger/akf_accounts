@@ -277,6 +277,7 @@ function get_donations(frm){
                             "pd_subservice_area": values.subservice_area,
                             "pd_product": values.product,
                             "pd_project": values.project,
+                            "project": values.project,
                             "pd_donor": row.donor,
                             "encumbrance_project_account": row.encumbrance_project_account,
                             "encumbrance_material_request_account": row.encumbrance_material_request_account,
