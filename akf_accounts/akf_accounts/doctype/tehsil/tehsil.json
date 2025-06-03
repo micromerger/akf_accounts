@@ -6,19 +6,30 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "district",
   "tehsil_name"
  ],
  "fields": [
   {
    "fieldname": "tehsil_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Tehsil Name",
+   "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "district",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "District",
+   "options": "District",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-27 14:20:34.656617",
+ "modified": "2025-06-03 14:46:09.691417",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Tehsil",
@@ -40,5 +51,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }
