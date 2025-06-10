@@ -19,7 +19,10 @@ def get_company_defaults(company):
 	
 	if (not doc.custom_encumbrance_material_request_account):
 		frappe.throw(f"Please set account of {form_link}", title="Encumbrance Material Request Account")
-  
+
+	if (not doc.custom_encumbrance_purchase_order_account):
+		frappe.throw(f"Please set account of {form_link}", title="Encumbrance Purchase Order Account")
+
 	if (not doc.custom_default_stock_in_transit):
 		frappe.throw(f"Please set account of {form_link}", title="Stock In Transit")
 	
@@ -41,6 +44,7 @@ def get_company_defaults(company):
 		# "default_inventory_asset_account": doc.custom_default_inventory_asset_account,
 		"encumbrance_project_account": doc.custom_encumbrance_project_account,
 		"encumbrance_material_request_account": doc.custom_encumbrance_material_request_account,
+		"encumbrance_purchase_order_account": doc.custom_encumbrance_purchase_order_account,
 		# Asset (In Transit)
 		"default_stock_in_transit": doc.custom_default_stock_in_transit,
 		"default_inventory_asset_account": doc.custom_default_inventory_asset_account,

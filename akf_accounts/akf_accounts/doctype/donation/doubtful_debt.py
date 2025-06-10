@@ -23,7 +23,8 @@ def record_provision_of_doubtful_det(self, args, values):
 			"program": row.pay_service_area,
 			"subservice_area": row.subservice_area,
 			"product": row.pay_product if(row.pay_product) else row.product,
-			"project": row.project,
+			"fund_class": row.fund_class_id,		
+			# "project": row.project,
 			"cost_center": row.cost_center,
 		})
 		# Bad debt expense (Debit Entry)		
@@ -68,7 +69,8 @@ def bad_debt_written_off(self, args, values):
 			"program": row.pay_service_area,
 			"subservice_area": row.subservice_area,
 			"product": row.pay_product if(row.pay_product) else row.product,
-			"project": row.project,
+			"fund_class": row.fund_class_id,		
+			# "project": row.project,
 			"cost_center": row.cost_center,
 		})
 		# Bad debt expense (Credit Entry)
@@ -124,7 +126,8 @@ def adjust_doubtful_debt(self):
 					"program": data.pay_service_area,
 					"subservice_area": data.subservice_area,
 					"product": data.pay_product if(data.pay_product) else data.product,
-					"project": data.project,
+					"fund_class": data.fund_class_id,				
+					# "project": data.project,
 					"cost_center": data.cost_center,
 				})
 				cargs = get_currency_args()

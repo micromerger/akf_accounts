@@ -1,10 +1,10 @@
 function make_change_donor_dialog(frm){
-    if (frm.doc.docstatus == 1 && frm.doc.program_details.length>0) {
+    if (frm.doc.docstatus == 1 && frm.doc.custom_program_details.length>0) {
         frm.add_custom_button(__("Change Donor"),
             () =>{
                 let fieldsObj = {};
                 let donorslist = [];
-                const program_details = frm.doc.program_details;
+                const program_details = frm.doc.custom_program_details;
                 program_details.forEach(row =>{
                     fieldsObj = {
                         "name": frm.doc.name,

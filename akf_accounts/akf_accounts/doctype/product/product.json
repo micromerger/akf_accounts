@@ -7,7 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "subservice_area",
-  "product"
+  "product",
+  "column_break_jopt",
+  "disabled"
  ],
  "fields": [
   {
@@ -21,11 +23,21 @@
    "fieldtype": "Data",
    "label": "Product",
    "unique": 1
+  },
+  {
+   "fieldname": "column_break_jopt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-27 17:51:35.724935",
+ "modified": "2025-05-09 16:30:45.601490",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Product",

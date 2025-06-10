@@ -7,7 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "service_area",
-  "subservice_area"
+  "subservice_area",
+  "column_break_autv",
+  "disabled"
  ],
  "fields": [
   {
@@ -21,11 +23,21 @@
    "fieldtype": "Data",
    "label": "Subservice Area",
    "unique": 1
+  },
+  {
+   "fieldname": "column_break_autv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-14 16:36:01.399305",
+ "modified": "2025-05-09 16:29:33.232127",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Subservice Area",

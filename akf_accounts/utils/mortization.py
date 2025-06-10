@@ -11,11 +11,11 @@ from erpnext.accounts.utils import get_company_default
 def validate_donor_balance(self):
 	if(self.is_new()): return
 	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
-		self.set("program_details", [])
+		self.set("custom_program_details", [])
 		return
 	itemBalance = sum(d.amount for d in self.items)
 	# itemBalance = sum(d.price_list_rate for d in self.items)
-	donorBalance = sum(d.actual_balance for d in self.program_details)
+	donorBalance = sum(d.actual_balance for d in self.custom_program_details)
 	if (itemBalance > donorBalance):
 		frappe.throw("Insufficient donor balance.")
 
@@ -57,11 +57,12 @@ def get_gl_entry_dict(self):
 	})
 
 def make_asset_purchase_gl_entries(self):
-	def make_debit_assets_entry(args, row, accounts, amount):
+	def make_debit_assets_entry(args, row, amount):
 		cargs = get_currency_args()
 		args.update(cargs)
 		args.update({
-			'account': row.encumbrance_material_request_account,
+			# 'account': row.encumbrance_material_request_account,
+			'account': row.encumbrance_purchase_order_account,
 			'debit': amount,
 			'debit_in_account_currency': amount,
 			"debit_in_transaction_currency": amount,
@@ -76,7 +77,7 @@ def make_asset_purchase_gl_entries(self):
 		cargs = get_currency_args()
 		args.update(cargs)
 		args.update({
-			'account': accounts.amortise_designated_asset_fund_account,
+			'account': row.amortise_designated_asset_fund_account,
 			'credit': amount,
 			'credit_in_account_currency': amount,
 			"credit_in_transaction_currency": amount,
@@ -87,12 +88,12 @@ def make_asset_purchase_gl_entries(self):
 		doc.submit()
 
 	def process_asset():
-		accounts = get_company_defaults(self.company)
+		# accounts = get_company_defaults(self.company)
 		advanceBalance = sum(d.allocated_amount for d in self.advances)
 		itemBalance = sum(d.amount for d in self.items) or 0.0
 		itemBalance = (itemBalance - advanceBalance)
 		args = get_gl_entry_dict(self)
-		for row in self.program_details:
+		for row in self.custom_program_details:
 			fargs = frappe._dict({
 				"party_type": "Supplier",
 				"party": self.supplier,
@@ -102,6 +103,7 @@ def make_asset_purchase_gl_entries(self):
 				"subservice_area": row.pd_subservice_area,
 				"product": row.pd_product,
 				"project": row.pd_project,
+				"fund_class": row.pd_fund_class,
 				"donor": row.pd_donor,
 				# "account": row.amortise_inventory_fund_account,
 			}) 
@@ -117,13 +119,13 @@ def make_asset_purchase_gl_entries(self):
 				# itemBalance = (7000 - 5000) = 2000
 				itemBalance = (itemBalance - balanceAmount)
 				# gl entry
-				make_debit_assets_entry(args, row, amount)
-				make_credit_designated_asset_entry(args, row, amount)
+				make_debit_assets_entry(args, row, balanceAmount)
+				make_credit_designated_asset_entry(args, row, balanceAmount)
 
 			elif(itemBalance>0 and balanceAmount>itemBalance):
 				# gl entry
-				make_debit_assets_entry(args, row, amount)
-				make_credit_designated_asset_entry(args, row, amount)
+				make_debit_assets_entry(args, row, itemBalance)
+				make_credit_designated_asset_entry(args, row, itemBalance)
 				itemBalance = 0
 	
 	process_asset()
@@ -134,7 +136,8 @@ def make_inventory_gl_entries(self):
 		cargs = get_currency_args()
 		args.update(cargs)
 		args.update({
-			"account": row.encumbrance_material_request_account,
+			# "account": row.encumbrance_material_request_account,
+			'account': row.encumbrance_purchase_order_account,
 			# Company Currency
 			"debit": amount,
 			# Account Currency
@@ -170,7 +173,7 @@ def make_inventory_gl_entries(self):
 		itemBalance = sum(d.amount for d in self.items) or 0.0
 		itemBalance = (itemBalance - advanceBalance)
 		# looping
-		for row in self.program_details:
+		for row in self.custom_program_details:
 			fargs = frappe._dict({
 				"party_type": "Supplier",
 				"party": self.supplier,
@@ -180,6 +183,7 @@ def make_inventory_gl_entries(self):
 				"subservice_area": row.pd_subservice_area,
 				"product": row.pd_product,
 				"project": row.pd_project,
+				"fund_class": row.pd_fund_class,
 				"donor": row.pd_donor,
 				# "account": row.amortise_inventory_fund_account,
 			}) 

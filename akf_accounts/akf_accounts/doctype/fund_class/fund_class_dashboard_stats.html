@@ -1,0 +1,57 @@
+<style>
+    .yellow{
+        color: rgb(255, 157, 0);
+    }
+    .green{
+        color: rgb(33, 145, 16);
+    }
+    .gray{
+        color: rgb(117, 116, 116);
+    }
+    .blue{
+        color: rgb(87, 87, 186);
+    }
+    .stat-label{
+        font-weight: bold;
+
+    }
+    .stat-value {
+        color: #626262
+    }
+</style>
+<div class="dashboard-section">
+    <div class="section-heading">
+        <h4>
+            <span class="indicator"></span>
+            Stats
+        </h4>
+    </div>
+    <div class="section-content">
+        <div class="row">
+            <div class="col-xs-3">
+                <div class="dashboard-stat">
+                    <div class="stat-label yellow">Total Budget</div>
+                    <div class="stat-value">{{ total_budget }}</div>
+                </div>
+            </div>
+            <div class="col-xs-3">
+                <div class="dashboard-stat">
+                    <div class="stat-label green">Funds Received</div>
+                    <div class="stat-value">{{ funds_received }}</div>
+                </div>
+            </div>
+            <div class="col-xs-3">
+                <div class="dashboard-stat">
+                    <div class="stat-label gray">Transfer Budget</div>
+                    <div class="stat-value">{{ transfer_budget }}</div>
+                </div>
+            </div>
+            <div class="col-xs-3">
+                <div class="dashboard-stat ">
+                    <div class="stat-label blue">Remaining Budget</div>
+                    <div class="stat-value">{{ remaining_budget }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

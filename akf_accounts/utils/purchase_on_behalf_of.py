@@ -60,6 +60,7 @@ def make_branchB_expense_gl_entry(self, args, row, amount):
 		'subservice_area': row.pd_subservice_area,
 		'product': row.pd_product,
 		'project': row.pd_project,
+		'fund_class': row.pd_fund_class,
 		'donor': row.pd_donor,
 
 		'debit': amount,

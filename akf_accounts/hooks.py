@@ -34,7 +34,8 @@ doctype_js = {
     "Purchase Invoice" : "public/js/customizations/purchase_invoice.js",
     # "Asset" : "public/js/customizations/asset.js",
     "Asset Movement": "public/js/customizations/asset_movement.js",
-	
+	# "Purchase Order": "public/js/customizations/enc_purchase_order.js",
+    "Material Request": "public/js/customizations/enc_material_request.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -140,22 +141,48 @@ doc_events = {
         "validate": "akf_accounts.utils.financial_closure.confirmation",
         "on_submit": "akf_accounts.utils.financial_closure.confirmation",
 	},
+    "Project": {
+        "validate": "akf_accounts.utils.encumbrance.enc_project.validate_donor_balance",
+        "after_insert": "akf_accounts.utils.encumbrance.enc_project.make_project_encumbrance_gl_entries",
+        "on_trash": "akf_accounts.utils.encumbrance.enc_project.cancel_project_encumbrance_gl_entries"
+    },
     "Material Request": {
-        "validate": "akf_accounts.utils.financial_closure.confirmation",
-        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
+        "validate": [
+            "akf_accounts.utils.financial_closure.confirmation",
+            "akf_accounts.utils.encumbrance.enc_material_request.validate_donor_balance"
+        ],
+        "on_submit": [
+            "akf_accounts.utils.financial_closure.confirmation",
+            "akf_accounts.utils.encumbrance.enc_material_request.make_encumbrance_material_request_gl_entries"
+        ],
+        "before_cancel": [
+            "akf_accounts.utils.encumbrance.enc_material_request.cancel_encumbrance_material_request_gl_entries"
+        ]
 	},
-    "Purchase Receipt": {
-        "validate": "akf_accounts.utils.financial_closure.confirmation",
-        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
+    "Stock Entry": {
+        "validate": "akf_accounts.utils.mortizations.mor_stock_entry.validate_donor_balance",
+        "on_submit": "akf_accounts.utils.mortizations.mor_stock_entry.make_mortizations_gl_entries",
+        "on_cancel": "akf_accounts.utils.mortizations.mor_stock_entry.del_stock_gl_entries",
 	},
+    # "Purchase Order": {
+    #     "validate": "akf_accounts.utils.encumbrance.enc_purchase_order.validate_donor_balance",
+    #     "on_submit": "akf_accounts.utils.encumbrance.enc_purchase_order.make_encumbrance_purchase_order_gl_entries",
+    #     "on_cancel": "akf_accounts.utils.encumbrance.enc_purchase_order.del_encumbrance_gl_entries",
+    # },
+    # "Purchase Receipt": {
+    #     "validate": "akf_accounts.utils.financial_closure.confirmation",
+    #     "on_submit": ["akf_accounts.utils.financial_closure.confirmation",
+    #         "akf_accounts.utils.encumbrance.enc_purchase_receipt.update_grn_accounting_dimensions"
+    #     ]
+	# },
     "Purchase Invoice": {
         "validate": "akf_accounts.utils.financial_closure.confirmation",
-        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
+        "on_submit": "akf_accounts.utils.financial_closure.confirmation"
 	},
     "Payment Entry": {
         "validate": "akf_accounts.utils.financial_closure.confirmation",
-        "on_submit": "akf_accounts.utils.financial_closure.confirmation",
-	},
+        "on_submit": "akf_accounts.utils.financial_closure.confirmation"
+	}
 }
 
 

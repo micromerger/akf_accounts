@@ -1,4 +1,3 @@
-
 function make_dimensions_modal(frm){
     frappe.db.get_value('Company', frm.doc.company, 'custom_enable_accounting_dimensions_dialog')
     .then(r => {
@@ -15,27 +14,65 @@ function get_donations(frm){
     if(!["", undefined].includes(frm.doc.from_cost_center)){
         frm.doc.cost_center = frm.doc.from_cost_center;
     }
-    if(["", undefined].includes(frm.doc.cost_center)){
-        frappe.throw("Please select cost-center to proceed.");
-        return;
-    }
+    // if(["", undefined].includes(frm.doc.cost_center)){
+    //     frappe.throw("Please select cost-center to proceed.");
+    //     return;
+    // }
     
     const d = new frappe.ui.Dialog({
         title: __("Accounting Dimensions"),
         fields: [
+            
+            {
+                label: __("Project"),
+                fieldname: "project",
+                fieldtype: "Link",
+                options: "Project",
+                default: ("project" in frm.doc)? frm.doc.project: "",
+                reqd: 1,
+                // read_only: ["", undefined].includes(frm.doc.project)?0:1,
+                get_query(){
+                    return{
+                        filters:{
+                            status: ['!=', 'Completed'],
+                            fund_class: ['!=', '']
+                        }
+                    }
+                },
+                onchange: function() {
+                    if (this.value) {
+                        frappe.db.get_value('Project', this.value, ['fund_class', 'custom_service_area', 'custom_subservice_area', 'custom_product', 'cost_center'])
+                            .then(r => {
+                                if (r.message) {
+                                    d.set_value('fund_class', r.message.fund_class);
+                                    d.set_value('service_area', r.message.custom_service_area);
+                                    d.set_value('subservice_area', r.message.custom_subservice_area);
+                                    d.set_value('product', r.message.custom_product);
+                                    d.set_value('cost_center', r.message.cost_center);
+                                }
+                            });
+                    }
+                }
+            },
+            {
+                label: __(""),
+                fieldname: "col_break",
+                fieldtype: "Column Break",
+            },
             {
                 label: __("Service Area"),
                 fieldname: "service_area",
                 fieldtype: "Link",
                 options: "Service Area",
                 reqd: 1,
-                get_query(){
-                    return{
-                        filters:{
-                            disabled: 0
-                        }
-                    }
-                }
+                read_only: 1,
+                // get_query(){
+                //     return{
+                //         filters:{
+                //             disabled: 0
+                //         }
+                //     }
+                // }
             },
             {
                 label: __(""),
@@ -48,14 +85,15 @@ function get_donations(frm){
                 fieldtype: "Link",
                 options: "Subservice Area",
                 reqd: 1,
-                get_query(){
-                    let service_area = d.fields_dict.service_area.value;
-                    return{
-                        filters:{
-                            service_area: service_area
-                        }
-                    }
-                }
+                read_only: 1,
+                // get_query(){
+                //     let service_area = d.fields_dict.service_area.value;
+                //     return{
+                //         filters:{
+                //             service_area: service_area
+                //         }
+                //     }
+                // }
             },
             {
                 label: __(""),
@@ -68,38 +106,17 @@ function get_donations(frm){
                 fieldtype: "Link",
                 options: "Product",
                 reqd: 1,
-                get_query(){
-                    let subservice_area = d.fields_dict.subservice_area.value;
-                    return{
-                        filters:{
-                            subservice_area: subservice_area
-                        }
-                    }
-                }
+                read_only: 1,
+                // get_query(){
+                //     let subservice_area = d.fields_dict.subservice_area.value;
+                //     return{
+                //         filters:{
+                //             subservice_area: subservice_area
+                //         }
+                //     }
+                // }
             },
-            {
-                label: __(""),
-                fieldname: "col_break",
-                fieldtype: "Column Break",
-            },
-            {
-                label: __("Project"),
-                fieldname: "project",
-                fieldtype: "Link",
-                options: "Project",
-                default: ("project" in frm.doc)? frm.doc.project: "",
-                reqd: 1,
-                read_only: ["", undefined].includes(frm.doc.project)?0:1,
-                get_query(){
-                    let service_area = d.fields_dict.service_area.value;
-                    return{
-                        filters:{
-                            company: frm.doc.company,
-                            custom_service_area: service_area
-                        }
-                    }
-                }
-            },
+            
             {
                 label: __(""),
                 fieldname: "col_break",
@@ -112,6 +129,20 @@ function get_donations(frm){
                 options: "Cost Center",
                 read_only: 1,
                 default: frm.doc.cost_center
+            },
+            // {
+            //     label: __(""),
+            //     fieldname: "col_break",
+            //     fieldtype: "Column Break",
+            // },
+            {
+                label: __("Fund Class"),
+                fieldname: "fund_class",
+                fieldtype: "Link",
+                options: "Fund Class",
+                in_list_view: 0,
+                read_only: 1,
+                hidden: 1
             },
             {
                 label: __(""),
@@ -220,7 +251,7 @@ function get_donations(frm){
                         fieldtype: "Currency",
                         in_list_view: 1,
                         read_only: 1,
-                    }
+                    },
                 ],
                 /* on_add_row: (idx) => {
                   // idx = visible idx of the row starting from 1
@@ -277,10 +308,12 @@ function get_donations(frm){
                             "pd_subservice_area": values.subservice_area,
                             "pd_product": values.product,
                             "pd_project": values.project,
+                            "pd_fund_class": values.fund_class,
                             "project": values.project,
                             "pd_donor": row.donor,
                             "encumbrance_project_account": row.encumbrance_project_account,
                             "encumbrance_material_request_account": row.encumbrance_material_request_account,
+                            "encumbrance_purchase_order_account": row.encumbrance_purchase_order_account,
                             "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
                             "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
                             "actual_balance": row.balance,

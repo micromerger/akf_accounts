@@ -8,8 +8,6 @@
  "engine": "InnoDB",
  "field_order": [
   "service_name",
-  "type",
-  "column_break_rsrf",
   "disabled",
   "section_break_hrld",
   "deduction_details",
@@ -24,6 +22,7 @@
   {
    "fieldname": "deduction_details",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Deduction Details",
    "options": "Deduction Details"
   },
@@ -34,6 +33,7 @@
   {
    "fieldname": "accounts_default",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Accounts Default",
    "options": "Accounts Default"
   },
@@ -46,26 +46,15 @@
    "unique": 1
   },
   {
-   "fieldname": "column_break_rsrf",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "0",
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
-  },
-  {
-   "fieldname": "type",
-   "fieldtype": "Select",
-   "label": "Type",
-   "options": "Restricted\nUnrestricted",
-   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-04-07 16:17:30.417714",
+ "modified": "2025-05-09 16:28:21.229237",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Service Area",

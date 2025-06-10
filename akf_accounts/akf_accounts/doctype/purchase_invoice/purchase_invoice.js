@@ -646,6 +646,17 @@ frappe.ui.form.on("Purchase Invoice", {
 
 				frappe.set_route("List", "Purchase Receipt", "List")
 			}, __('View'));
+
+		}
+		// Nabeel Saleem, 04-06-2025
+		if (frm.doc.docstatus == 1) {
+			frm.add_custom_button(__('Accounting Ledger'), () => {
+				frappe.route_options = {"from_date": frm.doc.posting_date, "voucher_no": frm.doc.name }
+				
+				frappe.set_route("query-report", "General Ledger");
+				
+			}, __('View'));
+			
 		}
 	},
 

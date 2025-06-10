@@ -26,6 +26,7 @@
   "co_address",
   "relationship_with_donor",
   "section_break_iela",
+  "fund_class_id",
   "pay_service_area",
   "pay_subservice_area",
   "pay_product",
@@ -40,8 +41,8 @@
   "seventh_share_person_name",
   "receipt_details_section",
   "receipt_number",
-  "column_break_airg",
   "receipt_issued_by",
+  "column_break_airg",
   "receipt_date",
   "clearance_date",
   "accounts_detail_section",
@@ -78,6 +79,7 @@
   "is_written_off",
   "accounting_dimensions_section",
   "dimension_col_break",
+  "fund_class",
   "column_break_mftg",
   "paid",
   "is_return",
@@ -106,26 +108,35 @@
    "reqd": 1
   },
   {
+   "fetch_from": "fund_class_id.service_area",
+   "fetch_if_empty": 1,
    "fieldname": "pay_service_area",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Service Area",
-   "options": "Service Area"
+   "options": "Service Area",
+   "read_only": 1
   },
   {
+   "fetch_from": "fund_class_id.subservice_area",
+   "fetch_if_empty": 1,
    "fieldname": "pay_subservice_area",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Subservice Area",
-   "options": "Subservice Area"
+   "options": "Subservice Area",
+   "read_only": 1
   },
   {
+   "fetch_from": "fund_class_id.product",
+   "fetch_if_empty": 1,
    "fieldname": "pay_product",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Product",
-   "options": "Product"
+   "options": "Product",
+   "read_only": 1
   },
   {
    "fieldname": "accounting_dimensions_section",
@@ -362,8 +373,7 @@
   },
   {
    "fieldname": "other_info_section",
-   "fieldtype": "Section Break",
-   "label": "Totals"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "payment_entry",
@@ -436,9 +446,9 @@
   {
    "fieldname": "project_id",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Project ID",
-   "options": "Project",
-   "reqd": 1
+   "options": "Project"
   },
   {
    "default": "0",
@@ -664,12 +674,24 @@
    "fieldtype": "Check",
    "label": "Is Written Off",
    "read_only": 1
+  },
+  {
+   "fieldname": "fund_class",
+   "fieldtype": "Link",
+   "label": "Fund Class",
+   "options": "Fund Class"
+  },
+  {
+   "fieldname": "fund_class_id",
+   "fieldtype": "Link",
+   "label": "Fund Class Id",
+   "options": "Fund Class"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-02-14 16:34:30.455760",
+ "modified": "2025-05-27 15:07:29.501203",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

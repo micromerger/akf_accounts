@@ -16,7 +16,7 @@ def get_donor_balance(filters=None):
 	if(type(filters) == str): filters = ast.literal_eval(filters)
 	
 	accounts = get_company_defaults(filters.get("company"))
-	
+
 	response = frappe.db.sql(""" 
  		Select 
    			cost_center, account, donor, 
@@ -43,6 +43,7 @@ def get_donor_balance(filters=None):
 	for row in response:
 		row["encumbrance_project_account"] = accounts.encumbrance_project_account
 		row["encumbrance_material_request_account"] = accounts.encumbrance_material_request_account
+		row["encumbrance_purchase_order_account"] = accounts.encumbrance_purchase_order_account
 		row["amortise_designated_asset_fund_account"] = accounts.default_designated_asset_fund_account
 		row["amortise_inventory_fund_account"] = accounts.default_inventory_fund_account
 		if(row.balance<=amount):
@@ -55,11 +56,12 @@ def get_donor_balance(filters=None):
 	return response
 
 def get_conditions(filters, accounts):
-	conditions = " and company = %(company)s " if(filters.get('company')) else ""
-	conditions += " and cost_center = %(cost_center)s " if(filters.get('cost_center')) else ""
+	# conditions = " and company = %(company)s " if(filters.get('company')) else ""
+	conditions = " and cost_center = %(cost_center)s " if(filters.get('cost_center')) else ""
 	conditions += " and service_area = %(service_area)s " if(filters.get('service_area')) else ""
 	conditions += " and subservice_area = %(subservice_area)s " if(filters.get('subservice_area')) else ""
 	conditions += " and product = %(product)s " if(filters.get('product')) else ""
+	conditions += " and fund_class = %(fund_class)s " if(filters.get('fund_class')) else ""
 	conditions += " and project = %(project)s " if(filters.get('project')) else ""
 	conditions += " and donor = %(donor)s " if(filters.get('donor')) else ""
 	
@@ -68,6 +70,11 @@ def get_conditions(filters, accounts):
 	if(doctype == "Material Request"):
 		conditions += " and account = %(account)s "	
 		filters.update({'account': accounts.encumbrance_project_account})
+	
+	elif(doctype == "Purchase Order"):
+		conditions += " and account = %(account)s "	
+		filters.update({'account': accounts.encumbrance_material_request_account})
+
 	elif(doctype == "Payment Entry"):
 		conditions += " and account = %(account)s "	
 		filters.update({'account': accounts.encumbrance_material_request_account})

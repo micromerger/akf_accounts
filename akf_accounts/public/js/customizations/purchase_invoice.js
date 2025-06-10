@@ -39,7 +39,7 @@ frappe.ui.form.on('Purchase Invoice', {
             console.log("On load");
             frm.doc.items.forEach(function(item) {
                 if (item.purchase_receipt) {
-                    frm.set_df_property("program_details", "hidden", 1);
+                    frm.set_df_property("custom_program_details", "hidden", 1);
                     frm.set_df_property("custom_donor_list_html", "hidden", 1);
                     frm.set_df_property("update_stock", "hidden", 1);
                 }
@@ -119,7 +119,7 @@ function toggle_custom_fields(frm) {
         }
     });
 
-    frm.set_df_property('program_details', 'hidden', hide_fields ? 1 : 0);
+    frm.set_df_property('custom_program_details', 'hidden', hide_fields ? 1 : 0);
     frm.set_df_property('custom_donor_list_html', 'hidden', hide_fields ? 1 : 0);
    
 
@@ -264,7 +264,7 @@ function set_queries_payment_details(frm){
 }
 
 function set_query_service_area(frm){
-    frm.fields_dict['program_details'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['custom_program_details'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -276,7 +276,7 @@ function set_query_service_area(frm){
 }
 
 function set_query_subservice_area(frm){
-    frm.fields_dict['program_details'].grid.get_field('pd_subservice_area').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_subservice_area').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -288,7 +288,7 @@ function set_query_subservice_area(frm){
 }
 
 function set_query_cost_center(frm){
-    frm.fields_dict['program_details'].grid.get_field('pd_cost_center').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_cost_center').get_query = function(doc, cdt, cdn) {
         return {
             filters: {
                 is_group: 0,
@@ -300,7 +300,7 @@ function set_query_cost_center(frm){
 }
 
 // function set_query_product(frm){
-//     frm.fields_dict['program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
+//     frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
 //         var row = locals[cdt][cdn];
 //         return {
 //             filters: {
@@ -313,7 +313,7 @@ function set_query_cost_center(frm){
 
 
 function set_query_product(frm) {
-    frm.fields_dict['program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_product').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         console.log("pd_subservice_area:", row.pd_subservice_area);
 
@@ -327,7 +327,7 @@ function set_query_product(frm) {
     };
 }
 function set_query_project(frm){
-    frm.fields_dict['program_details'].grid.get_field('pd_project').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_project').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -341,7 +341,7 @@ function set_query_project(frm){
 }
 
 function set_query_donor(frm){
-    frm.fields_dict['program_details'].grid.get_field('pd_donor').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['custom_program_details'].grid.get_field('pd_donor').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {

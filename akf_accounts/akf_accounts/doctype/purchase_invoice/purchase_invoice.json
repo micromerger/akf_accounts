@@ -28,7 +28,7 @@
   "tax_withholding_category",
   "amended_from",
   "section_break_xist",
-  "program_details",
+  "custom_program_details",
   "supplier_invoice_details",
   "bill_no",
   "column_break_15",
@@ -1645,13 +1645,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "program_details",
-   "fieldtype": "Table",
-   "label": "Donor Balance",
-   "options": "Program Details",
-   "read_only": 1
-  },
-  {
    "fieldname": "expense_for_tab",
    "fieldtype": "Tab Break",
    "label": "Expense For"
@@ -1778,13 +1771,20 @@
    "fieldtype": "Data",
    "label": "Receiving Supplier Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "custom_program_details",
+   "fieldtype": "Table",
+   "label": "Donor Balance",
+   "options": "Program Details",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-11 17:55:31.499778",
+ "modified": "2025-06-03 19:49:34.721847",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Purchase Invoice",

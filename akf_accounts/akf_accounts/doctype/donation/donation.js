@@ -90,7 +90,18 @@ frappe.ui.form.on('Payment Detail', {
             frm.call("set_deduction_breakeven");
         }
     },
-    pay_service_area: function (frm, cdt, cdn) {
+    fund_class_id: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        row.fund_class = row.fund_class_id;
+        if (row.fund_class_id != undefined || row.fund_class_id != "") {
+            if (frm.doc.is_return) {
+                frm.call("update_deduction_breakeven");
+            } else {
+                frm.call("set_deduction_breakeven");
+            }
+        }
+    },
+    /*pay_service_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         row.service_area = row.pay_service_area;
         frm.call("set_deduction_breakeven");  // nabeel saleem
@@ -104,7 +115,7 @@ frappe.ui.form.on('Payment Detail', {
         let row = locals[cdt][cdn];
         row.product = row.pay_product;
         frm.refresh_field("payment_detail")
-    },
+    },*/
     project_id: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         row.project = row.project_id;
@@ -365,7 +376,7 @@ function set_queries(frm) {
         };
     });
 
-    frm.set_query('fund_class', function () {
+    /*frm.set_query('fund_class', function () {
         return {
             filters: {
                 root_type: 'Equity',
@@ -373,7 +384,7 @@ function set_queries(frm) {
                 company: frm.doc.company
             }
         };
-    });
+    });*/
 
     frm.set_query('cost_center', function () {
         return {

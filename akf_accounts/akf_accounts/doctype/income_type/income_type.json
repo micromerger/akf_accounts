@@ -7,7 +7,11 @@
  "engine": "InnoDB",
  "field_order": [
   "income_type",
-  "project"
+  "project",
+  "project_name",
+  "column_break_mcnd",
+  "company",
+  "account"
  ],
  "fields": [
   {
@@ -19,13 +23,48 @@
   {
    "fieldname": "project",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Project",
-   "options": "Project"
+   "options": "Project",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mcnd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "project.project_name",
+   "fetch_if_empty": 1,
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Project Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "Account",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-31 18:41:13.427462",
+ "modified": "2025-05-22 15:42:16.182623",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Income Type",

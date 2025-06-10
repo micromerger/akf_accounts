@@ -23,10 +23,10 @@ form_grid_templates = {"items": "templates/form_grid/material_request_grid.html"
 
 # Nabeel Saleem, 18-02-2025
 from akf_accounts.utils.encumbrance.enc_material_request import (
-    validate_donor_balance,
-    make_encumbrance_material_request_gl_entries,
-    cancel_encumbrance_material_request_gl_entries
-    )
+	validate_donor_balance,
+	make_encumbrance_material_request_gl_entries,
+	cancel_encumbrance_material_request_gl_entries
+	)
 
 class MaterialRequest(BuyingController):
 	# begin: auto-generated types
@@ -734,6 +734,9 @@ def make_supplier_quotation(source_name, target_doc=None):
 
 @frappe.whitelist()
 def make_stock_entry(source_name, target_doc=None):
+	args = frappe._dict(frappe.flags.args) # e.g; args: {"purpose": "Issue Material"}
+	material_request_type = args.purpose
+
 	def update_item(obj, target, source_parent):
 		qty = (
 			flt(flt(obj.stock_qty) - flt(obj.ordered_qty)) / target.conversion_factor
@@ -744,31 +747,48 @@ def make_stock_entry(source_name, target_doc=None):
 		target.transfer_qty = qty * obj.conversion_factor
 		target.conversion_factor = obj.conversion_factor
 
-		if (
+		'''if (
 			source_parent.material_request_type == "Material Transfer"
 			or source_parent.material_request_type == "Customer Provided"
 		):
 			target.t_warehouse = obj.warehouse
 		else:
+			target.s_warehouse = obj.warehouse'''
+		if (
+			material_request_type == "Material Transfer"
+			or material_request_type == "Customer Provided"
+		):
+			target.t_warehouse = obj.warehouse
+		else:
 			target.s_warehouse = obj.warehouse
 
-		if source_parent.material_request_type == "Customer Provided":
+		'''if source_parent.material_request_type == "Customer Provided":
 			target.allow_zero_valuation_rate = 1
 
 		if source_parent.material_request_type == "Material Transfer":
+			target.s_warehouse = obj.from_warehouse'''
+		if material_request_type == "Customer Provided":
+			target.allow_zero_valuation_rate = 1
+
+		if material_request_type == "Material Transfer":
 			target.s_warehouse = obj.from_warehouse
 
 	def set_missing_values(source, target):
-		target.purpose = source.material_request_type
+		# target.purpose = source.material_request_type
+		target.purpose = material_request_type
 		target.from_warehouse = source.set_from_warehouse
 		target.to_warehouse = source.set_warehouse
 
 		if source.job_card:
 			target.purpose = "Material Transfer for Manufacture"
 
+		'''
 		if source.material_request_type == "Customer Provided":
 			target.purpose = "Material Receipt"
-
+		'''
+		if material_request_type == "Customer Provided":
+			target.purpose = "Material Receipt"
+				
 		target.set_transfer_qty()
 		target.set_actual_qty()
 		target.calculate_rate_and_amount(raise_error_if_no_rate=False)
@@ -816,7 +836,6 @@ def make_stock_entry(source_name, target_doc=None):
 	)
 
 	return doclist
-
 
 @frappe.whitelist()
 def raise_work_orders(material_request):
