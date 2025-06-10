@@ -42,38 +42,39 @@ frappe.ui.form.on("Fund Class", {
     refresh: function(frm) {
         parent_doctype_set_queries(frm);
         
-        // Add custom button to initiate Budget
-        frm.add_custom_button(__('Budget'), function() {
-            if (frm.is_new()) {
-                frm.save().then(() => {
+        if (!frm.is_new()) {
+            // Add custom button to initiate Budget
+            frm.add_custom_button(__('Budget'), function() {
+                if (frm.is_new()) {
+                    frm.save().then(() => {
+                        initiate_budget(frm);
+                    });
+                } else {
                     initiate_budget(frm);
-                });
-            } else {
-                initiate_budget(frm);
-            }
-        }, 'Initiate');
-        
-        // Add custom button to initiate Budget
-        frm.add_custom_button(__('Project'), function() {
-            if (frm.is_new()) {
-                frm.save().then(() => {
+                }
+            }, 'Initiate');
+            
+            // Add custom button to initiate Budget
+            frm.add_custom_button(__('Project'), function() {
+                if (frm.is_new()) {
+                    frm.save().then(() => {
+                        project_budget(frm);
+                    });
+                } else {
                     project_budget(frm);
-                });
-            } else {
-                project_budget(frm);
-            }
-        }, 'Initiate');
-        // Add custom button to transfer Budget
-        frm.add_custom_button(__('Funds'), function() {
-            if (frm.is_new()) {
-                frm.save().then(() => {
+                }
+            }, 'Initiate');
+            // Add custom button to transfer Budget
+            frm.add_custom_button(__('Funds'), function() {
+                if (frm.is_new()) {
+                    frm.save().then(() => {
+                        transfer_funds(frm);
+                    });
+                } else {
                     transfer_funds(frm);
-                });
-            } else {
-                transfer_funds(frm);
-            }
-        }, 'Tansfer');
-        
+                }
+            }, 'Tansfer');
+        }
         if (!frm.is_new()) {
             frm.trigger("open_dimension_dialog"); // Nabeel Saleem, 26-02-2025
         }
