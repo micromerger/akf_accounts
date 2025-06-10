@@ -55,7 +55,7 @@ def make_debit_gl_entry(args, row, amount):
 	args.update({
 		'party_type': 'Donor',
 		'party': row.pd_donor,
-		'account': row.pd_account,
+		'account': row.encumbrance_material_request_account,
 		'cost_center': row.pd_cost_center,
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,
