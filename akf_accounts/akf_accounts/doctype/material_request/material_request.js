@@ -542,9 +542,11 @@ frappe.ui.form.on("Material Request", {
 			},
 			(values) => {
 				frappe.model.open_mapped_doc({
-					method: "erpnext.stock.doctype.material_request.material_request.make_purchase_order",
+					// method: "erpnext.stock.doctype.material_request.material_request.make_purchase_order",
+					method: "akf_accounts.akf_accounts.doctype.material_request.material_request.make_purchase_order",
 					frm: frm,
-					args: { default_supplier: values.default_supplier },
+					// args: { default_supplier: values.default_supplier },
+					args: { default_supplier: values.default_supplier, purpose: "Purchase"},
 					run_link_triggers: true,
 				});
 			},
