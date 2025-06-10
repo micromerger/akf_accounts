@@ -19,7 +19,7 @@
   "company",
   "cost_center",
   "schedule_date",
-  "encumbrance",
+  "custom_encumbrance",
   "amended_from",
   "section_break_mhgs",
   "custom_program_details",
@@ -387,12 +387,6 @@
    "width": "150px"
   },
   {
-   "default": "0",
-   "fieldname": "encumbrance",
-   "fieldtype": "Check",
-   "label": "Encumbrance"
-  },
-  {
    "fieldname": "section_break_mhgs",
    "fieldtype": "Section Break"
   },
@@ -403,13 +397,19 @@
    "label": "Donor Balance",
    "options": "Program Details",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_encumbrance",
+   "fieldtype": "Check",
+   "label": "Encumbrance"
   }
  ],
  "icon": "fa fa-ticket",
  "idx": 70,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-05 17:09:26.789083",
+ "modified": "2025-06-10 18:38:59.564174",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Material Request",
