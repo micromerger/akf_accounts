@@ -8,7 +8,7 @@ def validate_donor_balance(doc, method=None):
 	if(self.is_new()): 
 		return
 
-	if(self.encumbrance):
+	if(self.custom_encumbrance):
 
 		if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
 			self.set("custom_program_details", [])
@@ -25,7 +25,7 @@ def validate_donor_balance(doc, method=None):
 
 def make_encumbrance_material_request_gl_entries(doc, method=None):
 	self = doc
-	if(self.encumbrance):
+	if(self.custom_encumbrance):
 		
 		if(get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
 			
@@ -103,7 +103,7 @@ def make_credit_gl_entry(company, args, row, amount):
 	
 def cancel_encumbrance_material_request_gl_entries(doc, method=None):
 	self = doc
-	if(self.encumbrance):
+	if(self.custom_encumbrance):
 		if(frappe.db.exists('GL Entry', {'against_voucher': self.name})):
 			frappe.db.sql(f""" Delete from `tabGL Entry` where against_voucher = '{self.name}' """)
 
