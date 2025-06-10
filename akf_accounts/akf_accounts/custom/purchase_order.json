@@ -159,7 +159,7 @@
    "insert_after": "items_col_break",
    "is_system_generated": 0,
    "is_virtual": 0,
-   "label": "Donor Balance",
+   "label": "",
    "length": 0,
    "mandatory_depends_on": null,
    "modified": "2025-06-03 12:18:00.789079",
