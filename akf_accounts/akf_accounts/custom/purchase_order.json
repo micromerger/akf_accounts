@@ -97,7 +97,7 @@
    "insert_after": "custom_donor_balance",
    "is_system_generated": 0,
    "is_virtual": 0,
-   "label": "Program Details",
+   "label": "Donor Balance",
    "length": 0,
    "mandatory_depends_on": null,
    "modified": "2025-06-03 12:18:01.195885",
