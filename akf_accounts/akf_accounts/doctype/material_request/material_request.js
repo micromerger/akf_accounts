@@ -571,6 +571,7 @@ frappe.ui.form.on("Material Request", {
 	},
 
 	make_stock_entry: function (frm, cPurpose) {
+		console.log(cPurpose);
 		frappe.model.open_mapped_doc({
 			method: "akf_accounts.akf_accounts.doctype.material_request.material_request.make_stock_entry",
 			frm: frm,

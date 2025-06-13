@@ -154,6 +154,42 @@ frappe.ui.form.on('Payment Entry', {
 
 		}
 		frm.trigger("open_dimension_dialog");
+
+		// Add set_query for tax_withholding_category
+		frm.set_query('tax_withholding_category', function() {
+			// Only set filters if all required fields are filled
+			if (!frm.doc.custom_nature_id || 
+				!frm.doc.custom_tax_type_id || 
+				!frm.doc.custom_tax_nature_id) {
+				return {
+					filters: {
+						'name': ['in', []]  // Return empty list if filters not set
+					}
+				};
+			}
+
+			return {
+				filters: {
+					'custom_nature_id': frm.doc.custom_nature_id,
+					'custom_tax_type_id': frm.doc.custom_tax_type_id,
+					'custom_tax_nature_id': frm.doc.custom_tax_nature_id
+				}
+			};
+		});
+	},
+	party: function(frm) {
+		if (frm.doc.party_type === 'Supplier' && frm.doc.party) {
+			fetchSupplierDetails(frm);
+		} else {
+			
+		}
+	},
+	party_name: function(frm) {
+		if (frm.doc.party_type === 'Supplier' && frm.doc.party_name) {
+			fetchSupplierDetails(frm);
+		} else {
+			
+		}
 	},
 	party_type: function(frm){
 		// if(frm.doc.party_type == "Donor" && frm.doc.payment_type=="Pay"){
@@ -168,6 +204,12 @@ frappe.ui.form.on('Payment Entry', {
 			frm.set_df_property("payment_type", "read_only", 0);
 			frm.set_df_property("reference_no", "hidden", 0);
 		}
+		// Clear all supplier related fields when party type changes
+		clearSupplierFields(frm);
+		
+		// Clear party and party name if party type changes
+		frm.set_value('party', '');
+		frm.set_value('party_name', '');
 	},
 	custom_cheque_leaf: function (frm) {
 		if ([undefined, ""].includes(frm.doc.custom_cheque_leaf)) {
@@ -210,8 +252,52 @@ frappe.ui.form.on('Payment Entry', {
 				
 			});
 		}
+	},
+	// custom_tax_payer_category: function(frm) {
+	// 	frm.set_value('tax_withholding_category', '');
+	// 	frm.refresh_field('tax_withholding_category');
+	// },
+	custom_nature_id: function(frm) {
+		frm.set_value('tax_withholding_category', '');
+		frm.refresh_field('tax_withholding_category');
+	},
+	custom_tax_type_id: function(frm) {
+		frm.set_value('tax_withholding_category', '');
+		frm.refresh_field('tax_withholding_category');
+	},
+	custom_tax_nature_id: function(frm) {
+		frm.set_value('tax_withholding_category', '');
+		frm.refresh_field('tax_withholding_category');
 	}
 });
+
+function update_tax_withholding_category(frm) {
+	// Only proceed if all required fields are filled
+	if (
+		!frm.doc.custom_nature_id || 
+		!frm.doc.custom_tax_type_id || 
+		!frm.doc.custom_tax_nature_id) {
+		return;
+	}
+
+	// Call server method to get filtered tax withholding categories
+	frappe.call({
+		method: 'akf_accounts.customizations.overrides.payment_entry.get_filtered_tax_withholding_categories',
+		args: {
+			tax_payer_category: frm.doc.custom_tax_payer_category,
+			nature_id: frm.doc.custom_nature_id,
+			tax_type_id: frm.doc.custom_tax_type_id,
+			tax_nature_id: frm.doc.custom_tax_nature_id
+		},
+		callback: function(r) {
+			if (r.message) {
+				// Update the tax withholding category field options
+				frm.set_df_property('tax_withholding_category', 'options', r.message);
+				frm.refresh_field('tax_withholding_category');
+			}
+		}
+	});
+}
 
 frappe.ui.form.on("Payment Entry Reference", {
 	reference_name: function (frm, cdt, cdn) {
@@ -251,4 +337,35 @@ triggers = {
 			frm.trigger("paid_from")
 		}
 	}
+}
+
+// Helper function to fetch supplier details
+function fetchSupplierDetails(frm) {
+	frappe.call({
+		method: 'frappe.client.get',
+		args: {
+			doctype: 'Supplier',
+			name: frm.doc.party || frm.doc.party_name
+		},
+		callback: function(r) {
+			if (r.message) {
+				// Set the custom fields with values from supplier
+				frm.set_value('custom_tax_payer_category_id', r.message.supplier_type);
+				frm.set_value('custom_resident_type_id', r.message.custom_resident_type_id);
+				
+				// If party was selected, set party_name and vice versa
+				if (frm.doc.party && !frm.doc.party_name) {
+					frm.set_value('party_name', r.message.supplier_name);
+				} else if (frm.doc.party_name && !frm.doc.party) {
+					frm.set_value('party', r.message.name);
+				}
+			}
+		}
+	});
+}
+
+// Helper function to clear supplier related fields
+function clearSupplierFields(frm) {
+	frm.set_value('custom_tax_payer_category_id', '');
+	frm.set_value('custom_resident_type_id', '');
 }

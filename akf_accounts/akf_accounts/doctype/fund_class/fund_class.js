@@ -89,6 +89,28 @@ frappe.ui.form.on("Fund Class", {
             $(this).next('.section-content').slideToggle();
         });
     },
+    validate: function(frm) {
+        frm.doc.deduction_details.forEach(function(row) {
+            if (row.percentage < 0 || row.percentage > 100) {
+                frappe.throw('Percentage should be between 0 and 100');
+            }
+            if (row.min_percent < 0 || row.min_percent > 100) {
+                frappe.throw('Minimum Percentage should be between 0 and 100');
+            }
+            if (row.max_percent < 0 || row.max_percent > 100) {
+                frappe.throw('Maximum Percentage should be between 0 and 100');
+            }
+            if (row.max_percent < row.min_percent) {
+                frappe.throw('Maximum Percentage cannot be less than Minimum Percentage');
+            }
+            if (row.percentage < row.min_percent) {
+                frappe.throw('Percentage cannot be less than Minimum Percentage');
+            }
+            if (row.percentage > row.max_percent) {
+                frappe.throw('Percentage cannot be greater than Maximum Percentage');
+            }
+        });
+    },
     service_area: function(frm) {
         // Clear subservice_area and product when service_area changes
         frm.set_value("subservice_area", "");

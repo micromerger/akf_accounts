@@ -88,6 +88,7 @@ def get_funds_balance(fund_class):
 						and is_cancelled=0
 						and ifnull(fund_class, "")!=""
 						and fund_class="{fund_class}"
+						and ifnull(project, "")=""
 						and account in (select name from tabAccount where root_type in ("Equity"))
 				  """)[0][0] or 0.0
 

@@ -23,7 +23,7 @@ def get_columns():
         _("TaxPayer City") + ":Data:140",
         _("TaxPayer Address") + ":Data:140",
         _("TaxPayer Status") + ":Data:140",
-        _("TaxPayer Business Name") + ":Date:140",
+        _("TaxPayer Business Name") + ":Data:140",
         _("Taxable Amount") + ":Data:140",
         _("Tax Amount") + ":Data:140",
     ]
@@ -57,13 +57,11 @@ def get_query_result(filters):
     result = frappe.db.sql(
         """
         SELECT 
-			pi.tax_withholding_category, sup.tax_id, sup.cnic, pi.supplier, 'City', 'Address', sup.supplier_type, 'Business Name', pi.total, pi.taxes_and_charges_deducted
+			"Tax Category", "NTN", custom_cnic, employee_name, 'City', custom_employee_address, 'Individual', "Business Name", gross_pay, current_month_income_tax
         FROM 
-            `tabPurchase Invoice` pi
-        LEFT JOIN
-			`tabSupplier` sup On pi.supplier = sup.name
+            `tabSalary Slip`
         WHERE
-            pi.docstatus != 2
+            docstatus = 1
         {0}
     """.format(
             conditions if conditions else ""

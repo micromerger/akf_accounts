@@ -23,7 +23,9 @@
   "encumbrance_purchase_order_account",
   "amortise_designated_asset_fund_account",
   "amortise_inventory_fund_account",
-  "actual_balance"
+  "actual_balance",
+  "amount",
+  "is_transferred"
  ],
  "fields": [
   {
@@ -155,12 +157,23 @@
    "label": "Fund Class",
    "options": "Fund Class",
    "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_transferred",
+   "fieldtype": "Check",
+   "label": "Is Transferred"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-04 17:13:10.543316",
+ "modified": "2025-06-12 13:41:11.159545",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",

@@ -2902,3 +2902,95 @@ def make_payment_order(source_name, target_doc=None):
 @erpnext.allow_regional
 def add_regional_gl_entries(gl_entries, doc):
 	return
+
+@frappe.whitelist()
+def get_filtered_tax_withholding_categories(doctype, txt, searchfield, start, page_len, filters):
+    """
+    Filter tax withholding categories based on the provided criteria
+    """
+    import csv
+    import os
+    from frappe import _
+    
+    # Path to your CSV file
+    csv_path = os.path.join(os.path.dirname(__file__), 'Final-MM tax template(1)(IT).csv')
+    
+    if not os.path.exists(csv_path):
+        frappe.throw(_("CSV file not found at {0}").format(csv_path))
+    
+    filtered_categories = []
+    
+    try:
+        with open(csv_path, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                # Check if the row matches all criteria
+                if (row['Nature Id'] == filters.get('nature_id') and
+                    row['Tax Type Id'] == filters.get('tax_type_id') and
+                    row['Tax Nature Id'] == filters.get('tax_nature_id')):
+                    
+                    # Add to filtered categories if it matches the search text
+                    if txt.lower() in row['Section'].lower():
+                        filtered_categories.append([row['Section'], row['Description']])
+    except Exception as e:
+        frappe.log_error(f"Error reading tax withholding categories: {str(e)}")
+        return []
+    
+    return filtered_categories
+
+@frappe.whitelist()
+def import_tax_withholding_categories():
+    """
+    Import tax withholding categories from CSV file
+    """
+    import csv
+    import os
+    from frappe import _
+    
+    # Path to your CSV file
+    csv_path = os.path.join(os.path.dirname(__file__), 'Final-MM tax template(1)(IT).csv')
+    
+    if not os.path.exists(csv_path):
+        frappe.throw(_("CSV file not found at {0}").format(csv_path))
+    
+    try:
+        with open(csv_path, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            
+            for row in reader:
+                # Skip empty rows
+                if not row.get('Section'):
+                    continue
+                    
+                # Check if category already exists
+                if not frappe.db.exists('Tax Withholding Category', row['Section']):
+                    # Create new Tax Withholding Category
+                    category = frappe.new_doc('Tax Withholding Category')
+                    category.name = row['Section']
+                    category.category_name = row['Description']
+                    
+                    # Add rate details
+                    category.append('rates', {
+                        'from_date': frappe.utils.getdate(),
+                        'to_date': frappe.utils.add_years(frappe.utils.getdate(), 1),
+                        'tax_withholding_rate': float(row['Tax Rate Percent']),
+                        'single_threshold': 0,
+                        'cumulative_threshold': 0
+                    })
+                    
+                    # Add company account
+                    company = frappe.get_cached_value('Company', {'is_group': 0}, 'name')
+                    if company:
+                        category.append('accounts', {
+                            'company': company,
+                            'account': frappe.get_cached_value('Company', company, 'default_tax_withholding_account')
+                        })
+                    
+                    category.insert()
+                    frappe.db.commit()
+                    
+        return "Tax Withholding Categories imported successfully"
+        
+    except Exception as e:
+        frappe.log_error(f"Error importing tax withholding categories: {str(e)}")
+        frappe.throw(_("Error importing tax withholding categories: {0}").format(str(e)))

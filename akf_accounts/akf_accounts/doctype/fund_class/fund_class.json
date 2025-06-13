@@ -75,7 +75,8 @@
    "fieldname": "accounts_default",
    "fieldtype": "Table",
    "label": "Accounts Default",
-   "options": "Accounts Default"
+   "options": "Accounts Default",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_dpxr",
@@ -88,7 +89,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-04 15:59:19.913950",
+ "modified": "2025-06-11 16:24:26.125229",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Fund Class",

@@ -46,7 +46,7 @@ def make_project_encumbrance_gl_entries(doc, method=None):
 			make_credit_temporary_encumbrance_project(self, row, consumed_amount)
 			consumed_amount = 0
 	
-	frappe.msgprint("Funds transfers from `Fund Class` to project success...", indicator="green", alert=1)
+	frappe.msgprint("Funds has been transfered to project successfully.", indicator="green", alert=1)
 
 def get_args(self):
 	posting_date = getdate()
@@ -123,60 +123,43 @@ def cancel_project_encumbrance_gl_entries(doc, method=None):
 		frappe.db.sql(f""" Delete from `tabGL Entry` where voucher_no = '{self.name}' """)
 
 
+"""
+	*** Function works in case of funds tranfer from 'Fund Class' to 'Project'
+"""
+# akf_accounts.utils.encumbrance.enc_project.make_transfer_funds_gl_entries
 @frappe.whitelist()
-def make_material_request(source_name, target_doc=None, args=None):
-	# if args is None:
-	# 	args = {}
-	# if isinstance(args, str):
-	# 	args = json.loads(args)
+def make_transfer_funds_gl_entries(doc, donor_balance):
+	from erpnext.accounts.doctype.account.account import get_account_currency
 
-	def set_missing_values(source, target):
-		doc = frappe.get_doc(target)
-		doc.budget = source.name
-		doc.encumbrance = source.encumbrance
-	# 	if frappe.flags.args and frappe.flags.args.default_supplier:
-	# 		# items only for given default supplier
-	# 		supplier_items = []
-	# 		for d in target_doc.items:
-	# 			default_supplier = get_item_defaults(d.item_code, target_doc.company).get("default_supplier")
-	# 			if frappe.flags.args.default_supplier == default_supplier:
-	# 				supplier_items.append(d)
-	# 		target_doc.items = supplier_items
+	_doc_ = frappe._dict()
+	
+	doc = frappe.parse_json(doc)
+	_doc_.update({
+		'doctype': "Project",		
+		'company': doc.company,
+  		'name': doc.custom_project,
+		'fund_class': doc.fund_class,
+		'estimated_costing': doc.estimated_costing
+	})
+	
+	donor_balance = frappe.parse_json(donor_balance)
+	
+	idx = 0
+	project_doc = frappe.get_doc("Project", doc.custom_project)
+	
+	for detail in donor_balance:
+		detail = frappe.parse_json(detail)
+		
+		donor_balance[idx] = detail.update({
+			"currency": get_account_currency(detail.pd_account),
+			"pd_fund_class": doc.fund_class
+		})
+		project_doc.append("custom_program_details", detail)
+		idx = idx + 1
 
-	# 	set_missing_values(source, target_doc)
+	_doc_.update({"custom_program_details": donor_balance})
 
-	# def select_item(d):
-	# 	filtered_items = args.get("filtered_children", [])
-	# 	child_filter = d.name in filtered_items if filtered_items else True
-
-	# 	return d.ordered_qty < d.stock_qty and child_filter
-
-	doclist = get_mapped_doc(
-		"Budget",
-		source_name,
-		{
-			"Budget": {
-				"doctype": "Material Request",
-				# "validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
-			},
-				"Program Details": {
-				"doctype": "Program Details",
-				# "field_map": [
-				# 	["name", "material_request_item"],
-				# 	["parent", "material_request"],
-				# 	["uom", "stock_uom"],
-				# 	["uom", "uom"],
-				# 	["sales_order", "sales_order"],
-				# 	["sales_order_item", "sales_order_item"],
-				# 	["wip_composite_asset", "wip_composite_asset"],
-				# ],
-				# "postprocess": update_item,
-				# "condition": select_item,
-			},
-		},
-		target_doc,
-		set_missing_values,
-	)
-
-	# doclist.set_onload("load_after_mapping", False)
-	return doclist
+	# process 01
+	project_doc.save(ignore_permissions=True)
+	# process 02
+	make_project_encumbrance_gl_entries(_doc_)

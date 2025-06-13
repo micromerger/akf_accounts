@@ -67,7 +67,7 @@
    "is_query_report": 0,
    "label": "Program",
    "link_count": 0,
-   "link_to": "Program",
+   "link_to": "Service Area",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -83,7 +83,7 @@
    "type": "Link"
   }
  ],
- "modified": "2024-12-05 17:56:09.733401",
+ "modified": "2025-05-23 15:39:39.747404",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation Management System",

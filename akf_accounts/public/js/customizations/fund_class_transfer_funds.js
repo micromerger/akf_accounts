@@ -338,6 +338,8 @@ function get_funds(frm){
                         "pd_donor": row.donor,
                         "pd_fund_class": frm.doc.name,
                         "actual_balance": row.balance,
+                        "amount": values.estimated_costing,
+                        "is_transferred": values.estimated_costing,
                         "encumbrance_project_account": row.encumbrance_project_account,
                         "encumbrance_material_request_account": row.encumbrance_material_request_account,
                         "encumbrance_purchase_order_account": row.encumbrance_purchase_order_account,
@@ -355,71 +357,16 @@ function get_funds(frm){
             }
 
             if(details.length > 0) {
-                // First get the current project document
                 frappe.call({
-                    method: 'frappe.client.get',
+                    method: "akf_accounts.utils.encumbrance.enc_project.make_transfer_funds_gl_entries",
                     args: {
-                        doctype: 'Project',
-                        name: values.custom_project
+                        doc: values,
+                        donor_balance: details
                     },
-                    callback: function(r) {
-                        if (r.message) {
-                            let project = r.message;
-                            
-                            // Update the custom_program_details table
-                            if (!project.custom_program_details) {
-                                project.custom_program_details = [];
-                            }
-
-                            // Add new row to custom_program_details
-                            project.custom_program_details.push({
-                                pd_cost_center: values.cost_center,
-                                pd_account: details[0].pd_account,
-                                pd_service_area: values.service_area,
-                                pd_subservice_area: values.subservice_area,
-                                pd_product: values.product,
-                                pd_donor: details[0].pd_donor,
-                                pd_fund_class: frm.doc.name,
-                                actual_balance: values.estimated_costing,
-                                custom_transfer_funds: values.estimated_costing,
-                                custom_funds_transfer: 1,  // Check the checkbox
-                                encumbrance_project_account: details[0].encumbrance_project_account,
-                                encumbrance_material_request_account: details[0].encumbrance_material_request_account,
-                                encumbrance_purchase_order_account: details[0].encumbrance_purchase_order_account,
-                                amortise_designated_asset_fund_account: details[0].amortise_designated_asset_fund_account,
-                                amortise_inventory_fund_account: details[0].amortise_inventory_fund_account
-                            });
-
-                            // Save the updated project
-                            frappe.call({
-                                method: 'frappe.client.save',
-                                args: {
-                                    doctype: 'Project',
-                                    doc: project
-                                },
-                                callback: function(r) {
-                                    if (r.message) {
-                                        // Show success message
-                                        frappe.msgprint({
-                                            title: __('Success'),
-                                            message: __(`Transfer funds cost of ${values.estimated_costing} has been transferred to the project ${values.custom_project}`),
-                                            indicator: 'green'
-                                        });
-                                        
-                                        // Close the dialog
-                                        d.hide();
-                                    } else {
-                                        frappe.msgprint({
-                                            title: __('Error'),
-                                            message: __('Failed to update project with transfer funds amount'),
-                                            indicator: 'red'
-                                        });
-                                    }
-                                }
-                            });
-                        }
+                    callback: function(r){
+                        d.hide();
                     }
-                });
+                })
             } else {
                 d.fields_dict.html_message.df.options = `<b style="color: red;">Please select a record to proceed.</b>`;
                 d.fields_dict.html_message.refresh();
