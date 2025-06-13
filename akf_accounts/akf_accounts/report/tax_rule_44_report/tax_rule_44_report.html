@@ -1,0 +1,533 @@
+<!-- FBR  -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBR Tax Rules</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+       body{
+            font-size: 0.5rem !important;
+            font-family: 'Times New Roman', Times, serif !important;
+        }
+        .header-blank{
+            background: #fff;
+            height: 28px;
+        }
+        .border-bottom{
+            border-bottom: 2px solid #333333 !important;
+        }
+        .border-right{
+            border-right: 2px solid #333333 !important;
+        }
+        .box{
+            height: 70px;
+            width: 90%;
+            border: 2px solid #333333 !important;
+        }
+        .border{
+            border: 2px solid #000 !important;
+        }
+        .no-border{
+            border: 2px solid #00000000!important;
+        }
+        .no-border-inline{
+            border-left: 2px solid #00000000!important;
+            border-right: 2px solid #00000000!important;
+        }
+        .no-border-top{
+            border-top: 2px solid #00000000!important;
+        }
+
+        .fs-6{
+            font-size: 0.4rem !important;
+        }
+        .fs-5{
+            font-size: 1rem !important;
+        }
+        .fs-4{
+            font-size: 1.2rem !important;
+        }
+        .fs-3{
+            font-size: 1.5rem !important;
+        }
+        p{
+            margin-bottom: 0px !important;
+        }
+        .custom-height{
+            height: 30px !important;
+        }
+        .table-bordered{
+            border: 2px solid #bbbbbb !important;
+        }
+    </style>
+</head>
+<body class="align-middle px-5 py-0">
+    <table class="table table-bordered main-container mt-3" >
+        <thead class="border-bottom">
+            <th colspan="7" class="p-1 no-border-inline no-border-top" >
+                <h5 class="fs-4 mb-0">Government of Pakistan <br><br>
+                </h5>
+                <h5 class="fs-4 mb-0">Monthly Sales Tax Return for Withholding agents</h5>
+            </th>
+        </thead>
+        <!-- Tax-Deduction-information -->
+        <tbody class="">
+            <tr class="border-bottom no-border-inline">
+                <td colspan="3" class="px-1  text-capitalize pt-3 ">
+                    <h5 class="fs-4 mb-1">withholding agent name &address</h5> 
+                    <div class=" box mb-2"></div>
+                </td>
+                <td colspan="2" class="ps-4 text-end fs-4 align-middle">
+                  <div class="text-center d-flex py-auto ps-5">
+                    <p class="mb-0 fs-4 pe-1" style="margin-block: 9%;">Period</p>
+                    <div class="mb-2">
+                      Month Year<br>
+                      <table class="table table-bordered" style="width:80px;">
+                        <tbody>
+                          <tr class="">
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                 </div> 
+                </td>
+                <td colspan="2" class="p-1 ps-5 fs-4 align-middle">
+                 
+                  <div class="px-1 text-center fs-5 align-middle d-flex">  
+                    <p class="mb-0 fs-4 pe-1" style="margin-block: 9%;">NFN/FTN</p>   
+                    <table class="table table-bordered mt-3"style=" width:90px;">
+                      <tbody>
+                        <tr class="">
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+            </tr>
+            </tr>
+            <tr  class="border-bottom">
+                <td colspan="7" class="text-center p-1">
+                    <h5 class="text-uppercase fs-4 mb-1">Detail of sales tax deducted during the month</h5>
+                    <h4 class="fs-4 mb-0">(attach additional sheets if required)</h4>
+                </td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1  fs-4 border-right" style="min-width: 70px; ">S.NO. </td>
+                <td colspan="1" class="p-1  fs-4 border-right"style="min-width: 145px; ">Name of supplier </td>
+                <td colspan="1" class="p-1  fs-4 border-right"style="min-width:145px;">NTN</td>
+                <td colspan="1" class="p-1  fs-4 border-right"style="min-width:145px;">No. of &nbsp;Invoices</td>
+                <td colspan="2" class="p-1  fs-4"style="min-width: 180px; border-right:2px solid #bbbbbb !important">Total Sales Tax charged</td>
+                <td colspan="1" class="p-1  fs-4"style="min-width:145px;">Sales Tax deducted</td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <!-- Totals -->
+            <tr class="">
+                <td colspan="6" class="p-1 text-center"  style="border-right:2px solid #bbbbbb !important"><h5 class="text-uppercase text-center mb-0 fs-4">Total Sales Tax Withheld During the Month</h5></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+             <!-- Declaration -->
+            <tr class=""  style="border-top:2px solid #bbbbbb !important">
+                <td colspan="1" class="pt-0 fs-5 header-blank " style="border-right:2px solid #bbbbbb !important">
+                    <img src="verification.png" alt="FBR" class="" height="190px">
+                </td>
+                <td colspan="6" class="p-1 "><p class="p-1 fs-4">
+                    I, _________________________ , holder of CNIC No.________________________ <br> 
+                    in my capacity as _____________________________  , certify that the information <br>
+                    given above is/are  correct, complete and in accordance with the provisions of the<br> Sales Tax Act, 1990, and Rules and Notifications issued thereunder.</p> 
+                <br>
+                <br>
+                <p class=" text-center mb-0 fs-4  d-inline">Date <br>(dd/mm/yyyy) _______________ &nbsp;Stamp ______________ &nbsp; Signature _____________ </p>
+            </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+<!-- PRA -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBR Tax Rules</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+       body{
+            font-size: 0.5rem !important;
+            font-family: 'Times New Roman', Times, serif !important;
+        }
+        .header-blank{
+            background: #fff;
+            height: 28px;
+        }
+        .border-bottom{
+            border-bottom: 2px solid #333333 !important;
+        }
+        .border-right{
+            border-right: 2px solid #333333 !important;
+        }
+        .box{
+            height: 70px;
+            width: 90%;
+            border: 2px solid #333333 !important;
+        }
+        .border{
+            border: 2px solid #000 !important;
+        }
+        .no-border{
+            border: 2px solid #00000000!important;
+        }
+        .no-border-inline{
+            border-left: 2px solid #00000000!important;
+            border-right: 2px solid #00000000!important;
+        }
+        .no-border-top{
+            border-top: 2px solid #00000000!important;
+        }
+
+        .fs-6{
+            font-size: 0.4rem !important;
+        }
+        .fs-5{
+            font-size: 1rem !important;
+        }
+        .fs-4{
+            font-size: 1.2rem !important;
+        }
+        .fs-3{
+            font-size: 1.5rem !important;
+        }
+        p{
+            margin-bottom: 0px !important;
+        }
+        .custom-height{
+            height: 30px !important;
+        }
+        .table-bordered{
+            border: 2px solid #bbbbbb !important;
+        }
+    </style>
+</head>
+<body class="align-middle px-5 py-0">
+    <table class="table table-bordered main-container mt-3" >
+        <thead class="border-bottom">
+            <th colspan="7" class="p-1 no-border-inline no-border-top" >
+                <h5 class="fs-4 mb-0">Government of Pakistan <br><br>
+                </h5>
+                <h5 class="fs-4 mb-0">Monthly Sales Tax Return for Withholding agents</h5>
+            </th>
+        </thead>
+        <!-- Tax-Deduction-information -->
+        <tbody class="">
+            <tr class="border-bottom no-border-inline">
+                <td colspan="3" class="px-1  text-capitalize pt-3 ">
+                    <h5 class="fs-4 mb-1">withholding agent name &address</h5> 
+                    <div class=" box mb-2"></div>
+                </td>
+                <td colspan="2" class="ps-4 text-end fs-4 align-middle">
+                  <div class="text-center d-flex py-auto ps-5">
+                    <p class="mb-0 fs-4 pe-1" style="margin-block: 9%;">Period</p>
+                    <div class="mb-2">
+                      Month Year<br>
+                      <table class="table table-bordered" style="width:80px;">
+                        <tbody>
+                          <tr class="">
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                            <td class="border custom-height p-1"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                 </div> 
+                </td>
+                <td colspan="2" class="p-1 ps-5 fs-4 align-middle">
+                 
+                  <div class="px-1 text-center fs-5 align-middle d-flex">  
+                    <p class="mb-0 fs-4 pe-1" style="margin-block: 9%;">NFN/FTN</p>   
+                    <table class="table table-bordered mt-3"style=" width:90px;">
+                      <tbody>
+                        <tr class="">
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                          <td class="border custom-height p-1"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+            </tr>
+            </tr>
+            <tr  class="border-bottom">
+                <td colspan="7" class="text-center p-1">
+                    <h5 class="text-uppercase fs-4 mb-1">Detail of sales tax deducted during the month</h5>
+                    <h4 class="fs-4 mb-0">(attach additional sheets if required)</h4>
+                </td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1  fs-4 border-right" style="min-width: 70px; ">S.NO. </td>
+                <td colspan="1" class="p-1  fs-4 border-right"style="min-width: 145px; ">Name of supplier </td>
+                <td colspan="1" class="p-1  fs-4 border-right"style="min-width:145px;">NTN</td>
+                <td colspan="1" class="p-1  fs-4 border-right"style="min-width:145px;">No. of &nbsp;Invoices</td>
+                <td colspan="2" class="p-1  fs-4"style="min-width: 180px; border-right:2px solid #bbbbbb !important">Total Sales Tax charged</td>
+                <td colspan="1" class="p-1  fs-4"style="min-width:145px;">Sales Tax deducted</td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <tr class="border-bottom">
+                <td colspan="" class="p-1 border-right fs-5 header-blank"></td>
+                <td colspan="1" class="p-1 border-right fs-5"> </td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="1" class="p-1 border-right fs-5"></td>
+                <td colspan="2" class="p-1  fs-5" style="border-right:2px solid #bbbbbb !important"></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+            <!-- Totals -->
+            <tr class="">
+                <td colspan="6" class="p-1 text-center"  style="border-right:2px solid #bbbbbb !important"><h5 class="text-uppercase text-center mb-0 fs-4">Total Sales Tax Withheld During the Month</h5></td>
+                <td colspan="1" class="p-1  fs-5"></td>
+            </tr>
+             <!-- Declaration -->
+            <tr class=""  style="border-top:2px solid #bbbbbb !important">
+                <td colspan="1" class="pt-0 fs-5 header-blank " style="border-right:2px solid #bbbbbb !important">
+                    <img src="verification.png" alt="FBR" class="" height="190px">
+                </td>
+                <td colspan="6" class="p-1 "><p class="p-1 fs-4">
+                    I, _________________________ , holder of CNIC No.________________________ <br> 
+                    in my capacity as _____________________________  , certify that the information <br>
+                    given above is/are  correct, complete and in accordance with the provisions of the<br> Sales Tax Act, 1990, and Rules and Notifications issued thereunder.</p> 
+                <br>
+                <br>
+                <p class=" text-center mb-0 fs-4  d-inline">Date <br>(dd/mm/yyyy) _______________ &nbsp;Stamp ______________ &nbsp; Signature _____________ </p>
+            </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> -->
