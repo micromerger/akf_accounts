@@ -14,7 +14,6 @@
   "supplier_name",
   "country",
   "cnic",
-  "status",
   "column_break0",
   "supplier_group",
   "supplier_type",
@@ -504,12 +503,6 @@
    "label": "Cost Center",
    "options": "Cost Center",
    "read_only": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Tax Payer Status",
-   "options": "\nOperative\nIn-Operative"
   }
  ],
  "icon": "fa fa-user",
@@ -522,7 +515,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-06-11 12:01:21.992779",
+ "modified": "2025-06-13 16:59:42.588539",
  "modified_by": "Administrator",
  "module": "AKF Buying",
  "name": "Supplier",

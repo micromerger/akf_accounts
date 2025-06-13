@@ -182,7 +182,10 @@ doc_events = {
     "Payment Entry": {
         "validate": "akf_accounts.utils.financial_closure.confirmation",
         "on_submit": "akf_accounts.utils.financial_closure.confirmation"
-	}
+	},
+    "Tax Withholding Category": {
+        "validate": "akf_accounts.utils.taxation.tax_withholding_category.set_sales_tax_and_province_rate",
+    }
 }
 
 

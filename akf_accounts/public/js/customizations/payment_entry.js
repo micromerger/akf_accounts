@@ -157,22 +157,14 @@ frappe.ui.form.on('Payment Entry', {
 
 		// Add set_query for tax_withholding_category
 		frm.set_query('tax_withholding_category', function() {
-			// Only set filters if all required fields are filled
-			if (!frm.doc.custom_nature_id || 
-				!frm.doc.custom_tax_type_id || 
-				!frm.doc.custom_tax_nature_id) {
-				return {
-					filters: {
-						'name': ['in', []]  // Return empty list if filters not set
-					}
-				};
-			}
-
 			return {
 				filters: {
-					'custom_nature_id': frm.doc.custom_nature_id,
 					'custom_tax_type_id': frm.doc.custom_tax_type_id,
-					'custom_tax_nature_id': frm.doc.custom_tax_nature_id
+					'custom_tax_payer_status_id': frm.doc.custom_tax_payer_status_id,
+					'custom_nature_id': frm.doc.custom_nature_id,
+					'custom_tax_nature_id': frm.doc.custom_tax_nature_id,
+					'custom_schedule': frm.doc.custom_schedule,
+					'custom_authority': frm.doc.custom_authority,
 				}
 			};
 		});
@@ -351,7 +343,7 @@ function fetchSupplierDetails(frm) {
 			if (r.message) {
 				// Set the custom fields with values from supplier
 				frm.set_value('custom_tax_payer_category_id', r.message.supplier_type);
-				frm.set_value('custom_resident_type_id', r.message.custom_resident_type_id);
+				frm.set_value('custom_resident_type_id', r.message.custom_resident_type);
 				
 				// If party was selected, set party_name and vice versa
 				if (frm.doc.party && !frm.doc.party_name) {
