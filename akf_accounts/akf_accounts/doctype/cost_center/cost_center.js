@@ -20,7 +20,7 @@ frappe.ui.form.on('Cost Center', {
 		if (!frm.is_new()) {
 			frm.add_custom_button(__('Update Cost Center Name / Number'), function () {
 				frm.trigger("update_cost_center_number");
-			});
+			}, __('Create'));
 		}
 
 		let intro_txt = '';
@@ -39,10 +39,10 @@ frappe.ui.form.on('Cost Center', {
 
 		if(!frm.doc.__islocal) {
 			frm.add_custom_button(__('Chart of Cost Centers'),
-				function() { frappe.set_route("Tree", "Cost Center"); });
+				function() { frappe.set_route("Tree", "Cost Center"); }, __('View'));
 
 			frm.add_custom_button(__('Budget'),
-				function() { frappe.set_route("List", "Budget", {'cost_center': frm.doc.name}); });
+				function() { frappe.set_route("List", "Budget", {'cost_center': frm.doc.name}); }, __('View'));
 		}
 	},
 	update_cost_center_number: function(frm) {
@@ -114,10 +114,10 @@ frappe.ui.form.on('Cost Center', {
 		let doc = frm.doc;
 		if (doc.is_group == 1) {
 			frm.add_custom_button(__('Convert to Non-Group'),
-				() => frm.events.convert_to_ledger(frm));
+				() => frm.events.convert_to_ledger(frm), __('Create'));
 		} else if (doc.is_group == 0) {
 			frm.add_custom_button(__('Convert to Group'),
-				() => frm.events.convert_to_group(frm));
+				() => frm.events.convert_to_group(frm), __('Create'));
 		}
 	},
 
