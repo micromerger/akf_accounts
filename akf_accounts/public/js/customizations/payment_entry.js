@@ -211,6 +211,7 @@ frappe.ui.form.on('Payment Entry', {
 		}
 	},
 	paid_amount: function (frm) {
+		console.log("paid_amount trigger fired");
 		if (frm.doc.party_type == "Donor") {
 			frm.doc.references.forEach(function (row) {
 				// Only update the rate for items with category 'Electronics'
@@ -219,6 +220,7 @@ frappe.ui.form.on('Payment Entry', {
 
 			frm.refresh_field('references');
 		}
+		updateRentSlabRate(frm);
 	},
 	custom_retention_money_payable: function (frm) {
 		frm.call("process_accounts_retention_flow");
@@ -260,6 +262,55 @@ frappe.ui.form.on('Payment Entry', {
 	custom_tax_nature_id: function(frm) {
 		frm.set_value('tax_withholding_category', '');
 		frm.refresh_field('tax_withholding_category');
+	},
+	custom_rent_slabs: function(frm) {
+		if (frm.doc.custom_rent_slabs) {
+			// Show custom_tax_payer_status field when checkbox is checked
+			frm.set_df_property('custom_tax_payer_status', 'hidden', 0);
+			frm.set_df_property('custom_supplier_type', 'hidden', 0);
+			
+			// Add row to taxes table if it doesn't exist
+			let rent_slab_exists = false;
+			frm.doc.taxes.forEach(function(tax) {
+				if (tax.account_head === 'Rent Slab - AKFP') {
+					rent_slab_exists = true;
+				}
+			});
+
+			if (!rent_slab_exists) {
+				frm.add_child('taxes', {
+					charge_type: 'On Paid Amount',
+					account_head: 'Rent Slab - AKFP',
+					rate: 0
+				});
+				frm.refresh_field('taxes');
+			}
+		} else {
+			// Hide fields when checkbox is unchecked
+			frm.set_df_property('custom_tax_payer_status', 'hidden', 1);
+			frm.set_df_property('custom_supplier_type', 'hidden', 1);
+			
+			// Remove rent slab row if exists
+			let taxes = frm.doc.taxes || [];
+			taxes = taxes.filter(function(tax) {
+				return tax.account_head !== 'Rent Slab - AKFP';
+			});
+			frm.set_value('taxes', taxes);
+			frm.refresh_field('taxes');
+		}
+	},
+	custom_tax_payer_status: function(frm) {
+		updateRentSlabRate(frm);
+	},
+	custom_supplier_type: function(frm) {
+		updateRentSlabRate(frm);
+	},
+	taxes_add: function(frm, cdt, cdn) {
+		console.log("taxes_add triggered for", cdt, cdn, locals[cdt][cdn]);
+		let row = locals[cdt][cdn];
+		if (row.account_head === 'Rent Slab - AKFP') {
+			set_rent_slab_rate(frm, cdt, cdn);
+		}
 	}
 });
 
@@ -360,4 +411,205 @@ function fetchSupplierDetails(frm) {
 function clearSupplierFields(frm) {
 	frm.set_value('custom_tax_payer_category_id', '');
 	frm.set_value('custom_resident_type_id', '');
+}
+
+function updateRentSlabRate(frm) {
+	// Only proceed if all required conditions are met
+	if (!frm.doc.custom_rent_slabs || 
+		!frm.doc.custom_tax_payer_status || 
+		!frm.doc.custom_supplier_type || 
+		!frm.doc.paid_amount) {
+		console.log("Required fields missing:", {
+			custom_rent_slabs: frm.doc.custom_rent_slabs,
+			custom_tax_payer_status: frm.doc.custom_tax_payer_status,
+			custom_supplier_type: frm.doc.custom_supplier_type,
+			paid_amount: frm.doc.paid_amount
+		});
+		return;
+	}
+
+	console.log("Starting Rent Slab Rate update with values:", {
+		custom_tax_payer_status: frm.doc.custom_tax_payer_status,
+		custom_supplier_type: frm.doc.custom_supplier_type,
+		paid_amount: frm.doc.paid_amount
+	});
+
+	// Fetch all Rent Slab documents (add filters if needed)
+	frappe.call({
+		method: 'frappe.client.get_list',
+		args: {
+			doctype: 'Rent Slab',
+			fields: ['name'],
+			limit_page_length: 100 // adjust as needed
+		},
+		callback: function(res) {
+			if (res.message && res.message.length > 0) {
+				let found = false;
+				res.message.forEach(function(rent_slab_doc) {
+					frappe.call({
+						method: 'frappe.client.get',
+						args: {
+							doctype: 'Rent Slab',
+							name: rent_slab_doc.name
+						},
+						callback: function(r) {
+							if (r.message && r.message.slabs && r.message.slabs.length > 0) {
+								const paid_amount = frm.doc.paid_amount;
+								let matching_slab = null;
+								r.message.slabs.forEach(function(slab) {
+									console.log("Checking slab:", {
+										from_amount: slab.from_amount,
+										to_amount: slab.to_amount,
+										tax_payer_status_id: slab.tax_payer_status_id,
+										supplier_type_tax_payer_category: slab.supplier_type_tax_payer_category,
+										percentage_deduction: slab.percentage_deduction
+									});
+									console.log("Comparing with:", {
+										paid_amount: paid_amount,
+										custom_tax_payer_status: frm.doc.custom_tax_payer_status,
+										custom_supplier_type: frm.doc.custom_supplier_type
+									});
+									const amountMatch = paid_amount >= slab.from_amount && (!slab.to_amount || paid_amount <= slab.to_amount);
+									const statusMatch = slab.tax_payer_status_id === frm.doc.custom_tax_payer_status;
+									const supplierTypeMatch = slab.supplier_type_tax_payer_category === frm.doc.custom_supplier_type;
+									console.log("Match results:", {
+										amountMatch,
+										statusMatch,
+										supplierTypeMatch
+									});
+									if (amountMatch && statusMatch && supplierTypeMatch) {
+										matching_slab = slab;
+									}
+								});
+								if (matching_slab && !found) {
+									found = true;
+									console.log("Matching slab found:", matching_slab);
+									let rent_slab_row = (frm.doc.taxes || []).find(tax => tax.account_head === 'Rent Slab - AKFP');
+									if (rent_slab_row) {
+										rent_slab_row.rate = matching_slab ? matching_slab.percent_deduction : 0;
+										if (!rent_slab_row.description && rent_slab_row.account_head) {
+											rent_slab_row.description = rent_slab_row.account_head.split(' - ').slice(0, -1).join(' - ');
+										}
+										console.log("Rent Slab row after update:", rent_slab_row);
+										frm.refresh_field('taxes');
+										if (frm.script_manager && frm.script_manager.trigger) {
+											frm.script_manager.trigger("calculate_taxes_and_totals");
+										}
+									}
+								}
+							}
+						}
+					});
+				});
+				setTimeout(function() {
+					if (!found) {
+						console.log("No matching slab found. Setting rate to 0.");
+						let rent_slab_row = (frm.doc.taxes || []).find(tax => tax.account_head === 'Rent Slab - AKFP');
+						if (rent_slab_row) {
+							rent_slab_row.rate = 0;
+							if (!rent_slab_row.description && rent_slab_row.account_head) {
+								rent_slab_row.description = rent_slab_row.account_head.split(' - ').slice(0, -1).join(' - ');
+							}
+							console.log("Rent Slab row after update:", rent_slab_row);
+							frm.refresh_field('taxes');
+							if (frm.script_manager && frm.script_manager.trigger) {
+								frm.script_manager.trigger("calculate_taxes_and_totals");
+							}
+						}
+					}
+				}, 1000); // adjust delay as needed
+			} else {
+				console.log("No Rent Slab documents found.");
+			}
+		}
+	});
+}
+
+function add_rent_slab_tax_row(frm, matching_slab) {
+	// Remove any existing Rent Slab row first
+	frm.doc.taxes = (frm.doc.taxes || []).filter(tax => tax.account_head !== 'Rent Slab - AKFP');
+
+	// Add new row
+	let new_row = frm.add_child('taxes', {
+		charge_type: 'On Paid Amount',
+		account_head: 'Rent Slab - AKFP',
+		rate: 0
+	});
+
+	// Set the rate directly
+	new_row.rate = matching_slab ? matching_slab.percent_deduction : 0;
+
+	// Auto-set description if not set
+	if (!new_row.description && new_row.account_head) {
+		new_row.description = new_row.account_head.split(' - ').slice(0, -1).join(' - ');
+	}
+
+	console.log("Rent Slab row after setting rate and description:", new_row);
+
+	frm.refresh_field('taxes');
+	if (frm.script_manager && frm.script_manager.trigger) {
+		frm.script_manager.trigger("calculate_taxes_and_totals");
+	}
+}
+
+frappe.ui.form.on('Payment Entry Deduction', {
+	account_head: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		if (row.account_head === 'Rent Slab - AKFP') {
+			set_rent_slab_rate(frm, cdt, cdn);
+		}
+	}
+});
+
+function set_rent_slab_rate(frm, cdt, cdn) {
+	let row = locals[cdt][cdn];
+	frappe.call({
+		method: 'frappe.client.get',
+		args: {
+			doctype: 'Rent Slab',
+			name: frm.doc.custom_rent_slabs
+		},
+		callback: function(r) {
+			if (r.message && r.message.slabs && r.message.slabs.length > 0) {
+				const paid_amount = frm.doc.paid_amount;
+				let matching_slab = null;
+				r.message.slabs.forEach(function(slab) {
+					const amountMatch = paid_amount >= slab.from_amount && (!slab.to_amount || paid_amount <= slab.to_amount);
+					const statusMatch = slab.tax_payer_status_id === frm.doc.custom_tax_payer_status;
+					const supplierTypeMatch = slab.supplier_type_tax_payer_category === frm.doc.custom_supplier_type;
+					if (amountMatch && statusMatch && supplierTypeMatch) {
+						matching_slab = slab;
+					}
+				});
+				if (matching_slab) {
+					console.log("Found matching slab:", matching_slab);
+					let rent_slab_row = (frm.doc.taxes || []).find(tax => tax.account_head === 'Rent Slab - AKFP');
+					if (rent_slab_row) {
+						rent_slab_row.rate = matching_slab ? matching_slab.percent_deduction : 0;
+						if (!rent_slab_row.description && rent_slab_row.account_head) {
+							rent_slab_row.description = rent_slab_row.account_head.split(' - ').slice(0, -1).join(' - ');
+						}
+						console.log("Rent Slab row after update:", rent_slab_row);
+						frm.refresh_field('taxes');
+						if (frm.script_manager && frm.script_manager.trigger) {
+							frm.script_manager.trigger("calculate_taxes_and_totals");
+						}
+					}
+				} else {
+					let rent_slab_row = (frm.doc.taxes || []).find(tax => tax.account_head === 'Rent Slab - AKFP');
+					if (rent_slab_row) {
+						rent_slab_row.rate = 0;
+						if (!rent_slab_row.description && rent_slab_row.account_head) {
+							rent_slab_row.description = rent_slab_row.account_head.split(' - ').slice(0, -1).join(' - ');
+						}
+						console.log("Rent Slab row after update:", rent_slab_row);
+						frm.refresh_field('taxes');
+						if (frm.script_manager && frm.script_manager.trigger) {
+							frm.script_manager.trigger("calculate_taxes_and_totals");
+						}
+					}
+				}
+			}
+		}
+	});
 }

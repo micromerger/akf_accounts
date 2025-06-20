@@ -250,11 +250,15 @@ class XPaymentEntry(AccountsController):
 		if self.payment_type == "Internal Transfer":
 			return
 
+		if self.party_type == "Employee":
+			return
+
 		if self.party_type in ("Customer", "Supplier", "Donor"):
 			self.validate_allocated_amount_with_latest_data()
 		else:
 			fail_message = _("Row #{0}: Allocated Amount cannot be greater than outstanding amount.")
 			for d in self.get("references"):
+				# print(f"d.allocated_amount: {d.allocated_amount}, d.outstanding_amount : {d.outstanding_amount}")
 				if (flt(d.allocated_amount)) > 0 and flt(d.allocated_amount) > flt(d.outstanding_amount):
 					frappe.throw(fail_message.format(d.idx))
 
@@ -564,7 +568,8 @@ class XPaymentEntry(AccountsController):
 		elif self.party_type == "Shareholder":
 			return ("Journal Entry",)
 		elif self.party_type == "Employee":
-			return ("Journal Entry", "Expense Claim")
+			# return ("Journal Entry", "Expense Claim")
+			return ("Journal Entry", "Expense Claim", "Employee Advance")
 
 
 	def validate_paid_invoices(self):
@@ -1627,7 +1632,9 @@ class XPaymentEntry(AccountsController):
 			self.paid_amount_after_tax = self.get("taxes")[-1].base_total
 
 	def get_current_tax_amount(self, tax):
-		tax_rate = tax.rate
+		tax_rate = flt(tax.rate)
+		paid_amount_after_tax = flt(self.paid_amount_after_tax)
+		current_tax_amount = (tax_rate / 100.0) * paid_amount_after_tax
 
 		# To set row_id by default as previous row.
 		if tax.charge_type in ["On Previous Row Amount", "On Previous Row Total"]:
