@@ -22,11 +22,11 @@ from erpnext.stock.stock_balance import get_indented_qty, update_bin_qty
 form_grid_templates = {"items": "templates/form_grid/material_request_grid.html"}
 
 # Nabeel Saleem, 18-02-2025
-from akf_accounts.utils.encumbrance.enc_material_request import (
-	validate_donor_balance,
-	make_encumbrance_material_request_gl_entries,
-	cancel_encumbrance_material_request_gl_entries
-	)
+# from akf_accounts.utils.encumbrance.enc_material_request import (
+# 	validate_donor_balance,
+# 	make_encumbrance_material_request_gl_entries,
+# 	cancel_encumbrance_material_request_gl_entries
+# 	)
 
 class MaterialRequest(BuyingController):
 	# begin: auto-generated types
@@ -158,7 +158,8 @@ class MaterialRequest(BuyingController):
 		self.reset_default_field_value("set_warehouse", "items", "warehouse")
 		self.reset_default_field_value("set_from_warehouse", "items", "from_warehouse")
 		# Nabeel Saleem, 18-02-2025
-		validate_donor_balance(self)
+		# validate_donor_balance(self)  # now it's calling from hooks.py
+
 		
 		# self.stop_exceeding_qty() # By Nabeel Saleem
 	def set_requester(self):
@@ -187,7 +188,7 @@ class MaterialRequest(BuyingController):
 			"Budget", {"applicable_on_material_request": 1, "docstatus": 1}
 		):
 			self.validate_budget()
-		make_encumbrance_material_request_gl_entries(self)
+		# make_encumbrance_material_request_gl_entries(self) # now it's calling from hooks.py
 
 	def before_save(self):
 		self.set_status(update=True)
@@ -200,7 +201,7 @@ class MaterialRequest(BuyingController):
 		check_on_hold_or_closed_status(self.doctype, self.name)
 
 		self.set_status(update=True, status="Cancelled")
-		cancel_encumbrance_material_request_gl_entries(self)
+		# cancel_encumbrance_material_request_gl_entries(self)  # now it's calling from hooks.py
 
 	def check_modified_date(self):
 		mod_db = frappe.db.sql(
@@ -532,7 +533,7 @@ def make_purchase_receipt(source_name, target_doc=None, args=None):
 		{
 			"Material Request": {
 				"doctype": "Purchase Receipt",
-				"validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
+				# "validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
 			},
 			"Material Request Item": {
 				"doctype": "Purchase Receipt Item",
@@ -570,7 +571,7 @@ def make_request_for_quotation(source_name, target_doc=None):
 		{
 			"Material Request": {
 				"doctype": "Request for Quotation",
-				"validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
+				# "validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
 			},
 			"Material Request Item": {
 				"doctype": "Request for Quotation Item",
@@ -714,7 +715,7 @@ def make_supplier_quotation(source_name, target_doc=None):
 		{
 			"Material Request": {
 				"doctype": "Supplier Quotation",
-				"validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
+				# "validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
 			},
 			"Material Request Item": {
 				"doctype": "Supplier Quotation Item",
@@ -790,7 +791,7 @@ def make_stock_entry(source_name, target_doc=None):
 		if material_request_type == "Customer Provided":
 			target.purpose = "Material Receipt"
 				
-		# target.set_transfer_qty()
+		target.set_transfer_qty()
 		target.set_actual_qty()
 		target.calculate_rate_and_amount(raise_error_if_no_rate=False)
 		target.stock_entry_type = target.purpose
@@ -813,10 +814,10 @@ def make_stock_entry(source_name, target_doc=None):
 		{
 			"Material Request": {
 				"doctype": "Stock Entry",
-				"validation": {
-					"docstatus": ["=", 1],
-					"material_request_type": ["in", ["Material Transfer", "Material Issue", "Customer Provided"]],
-				},
+				# "validation": {
+				# 	"docstatus": ["=", 1],
+				# 	"material_request_type": ["in", ["Material Transfer", "Material Issue", "Customer Provided"]],
+				# },
 			},
 			"Material Request Item": {
 				"doctype": "Stock Entry Detail",
@@ -827,10 +828,10 @@ def make_stock_entry(source_name, target_doc=None):
 					"job_card_item": "job_card_item",
 				},
 				"postprocess": update_item,
-				# "condition": lambda doc: (
-				# 	flt(doc.ordered_qty, doc.precision("ordered_qty"))
-				# 	< flt(doc.stock_qty, doc.precision("ordered_qty"))
-				# ),
+				"condition": lambda doc: (
+					flt(doc.ordered_qty, doc.precision("ordered_qty"))
+					< flt(doc.stock_qty, doc.precision("ordered_qty"))
+				),
 			},
 		},
 		target_doc,
@@ -913,7 +914,7 @@ def create_pick_list(source_name, target_doc=None):
 			"Material Request": {
 				"doctype": "Pick List",
 				"field_map": {"material_request_type": "purpose"},
-				"validation": {"docstatus": ["=", 1]},
+				# "validation": {"docstatus": ["=", 1]},
 			},
 			"Material Request Item": {
 				"doctype": "Pick List Item",

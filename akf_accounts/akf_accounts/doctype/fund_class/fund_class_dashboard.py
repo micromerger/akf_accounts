@@ -45,6 +45,7 @@ def get_fund_class_stats(fund_class):
 		return {
 			"total_budget": fmt_money(0, currency="PKR"),
 			"funds_received": fmt_money(0, currency="PKR"),
+			"funds_balance": fmt_money(0, currency="PKR"),
 			"transfer_budget": fmt_money(0, currency="PKR"),
 			"remaining_budget": fmt_money(0, currency="PKR")
 		} 
@@ -58,8 +59,9 @@ def get_total_defined_budget(fund_class):
 			FROM 
 				`tabBudget` b JOIN `tabBudget Account` ba ON ba.parent = b.name
 			WHERE 
-				b.fund_class = "{fund_class}" 
-				AND b.docstatus < 2
+				b.docstatus < 2
+				AND b.fund_class = "{fund_class}" 
+				
 		""")[0][0] or 0.0
 		
  

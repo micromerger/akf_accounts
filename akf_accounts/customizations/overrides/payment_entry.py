@@ -88,7 +88,7 @@ class XPaymentEntry(AccountsController):
 		self.set_exchange_rate()
 		self.validate_mandatory()
 		self.validate_reference_documents()
-		self.set_tax_withholding()
+		# self.set_tax_withholding()
 		self.set_amounts()
 		self.validate_amounts()
 		self.apply_taxes()
@@ -869,8 +869,13 @@ class XPaymentEntry(AccountsController):
 					voucher_status="Draft", party_type="{self.party_type}", party="{self.party}", cheque_date="{self.reference_date}", amount="{self.paid_amount}", remarks="{self.remarks}"
 					Where name = "{self.custom_cheque_leaf}"
 				""")
+	# # Nabeel Saleem, 20-06-2025
+	def _empty_advance_taxes_and_charges(self):
+		self.set("taxes", [])	
 	
+	# I.T
 	def set_tax_withholding(self):
+		
 		if not self.party_type == "Supplier":
 			return
 
@@ -912,7 +917,181 @@ class XPaymentEntry(AccountsController):
 				d.update(tax_withholding_details)
 			accounts.append(d.account_head)
 		
-		if not accounts or tax_withholding_details.get("account_head") not in accounts:
+		# Check for an existing Rent Slab row with the same account_head and charge_type
+		rent_slab_row_exists = False
+		for d in self.taxes:
+			if (
+				d.account_head == tax_withholding_details.get("account_head")
+				and d.charge_type == tax_withholding_details.get("charge_type")
+			):
+				# Update the row if needed
+				if d.included_in_paid_amount:
+					tax_withholding_details.update({"included_in_paid_amount": d.included_in_paid_amount})
+				d.update(tax_withholding_details)
+				rent_slab_row_exists = True
+
+		# Only append if not already present
+		if not rent_slab_row_exists:
+			self.append("taxes", tax_withholding_details)
+		
+		to_remove = [
+			d
+			for d in self.taxes
+			if not d.tax_amount and d.account_head == tax_withholding_details.get("account_head")
+		]
+		
+		for d in to_remove:
+			self.remove(d)
+
+	# S.T and Province
+	# Nabeel Saleem, 20-06-2025
+	def set_sales_tax_and_province_tax_withholding(self):
+		if not self.party_type == "Supplier":
+			return
+
+		if not self.custom_sales_tax_and_province:
+			return
+
+		order_amount = self.get_order_net_total()
+
+		net_total = flt(order_amount) + flt(self.unallocated_amount)
+
+		# Adding args as purchase invoice to get TDS amount
+		args = frappe._dict(
+			{
+				"company": self.company,
+				"doctype": "Payment Entry",
+				"supplier": self.party,
+				"posting_date": self.posting_date,
+				"net_total": net_total,
+			}
+		)
+
+		tax_withholding_details = get_party_tax_withholding_details(args, self.custom_tax_withholding_category_st)
+		
+		if not tax_withholding_details:
+			return
+
+		tax_withholding_details.update(
+			{"cost_center": self.cost_center or erpnext.get_default_cost_center(self.company)}
+		)
+		
+		accounts = []
+		for d in self.taxes:
+			if d.account_head == tax_withholding_details.get("account_head"):
+
+				# Preserve user updated included in paid amount
+				if d.included_in_paid_amount:
+					tax_withholding_details.update({"included_in_paid_amount": d.included_in_paid_amount})
+
+				d.update(tax_withholding_details)
+			accounts.append(d.account_head)
+		
+		# Check for an existing Rent Slab row with the same account_head and charge_type
+		rent_slab_row_exists = False
+		for d in self.taxes:
+			if (
+				d.account_head == tax_withholding_details.get("account_head")
+				and d.charge_type == tax_withholding_details.get("charge_type")
+			):
+				# Update the row if needed
+				if d.included_in_paid_amount:
+					tax_withholding_details.update({"included_in_paid_amount": d.included_in_paid_amount})
+				d.update(tax_withholding_details)
+				rent_slab_row_exists = True
+
+		# Only append if not already present
+		if not rent_slab_row_exists:
+			self.append("taxes", tax_withholding_details)
+		
+		to_remove = [
+			d
+			for d in self.taxes
+			if not d.tax_amount and d.account_head == tax_withholding_details.get("account_head")
+		]
+		
+		for d in to_remove:
+			self.remove(d)
+
+	def set_rent_slab(self):
+		if not self.party_type == "Supplier":
+			return
+
+		if not self.custom_apply_rent_slab:
+			return
+
+		order_amount = self.get_order_net_total()
+
+		net_total = flt(order_amount) + flt(self.unallocated_amount)
+
+		# Adding args as purchase invoice to get TDS amount
+		args = frappe._dict(
+			{
+				"company": self.company,
+				"doctype": "Payment Entry",
+				"supplier": self.party,
+				"posting_date": self.posting_date,
+				"net_total": net_total,
+			}
+		)
+
+		def get_rent_slab_details():
+			return frappe.db.sql(f'''
+				Select 
+					ts.idx,
+					rs.add_deduct_tax, 
+					rs.account_head,
+					rs.category, 
+					rs.charge_type, 
+					ts.percent_deduction as rate, 
+					"Rent Slab" as description,
+					({self.paid_amount}*(ts.percent_deduction/100)) as tax_amount
+
+				From `tabRent Slab` rs inner join `tabTaxable Salary Slab` ts on (rs.name=ts.parent)
+
+				Where 
+					rs.docstatus=1
+					and rs.company = "{self.company}"
+					and ts.tax_payer_status_id='{self.custom_tax_payer_status}'
+					and ts.supplier_type_tax_payer_category ='{self.custom_tax_payer_category_id}'
+					and {self.paid_amount} between ts.from_amount and ts.to_amount	
+			''', as_dict=1)[0] or {}
+
+		tax_withholding_details = get_rent_slab_details()
+		# frappe.msgprint(frappe.as_json(tax_withholding_details))
+		if not tax_withholding_details:
+			return
+
+		tax_withholding_details.update(
+			{"cost_center": self.cost_center or erpnext.get_default_cost_center(self.company)}
+		)
+		
+		accounts = []
+		for d in self.taxes:
+			if d.account_head == tax_withholding_details.get("account_head"):
+
+				# Preserve user updated included in paid amount
+				if d.included_in_paid_amount:
+					tax_withholding_details.update({"included_in_paid_amount": d.included_in_paid_amount})
+
+				d.update(tax_withholding_details)
+			accounts.append(d.account_head)
+		
+		# Check for an existing Rent Slab row with the same account_head and charge_type
+		rent_slab_row_exists = False
+		for d in self.taxes:
+			if (
+				d.account_head == tax_withholding_details.get("account_head")
+				and d.charge_type == tax_withholding_details.get("charge_type")
+			):
+				# Update the row if needed
+				if d.included_in_paid_amount:
+					tax_withholding_details.update({"included_in_paid_amount": d.included_in_paid_amount})
+				d.update(tax_withholding_details)
+				rent_slab_row_exists = True
+
+		# Only append if not already present
+		if not rent_slab_row_exists:
 			self.append("taxes", tax_withholding_details)
 		
 		to_remove = [

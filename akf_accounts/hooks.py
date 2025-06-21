@@ -36,6 +36,7 @@ doctype_js = {
     "Asset Movement": "public/js/customizations/asset_movement.js",
 	# "Purchase Order": "public/js/customizations/enc_purchase_order.js",
     "Material Request": "public/js/customizations/enc_material_request.js",
+    "Project": "public/js/customizations/enc_project.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -180,8 +181,14 @@ doc_events = {
         "on_submit": "akf_accounts.utils.financial_closure.confirmation"
 	},
     "Payment Entry": {
-        "validate": "akf_accounts.utils.financial_closure.confirmation",
-        "on_submit": "akf_accounts.utils.financial_closure.confirmation"
+        "validate": [
+            "akf_accounts.utils.financial_closure.confirmation",
+            "akf_accounts.utils.payment_entry_utils.apply_tax_matrix",
+        ],
+        "on_submit": [
+            "akf_accounts.utils.financial_closure.confirmation",
+            "akf_accounts.utils.payment_entry_utils.submit_sales_tax_provision_gl_entry"
+        ]
 	},
     "Tax Withholding Category": {
         "validate": "akf_accounts.utils.taxation.tax_withholding_category.set_sales_tax_and_province_rate",

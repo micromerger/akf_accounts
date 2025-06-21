@@ -163,8 +163,19 @@ frappe.ui.form.on('Payment Entry', {
 					'custom_tax_payer_status_id': frm.doc.custom_tax_payer_status_id,
 					'custom_nature_id': frm.doc.custom_nature_id,
 					'custom_tax_nature_id': frm.doc.custom_tax_nature_id,
-					'custom_schedule': frm.doc.custom_schedule,
+				}
+			};
+		});
+		// Add set_query for tax_withholding_category
+		frm.set_query('custom_tax_withholding_category_st', function() {
+			return {
+				filters: {
+					'custom_resident_type': frm.doc.custom_resident_type_id,
+					'custom_tax_payer_category': frm.doc.custom_tax_payer_category_id,
+					'custom_tax_type_id': frm.doc.custom_tax_type_id_st,
+					'custom_tax_payer_status_id': frm.doc.custom_tax_payer_status_id_st,
 					'custom_authority': frm.doc.custom_authority,
+					'custom_schedule': frm.doc.custom_schedule,
 				}
 			};
 		});
@@ -311,7 +322,16 @@ frappe.ui.form.on('Payment Entry', {
 		if (row.account_head === 'Rent Slab - AKFP') {
 			set_rent_slab_rate(frm, cdt, cdn);
 		}
-	}
+	},
+	custom_sales_tax_and_province: function (frm) {
+		if (!frm.doc.custom_sales_tax_and_province) {
+			frm.set_value("custom_tax_withholding_category_st", '');
+		} else {
+			frappe.db.get_value('Supplier', frm.doc.party, 'tax_withholding_category', (values) => {
+				frm.set_value("custom_tax_withholding_category_st", values.tax_withholding_category);
+			});
+		}
+	},
 });
 
 function update_tax_withholding_category(frm) {

@@ -52,13 +52,40 @@ def make_mortizations_gl_entries(doc, method=None):
 		
 		amount = sum([d.amount for d in self.items])
 		# Looping
+		accounts = get_company_defaults(self.company)
 		for row in self.custom_program_details:
 			difference_amount = amount if(row.actual_balance>=amount) else (amount - row.actual_balance)
 			amount = amount - difference_amount
-			make_debit_gl_entry(args, row, difference_amount) # debit
-			make_credit_gl_entry(self.company, args, row, difference_amount) # credit
 
-def make_debit_gl_entry(args, row, amount):
+			restricted_income_account_gl_entry(args, row, difference_amount, accounts.default_income)
+			material_request_encumbrance_debit_gl_entry(args, row, difference_amount) # debit
+			# make_inventory_account_gl_entry(self.company, args, row, difference_amount, accounts.default_inventory_fund_account) # credit
+			restricted_expense_account_gl_entry(args, row, difference_amount, accounts.restricted_expense_account)
+
+def restricted_income_account_gl_entry(args, row, amount, default_income):
+	cargs = get_currency_args()
+	args.update(cargs)
+	args.update({
+		'party_type': 'Donor',
+		'party': row.pd_donor,
+		'account': default_income, # Restricted Income 
+		'cost_center': row.pd_cost_center,
+		'service_area': row.pd_service_area,
+		'subservice_area': row.pd_subservice_area,
+		'product': row.pd_product,
+		'project': row.pd_project,
+		'fund_class': row.pd_fund_class,
+		'donor': row.pd_donor,
+		'credit': amount,
+		'credit_in_account_currency': amount,
+		'transaction_currency': row.currency,
+		'credit_in_transaction_currency': amount,
+	})
+	doc = frappe.get_doc(args)
+	doc.insert(ignore_permissions=True)
+	doc.submit()
+
+def material_request_encumbrance_debit_gl_entry(args, row, amount):
 	cargs = get_currency_args()
 	args.update(cargs)
 	args.update({
@@ -81,14 +108,13 @@ def make_debit_gl_entry(args, row, amount):
 	doc.insert(ignore_permissions=True)
 	doc.submit()
 
-def make_credit_gl_entry(company, args, row, amount):
+def make_inventory_account_gl_entry(company, args, row, amount, default_inventory_fund_account):
 	cargs = get_currency_args()	
 	args.update(cargs)
-	accounts = get_company_defaults(company)
 	args.update({
 		'party_type': 'Donor',
 		'party': row.pd_donor,
-		'account': accounts.default_inventory_fund_account,
+		'account': default_inventory_fund_account,
 		'cost_center': row.pd_cost_center,
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,
@@ -100,6 +126,29 @@ def make_credit_gl_entry(company, args, row, amount):
 		'credit_in_account_currency': amount,
 		'transaction_currency': row.currency,
 		'credit_in_transaction_currency': amount,
+	})
+	doc = frappe.get_doc(args)
+	doc.insert(ignore_permissions=True)
+	doc.submit()
+
+def restricted_expense_account_gl_entry(args, row, amount, restricted_expense_account):
+	cargs = get_currency_args()
+	args.update(cargs)
+	args.update({
+		'party_type': 'Donor',
+		'party': row.pd_donor,
+		'account': restricted_expense_account,
+		'cost_center': row.pd_cost_center,
+		'service_area': row.pd_service_area,
+		'subservice_area': row.pd_subservice_area,
+		'product': row.pd_product,
+		'project': row.pd_project,
+		'fund_class': row.pd_fund_class,
+		'donor': row.pd_donor,
+		'debit': amount,
+		'debit_in_account_currency': amount,
+		'transaction_currency': row.currency,
+		'debit_in_transaction_currency': amount,
 	})
 	doc = frappe.get_doc(args)
 	doc.insert(ignore_permissions=True)

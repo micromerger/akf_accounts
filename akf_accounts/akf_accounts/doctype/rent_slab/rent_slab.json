@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "autoname": "Prompt",
+ "creation": "2025-06-16 13:03:32.811762",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "disabled",
+  "accounts_details_section",
+  "add_deduct_tax",
+  "category",
+  "charge_type",
+  "column_break_dqes",
+  "company",
+  "account_head",
+  "section_break_2",
+  "effective_from",
+  "column_break_3",
+  "effective_to",
+  "rent_slab",
+  "slabs",
+  "rent_slab_copy",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Effective from",
+   "reqd": 1
+  },
+  {
+   "default": "Alkhidmat Foundation Pakistan",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "slabs",
+   "fieldtype": "Table",
+   "label": "Rent Slab",
+   "options": "Taxable Salary Slab",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Effective to",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rent_slab",
+   "fieldtype": "Section Break",
+   "label": "Rent Slab"
+  },
+  {
+   "fieldname": "accounts_details_section",
+   "fieldtype": "Section Break",
+   "label": "Accounts Details"
+  },
+  {
+   "default": "Deduct",
+   "fieldname": "add_deduct_tax",
+   "fieldtype": "Select",
+   "label": "Add Deduct Tax",
+   "options": "Add\nDeduct",
+   "reqd": 1
+  },
+  {
+   "default": "Total",
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Total",
+   "reqd": 1
+  },
+  {
+   "default": "Actual",
+   "fieldname": "charge_type",
+   "fieldtype": "Select",
+   "label": "Charge Type",
+   "options": "\nActual\nOn Paid Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_dqes",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "account_head",
+   "fieldtype": "Link",
+   "label": "Account Head",
+   "options": "Account"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Rent Slab",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "rent_slab_copy",
+   "fieldtype": "Table",
+   "label": "Rent Slab Copy",
+   "options": "Taxable Rent Slab",
+   "reqd": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-06-20 15:22:12.035065",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Rent Slab",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -239,6 +239,7 @@ function loadFundClassDashboard(frm) {
         callback: function(r) {
             if (r.message) {
                 const data = r.message;
+                // console.log((data));
                 frm.dashboard.refresh();
                 
                 // Add stats section
