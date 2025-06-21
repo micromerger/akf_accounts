@@ -326,4 +326,4 @@ accounting_dimension_doctypes = [
 	"Deduction Breakeven",
     "Stock Ledger Entry"
 ]
-fixtures = ['Authority', 'Account', 'Company']
+# fixtures = ['Authority', 'Account', 'Company']
