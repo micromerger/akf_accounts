@@ -326,3 +326,4 @@ accounting_dimension_doctypes = [
 	"Deduction Breakeven",
     "Stock Ledger Entry"
 ]
+

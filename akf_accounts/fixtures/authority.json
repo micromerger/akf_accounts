@@ -1,0 +1,56 @@
+[
+ {
+  "authority_name": "BRA",
+  "docstatus": 0,
+  "doctype": "Authority",
+  "modified": "2025-06-20 16:16:00.255992",
+  "name": "BRA",
+  "supplier": "SUP-2025-00078",
+  "supplier_name": "BRA Supplier"
+ },
+ {
+  "authority_name": "KPRA",
+  "docstatus": 0,
+  "doctype": "Authority",
+  "modified": "2025-06-20 16:16:44.904295",
+  "name": "KPRA",
+  "supplier": "SUP-2025-00079",
+  "supplier_name": "KPRA Supplier"
+ },
+ {
+  "authority_name": "PRA",
+  "docstatus": 0,
+  "doctype": "Authority",
+  "modified": "2025-06-20 16:17:09.897753",
+  "name": "PRA",
+  "supplier": "SUP-2025-00080",
+  "supplier_name": "PRA Supplier"
+ },
+ {
+  "authority_name": "SRB",
+  "docstatus": 0,
+  "doctype": "Authority",
+  "modified": "2025-06-20 16:17:29.643931",
+  "name": "SRB",
+  "supplier": "SUP-2025-00081",
+  "supplier_name": "SRB Supplier"
+ },
+ {
+  "authority_name": "ICT",
+  "docstatus": 0,
+  "doctype": "Authority",
+  "modified": "2025-06-20 16:18:01.723606",
+  "name": "ICT",
+  "supplier": "SUP-2025-00082",
+  "supplier_name": "ICT Supplier"
+ },
+ {
+  "authority_name": "FBR",
+  "docstatus": 0,
+  "doctype": "Authority",
+  "modified": "2025-06-20 16:14:33.498071",
+  "name": "FBR",
+  "supplier": "SUP-2025-00077",
+  "supplier_name": "FBR Vendor"
+ }
+]
