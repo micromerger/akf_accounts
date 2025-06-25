@@ -155,6 +155,7 @@ def set_sales_tax_and_province_tax_withholding(self):
 		self.remove(d)
 
 def set_rent_slab(self):
+	
 	if not self.party_type == "Supplier":
 		return
 
@@ -177,7 +178,7 @@ def set_rent_slab(self):
 	)
 
 	def get_rent_slab_details():
-		return frappe.db.sql(f'''
+		result = frappe.db.sql(f'''
 			Select 
 				ts.idx,
 				rs.add_deduct_tax, 
@@ -186,9 +187,9 @@ def set_rent_slab(self):
 				rs.charge_type, 
 				ts.percent_deduction as rate, 
 				"Rent Slab" as description,
-				({self.paid_amount}*(ts.percent_deduction/100)) as tax_amount
+				ts.formula
 
-			From `tabRent Slab` rs inner join `tabTaxable Salary Slab` ts on (rs.name=ts.parent)
+			From `tabRent Slab` rs inner join `tabTaxable Rent Slab` ts on (rs.name=ts.parent)
 
 			Where 
 				rs.docstatus=1
@@ -196,10 +197,11 @@ def set_rent_slab(self):
 				and ts.tax_payer_status_id='{self.custom_tax_payer_status}'
 				and ts.supplier_type_tax_payer_category ='{self.custom_tax_payer_category_id}'
 				and {self.paid_amount} between ts.from_amount and ts.to_amount	
-		''', as_dict=1)[0] or {}
-
+		''', as_dict=1)
+		return result[0] if(result) else {}
+  
 	tax_withholding_details = get_rent_slab_details()
-	# frappe.msgprint(frappe.as_json(tax_withholding_details))
+	
 	if not tax_withholding_details:
 		return
 
@@ -217,6 +219,7 @@ def set_rent_slab(self):
 
 			d.update(tax_withholding_details)
 		accounts.append(d.account_head)
+
 	
 	# Check for an existing Rent Slab row with the same account_head and charge_type
 	rent_slab_row_exists = False
@@ -231,6 +234,9 @@ def set_rent_slab(self):
 			d.update(tax_withholding_details)
 			rent_slab_row_exists = True
 
+	amount = eval_condition_and_formula(self, tax_withholding_details)
+	tax_withholding_details.update({"tax_amount": amount})
+	
 	# Only append if not already present
 	if not rent_slab_row_exists:
 		self.append("taxes", tax_withholding_details)
@@ -244,6 +250,75 @@ def set_rent_slab(self):
 	for d in to_remove:
 		self.remove(d)
 
+def eval_condition_and_formula(self, struct_row):
+	from frappe import _, msgprint
+	from hrms.payroll.utils import sanitize_expression
+	from akf_hrms.overrides.salary_slip  import _safe_eval, throw_error_message
+	data = frappe._dict({
+		"paid_amount": self.paid_amount
+	})
+
+	self.whitelisted_globals = {
+			"int": int,
+			"float": float,
+			"long": int,
+			"round": round,
+			# "date": date,
+			# "getdate": getdate,
+			# "ceil": ceil,
+			# "floor": floor,
+		}
+
+	try:
+		
+		'''condition = sanitize_expression(struct_row.condition)
+		if condition:
+			if not _safe_eval(condition, self.whitelisted_globals, data):
+				return None
+		amount = struct_row.amount
+		if struct_row.amount_based_on_formula:
+			formula = sanitize_expression(struct_row.formula)
+			if formula:
+				amount = flt(
+					_safe_eval(formula, self.whitelisted_globals, data), struct_row.precision("amount")
+				)
+		if amount:
+			data[struct_row.abbr] = amount
+
+		return amount '''
+		
+		# formula = sanitize_expression('(600000-300000)*0.05 + (paid_amount-600000)* .1')
+		formula = sanitize_expression(struct_row.formula)
+		if formula:
+			amount = flt(
+				_safe_eval(formula, self.whitelisted_globals, data)
+				# _safe_eval(formula, self.whitelisted_globals, data), struct_row.precision("amount")
+			)
+			return amount
+		
+		return 0
+
+	except NameError as ne:
+		throw_error_message(
+			struct_row,
+			ne,
+			title=_("Name error"),
+			description=_("This error can be due to missing or deleted field."),
+		)
+	except SyntaxError as se:
+		throw_error_message(
+			struct_row,
+			se,
+			title=_("Syntax error"),
+			description=_("This error can be due to invalid syntax."),
+		)
+	except Exception as exc:
+		throw_error_message(
+			struct_row,
+			exc,
+			title=_("Error in formula or condition"),
+			description=_("This error can be due to invalid formula or condition."),
+		)
 
 def submit_sales_tax_provision_gl_entry(doc, method=None):
 	self = doc
@@ -275,12 +350,24 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 							From `tabParty Account` 
 							Where docstatus=0 
 							and parent="{self.custom_supplier}" ''')[0][0] or None
-
 		if(not supplier_account):
-			_link_ = get_link_to_form(self.doctype, self.name)
-			frappe.throw(f"Please select default account of supplier ` <br>{_link_}.", 
+			sp_link = get_link_to_form(self.doctype, self.name)
+			frappe.throw(f"Please select default account of supplier ` <br>{sp_link}.", 
 				title="Missing Info")
 		return supplier_account
+
+	def get_tax_wh_payable_account():
+		account = frappe.db.sql(f'''
+							Select custom_tax_withholding_payable_account 
+							From `tabCompany` 
+							Where docstatus=0 
+							and parent="{self.company}" ''')[0][0] or None
+		if(not account):
+			wh_link = get_link_to_form(self.doctype, self.name)
+			frappe.throw(f"Please select default account of supplier ` <br>{wh_link}.", 
+				title="Missing Info")
+		
+		return account
 	
 	from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 	
@@ -290,6 +377,7 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 	tax_amount = [d.tax_amount for d in self.taxes if(d.description == self.custom_tax_withholding_category_st)][0] or 0.0
 
 	supplier_account = get_supplier_account()
+	temp_tax_wh_payable_account = get_tax_wh_payable_account()
 	args.update({
 		"party_type": "Supplier",
 		"party": self.custom_supplier,
@@ -301,10 +389,10 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 		"fund_class": self.fund_class,
 		"donor": self.donor,
   
-		'account': supplier_account,
-		'debit': tax_amount,
-		'debit_in_account_currency': tax_amount,
-		"debit_in_transaction_currency": tax_amount,
+		'account': temp_tax_wh_payable_account,
+		'credit': tax_amount,
+		'credit_in_account_currency': tax_amount,
+		"credit_in_transaction_currency": tax_amount,
 		# "transaction_currency": row.currency,
 	})
 	doc = frappe.get_doc(args)
@@ -312,9 +400,9 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 	doc.submit()
 
 	# create j.e to settle payable entry for tax to pay to government taxation department.
-	make_sales_tax_provision_journal_entry(self, supplier_account, tax_amount)
+	make_sales_tax_provision_journal_entry(self, supplier_account, temp_tax_wh_payable_account, tax_amount)
 
-def make_sales_tax_provision_journal_entry(self, supplier_account, tax_amount):
+def make_sales_tax_provision_journal_entry(self, supplier_account, temp_tax_wh_payable_account, tax_amount):
 	
 	def _create_():
 		reference_doctype = "Payment Entry"
@@ -328,23 +416,29 @@ def make_sales_tax_provision_journal_entry(self, supplier_account, tax_amount):
 			"accounts": [
 				# debit
 				{
-					"account": self.paid_to,
-					"party_type": self.party_type,
-					"party": self.party,
-					"cost_center": self.cost_center,
-					"debit_in_account_currency": tax_amount,
-					"debit": tax_amount,
-					"reference_type": reference_doctype,
-					"reference_name": reference_name
-				},
-				# credit
-				{
 					"account": supplier_account,
 					"party_type": self.party_type,
-					"party": self.party,
+					"party": self.custom_supplier,
 					"cost_center": self.cost_center,
 					"credit_in_account_currency": tax_amount,
 					"credit": tax_amount,
+					# "debit_in_account_currency": tax_amount,
+					# "debit": tax_amount,
+					# "reference_type": reference_doctype,
+					# "reference_name": reference_name
+				},
+				# credit
+				{
+					"account": temp_tax_wh_payable_account,
+					"party_type": self.party_type,
+					"party": self.custom_supplier,
+					"cost_center": self.cost_center,
+					"debit_in_account_currency": tax_amount,
+					"debit": tax_amount,
+					# "credit_in_account_currency": tax_amount,
+					# "credit": tax_amount,
+					"reference_type": reference_doctype,
+					"reference_name": reference_name
 				}
 			]
 		}

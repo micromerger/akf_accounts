@@ -20,8 +20,7 @@
   "column_break_3",
   "effective_to",
   "rent_slab",
-  "slabs",
-  "rent_slab_copy",
+  "rent_slabs",
   "amended_from"
  ],
  "fields": [
@@ -56,13 +55,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "slabs",
-   "fieldtype": "Table",
-   "label": "Rent Slab",
-   "options": "Taxable Salary Slab",
-   "reqd": 1
-  },
-  {
    "fieldname": "effective_to",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -72,7 +64,7 @@
   {
    "fieldname": "rent_slab",
    "fieldtype": "Section Break",
-   "label": "Rent Slab"
+   "label": "Rent Slab Info"
   },
   {
    "fieldname": "accounts_details_section",
@@ -85,6 +77,7 @@
    "fieldtype": "Select",
    "label": "Add Deduct Tax",
    "options": "Add\nDeduct",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -93,6 +86,7 @@
    "fieldtype": "Select",
    "label": "Category",
    "options": "Total",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -101,6 +95,7 @@
    "fieldtype": "Select",
    "label": "Charge Type",
    "options": "\nActual\nOn Paid Amount",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -124,16 +119,16 @@
    "search_index": 1
   },
   {
-   "fieldname": "rent_slab_copy",
+   "fieldname": "rent_slabs",
    "fieldtype": "Table",
-   "label": "Rent Slab Copy",
+   "label": "Rent Slabs",
    "options": "Taxable Rent Slab",
    "reqd": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-20 15:22:12.035065",
+ "modified": "2025-06-24 13:20:45.928513",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Rent Slab",

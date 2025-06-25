@@ -90,6 +90,7 @@ def get_party_tax_withholding_details(inv, tax_withholding_category=None):
 	pan_no = ""
 	parties = []
 	party_type, party = get_party_details(inv)
+	
 	has_pan_field = frappe.get_meta(party_type).has_field("pan")
 
 	if not tax_withholding_category:
@@ -119,7 +120,7 @@ def get_party_tax_withholding_details(inv, tax_withholding_category=None):
 
 	posting_date = inv.get("posting_date") or inv.get("transaction_date")
 	tax_details = get_tax_withholding_details(tax_withholding_category, posting_date, inv.company)
-
+	
 	if not tax_details:
 		frappe.msgprint(
 			_(
@@ -138,12 +139,12 @@ def get_party_tax_withholding_details(inv, tax_withholding_category=None):
 			).format(tax_withholding_category, inv.company, party)
 		)
 
-	tax_amount, tax_deducted, tax_deducted_on_advances, voucher_wise_amount = get_tax_amount(
+	tax_applicable_amount, tax_amount, tax_deducted, tax_deducted_on_advances, voucher_wise_amount = get_tax_amount(
 		party_type, parties, inv, tax_details, posting_date, pan_no
 	)
-
+	
 	if party_type == "Supplier":
-		tax_row = get_tax_row_for_tds(tax_details, tax_amount)
+		tax_row = get_tax_row_for_tds(tax_details, tax_applicable_amount, tax_amount)
 	else:
 		tax_row = get_tax_row_for_tcs(inv, tax_details, tax_amount, tax_deducted)
 
@@ -187,6 +188,10 @@ def get_tax_withholding_details(tax_withholding_category, posting_date, company)
 					"consider_party_ledger_amount": tax_withholding.consider_party_ledger_amount,
 					"tax_on_excess_amount": tax_withholding.tax_on_excess_amount,
 					"round_off_tax_amount": tax_withholding.round_off_tax_amount,
+					"applicable_rate": tax_rate_detail.custom_applicable_rate, # Nabeel Saleem, 24-06-2025
+					"tax_payer_status": tax_withholding.custom_tax_payer_status_id, # Nabeel Saleem, 24-06-2025
+					"apply_income_tax": tax_withholding.custom_apply_income_tax, # Nabeel Saleem, 24-06-2025
+					"apply_sales_tax_and_province": tax_withholding.custom_apply_sales_tax_and_province, # Nabeel Saleem, 24-06-2025
 				}
 			)
 
@@ -230,12 +235,14 @@ def get_tax_row_for_tcs(inv, tax_details, tax_amount, tax_deducted):
 	return row
 
 
-def get_tax_row_for_tds(tax_details, tax_amount):
+def get_tax_row_for_tds(tax_details, tax_applicable_amount, tax_amount):
 	return {
 		"category": "Total",
 		"charge_type": "Actual",
 		"tax_amount": tax_amount,
 		"custom_wh_rate": tax_details.rate,
+		"custom_applicable_rate": tax_details.applicable_rate,
+		"custom_tax_applicable_amount": tax_applicable_amount,
 		"add_deduct_tax": "Deduct",
 		"description": tax_details.description,
 		"account_head": tax_details.account_head,
@@ -270,6 +277,7 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 		to_date=tax_details.to_date,
 		party_type=party_type,
 	)
+	
 	taxable_vouchers = vouchers + advance_vouchers
 	tax_deducted_on_advances = 0
 
@@ -279,11 +287,12 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 	tax_deducted = 0
 	if taxable_vouchers:
 		tax_deducted = get_deducted_tax(taxable_vouchers, tax_details)
-
+	
 	tax_amount = 0
-
+	tax_applicable_amount = 0 # nabeel, 24-06-2025
 	if party_type == "Supplier":
 		ldc = get_lower_deduction_certificate(inv.company, tax_details, pan_no)
+		
 		if tax_deducted:
 			net_total = inv.tax_withholding_net_total
 			if ldc:
@@ -296,12 +305,20 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 					tax_amount = net_total * tax_details.rate / 100
 			else:
 				tax_amount = net_total * tax_details.rate / 100
-
+				
+			
 			# once tds is deducted, not need to add vouchers in the invoice
 			voucher_wise_amount = {}
 		else:
 			tax_amount = get_tds_amount(ldc, parties, inv, tax_details, vouchers)
-
+		
+		# nabeel, 24-06-2025 (Sales Tax & Province)
+		if(tax_details.apply_sales_tax_and_province):
+			applicable_rate = tax_details.applicable_rate
+			applicable_rate = (1 + (applicable_rate / 100)) if(tax_details.tax_payer_status in ['Filer', 'Operative', 'Active']) else (100 + applicable_rate)
+			tax_applicable_amount = (inv.tax_withholding_net_total / applicable_rate) * (tax_details.applicable_rate / 100)
+			tax_amount =  (tax_applicable_amount * tax_details.rate)
+			
 	elif party_type == "Customer":
 		if tax_deducted:
 			# if already TCS is charged, then amount will be calculated based on 'Previous Row Total'
@@ -314,7 +331,7 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 	if cint(tax_details.round_off_tax_amount):
 		tax_amount = normal_round(tax_amount)
 
-	return tax_amount, tax_deducted, tax_deducted_on_advances, voucher_wise_amount
+	return tax_applicable_amount, tax_amount, tax_deducted, tax_deducted_on_advances, voucher_wise_amount
 
 
 def get_invoice_vouchers(parties, tax_details, company, party_type="Supplier"):

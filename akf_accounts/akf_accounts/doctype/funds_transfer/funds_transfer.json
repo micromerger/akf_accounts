@@ -10,13 +10,13 @@
   "from_cost_center",
   "cost_center",
   "from_bank_account",
-  "from_bank",
+  "posting_date",
   "amended_from",
   "column_break_qciy",
   "transaction_type",
-  "posting_date",
   "to_cost_center",
   "to_bank_account",
+  "from_bank",
   "to_bank",
   "section_break_lbjh",
   "donor_list_html",
@@ -52,7 +52,7 @@
    "fieldname": "transaction_type",
    "fieldtype": "Select",
    "label": "Transaction Type",
-   "options": "Inter Fund\nInter Branch",
+   "options": "Inter Fund\nInter Branch\nInter Bank",
    "reqd": 1
   },
   {
@@ -118,10 +118,11 @@
    "options": "Cost Center"
   },
   {
-   "depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "depends_on": "eval: doc.transaction_type === 'Inter Fund' || doc.transaction_type === 'Inter Bank';",
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "label": "Cost Center",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Fund' || doc.transaction_type === 'Inter Bank';",
    "options": "Cost Center"
   },
   {
@@ -133,11 +134,11 @@
    "options": "Account"
   },
   {
-   "depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "depends_on": "eval: doc.transaction_type === 'Inter Fund' || doc.transaction_type === 'Inter Bank';",
    "fieldname": "from_bank",
    "fieldtype": "Link",
    "label": "From Bank",
-   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Fund' || doc.transaction_type === 'Inter Bank';",
    "options": "Account"
   },
   {
@@ -161,11 +162,11 @@
    "options": "Account"
   },
   {
-   "depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "depends_on": "eval: doc.transaction_type === 'Inter Fund' || doc.transaction_type === 'Inter Bank';",
    "fieldname": "to_bank",
    "fieldtype": "Link",
    "label": "To Bank",
-   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Fund'",
+   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Fund' || doc.transaction_type === 'Inter Bank';",
    "options": "Account"
   },
   {
@@ -201,7 +202,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-11 18:01:22.188304",
+ "modified": "2025-06-25 14:07:08.581286",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",

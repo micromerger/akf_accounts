@@ -220,14 +220,36 @@ function project_budget(frm){
 }
 
 function transfer_funds(frm){
-    // Require the transfer funds file
-    frappe.require("/assets/akf_accounts/js/customizations/fund_class_transfer_funds.js", function() {
-        if (typeof get_funds === "function") {
-            get_funds(frm);
-        } else {
-            frappe.msgprint("Transfer funds functionality is not loaded.");
+    frappe.prompt([
+        {
+            label: __("Transfer To"),
+            fieldname: "transfer_to",
+            fieldtype: "Select",
+            options: ["Project", "Fund Class"],
+            reqd: 1,
+            default: "Project"
         }
-    });
+    ], function(values){
+        if(values.transfer_to === "Project") {
+            // Existing behavior
+            frappe.require("/assets/akf_accounts/js/customizations/fund_class_transfer_funds.js", function() {
+                if (typeof get_funds === "function") {
+                    get_funds(frm, "Project");
+                } else {
+                    frappe.msgprint("Transfer funds functionality is not loaded.");
+                }
+            });
+        } else {
+            // New behavior for Fund Class
+            frappe.require("/assets/akf_accounts/js/customizations/fund_class_transfer_funds.js", function() {
+                if (typeof get_funds === "function") {
+                    get_funds(frm, "Fund Class");
+                } else {
+                    frappe.msgprint("Transfer funds functionality is not loaded.");
+                }
+            });
+        }
+    }, __("Transfer Funds"), __("Next"));
 }
 
 function loadFundClassDashboard(frm) {

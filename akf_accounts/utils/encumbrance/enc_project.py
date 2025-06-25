@@ -128,38 +128,143 @@ def cancel_project_encumbrance_gl_entries(doc, method=None):
 """
 # akf_accounts.utils.encumbrance.enc_project.make_transfer_funds_gl_entries
 @frappe.whitelist()
-def make_transfer_funds_gl_entries(doc, donor_balance):
+def make_transfer_funds_gl_entries(doc, donor_balance, transfer_to=None):
 	from erpnext.accounts.doctype.account.account import get_account_currency
 
-	_doc_ = frappe._dict()
-	
 	doc = frappe.parse_json(doc)
-	_doc_.update({
-		'doctype': "Project",		
-		'company': doc.company,
-  		'name': doc.custom_project,
-		'fund_class': doc.fund_class,
-		'estimated_costing': doc.estimated_costing
-	})
-	
 	donor_balance = frappe.parse_json(donor_balance)
-	
-	idx = 0
-	project_doc = frappe.get_doc("Project", doc.custom_project)
-	
-	for detail in donor_balance:
-		detail = frappe.parse_json(detail)
-		
-		donor_balance[idx] = detail.update({
-			"currency": get_account_currency(detail.pd_account),
-			"pd_fund_class": doc.fund_class
+
+	transfer_to = (transfer_to or "").strip().lower()
+	frappe.msgprint(f"transfer_to received: {transfer_to}")
+
+	if transfer_to == "fund class":
+		source_fund_class = doc.get("fund_class")  # The fund class you are transferring FROM
+		target_fund_class = doc.get("target_fund_class")  # The fund class you are transferring TO
+		company = doc.get("company")
+
+		source_equity_account = frappe.db.get_value(
+			"Accounts Default",
+			{"parent": source_fund_class, "company": company},
+			"equity_account"
+		)
+		target_equity_account = frappe.db.get_value(
+			"Accounts Default",
+			{"parent": target_fund_class, "company": company},
+			"equity_account"
+		)
+
+		for detail in donor_balance:
+			detail = frappe._dict(detail)
+			amount = float(detail.get("amount") or 0)
+			if amount <= 0:
+				continue
+
+			currency = get_account_currency(source_equity_account)
+			posting_date = getdate()
+			cost_center = detail.get("pd_cost_center")
+
+			# Debit source fund class equity account
+			gl_debit = frappe.get_doc({
+				"doctype": "GL Entry",
+				"posting_date": posting_date,
+				"account": source_equity_account,
+				"cost_center": cost_center,
+				"fund_class": source_fund_class,
+				"debit": amount,
+				"debit_in_account_currency": amount,
+				"company": company,
+				"remarks": f"Transfer from Fund Class {source_fund_class} to {target_fund_class}",
+				"voucher_type": "Fund Class",
+				"voucher_no": target_fund_class,
+				"is_opening": "No",
+				"is_advance": "No",
+				"transaction_currency": currency,
+				"debit_in_transaction_currency": amount,
+				"project": "",
+			})
+			gl_debit.insert(ignore_permissions=True)
+			gl_debit.submit()
+
+			# Credit target fund class equity account
+			currency = get_account_currency(target_equity_account)
+			gl_credit = frappe.get_doc({
+				"doctype": "GL Entry",
+				"posting_date": posting_date,
+				"account": target_equity_account,
+				"cost_center": cost_center,
+				"fund_class": target_fund_class,
+				"credit": amount,
+				"credit_in_account_currency": amount,
+				"company": company,
+				"remarks": f"Transfer from Fund Class {source_fund_class} to {target_fund_class}",
+				"voucher_type": "Fund Class",
+				"voucher_no": target_fund_class,
+				"is_opening": "No",
+				"is_advance": "No",
+				"transaction_currency": currency,
+				"credit_in_transaction_currency": amount,
+				"project": "",
+			})
+			gl_credit.insert(ignore_permissions=True)
+			gl_credit.submit()
+
+		# --- NEW: Update Fund Class child table ---
+		fund_class_doc = frappe.get_doc("Fund Class", doc.get("target_fund_class"))
+		enriched_rows = []
+		for detail in donor_balance:
+			# If detail is a dict, parse as needed
+			if isinstance(detail, str):
+				detail = frappe.parse_json(detail)
+			# Add currency and pd_fund_class
+			detail["currency"] = get_account_currency(detail["pd_account"])
+			detail["pd_fund_class"] = doc.get("target_fund_class")
+			enriched_rows.append(detail)
+		fund_class_doc.set("custom_program_details", enriched_rows)
+		fund_class_doc.save(ignore_permissions=True)
+		# --- END NEW ---
+
+		frappe.msgprint(
+			f"Funds have been transferred to Fund Class: {doc.get('target_fund_class')}",
+			indicator="green",
+			alert=1
+		)
+		return
+
+	if transfer_to == "project":
+		if not doc.get("custom_project"):
+			frappe.msgprint("No project selected, skipping Project transfer logic.", indicator="orange", alert=1)
+			return
+
+		# Default: Project transfer (existing logic)
+		_doc_ = frappe._dict()
+		_doc_.update({
+			'doctype': "Project",        
+			'company': doc.company,
+			'name': doc.custom_project,
+			'fund_class': doc.fund_class,
+			'estimated_costing': doc.estimated_costing
 		})
-		project_doc.append("custom_program_details", detail)
-		idx = idx + 1
 
-	_doc_.update({"custom_program_details": donor_balance})
+		idx = 0
+		project_doc = frappe.get_doc("Project", doc.custom_project)
 
-	# process 01
-	project_doc.save(ignore_permissions=True)
-	# process 02
-	make_project_encumbrance_gl_entries(_doc_)
+		for detail in donor_balance:
+			detail = frappe.parse_json(detail)
+			donor_balance[idx] = detail.update({
+				"currency": get_account_currency(detail.pd_account),
+				"pd_fund_class": doc.fund_class
+			})
+			project_doc.append("custom_program_details", detail)
+			idx = idx + 1
+
+		_doc_.update({"custom_program_details": donor_balance})
+
+		# process 01
+		project_doc.save(ignore_permissions=True)
+		# process 02
+		make_project_encumbrance_gl_entries(_doc_)
+		return
+
+	# If neither, do nothing or show a warning
+	frappe.msgprint("No valid transfer type selected.", indicator="orange", alert=1)
+	return

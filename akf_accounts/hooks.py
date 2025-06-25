@@ -190,9 +190,9 @@ doc_events = {
             "akf_accounts.utils.payment_entry_utils.submit_sales_tax_provision_gl_entry"
         ]
 	},
-    "Tax Withholding Category": {
-        "validate": "akf_accounts.utils.taxation.tax_withholding_category.set_sales_tax_and_province_rate",
-    }
+    # "Tax Withholding Category": {
+    #     "validate": "akf_accounts.utils.taxation.tax_withholding_category.set_sales_tax_and_province_rate",
+    # }
 }
 
 

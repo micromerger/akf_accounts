@@ -13,7 +13,8 @@
   "column_break_5",
   "html_6",
   "supplier_type_tax_payer_category",
-  "tax_payer_status_id"
+  "tax_payer_status_id",
+  "formula"
  ],
  "fields": [
   {
@@ -69,11 +70,18 @@
    "in_list_view": 1,
    "label": "Tax Payer Status Id",
    "options": "\nFiler\nNon-Filer"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "formula",
+   "fieldtype": "Code",
+   "in_list_view": 1,
+   "label": "Formula"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2025-06-20 15:21:36.545107",
+ "modified": "2025-06-25 13:02:17.443924",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Taxable Rent Slab",
