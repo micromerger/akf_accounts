@@ -12,6 +12,7 @@
   "details",
   "company_name",
   "abbr",
+  "change_abbr",
   "default_currency",
   "country",
   "is_group",
@@ -807,6 +808,11 @@
    "fieldname": "akfp_accounts_tab",
    "fieldtype": "Tab Break",
    "label": "AKFP Accounts"
+  },
+  {
+   "fieldname": "change_abbr",
+   "fieldtype": "Button",
+   "label": "Change Abbr"
   }
  ],
  "icon": "fa fa-building",
@@ -814,7 +820,7 @@
  "image_field": "company_logo",
  "is_tree": 1,
  "links": [],
- "modified": "2025-03-11 12:47:02.825475",
+ "modified": "2025-06-25 18:05:50.316059",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Company",
