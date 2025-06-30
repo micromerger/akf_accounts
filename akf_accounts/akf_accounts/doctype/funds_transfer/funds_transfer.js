@@ -271,7 +271,7 @@ frappe.ui.form.on("Funds Transfer To", {
         }, 200);
     },
     project: function(frm, cdt, cdn) {
-        frm.call("set_deduction_breakeven");
+        // frm.call("set_deduction_breakeven");
     },
     funds_transfer_to_add: function(frm, cdt, cdn) {
 
@@ -288,7 +288,7 @@ frappe.ui.form.on("Funds Transfer To", {
         const to_costcenter = frm.doc.to_cost_center;
         
         set_random_id();
-        if (frm.doc.transaction_type === 'Inter Fund') {
+        if (['Inter Fund', 'Inter Bank'].includes(frm.doc.transaction_type)) {
             // console.log("Funds Transfer From Inter Fund ");
             frappe.model.set_value(row.doctype, row.name, "ft_cost_center", cost_center);
             frappe.model.set_value(row.doctype, row.name, "ft_account", bank_account); 
@@ -311,8 +311,7 @@ frappe.ui.form.on("Funds Transfer To", {
         frappe.model.set_value(cdt, cdn, 'ft_product', '');
         frappe.model.set_value(cdt, cdn, 'ft_project', '');
         
-
-        frappe.call({
+        /*frappe.call({
             method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
             args: {
                 doc: frm.doc
@@ -343,16 +342,16 @@ frappe.ui.form.on("Funds Transfer To", {
 
                 frm.fields_dict['funds_transfer_to'].grid.refresh_field('ft_service_area');
             }
-        });
+        });*/
     },
     ft_service_area: function (frm, cdt, cdn) {
-        let row = locals[cdt][cdn];
+        /*let row = locals[cdt][cdn];
         if (row.ft_service_area) {
           row.ft_subservice_area = "";
           row.ft_product = "";
           row.project = "";
         }
-        frm.refresh_field("funds_transfer_to")
+        frm.refresh_field("funds_transfer_to")*/
     }
     
 });
@@ -459,7 +458,8 @@ function set_queries_transaction_types(frm) {
             filters: {
                 is_group: 0,
                 disabled: 0,
-                company: frm.doc.company  
+                company: frm.doc.company,
+                name: ['!=', frm.doc.to_cost_center]
             }
         };
     });
@@ -469,7 +469,8 @@ function set_queries_transaction_types(frm) {
             filters: {
                 is_group: 0,
                 disabled: 0,
-                company: frm.doc.company  
+                company: frm.doc.company,
+                name: ['!=', frm.doc.from_cost_center]
             }
         };
     });
@@ -484,30 +485,36 @@ function set_queries_transaction_types(frm) {
         };
     });
 
-    frm.set_query("to_bank_account", function() {
-        return {
-            filters: {
-              
-                company: frm.doc.company  
-            }
-        };
-    });
-
     frm.set_query("from_bank_account", function() {
         return {
             filters: {
-              
-                company: frm.doc.company  
+                disabled: 0,
+                is_group: 0,
+                company: frm.doc.company,
+                name: ['!=', frm.doc.to_bank_account]
             }
         };
     });
 
+    frm.set_query("to_bank_account", function() {
+        return {
+            filters: {
+                disabled: 0,
+                is_group: 0,
+                company: frm.doc.company,
+                name: ['!=', frm.doc.from_bank_account]
+            }
+        };
+    });
 
     frm.set_query("from_bank", function() {
         return {
             filters: {
+                disabled: 0,
+                is_group: 0,
+                account_type: "Bank",
                 company: frm.doc.company,
-                account_type: "Bank"
+                
             }
         };
     });
@@ -515,8 +522,11 @@ function set_queries_transaction_types(frm) {
     frm.set_query("to_bank", function() {
         return {
             filters: {
+                disabled: 0,
+                is_group: 0,
+                account_type: "Bank",
                 company: frm.doc.company,
-                account_type: "Bank"
+               
             }
         };
     });

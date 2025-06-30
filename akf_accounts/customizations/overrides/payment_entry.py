@@ -1381,7 +1381,7 @@ class XPaymentEntry(AccountsController):
 		self.add_party_gl_entries(gl_entries)
 		self.add_bank_gl_entries(gl_entries)
 		self.add_deductions_gl_entries(gl_entries)
-		self.add_tax_gl_entries(gl_entries)
+		# self.add_tax_gl_entries(gl_entries) # request by zubair khan to stop...bcz we added customized entry for this.
 		add_regional_gl_entries(gl_entries, self)
 		return gl_entries
 

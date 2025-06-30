@@ -16,6 +16,7 @@ def execute(filters=None):
 
 def get_columns():
     columns = [
+        _("Payment Entry") + ":Link/Payment Entry:140",
         _("Payment Section") + ":Data:140",
         _("TaxPayer NTN") + ":Data:140",
         _("TaxPayer CNIC") + ":Data:140",

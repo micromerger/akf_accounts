@@ -336,7 +336,7 @@ function get_donations(frm){
             d.fields_dict.html_message.df.options = description;
             d.fields_dict.html_message.refresh();
          },
-        primary_action_label: __("Add Program Detail"),
+        primary_action_label: __("Add Balances"),
     });
     d.show();
       

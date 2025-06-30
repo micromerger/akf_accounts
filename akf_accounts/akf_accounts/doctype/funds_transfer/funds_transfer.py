@@ -180,7 +180,7 @@ class FundsTransfer(Document):
 		execute_funds_transfer_from()
 
 	def on_submit(self):
-		transaction_types = ['Inter Branch', 'Inter Fund']
+		transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Bank']
 		if self.transaction_type in transaction_types:
 			self.make_gl_entries()
 			# self.create_gl_entries_for_inter_funds_transfer()
