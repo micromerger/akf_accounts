@@ -7,6 +7,8 @@ let passport = "999999999";
 let cnicRegix = /^\d{5}-\d{7}-\d{1}$/;
 let ntnRegix = /^\d{6}-\d{1}$/;
 let passportRegix = /^\d{9}$/;
+// let contact_no = "92999-9999999";
+// let contact_noRegix = /^\d{5}-\d{7}$/;
 // =>
 
 let NoArrays = ['contact_no'];
@@ -69,8 +71,16 @@ frappe.ui.form.on('Donor', {
     contact_no: function (frm) {
         if (frm.doc.contact_no) {
             const labelName = __(frm.fields_dict['contact_no'].df.label);
-            if (!internationalPhoneValidation(frm.doc.contact_no, labelName)) {
-                frm.set_df_property('contact_no', 'description', `<p style="color:red">Please enter valid ${labelName}</p>`);
+            // Get the user input (without 92 and dash)
+            let user_input = frm.doc.contact_no.startsWith("92") ? frm.doc.contact_no.slice(2).replace("-", "") : frm.doc.contact_no.replace("-", "");
+            if (user_input[0] === "0") {
+                frm.set_df_property('contact_no', 'description', `<p style="color:red">Please enter a valid number.</p>`);
+            } else if (frm.doc.contact_no.length === 13) {
+                if (!internationalPhoneValidation(frm.doc.contact_no, labelName)) {
+                    frm.set_df_property('contact_no', 'description', `<p style="color:red">Please enter valid ${labelName}</p>`);
+                } else {
+                    frm.set_df_property('contact_no', 'description', "");
+                }
             } else {
                 frm.set_df_property('contact_no', 'description', "");
             }
@@ -242,7 +252,63 @@ function get_country_detail(frm) {
 }
 
 function apply_mask_on_phones(frm) {
-    if (phone_mask) {
+    if (frm.doc.country === "Pakistan") {
+        let input = frm.fields_dict["contact_no"].$input;
+        input.unmask && input.unmask();
+
+        // Remove any previous input group or prefix
+        if (input.parent().hasClass('input-group')) {
+            input.prev('.input-group-text').remove();
+            input.unwrap();
+        }
+        input.parent().find('.pakistan-prefix').remove();
+        input.css({ "padding-left": "", "position": "" });
+
+        // Set mask for 999-9999999 (10 digits, user input only)
+        input.mask("999-9999999");
+        input.attr("placeholder", "xxx-xxxxxxx");
+
+        // On load, if value starts with 92, show only the part after 92
+        if (frm.doc.contact_no && frm.doc.contact_no.startsWith("92")) {
+            input.val(frm.doc.contact_no.slice(2));
+        } else if (frm.doc.contact_no) {
+            input.val(frm.doc.contact_no);
+        } else {
+            input.val("");
+        }
+
+        // On input, always store as "92" + input value (no dashes)
+        input.off("input._pakistan").on("input._pakistan", function() {
+            let val = this.value.replace(/\D/g, '').slice(0, 10); // Only 10 digits
+            frm.doc.contact_no = val.length === 10 ? ("92" + val.slice(0,3) + "-" + val.slice(3,10)) : "";
+        });
+
+        // On paste, strip non-digits and leading 92
+        input.off("paste._pakistan").on("paste._pakistan", function(e) {
+            let paste = (e.originalEvent || e).clipboardData.getData('text');
+            paste = paste.replace(/\D/g, '');
+            if (paste.startsWith("92")) {
+                paste = paste.slice(2);
+            }
+            paste = paste.slice(0, 10);
+            setTimeout(() => {
+                input.val(paste);
+                frm.doc.contact_no = paste ? ("92" + paste.slice(0,3) + "-" + paste.slice(3,10)) : "";
+            }, 0);
+            e.preventDefault();
+        });
+
+        // Optionally, show "92" as a faded prefix inside the input (visual only)
+        input.css({ "padding-left": "28px", "position": "relative" });
+        if (!input.parent().find('.pakistan-prefix').length) {
+            input.before('<span class="pakistan-prefix" style="position:absolute;left:10px;top:7px;color:#888;pointer-events:none;">92</span>');
+            input.parent().css("position", "relative");
+        }
+        // Remove prefix on destroy
+        input.on("remove", function() {
+            input.parent().find('.pakistan-prefix').remove();
+        });
+    } else if (phone_mask) {
         for (let i = 0; i < NoArrays.length; i++) {
             frm.fields_dict[NoArrays[i]].$input.mask(phone_mask);
             frm.fields_dict[NoArrays[i]].$input.attr("placeholder", phone_mask);
