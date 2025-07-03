@@ -358,6 +358,7 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 				title="Missing Info")
 		return supplier_account[0][0]
 
+
 	def get_tax_wh_payable_account():
 		account = frappe.db.sql(f'''
 							Select custom_tax_withholding_payable_account 
