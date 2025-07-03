@@ -262,6 +262,10 @@ frappe.ui.form.on('Payment Entry', {
 	// 	frm.set_value('tax_withholding_category', '');
 	// 	frm.refresh_field('tax_withholding_category');
 	// },
+	custom_tax_payer_status_id: function(frm) {
+		frm.set_value('tax_withholding_category', '');
+		frm.refresh_field('tax_withholding_category');
+	},
 	custom_nature_id: function(frm) {
 		frm.set_value('tax_withholding_category', '');
 		frm.refresh_field('tax_withholding_category');
@@ -326,11 +330,28 @@ frappe.ui.form.on('Payment Entry', {
 	custom_sales_tax_and_province: function (frm) {
 		if (!frm.doc.custom_sales_tax_and_province) {
 			frm.set_value("custom_tax_withholding_category_st", '');
+			frm.set_value("custom_supplier", '');
 		} else {
 			frappe.db.get_value('Supplier', frm.doc.party, 'tax_withholding_category', (values) => {
 				frm.set_value("custom_tax_withholding_category_st", values.tax_withholding_category);
 			});
 		}
+	},
+	custom_tax_payer_status_id_st: function(frm){
+		frm.trigger("emptyTriggerTaxWithholdingCategoryST");
+	},
+	custom_tax_type_id_st: function(frm){
+		frm.trigger("emptyTriggerTaxWithholdingCategoryST");
+	},
+	custom_authority: function(frm){
+		frm.trigger("emptyTriggerTaxWithholdingCategoryST");
+	},
+	custom_schedule: function(frm){
+		frm.trigger("emptyTriggerTaxWithholdingCategoryST");
+	},
+	emptyTriggerTaxWithholdingCategoryST: function(frm){
+		frm.set_value('custom_tax_withholding_category_st', '');
+		frm.refresh_field('custom_tax_withholding_category_st');
 	},
 });
 

@@ -198,8 +198,8 @@ class FundsTransfer(Document):
 		fiscal_year = get_fiscal_year(today(), company=self.company)[0]
 		
 		def validate_funds_transfer_to():
-			if not self.funds_transfer_to:
-				frappe.throw("There is no information to transfer funds.")
+			if (not self.funds_transfer_to):
+				frappe.throw("There is no information to transfer funds.", title="Funds Transfer To")
 				
 		# make debit entries
 		def gl_entries_funds_transfer_from():

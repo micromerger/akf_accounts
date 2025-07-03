@@ -141,8 +141,9 @@ function get_donations(frm){
                 fieldtype: "Link",
                 options: "Fund Class",
                 in_list_view: 0,
+                reqd: ['Funds Transfer'].includes(frm.doc.doctype)? 1:0,
                 read_only: 1,
-                hidden: 1
+                hidden: ['Funds Transfer'].includes(frm.doc.doctype)? 0:1,
             },
             {
                 label: __(""),
@@ -264,7 +265,6 @@ function get_donations(frm){
                     logs.grid.refresh();
                 }, */
             },
-            
             {
                 label: __(""),
                 fieldname: "html_message",
@@ -299,6 +299,7 @@ function get_donations(frm){
                             // "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
                             // "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
                             "ff_balance_amount": row.balance,
+                            "fund_class": values.fund_class
                         });
                     }else{
                         details.push({
