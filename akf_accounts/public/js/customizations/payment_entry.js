@@ -159,8 +159,12 @@ frappe.ui.form.on('Payment Entry', {
 		frm.set_query('tax_withholding_category', function() {
 			return {
 				filters: {
-					'custom_tax_type_id': frm.doc.custom_tax_type_id,
+					'custom_tax_payer_category': frm.doc.custom_tax_payer_category_id,
+					'custom_resident_type': frm.doc.custom_resident_type_id,
+					// 
+					'custom_apply_income_tax': frm.doc.apply_tax_withholding_amount,
 					'custom_tax_payer_status_id': frm.doc.custom_tax_payer_status_id,
+					'custom_tax_type_id': frm.doc.custom_tax_type_id,
 					'custom_nature_id': frm.doc.custom_nature_id,
 					'custom_tax_nature_id': frm.doc.custom_tax_nature_id,
 				}
@@ -170,10 +174,12 @@ frappe.ui.form.on('Payment Entry', {
 		frm.set_query('custom_tax_withholding_category_st', function() {
 			return {
 				filters: {
-					'custom_resident_type': frm.doc.custom_resident_type_id,
 					'custom_tax_payer_category': frm.doc.custom_tax_payer_category_id,
-					'custom_tax_type_id': frm.doc.custom_tax_type_id_st,
+					'custom_resident_type': frm.doc.custom_resident_type_id,
+					// 
+					'custom_apply_sales_tax_and_province': frm.doc.custom_sales_tax_and_province,
 					'custom_tax_payer_status_id': frm.doc.custom_tax_payer_status_id_st,
+					'custom_tax_type_id': frm.doc.custom_tax_type_id_st,
 					'custom_authority': frm.doc.custom_authority,
 					'custom_schedule': frm.doc.custom_schedule,
 				}
