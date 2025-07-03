@@ -360,14 +360,11 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 
 
 	def get_tax_wh_payable_account():
-		account = frappe.db.sql(f'''
-							Select custom_tax_withholding_payable_account 
-							From `tabCompany` 
-							Where docstatus=0 
-							and name="{self.company}" ''')
-		if(not account):
-			wh_link = get_link_to_form(self.doctype, self.name)
-			frappe.throw(f"Please select default account of supplier ` <br>{wh_link}.", 
+		comp = frappe.get_doc('Company', self.company)
+		
+		if(not comp.custom_tax_withholding_payable_account):
+			wh_link = get_link_to_form('Company', comp.name)
+			frappe.throw(f"Please select tax withholding payable account in company. <br>{wh_link}.", 
 				title="Missing Info")
 		
 		return account[0][0]
@@ -381,6 +378,7 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 
 	supplier_account = get_supplier_account()
 	temp_tax_wh_payable_account = get_tax_wh_payable_account()
+	
 	args.update({
 		"party_type": "Supplier",
 		"party": self.custom_supplier,
