@@ -367,7 +367,7 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 			frappe.throw(f"Please select tax withholding payable account in company. <br>{wh_link}.", 
 				title="Missing Info")
 		
-		return account[0][0]
+		return comp.custom_tax_withholding_payable_account
 	
 	from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 	
