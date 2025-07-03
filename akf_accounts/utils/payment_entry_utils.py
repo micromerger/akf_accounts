@@ -363,7 +363,7 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 							Select custom_tax_withholding_payable_account 
 							From `tabCompany` 
 							Where docstatus=0 
-							and parent="{self.company}" ''')
+							and name="{self.company}" ''')
 		if(not account):
 			wh_link = get_link_to_form(self.doctype, self.name)
 			frappe.throw(f"Please select default account of supplier ` <br>{wh_link}.", 
