@@ -351,25 +351,25 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 							Select account 
 							From `tabParty Account` 
 							Where docstatus=0 
-							and parent="{self.custom_supplier}" ''')[0][0] or None
+							and parent="{self.custom_supplier}" ''')
 		if(not supplier_account):
 			sp_link = get_link_to_form(self.doctype, self.name)
 			frappe.throw(f"Please select default account of supplier ` <br>{sp_link}.", 
 				title="Missing Info")
-		return supplier_account
+		return supplier_account[0][0]
 
 	def get_tax_wh_payable_account():
 		account = frappe.db.sql(f'''
 							Select custom_tax_withholding_payable_account 
 							From `tabCompany` 
 							Where docstatus=0 
-							and parent="{self.company}" ''')[0][0] or None
+							and parent="{self.company}" ''')
 		if(not account):
 			wh_link = get_link_to_form(self.doctype, self.name)
 			frappe.throw(f"Please select default account of supplier ` <br>{wh_link}.", 
 				title="Missing Info")
 		
-		return account
+		return account[0][0]
 	
 	from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 	
