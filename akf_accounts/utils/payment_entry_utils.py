@@ -7,29 +7,10 @@ import time
 # calls on validate 
 def apply_tax_matrix(doc, method=None):
 	self = doc
-	validate_tax_withholding_category(self)
 	_empty_advance_taxes_and_charges(self)
 	set_tax_withholding_income_tax(self)
 	set_sales_tax_and_province_tax_withholding(self)
 	set_rent_slab(self)
-
-def validate_tax_withholding_category(self):
-	income_tax = frappe.db.sql(f'''
-				Select name 
-				From `tabTax Withholding Category`
-				Where 
-					custom_apply_income_tax=1
-					and custom_resident_type = '{self.custom_resident_type_id}'				
-					and custom_tax_payer_category = '{self.custom_tax_payer_category_id}'
-					and custom_tax_type_id = '{self.custom_tax_type_id}'
-					and custom_tax_payer_status_id = '{self.custom_tax_payer_status_id}'
-					and custom_nature_id = '{self.custom_nature_id}'
-					and custom_tax_nature_id = '{self.custom_tax_nature_id}'
-					and name = '{self.tax_withholding_category}'
-				''')
-	if(not income_tax):
-		self.tax_withholding_category = ''
-		frappe.msgprint(f"Select accurate <b>Tax Withholding Category (Income Tax)</b>: {self.tax_withholding_category} against filters. ", title="Income Tax (AKFP)")
 
 # Nabeel Saleem, 20-06-2025
 def _empty_advance_taxes_and_charges(self):
