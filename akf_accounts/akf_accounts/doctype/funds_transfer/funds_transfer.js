@@ -22,24 +22,12 @@ frappe.ui.form.on("Funds Transfer", {
         set_queries_funds_transfer_from(frm);
         set_queries_funds_transfer_to(frm);
         set_queries_transaction_types(frm);
-        // console.log(!frm.is_new());
-        // console.log(!frm.doc.__islocal);
-
-        // if (!frm.is_new() && !frm.doc.__islocal) {
-        //     get_html(frm);
-        // }
-
-        if (frm.doc.docstatus === 1) {  
+      
+        if (!frm.is_new() && frm.doc.docstatus < 2) {  
             set_custom_btns(frm);
         }
         frm.trigger("open_dimension_dialog"); // Nabeel Saleem, 12-03-2025
     },
-    on_submit: function(frm){
-        // if (!frm.is_new() && !frm.doc.__islocal && ["Inventory Purchase Restricted", "Asset Purchase"].includes(frm.doc.custom_type_of_transaction)) {
-            // get_html(frm);
-        // }
-        
-        },
 
     onload: function(frm) {
         $("#table_render").empty();
@@ -147,17 +135,14 @@ frappe.ui.form.on("Funds Transfer From", {
     project: function(frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
         frm.call("donor_list_data_funds_transfer").then(r=>{});
-        // get_html(frm);
     },
     ff_account: function(frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
         frm.call("donor_list_data_funds_transfer").then(r=>{});
-        // get_html(frm);
     },
     ff_donor: function(frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
         frm.call("donor_list_data_funds_transfer").then(r=>{});
-        // get_html(frm);
     },
     funds_transfer_from_add: function(frm, cdt, cdn) {
         const cost_center = frm.doc.cost_center; 
@@ -716,122 +701,6 @@ function set_query_ft_donor(frm){
             }
         };
     };
-}
-
-function get_html(frm) {
-    var donorList = [];
-    if(frm.doc.docstatus==0){
-        donorList = frm.doc.funds_transfer_from;
-    }else if(frm.doc.docstatus==1){
-        donorList = frm.doc.funds_transfer_to;
-    }
-    if (donorList.length === 0) {
-        $("#table_render").empty();
-        $("#total_balance").empty();
-        $("#previous").empty();
-        $("#next").empty();
-        frm.set_df_property('donor_list_html', 'options', `<p class="text-center;">No donor records found.`);
-    } else if (donorList.length > 0) {
-        var currentPage = 1;
-        var recordsPerPage = 5;
-        var totalPages = Math.ceil(donorList.length / recordsPerPage);
-
-        function displayPage(page) {
-            
-            var start = (page - 1) * recordsPerPage;
-            var end = start + recordsPerPage;
-            var paginatedDonorList = donorList.slice(start, end);
-            
-            var tableHeader = `
-                <table class="table table-bordered" style="border: 2px solid black;" id="table_render">
-                    <thead style="background-color: #015aab; color: white; text-align: left;">
-                        <tr>
-                            <th class="text-left" style="border: 1px solid black;">Donor ID</th>
-                            <th class="text-left" style="border: 1px solid black;">Donor Name</th>
-                            <th class="text-left" style="border: 1px solid black;">Cost Center</th>
-                            <th class="text-left" style="border: 1px solid black;">Product</th>
-                            ${frm.doc.docstatus == 1 ? '<th class="text-right" style="border: 1px solid black;">Transferred Amount</th>' : '<th class="text-right" style="border: 1px solid black;">Balance</th>'}
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            var donorListRows = "";
-            var totalBalance=0.0;
-            paginatedDonorList.forEach(function(row) {
-                var donorId, donorName, costCenter, product, balance;
-                if("ff_donor" in row){
-                    donorId = row.ff_donor;
-                    donorName = row.ff_donor_name;
-                    costCenter = row.ff_cost_center;
-                    product = row.ff_product;
-                    balance = row.ff_balance_amount;
-                }else if("ft_donor" in row){
-                    donorId = row.ft_donor;
-                    donorName = row.ft_donor_name;
-                    costCenter = row.ft_cost_center;
-                    product = row.ft_product;
-                    balance = row.ft_amount;
-                }
-                totalBalance += balance;
-                var backgroundColor = (parseFloat(balance) < 0) ? '#EE4B2B' : '#d1d1d1'; 
-                var row = `
-                    <tr style="background-color: ${backgroundColor}; color: black; text-align: left;">
-                        <td class="text-left" style="border: 1px solid black;">${donorId}</td>
-                        <td class="text-left" style="border: 1px solid black;">${donorName}</td>
-                        <td class="text-left" style="border: 1px solid black;">${costCenter}</td>
-                        <td class="text-left" style="border: 1px solid black;">${product}</td>
-                        <td class="text-right" style="border: 1px solid black;">${format_currency(balance)}</td>
-                    </tr>
-                `;
-                donorListRows += row;
-            });
-
-            var completeTable = tableHeader + donorListRows + "</tbody></table><br>";
-
-            if (frm.doc.docstatus != 1 && totalBalance !== 0) {
-                completeTable += `
-                    <p style="text-align: right;" id="total_balance">Total Balance: <strong>${format_currency(totalBalance)}</strong></p>
-                `;
-            }
-
-            if (totalPages > 1) {
-                completeTable += generatePaginationControls();
-                // console.log("Completeee Tableee")
-                // console.log(completeTable)
-            }
-
-            frm.set_df_property('donor_list_html', 'options', completeTable);
-        }
-
-        function generatePaginationControls() {
-            var controls = `<div style="text-align: center; margin-top: 10px;">`;
-
-            if (currentPage > 1) {
-                controls += `<button onclick="changePage(${currentPage - 1})" style="text-align: right;" id="previous">Previous</button>`;
-            }
-
-            controls += ` Page ${currentPage} of ${totalPages} `;
-
-            if (currentPage < totalPages) {
-                controls += `<button onclick="changePage(${currentPage + 1})" style="text-align: right;" id="next">Next</button>`;
-            }
-
-            controls += `</div>`;
-            return controls;
-        }
-
-        window.changePage = function(page) {
-            if (page >= 1 && page <= totalPages) {
-                currentPage = page;
-                displayPage(currentPage);
-            }
-        };
-
-        displayPage(currentPage);
-    }
-        
-    
 }
 
 function set_cost_center_in_children(child_table, cost_center_field, cost_center) {

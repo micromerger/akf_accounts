@@ -18,8 +18,10 @@
   "to_bank_account",
   "from_bank",
   "to_bank",
-  "section_break_lbjh",
-  "donor_list_html",
+  "section_break_gcax",
+  "from_gl_entry",
+  "column_break_cugq",
+  "to_gl_entry",
   "section_break_jrzi",
   "funds_transfer_from",
   "section_break_pwtm",
@@ -60,15 +62,6 @@
    "fieldtype": "Date",
    "label": "Posting Date",
    "read_only": 1
-  },
-  {
-   "fieldname": "section_break_lbjh",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "donor_list_html",
-   "fieldtype": "HTML",
-   "label": "Donor List HTML"
   },
   {
    "fieldname": "section_break_jrzi",
@@ -198,12 +191,35 @@
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_gcax",
+   "fieldtype": "Section Break",
+   "label": "Workflow GL Entries"
+  },
+  {
+   "fieldname": "column_break_cugq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "from_gl_entry",
+   "fieldtype": "Check",
+   "label": "1st GL Entry",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "to_gl_entry",
+   "fieldtype": "Check",
+   "label": "2nd GL Entry",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-26 13:21:29.828420",
+ "modified": "2025-07-08 12:44:21.681540",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",

@@ -17,6 +17,7 @@ class FundsTransfer(Document):
 		self.donor_list_data_funds_transfer(is_valid=True)
 		self.update_funds_tranfer_from()
 		self.set_deduction_breakeven()
+		self.calculate_totals()
 
 	def validate_cost_center(self):
 		if self.transaction_type == 'Inter Branch':
@@ -73,6 +74,9 @@ class FundsTransfer(Document):
 			from akf_accounts.akf_accounts.doctype.funds_transfer.deduction_breakeven import apply_deduction_breakeven
 			apply_deduction_breakeven(self)
 		else: self.set("deduction_breakeven", [])
+
+	def calculate_totals(self):
+		self.total_amount = sum(d.ft_amount for d in self.funds_transfer_to)
 
 	@frappe.whitelist()
 	def donor_list_data_funds_transfer(self, is_valid=False):
@@ -177,7 +181,10 @@ class FundsTransfer(Document):
 				validate_balance(row, financial_stats) # validate balance against filters
 				# donor_entries = get_donor_entries(condition)
 	
-		execute_funds_transfer_from()
+		if(self.docstatus==0): execute_funds_transfer_from()
+
+	def on_update(self): 
+		if ((self.from_gl_entry) and (not self.to_gl_entry)): self.make_gl_entries()
 
 	def on_submit(self):
 		transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Bank']
@@ -193,6 +200,9 @@ class FundsTransfer(Document):
 
 	def delete_all_gl_entries(self):
 		frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
+		if(hasattr(self, 'workflow_state')): 
+			frappe.db.set_value(self.doctype, self.name, 'workflow_state', 'Cancelled') 
+			self.reload
 
 	def make_gl_entries(self):
 		fiscal_year = get_fiscal_year(today(), company=self.company)[0]
@@ -377,10 +387,13 @@ class FundsTransfer(Document):
 			doc.submit()
 		
 		validate_funds_transfer_to()
-		gl_entries_funds_transfer_from()
-		total_transfer_amount = gl_entries_funds_transfer_to()
-		gl_entry_bank_from(total_transfer_amount)
-		gl_entry_bank_to(total_transfer_amount)
+		if(self.from_gl_entry and not self.to_gl_entry): gl_entries_funds_transfer_from()
+		# total_transfer_amount = gl_entries_funds_transfer_to()
+		if(self.to_gl_entry): gl_entries_funds_transfer_to()
+		total_transfer_amount = self.total_amount
+  
+		if(self.from_gl_entry and not self.to_gl_entry): gl_entry_bank_from(total_transfer_amount)
+		if(self.to_gl_entry): gl_entry_bank_to(total_transfer_amount)
 		
 	def create_gl_entries_for_inter_funds_transfer(self):
 		today_date = today()
