@@ -353,7 +353,7 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 							Where docstatus=0 
 							and parent="{self.custom_supplier}" ''')
 		if(not supplier_account):
-			sp_link = get_link_to_form(self.doctype, self.name)
+			sp_link = get_link_to_form('Supplier', self.custom_supplier)
 			frappe.throw(f"Please select default account of supplier ` <br>{sp_link}.", 
 				title="Missing Info")
 		return supplier_account[0][0]
