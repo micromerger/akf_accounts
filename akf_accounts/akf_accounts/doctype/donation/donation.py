@@ -352,6 +352,9 @@ class Donation(Document):
 				# "project": row.project,
 				"cost_center": row.cost_center,
 				"account": row.equity_account,
+				"donation_type": row.donation_type,
+				"donor_desk": row.donor_desk,
+				"inventory_scenario": row.inventory_scenario,
 			})
 			c_args = get_currency_args()
 			args.update(c_args)
@@ -397,7 +400,11 @@ class Donation(Document):
 						"subservice_area": row.pay_subservice_area,
 						"product": rowp.pay_product if(rowp.pay_product) else rowp.product,
 						"fund_class": row.fund_class_id,
+
 						# "project": rowp.project,
+						"donation_type": row.donation_type,
+						"donor_desk": row.donor_desk,
+						"inventory_scenario": row.inventory_scenario,
 						"cost_center": rowp.cost_center,
 						"account": rowp.equity_account,
 						"debit": row.base_net_amount,
@@ -507,6 +514,9 @@ class Donation(Document):
 				"subservice_area": row.subservice_area,
 				"product": row.product,
 				"project": row.project,
+				"donation_type": row.donation_type,
+				"donor_desk": row.donor_desk,
+				"inventory_scenario": row.inventory_scenario,
 				"voucher_detail_no": row.name,
 			})
 			doc = frappe.get_doc(args)
@@ -580,6 +590,9 @@ class Donation(Document):
 				"service_area" : row.pay_service_area,
 				"subservice_area" : row.pay_subservice_area,
 				"product": row.product,
+				"donation_type": row.donation_type,
+				"donor_desk": row.donor_desk,
+				"inventory_scenario": row.inventory_scenario,
 				"project" : row.project,
 				"cost_center" : row.cost_center,
 				"references": [{
