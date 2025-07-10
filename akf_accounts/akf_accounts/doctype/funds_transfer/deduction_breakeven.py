@@ -28,8 +28,7 @@ def apply_deduction_breakeven(self):
                 WHERE 
                     ifnull(account, "")!=""
                     and company = '{self.company}'
-                    and parent = '{row.ft_service_area}'
-                    and project = '{row.project}'
+                    and parent = '{row.fund_class}'
                 """, as_dict=True)
 
     def set_deduction_details(row, args):
@@ -43,6 +42,7 @@ def apply_deduction_breakeven(self):
                 "base_amount": percentage_amount,
                 "service_area": row.ft_service_area,
                 "project": row.project,
+                "fund_class": row.fund_class,
                 
                 "cost_center": self.to_cost_center,
                 "random_id": row.random_id,
@@ -131,6 +131,7 @@ def make_deduction_gl_entries(self):
             "subservice_area": row.subservice_area,
             "product": row.product,
             "project": row.project,
+            "fund_class": row.fund_class,
             "voucher_detail_no": row.name,
         })
         doc = frappe.get_doc(args)

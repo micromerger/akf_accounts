@@ -63,20 +63,20 @@ frappe.ui.form.on("Funds Transfer", {
         frm.call("set_deduction_breakeven");
     },
     open_dimension_dialog: function (frm) { // Nabeel Saleem, 12-03-2025
-		if (!frm.doc.__islocal) {
-			frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function () {
-				if (typeof make_dimensions_modal === "function" && (typeof donor_balance_set_queries === "function")) {
+		if (!frm.doc.from_gl_entry) {
+            frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function () {
+                if (typeof make_dimensions_modal === "function" && (typeof donor_balance_set_queries === "function")) {
                     make_dimensions_modal(frm);
                     // donor_balance_set_queries(frm);
-				} else {
-					frappe.msgprint("Donation modal is not loaded.");
-				}
-				if ((typeof accounting_ledger === "function")) {
-					if (frm.doc.docstatus == 1) {
-						accounting_ledger(frm);
-					}
-				}
-			});
+                } else {
+                    frappe.msgprint("Donation modal is not loaded.");
+                }
+                if ((typeof accounting_ledger === "function")) {
+                    if (frm.doc.docstatus == 1) {
+                        accounting_ledger(frm);
+                    }
+                }
+            });
 		}
 	}
 });

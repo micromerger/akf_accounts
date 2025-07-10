@@ -4,7 +4,9 @@ from frappe.model.document import Document
 import json
 import datetime
 from erpnext.accounts.utils import get_fiscal_year
-from frappe.utils import today, fmt_money
+from frappe.utils import (
+    today, fmt_money, get_link_to_form
+)
 from akf_projects.customizations.overrides.project.financial_stats import get_transactions
 
 # from frappe import today
@@ -13,7 +15,7 @@ class FundsTransfer(Document):
 	def validate(self):
 		self.posting_date = today()
 		self.validate_cost_center()
-		self.validate_bank_accounts()
+		self.validate_inter_branch_accounts()
 		self.donor_list_data_funds_transfer(is_valid=True)
 		self.update_funds_tranfer_from()
 		self.set_deduction_breakeven()
@@ -24,10 +26,13 @@ class FundsTransfer(Document):
 			if self.from_cost_center == self.to_cost_center:
 				frappe.throw("Cost Centers cannot be same in Inter Branch Transfer")
 
-	def validate_bank_accounts(self):
+	def validate_inter_branch_accounts(self):
 		if self.transaction_type == 'Inter Branch':
 			if self.from_bank_account == self.to_bank_account:
 				frappe.throw("Banks cannot be same in Inter Branch Transfer")
+			if (not self.desposit_in_transit_account or not self.ibft_equity_account):
+				clink = get_link_to_form("Company", self.company)
+				frappe.throw(f"[Desposit In Transit Account, IBFT (Equity) Account] are need to be set in company {clink}", title="Inter Branch (Accounts Settings)")
 
 	@frappe.whitelist()
 	def update_funds_tranfer_from(self):
@@ -77,6 +82,8 @@ class FundsTransfer(Document):
 
 	def calculate_totals(self):
 		self.total_amount = sum(d.ft_amount for d in self.funds_transfer_to)
+		# self.total_deduction = sum(d.amount for d in self.deduction_breakeven)
+		# self.outstanding_amount =
 
 	@frappe.whitelist()
 	def donor_list_data_funds_transfer(self, is_valid=False):
@@ -194,7 +201,10 @@ class FundsTransfer(Document):
 		if(self.transaction_type == 'Inter Branch'): 
 			from akf_accounts.akf_accounts.doctype.funds_transfer.deduction_breakeven import make_deduction_gl_entries
 			make_deduction_gl_entries(self)
-		
+
+	def on_trash(self):
+		self.delete_all_gl_entries()
+
 	def on_cancel(self):
 		self.delete_all_gl_entries()
 
@@ -205,7 +215,6 @@ class FundsTransfer(Document):
 			self.reload
 
 	def make_gl_entries(self):
-		fiscal_year = get_fiscal_year(today(), company=self.company)[0]
 		
 		def validate_funds_transfer_to():
 			if (not self.funds_transfer_to):
@@ -213,96 +222,54 @@ class FundsTransfer(Document):
 				
 		# make debit entries
 		def gl_entries_funds_transfer_from():
-			
+			args = _get_gl_structure(self)
 			for row in self.funds_transfer_from:
 				# Debit entry for previous dimension; funds transfer from
 				if(row.transfer):
-					args = {
-						'doctype': 'GL Entry',
-						'posting_date': self.posting_date,
-						'transaction_date': self.posting_date,
+					args.update({
 						'account': row.ff_account,
 						'party_type': 'Donor',
 						'party': row.ff_donor,
-						
 						'cost_center': row.ff_cost_center,
 						'debit': row.ff_transfer_amount,
-						'credit': 0.0,
 						'debit_in_account_currency': row.ff_transfer_amount,
-						'credit_in_account_currency': 0.0,
 						'against': row.ff_account,
-						
-						'voucher_type': 'Funds Transfer',
-						'voucher_no': self.name,
-						
-						'against_voucher_type': 'Funds Transfer',
-						'against_voucher': self.name,
-						'remarks': 'Funds Transferred',
-						'is_opening': 'No',
-						'is_advance': 'No',
-						'fiscal_year': fiscal_year,
 						'company': row.ff_company,
-						'account_currency': 'PKR',
-						'transaction_currency': 'PKR',
 						'debit_in_transaction_currency': row.ff_transfer_amount,
-						'credit_in_transaction_currency': 0.0,
-						'transaction_exchange_rate': 1,
 						'project': row.project,
 						'service_area': row.ff_service_area,
 						'subservice_area': row.ff_subservice_area,
 						'product': row.ff_product,      
-						'donor': row.ff_donor,
-						'inventory_flag': 'Purchased', 
-					}
+						'donor': row.ff_donor, 
+					})
 					doc = frappe.get_doc(args)
 					doc.insert(ignore_permissions=True)
 					doc.submit()
 			
 		# make credit entries
 		def gl_entries_funds_transfer_to():
+			args = _get_gl_structure(self)
 			sum_ft_amount = 0.0
 			for row in self.funds_transfer_to:
 				# for bank from gl entry purpose
 				sum_ft_amount += row.ft_amount
 				# Debit entry for previous dimension; funds transfer from
-				args = {
-					'doctype': 'GL Entry',
-					'posting_date': self.posting_date,
-					'transaction_date': self.posting_date,
+				args.update({
 					'account': row.ft_account,
 					'party_type': 'Donor',
 					'party': row.ft_donor,
-					
 					'cost_center': row.ft_cost_center,
-					'debit': 0.0,
-					'credit': row.ft_amount,
-					'debit_in_account_currency': 0.0,
-					'credit_in_account_currency': row.ft_amount,
+					'credit': row.outstanding_amount,
+					'credit_in_account_currency': row.outstanding_amount,
+					'credit_in_transaction_currency': row.outstanding_amount,
 					'against': row.ft_account,
-					
-					'voucher_type': 'Funds Transfer',
-					'voucher_no': self.name,
-					
-					'against_voucher_type': 'Funds Transfer',
-					'against_voucher': self.name,
-					'remarks': 'Funds Transferred',
-					'is_opening': 'No',
-					'is_advance': 'No',
-					'fiscal_year': fiscal_year,
-					'company': row.ft_company,
-					'account_currency': 'PKR',
-					'transaction_currency': 'PKR',
-					'debit_in_transaction_currency': row.ft_amount,
-					'credit_in_transaction_currency': 0.0,
-					'transaction_exchange_rate': 1,
 					'project': row.project,
+					'fund_class': row.fund_class if(self.transaction_type=="Inter Branch") else "",
 					'service_area': row.ft_service_area,
 					'subservice_area': row.ft_subservice_area,
 					'product': row.ft_product,      
-					'donor': row.ft_donor,
-					'inventory_flag': 'Purchased',
-					
-				}
+					'donor': row.ft_donor	
+				})
 				doc = frappe.get_doc(args)
 				doc.insert(ignore_permissions=True)
 				doc.submit()
@@ -310,45 +277,28 @@ class FundsTransfer(Document):
 			return sum_ft_amount
 		
 		# make credit entries
-		def gl_entry_bank_from(total_transfer_amount):
+		def gl_entry_bank_from():
 			from_bank = None
 			if(not self.from_bank) and (self.transaction_type=='Inter Fund'): return
 			if(not self.from_bank_account) and (self.transaction_type=='Inter Branch'): return
 			if(self.from_bank): from_bank = self.from_bank
 			if(self.from_bank_account): from_bank = self.from_bank_account
-			# Credit entry for bank account
-			gl_entry_for_bank_credit = frappe.get_doc({
-				'doctype': 'GL Entry',
-				'posting_date': self.posting_date,
-				'transaction_date': self.posting_date,
+			# Credit entry for bank account	
+			args = _get_gl_structure(self)
+			args.update({
 				'account': from_bank,
-				'against_voucher_type': 'Funds Transfer',
-				'against_voucher': self.name,
-				'cost_center': self.from_cost_center,
-				'debit': 0.0,
-				'credit': total_transfer_amount,
-				'account_currency': 'PKR',
-				'debit_in_account_currency': 0.0,
-				'credit_in_account_currency': total_transfer_amount,
-				'against': from_bank,
-				'voucher_type': 'Funds Transfer',
-				'voucher_no': self.name,
-				'remarks': 'Funds Transferred',
-				'is_opening': 'No',
-				'is_advance': 'No',
-				'fiscal_year': fiscal_year,
-				'company': self.company,
-				'transaction_currency': 'PKR',
-				'debit_in_transaction_currency': 0.0,
-				'credit_in_transaction_currency': total_transfer_amount,
-				'transaction_exchange_rate': 1,
+				'cost_center': self.from_cost_center if(self.transaction_type == "Inter Branch") else self.cost_center,
+				'against': from_bank,			
+				'credit': self.total_amount,
+				'credit_in_account_currency': self.total_amount,						
+				'credit_in_transaction_currency': self.total_amount
 			})
-
-			gl_entry_for_bank_credit.insert(ignore_permissions=True)
-			gl_entry_for_bank_credit.submit()
+			doc = frappe.get_doc(args)
+			doc.insert(ignore_permissions=True)
+			doc.submit()
 		
 		# make debit entries
-		def gl_entry_bank_to(total_transfer_amount):
+		def gl_entry_bank_to():
 			to_bank = None
 			if(not self.to_bank) and (self.transaction_type=='Inter Fund'): return
 			if(not self.to_bank_account) and (self.transaction_type=='Inter Branch'): return
@@ -356,45 +306,89 @@ class FundsTransfer(Document):
 			if(self.to_bank_account): to_bank = self.to_bank_account
 			
 			# Debit entry for bank account
-			doc = frappe.get_doc({
-				'doctype': 'GL Entry',
-				'posting_date': self.posting_date,
-				'transaction_date': self.posting_date,
+			args = _get_gl_structure(self)
+			args.update({
+			
 				'account': to_bank,
-				'against_voucher_type': 'Funds Transfer',
-				'against_voucher': self.name,
-				'cost_center': self.to_cost_center,
-				'debit': total_transfer_amount,
-				'credit': 0.0,
-				'account_currency': 'PKR',
-				'debit_in_account_currency': total_transfer_amount,
-				'credit_in_account_currency': 0.0,
-				'against': to_bank,
-				'voucher_type': 'Funds Transfer',
-				'voucher_no': self.name,
-				'remarks': 'Funds Transferred',
-				'is_opening': 'No',
-				'is_advance': 'No',
-				'fiscal_year': fiscal_year,
-				'company': self.company,
-				'transaction_currency': 'PKR',
-				'debit_in_transaction_currency': total_transfer_amount,
-				'credit_in_transaction_currency': 0.0,
-				'transaction_exchange_rate': 1,
+				'cost_center': self.to_cost_center if(self.transaction_type == "Inter Branch") else self.cost_center,
+				'against': to_bank,			
+				'debit': self.total_amount,
+				'debit_in_account_currency': self.total_amount,
+				'debit_in_transaction_currency': self.total_amount,
 			})
-
+			doc = frappe.get_doc(args)
 			doc.insert(ignore_permissions=True)
 			doc.submit()
+
+		def entry_Deposit_In_Transit():
+			if(self.transaction_type=="Inter Branch"):
+				args = _get_gl_structure(self)
+				if(self.from_gl_entry and not self.to_gl_entry):
+					args.update({
+						'account': self.desposit_in_transit_account,
+						'cost_center': self.from_cost_center,
+						'against': self.desposit_in_transit_account,			
+						'debit': self.total_amount,
+						'debit_in_account_currency': self.total_amount,						
+						'debit_in_transaction_currency': self.total_amount
+					})
+
+				elif(self.to_gl_entry):
+					args.update({
+						'account': self.desposit_in_transit_account,
+						'cost_center': self.from_cost_center,
+						'against': self.desposit_in_transit_account,			
+						'credit': self.total_amount,
+						'credit_in_account_currency': self.total_amount,						
+						'credit_in_transaction_currency': self.total_amount
+					})
+				
+				doc = frappe.get_doc(args)	
+				doc.insert(ignore_permissions=True)
+				doc.submit()
 		
+		def entry_IBFT_Equity():
+			if(self.transaction_type=="Inter Branch"):
+				args = _get_gl_structure(self)
+				if(self.from_gl_entry and not self.to_gl_entry):
+					args.update({
+						'account': self.ibft_equity_account,
+						'cost_center': self.from_cost_center,
+						'against': self.ibft_equity_account,
+						'credit': self.total_amount,
+						'credit_in_account_currency': self.total_amount,						
+						'credit_in_transaction_currency': self.total_amount
+					})
+
+				elif(self.to_gl_entry):
+					args.update({
+						'account': self.ibft_equity_account,
+						'cost_center': self.from_cost_center,
+						'against': self.ibft_equity_account,			
+						'debit': self.total_amount,
+						'debit_in_account_currency': self.total_amount,						
+						'debit_in_transaction_currency': self.total_amount
+					})
+				
+				doc = frappe.get_doc(args)	
+				doc.insert(ignore_permissions=True)
+				doc.submit()
+
+		# Start Execution
 		validate_funds_transfer_to()
-		if(self.from_gl_entry and not self.to_gl_entry): gl_entries_funds_transfer_from()
-		# total_transfer_amount = gl_entries_funds_transfer_to()
-		if(self.to_gl_entry): gl_entries_funds_transfer_to()
-		total_transfer_amount = self.total_amount
-  
-		if(self.from_gl_entry and not self.to_gl_entry): gl_entry_bank_from(total_transfer_amount)
-		if(self.to_gl_entry): gl_entry_bank_to(total_transfer_amount)
 		
+		if(self.from_gl_entry and not self.to_gl_entry): 
+			gl_entries_funds_transfer_from()
+			gl_entry_bank_from()
+		# total_transfer_amount = gl_entries_funds_transfer_to()
+		
+		if(self.to_gl_entry): 
+			gl_entries_funds_transfer_to()
+			# gl_entry_bank_to()
+
+		entry_Deposit_In_Transit()
+		entry_IBFT_Equity()
+
 	def create_gl_entries_for_inter_funds_transfer(self):
 		today_date = today()
 		fiscal_year = get_fiscal_year(today_date, company=self.company)[0]
@@ -1292,4 +1286,43 @@ def get_service_areas(doc):
         company.append(f.ff_company)
     # frappe.msgprint(frappe.as_json(company))
     return company
+
+
+def _get_gl_structure(self):
+	fiscal_year = get_fiscal_year(today(), company=self.company)[0]
+	return {
+		'doctype': 'GL Entry',
+		'posting_date': self.posting_date,
+		'transaction_date': self.posting_date,
+		'party_type': '',
+		'party': '',
+		'voucher_type': 'Funds Transfer',
+		'voucher_no': self.name,
+		'against_voucher_type': 'Funds Transfer',
+		'against_voucher': self.name,
+		'remarks': 'Funds Transferred',
+		'is_opening': 'No',
+		'is_advance': 'No',
+		'fiscal_year': fiscal_year,
+		'company': self.company,
+		'account_currency': 'PKR',
+		'transaction_currency': 'PKR',
+		'transaction_exchange_rate': 1,
+		'project': '',
+		'service_area': '',
+		'subservice_area': '',
+		'product': '',     
+		'donor': '',
+		'inventory_flag': '',
+		# not common arguments
+		'cost_center': '',
+		'account': '',
+		'against': '',
+		'debit': 0.0,
+		'credit': 0.0,
+		'debit_in_account_currency': 0.0,
+		'credit_in_account_currency': 0.0,
+		'debit_in_transaction_currency': 0.0,
+		'credit_in_transaction_currency': 0.0
+	}
 

@@ -11,6 +11,7 @@
   "ft_company",
   "ft_cost_center",
   "project",
+  "fund_class",
   "ft_service_area",
   "ft_subservice_area",
   "ft_product",
@@ -132,12 +133,23 @@
    "hidden": 1,
    "label": "Balance Amount",
    "read_only": 1
+  },
+  {
+   "fetch_from": "project.fund_class",
+   "fetch_if_empty": 1,
+   "fieldname": "fund_class",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Fund Class",
+   "options": "Fund Class",
+   "read_only": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-26 19:45:31.179154",
+ "modified": "2025-07-10 17:59:02.046263",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer To",
