@@ -1,0 +1,37 @@
+{%
+var report_columns = report.get_columns_for_print();
+%}
+<style>
+    @media print {
+        .break_tax_payer_page {
+            page-break-after: always;
+        }
+    }
+</style>
+<div style="margin-bottom: 7px;" class="text-center">
+</div>
+<h2 class="text-center">{%= __(report.report_name) %}</h2>
+<h5 class="text-center">{%= __("{0} to {1}", [frappe.datetime.str_to_user(filters.from_date),
+    frappe.datetime.str_to_user(filters.to_date)]) %}</h5>
+<hr>
+<table class="table table-bordered">
+
+    <tbody>
+        {% for(var j=0, k=data.length; j<k; j++) { %} {% var row=data[j]; %} <tr>
+            {% for(var i=0, l=report_columns.length; i<l; i++) { %} <td class="">
+                {% var fieldname = report_columns[i].fieldname; %}
+                {% if (report_columns[i].fieldtype=='Currency' && !isNaN(row[fieldname])) { %}
+                {%= format_currency(row[fieldname]) %}
+                {% } else { %}
+                {% if (!is_null(row[fieldname])) { %}
+                {%= row[fieldname] %}
+                {% } %}
+                {% } %}
+                </td>
+                {% } %}
+                </tr>
+                {% } %}
+    </tbody>
+</table>
+<p class="text-right text-muted">{%= __("Printed On {0}",
+    [frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string())]) %}</p>
