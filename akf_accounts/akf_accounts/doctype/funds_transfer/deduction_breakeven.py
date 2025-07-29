@@ -41,7 +41,7 @@ def apply_deduction_breakeven(self):
                 "amount": percentage_amount,
                 "base_amount": percentage_amount,
                 "service_area": row.ft_service_area,
-                "project": row.project,
+                # "project": row.project,
                 "fund_class": row.fund_class,
                 
                 "cost_center": self.to_cost_center,

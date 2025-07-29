@@ -660,3 +660,155 @@ function set_rent_slab_rate(frm, cdt, cdn) {
 		}
 	});
 }
+
+// --- Custom Outstanding Invoices/Orders Supplier Filter ---
+function get_outstanding_invoices_or_orders_custom(frm, get_outstanding_invoices, get_orders_to_be_billed) {
+	const today = frappe.datetime.get_today();
+	let fields = [
+		{ fieldtype: "Section Break", label: __("Posting Date") },
+		{
+			fieldtype: "Date", label: __("From Date"),
+			fieldname: "from_posting_date", default: frappe.datetime.add_days(today, -30)
+		},
+		{ fieldtype: "Column Break" },
+		{ fieldtype: "Date", label: __("To Date"), fieldname: "to_posting_date", default: today },
+		{ fieldtype: "Section Break", label: __("Due Date") },
+		{ fieldtype: "Date", label: __("From Date"), fieldname: "from_due_date" },
+		{ fieldtype: "Column Break" },
+		{ fieldtype: "Date", label: __("To Date"), fieldname: "to_due_date" },
+		{ fieldtype: "Section Break", label: __("Outstanding Amount") },
+		{
+			fieldtype: "Float", label: __("Greater Than Amount"),
+			fieldname: "outstanding_amt_greater_than", default: 0
+		},
+		{ fieldtype: "Column Break" },
+		{ fieldtype: "Float", label: __("Less Than Amount"), fieldname: "outstanding_amt_less_than" },
+		{ fieldtype: "Section Break", label: __("Supplier Filter") },
+		{
+			fieldtype: "Link",
+			label: __("Supplier"),
+			fieldname: "supplier",
+			options: "Supplier",
+			reqd: 0,
+			description: __("Leave blank to fetch for all suppliers.")
+		},
+	];
+	if (frm.dimension_filters) {
+		let column_break_insertion_point = Math.ceil((frm.dimension_filters.length) / 2);
+		fields.push({ fieldtype: "Section Break" });
+		frm.dimension_filters.map((elem, idx) => {
+			fields.push({
+				fieldtype: "Link",
+				label: elem.document_type == "Cost Center" ? "Cost Center" : elem.label,
+				options: elem.document_type,
+				fieldname: elem.fieldname || elem.document_type
+			});
+			if (idx + 1 == column_break_insertion_point) {
+				fields.push({ fieldtype: "Column Break" });
+			}
+		});
+	}
+	fields = fields.concat([
+		{ fieldtype: "Section Break" },
+		{ fieldtype: "Check", label: __("Allocate Payment Amount"), fieldname: "allocate_payment_amount", default: 1 },
+	]);
+	let btn_text = get_outstanding_invoices ? "Get Outstanding Invoices" : "Get Outstanding Orders";
+	frappe.prompt(fields, function (filters) {
+		frappe.flags.allocate_payment_amount = true;
+		if (frm.events.validate_filters_data) frm.events.validate_filters_data(frm, filters);
+		frm.doc.cost_center = filters.cost_center;
+		if (frm.events.get_outstanding_documents) frm.events.get_outstanding_documents(frm, filters, get_outstanding_invoices, get_orders_to_be_billed);
+	}, __("Filters"), __(btn_text));
+}
+function get_outstanding_invoices_custom(frm) {
+	frm.events.get_outstanding_invoices_or_orders(frm, true, false);
+}
+function get_outstanding_orders_custom(frm) {
+	frm.events.get_outstanding_invoices_or_orders(frm, false, true);
+}
+function get_outstanding_documents_custom(frm, filters, get_outstanding_invoices, get_orders_to_be_billed) {
+	frm.clear_table("references");
+	if (!frm.doc.party) return;
+	if (frm.events.check_mandatory_to_fetch) frm.events.check_mandatory_to_fetch(frm);
+	var company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
+	var args = {
+		"posting_date": frm.doc.posting_date,
+		"company": frm.doc.company,
+		"party_type": frm.doc.party_type,
+		"payment_type": frm.doc.payment_type,
+		"party": frm.doc.party,
+		"party_account": frm.doc.payment_type == "Receive" ? frm.doc.paid_from : frm.doc.paid_to,
+		"cost_center": frm.doc.cost_center
+	};
+	for (let key in filters) args[key] = filters[key];
+	if (get_outstanding_invoices) args["get_outstanding_invoices"] = true;
+	else if (get_orders_to_be_billed) args["get_orders_to_be_billed"] = true;
+	if (frm.doc.book_advance_payments_in_separate_party_account) args["book_advance_payments_in_separate_party_account"] = true;
+	frappe.flags.allocate_payment_amount = filters['allocate_payment_amount'];
+	return frappe.call({
+		method: 'akf_accounts.customizations.overrides.payment_entry.get_outstanding_reference_documents',
+		args: { args: args },
+		callback: function (r, rt) {
+			console.log(r.message);
+			if (r.message) {
+				var total_positive_outstanding = 0;
+				var total_negative_outstanding = 0;
+				$.each(r.message, function (i, d) {
+					var c = frm.add_child("references");
+					c.reference_doctype = d.voucher_type;
+					c.reference_name = d.voucher_no;
+					c.due_date = d.due_date
+					c.total_amount = d.invoice_amount;
+					c.outstanding_amount = d.outstanding_amount;
+					c.bill_no = d.bill_no;
+					c.payment_term = d.payment_term;
+					c.allocated_amount = d.allocated_amount;
+					c.account = d.account;
+					if (!in_list(frm.events.get_order_doctypes(frm), d.voucher_type)) {
+						if (flt(d.outstanding_amount) > 0)
+							total_positive_outstanding += flt(d.outstanding_amount);
+						else
+							total_negative_outstanding += Math.abs(flt(d.outstanding_amount));
+					}
+					var party_account_currency = frm.doc.payment_type == "Receive" ? frm.doc.paid_from_account_currency : frm.doc.paid_to_account_currency;
+					c.exchange_rate = (party_account_currency != company_currency) ? d.exchange_rate : 1;
+					if (in_list(frm.events.get_invoice_doctypes(frm), d.reference_doctype)) {
+						c.due_date = d.due_date;
+					}
+					c.custom_tax_payer_payment_entry = d.custom_tax_payer_payment_entry
+					c.custom_tax_payer_id = d.custom_tax_payer_id
+					c.custom_tax_withholding_category = d.custom_tax_withholding_category
+					c.custom_tax_payer_total_amount = d.custom_tax_payer_total_amount
+				});
+				if (
+					(frm.doc.payment_type == "Receive" && frm.doc.party_type == "Customer") ||
+					(frm.doc.payment_type == "Pay" && frm.doc.party_type == "Supplier") ||
+					(frm.doc.payment_type == "Pay" && frm.doc.party_type == "Employee")
+				) {
+					if (total_positive_outstanding > total_negative_outstanding)
+						if (!frm.doc.paid_amount)
+							frm.set_value("paid_amount", total_positive_outstanding - total_negative_outstanding);
+				} else if (
+					total_negative_outstanding &&
+					total_positive_outstanding < total_negative_outstanding
+				) {
+					if (!frm.doc.received_amount)
+						frm.set_value("received_amount", total_negative_outstanding - total_positive_outstanding);
+				}
+			}
+			frm.refresh_field("references");
+		}
+	});
+}
+// --- End Custom Outstanding Invoices/Orders Supplier Filter ---
+
+// --- Attach custom handlers in refresh to override ERPNext originals ---
+frappe.ui.form.on('Payment Entry', {
+	refresh: function(frm) {
+		// Attach custom outstanding pop-up logic (override original handlers)
+		frm.events.get_outstanding_invoices_or_orders = get_outstanding_invoices_or_orders_custom;
+		frm.events.get_outstanding_invoices = get_outstanding_invoices_custom;
+		frm.events.get_outstanding_orders = get_outstanding_orders_custom;
+		frm.events.get_outstanding_documents = get_outstanding_documents_custom;
+	}
+});

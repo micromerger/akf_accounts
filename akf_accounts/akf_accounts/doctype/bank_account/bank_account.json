@@ -225,7 +225,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Account Currency",
-   "options": "Account",
+   "options": "Currency",
    "read_only": 1
   },
   {
@@ -282,7 +282,7 @@
   }
  ],
  "links": [],
- "modified": "2025-02-26 17:18:22.117532",
+ "modified": "2025-07-22 13:38:43.059404",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Bank Account",

@@ -187,7 +187,7 @@ doc_events = {
         ],
         "on_submit": [
             "akf_accounts.utils.financial_closure.confirmation",
-            "akf_accounts.utils.payment_entry_utils.submit_sales_tax_provision_gl_entry"
+            "akf_accounts.utils.payment_entry_utils.make_journal_entry"
         ]
 	},
     # "Tax Withholding Category": {

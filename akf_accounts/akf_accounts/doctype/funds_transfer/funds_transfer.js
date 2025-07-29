@@ -3,67 +3,67 @@ frappe.provide("erpnext.accounts.dimensions");
 erpnext.landed_cost_taxes_and_charges.setup_triggers("Stock Entry");
 
 frappe.ui.form.on("Funds Transfer", {
-    onload_post_render: function(frm) {
+    onload_post_render: function (frm) {
         frm.get_field("funds_transfer_from").grid.set_multiple_add("ff_service_area");
         frm.refresh_field('funds_transfer_from');
 
         frm.get_field("funds_transfer_to").grid.set_multiple_add("ft_service_area");
         frm.refresh_field('funds_transfer_to');
     },
-    onload: function(frm){
-        var df = frappe.meta.get_docfield("Funds Transfer From","ff_cost_center", cur_frm.doc.name);
-        df.read_only = 1;
-        frm.refresh_field['funds_transfer_from']
+    onload: function (frm) {
+        // var df = frappe.meta.get_docfield("Funds Transfer From", "ff_cost_center", cur_frm.doc.name);
+        // df.read_only = 1;
+        // frm.refresh_field['funds_transfer_from']
     },
 
-    refresh: function(frm) {
+    refresh: function (frm) {
         set_query_service_area_transfer_from(frm);
         // set_query_service_area_transfer_to(frm);
         set_queries_funds_transfer_from(frm);
         set_queries_funds_transfer_to(frm);
         set_queries_transaction_types(frm);
-      
-        if (!frm.is_new() && frm.doc.docstatus < 2) {  
+
+        if (!frm.is_new() && frm.doc.docstatus < 2) {
             set_custom_btns(frm);
         }
         frm.trigger("open_dimension_dialog"); // Nabeel Saleem, 12-03-2025
     },
 
-    onload: function(frm) {
+    onload: function (frm) {
         $("#table_render").empty();
         $("#total_balance").empty();
         $("#previous").empty();
         $("#next").empty();
     },
-    transaction_type: function(frm) {
+    transaction_type: function (frm) {
         handle_transaction_type_logic(frm);
     },
 
-    cost_center: function(frm) {
+    cost_center: function (frm) {
         // console.log("Custom Cost Center triggered");
         update_cost_center_in_both_children(frm);
     },
 
-    from_bank_account: function(frm) {
+    from_bank_account: function (frm) {
         update_ff_bank_account_in_children(frm);
     },
 
-    from_bank_account: function(frm) {
+    from_bank_account: function (frm) {
         update_ft_bank_account_in_children(frm);
     },
 
-    from_cost_center: function(frm) {
-       
+    from_cost_center: function (frm) {
+
         update_ff_cost_center_in_children(frm);
-        
+
     },
 
-    to_cost_center: function(frm) {
+    to_cost_center: function (frm) {
         update_ft_cost_center_in_children(frm);
         frm.call("set_deduction_breakeven");
     },
     open_dimension_dialog: function (frm) { // Nabeel Saleem, 12-03-2025
-		if (!frm.doc.from_gl_entry) {
+        if (!frm.doc.from_gl_entry && frm.doc.transaction_type!="Inter Bank") {
             frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function () {
                 if (typeof make_dimensions_modal === "function" && (typeof donor_balance_set_queries === "function")) {
                     make_dimensions_modal(frm);
@@ -77,32 +77,71 @@ frappe.ui.form.on("Funds Transfer", {
                     }
                 }
             });
-		}
-	}
+        }
+    },
+    transfer_type: function (frm) {
+        frm.set_value('funds_transfer_to', []);
+        frm.refresh_field('funds_transfer_to');
+    },
+    // Inter Bank
+    from_bank: function (frm) {
+        frm.events.set_inter_bank_balance(frm, "account_balance_from", frm.doc.from_bank);
+    },
+    to_bank: function (frm) {
+        frm.events.set_inter_bank_balance(frm, "account_balance_to", frm.doc.to_bank);
+    },
+    set_inter_bank_balance: function(frm, balance_field, bankAccount){
+        if(bankAccount!=""){
+            frappe.call({
+                method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_account_details",
+                args: {
+                    "account": bankAccount,
+                    "date": frm.doc.posting_date,
+                    // "cost_center": frm.doc.cost_center
+                },
+                callback: function (r, rt) {
+                    const account_balance = r.message['account_balance'];
+                    frm.set_value(balance_field, account_balance);
+                    frm.set_df_property(balance_field, 'description', account_balance>0? "": "<b style='color:red;'>No balance found.</b>");
+
+                }
+            });
+        }else{
+            frm.set_value(balance_field, 0.0); 
+            frm.set_df_property(balance_field, 'description', "<b style='color:red;'>No balance found.</b>");
+        }
+        
+    }
 });
 
 function handle_transaction_type_logic(frm) {
-    if (frm.doc.transaction_type === 'Inter Fund') {
-        // console.log("Inside handle_transaction_type_logic Inter Fund ");
-        
+    const transaction_type = frm.doc.transaction_type;
+
+    if (['Inter Fund', 'Inter Bank'].includes(transaction_type)) {
         frm.set_value('from_cost_center', '');
         frm.set_value('to_cost_center', '');
         frm.set_value('from_bank_account', '');
         frm.set_value('to_bank_account', '');
-        frm.set_value('deduction_breakeven', []);
-        frm.refresh_field("deduction_breakeven");
-    } else if (frm.doc.transaction_type === 'Inter Branch') {
-        // console.log("Inside handle_transaction_type_logic Inter Branch ");
-        frm.set_value('cost_center', '');
-        frm.call("set_deduction_breakeven");
     }
-    
+
+    const is_enabled = (transaction_type != "Inter Fund") ? true : false;
+
+    if (is_enabled) {
+        frm.set_value('transfer_type', 'Project');
+    }
+    frm.set_df_property('transfer_type', 'read_only', is_enabled);
+
+    frm.set_value('deduction_breakeven', []);
+    frm.refresh_field("deduction_breakeven");
+
+    frm.set_value('funds_transfer_to', []);
+    frm.refresh_field("funds_transfer_to");
 }
 
 function update_ff_bank_account_in_children(frm) {
     const bank_account = frm.doc.from_bank_account;
 
-    frm.doc.funds_transfer_from.forEach(function(row) {
+    frm.doc.funds_transfer_from.forEach(function (row) {
         frappe.model.set_value(row.doctype, row.name, 'ff_account', bank_account);
     });
 
@@ -118,7 +157,7 @@ function update_ff_bank_account_in_children(frm) {
 function update_ft_bank_account_in_children(frm) {
     const bank_account = frm.doc.to_bank_account;
 
-    frm.doc.funds_transfer_from.forEach(function(row) {
+    frm.doc.funds_transfer_from.forEach(function (row) {
         frappe.model.set_value(row.doctype, row.name, 'ft_account', bank_account);
     });
 
@@ -132,20 +171,20 @@ function update_ft_bank_account_in_children(frm) {
 }
 
 frappe.ui.form.on("Funds Transfer From", {
-    project: function(frm, cdt, cdn) {
+    project: function (frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
-        frm.call("donor_list_data_funds_transfer").then(r=>{});
+        frm.call("donor_list_data_funds_transfer").then(r => { });
     },
-    ff_account: function(frm, cdt, cdn) {
+    ff_account: function (frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
-        frm.call("donor_list_data_funds_transfer").then(r=>{});
+        frm.call("donor_list_data_funds_transfer").then(r => { });
     },
-    ff_donor: function(frm, cdt, cdn) {
+    ff_donor: function (frm, cdt, cdn) {
         // Trigger the get_html function whenever ff_donor is updated
-        frm.call("donor_list_data_funds_transfer").then(r=>{});
+        frm.call("donor_list_data_funds_transfer").then(r => { });
     },
-    funds_transfer_from_add: function(frm, cdt, cdn) {
-        const cost_center = frm.doc.cost_center; 
+    funds_transfer_from_add: function (frm, cdt, cdn) {
+        const cost_center = frm.doc.cost_center;
         const bank_account = frm.doc.from_bank_account;
         const from_costcenter = frm.doc.from_cost_center;
 
@@ -162,10 +201,10 @@ frappe.ui.form.on("Funds Transfer From", {
             frm.fields_dict['funds_transfer_from'].grid.grid_rows_by_docname[cdn].toggle_editable('ff_cost_center', false);
         }
 
-       
+
         frm.refresh_field("funds_transfer_from");
     },
-    ff_company: function(frm, cdt, cdn) {
+    ff_company: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         let company = row.ff_company;
 
@@ -175,17 +214,17 @@ frappe.ui.form.on("Funds Transfer From", {
         frappe.model.set_value(cdt, cdn, 'ff_subservice_area', '');
         frappe.model.set_value(cdt, cdn, 'ff_product', '');
         frappe.model.set_value(cdt, cdn, 'project', '');
-       
+
         frappe.call({
             method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
             args: {
                 doc: frm.doc
             },
-            callback: function(r) {
+            callback: function (r) {
                 // console.log("SERVICE AREA QUERY!!!");
                 // console.log(r.message);  
 
-                frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
+                frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function (doc, cdt, cdn) {
                     var row = locals[cdt][cdn];
                     var company = row.ff_company;
 
@@ -200,7 +239,7 @@ frappe.ui.form.on("Funds Transfer From", {
                     return {
                         filters: {
                             company: company,
-                            service_area: ["in", r.message]  
+                            service_area: ["in", r.message]
                         }
                     };
                 };
@@ -213,16 +252,16 @@ frappe.ui.form.on("Funds Transfer From", {
     ff_service_area: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         if (row.ff_service_area) {
-          row.ff_subservice_area = "";
-          row.ff_product = "";
-          row.project = "";
+            row.ff_subservice_area = "";
+            row.ff_product = "";
+            row.project = "";
         }
         frm.refresh_field("funds_transfer_from")
     }
 });
 
 
-function get_balance_funds_tranfer_from(funds_transfer_from, row){
+function get_balance_funds_tranfer_from(funds_transfer_from, row) {
     // let ftrow = locals[cdt][cdn];
     let balance_amount = 0.0;
     let doctype, docname;
@@ -230,62 +269,72 @@ function get_balance_funds_tranfer_from(funds_transfer_from, row){
     funds_transfer_from.forEach(element => {
         doctype = element.doctype;
         docname = element.name;
-        if((element.ff_donor== row.ft_donor) && (row.ft_amount<=element.ff_balance_amount) && matched){
+        if ((element.ff_donor == row.ft_donor) && (row.ft_amount <= element.ff_balance_amount) && matched) {
             balance_amount += element.ff_balance_amount;
             matched = false;
             frappe.model.set_value(doctype, docname, 'ff_transfer_amount', row.ft_amount);
             frappe.model.set_value(doctype, docname, 'transfer', 1);
-        }else if(element.ff_donor== row.ft_donor){
+        } else if (element.ff_donor == row.ft_donor) {
             frappe.model.set_value(doctype, docname, 'ff_transfer_amount', 0.0);
             frappe.model.set_value(doctype, docname, 'transfer', 0);
             matched = true;
         }
     });
-    
-    return  balance_amount;
+
+    return balance_amount;
 }
 
 frappe.ui.form.on("Funds Transfer To", {
-    ft_donor: function(frm, cdt, cdn){
+    ft_donor: function (frm, cdt, cdn) {
         frm.trigger()
     },
-    ft_amount: function(frm, cdt, cdn) {
-        frm.call("update_funds_tranfer_from");    
+    ft_amount: function (frm, cdt, cdn) {
+        frm.call("update_funds_tranfer_from");
         setTimeout(() => {
             frm.call("set_deduction_breakeven");
         }, 200);
     },
-    project: function(frm, cdt, cdn) {
+    project: function (frm, cdt, cdn) {
         // frm.call("set_deduction_breakeven");
+        let row = frappe.get_doc(cdt, cdn);
+        frappe.call({
+            method: "frappe.client.get",
+            args: {
+                doctype: "Project",
+                name: row.project
+            },
+            callback: function(r) {
+                const data  = r.message;
+                if (data) {
+                    row.ft_service_area = data.custom_service_area;
+                    row.ft_subservice_area = data.custom_subservice_area;
+                    row.ft_product = data.custom_product;
+                }
+                frm.refresh_field("funds_transfer_to")
+            }
+        });
     },
-    funds_transfer_to_add: function(frm, cdt, cdn) {
-
-        const row = frappe.get_doc(cdt, cdn);
-
-        function set_random_id(){
-                if(frm.doc.is_return){ return; }
-                let row = locals[cdt][cdn];
-                row.random_id = Math.floor((1000 + row.idx) + (Math.random() * 9000));
-                
-        }
-        const cost_center = frm.doc.cost_center;
-        const bank_account = frm.doc.to_bank_account;
-        const to_costcenter = frm.doc.to_cost_center;
-        
-        set_random_id();
-        if (['Inter Fund', 'Inter Bank'].includes(frm.doc.transaction_type)) {
-            // console.log("Funds Transfer From Inter Fund ");
-            frappe.model.set_value(row.doctype, row.name, "ft_cost_center", cost_center);
-            frappe.model.set_value(row.doctype, row.name, "ft_account", bank_account); 
-            
-        } else if (frm.doc.transaction_type === 'Inter Branch') {
-            // console.log("Funds Transfer From Inter Branch ");
-            frappe.model.set_value(row.doctype, row.name, "ft_cost_center", to_costcenter);
-            frappe.model.set_value(row.doctype, row.name, "ft_account", bank_account); 
-        }
-        frm.refresh_field("funds_transfer_to")
+    fund_class: function (frm, cdt, cdn) {
+        // frm.call("set_deduction_breakeven");
+        let row = frappe.get_doc(cdt, cdn);
+        frappe.call({
+            method: "frappe.client.get",
+            args: {
+                doctype: "Fund Class",
+                name: row.fund_class
+            },
+            callback: function(r) {
+                const data  = r.message;
+                if (data) {
+                    row.ft_service_area = data.service_area;
+                    row.ft_subservice_area = data.subservice_area;
+                    row.ft_product = data.product;
+                }
+                frm.refresh_field("funds_transfer_to");
+            }
+        });
     },
-    ft_company: function(frm, cdt, cdn) {
+    ft_company: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
         let company = row.ft_company;
 
@@ -295,7 +344,7 @@ frappe.ui.form.on("Funds Transfer To", {
         frappe.model.set_value(cdt, cdn, 'ft_subservice_area', '');
         frappe.model.set_value(cdt, cdn, 'ft_product', '');
         frappe.model.set_value(cdt, cdn, 'ft_project', '');
-        
+
         /*frappe.call({
             method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
             args: {
@@ -337,7 +386,43 @@ frappe.ui.form.on("Funds Transfer To", {
           row.project = "";
         }
         frm.refresh_field("funds_transfer_to")*/
-    }
+    },
+    funds_transfer_to_add: function (frm, cdt, cdn) {
+
+        const row = frappe.get_doc(cdt, cdn);
+
+        function set_random_id() {
+            if (frm.doc.is_return) { return; }
+            let row = locals[cdt][cdn];
+            row.random_id = Math.floor((1000 + row.idx) + (Math.random() * 9000));
+
+        }
+        const cost_center = frm.doc.cost_center;
+        const bank_account = frm.doc.to_bank_account;
+        const to_costcenter = frm.doc.to_cost_center;
+
+        set_random_id();
+        if (['Inter Fund', 'Inter Bank'].includes(frm.doc.transaction_type)) {
+            // console.log("Funds Transfer From Inter Fund ");
+            frappe.model.set_value(row.doctype, row.name, "ft_cost_center", cost_center);
+            frappe.model.set_value(row.doctype, row.name, "ft_account", bank_account);
+        } else if (frm.doc.transaction_type === 'Inter Branch') {
+            // console.log("Funds Transfer From Inter Branch ");
+            frappe.model.set_value(row.doctype, row.name, "ft_cost_center", to_costcenter);
+            // frappe.model.set_value(row.doctype, row.name, "ft_account", bank_account); 
+        }
+        const isProject = (frm.doc.transfer_type == 'Project')? true: false;
+        const isFundClass = (frm.doc.transfer_type == 'Fund Class')? true: false;
+        
+        // Make "project" required only in this row
+        frm.fields_dict["funds_transfer_to"].grid.toggle_enable("project", isProject, cdn);
+        frm.fields_dict["funds_transfer_to"].grid.toggle_reqd("project", isProject, cdn);
+        // Make "fund class" required only in this row
+        frm.fields_dict["funds_transfer_to"].grid.toggle_enable("fund_class", isFundClass, cdn);
+        frm.fields_dict["funds_transfer_to"].grid.toggle_reqd("fund_class", isFundClass, cdn);
+        
+        frm.refresh_field("funds_transfer_to");
+    },
     
 });
 
@@ -354,7 +439,7 @@ frappe.ui.form.on('Deduction Breakeven', {
 function update_cost_center_in_both_children(frm) {
     const cost_center = frm.doc.cost_center;
 
-    frm.doc.funds_transfer_to.forEach(function(row) {
+    frm.doc.funds_transfer_to.forEach(function (row) {
         frappe.model.set_value(row.doctype, row.name, 'ft_cost_center', cost_center);
     });
 
@@ -364,7 +449,7 @@ function update_cost_center_in_both_children(frm) {
         }
     });
 
-    frm.doc.funds_transfer_from.forEach(function(row) {
+    frm.doc.funds_transfer_from.forEach(function (row) {
         frappe.model.set_value(row.doctype, row.name, 'ff_cost_center', cost_center);
     });
 
@@ -381,7 +466,7 @@ function update_cost_center_in_both_children(frm) {
 function update_ff_cost_center_in_children(frm) {
     const cost_center = frm.doc.from_cost_center;
 
-    frm.doc.funds_transfer_from.forEach(function(row) {
+    frm.doc.funds_transfer_from.forEach(function (row) {
         frappe.model.set_value(row.doctype, row.name, 'ff_cost_center', cost_center);
     });
 
@@ -397,7 +482,7 @@ function update_ff_cost_center_in_children(frm) {
 function update_ft_cost_center_in_children(frm) {
     const cost_center = frm.doc.to_cost_center;
 
-    frm.doc.funds_transfer_to.forEach(function(row) {
+    frm.doc.funds_transfer_to.forEach(function (row) {
         frappe.model.set_value(row.doctype, row.name, 'ft_cost_center', cost_center);
     });
 
@@ -411,7 +496,7 @@ function update_ft_cost_center_in_children(frm) {
 }
 
 function set_query_service_area_transfer_to(frm) {
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         var company = row.ft_company;
 
@@ -433,12 +518,12 @@ function set_query_service_area_transfer_to(frm) {
 
 function set_custom_btns(frm) {
     frm.add_custom_button(__('Accounting Ledger'), function () {
-        frappe.set_route("query-report", "General Ledger", {"voucher_no": frm.doc.name,"group_by": ""});
+        frappe.set_route("query-report", "General Ledger", { "voucher_no": frm.doc.name, "group_by": "" });
     }, __("View"));
 }
 
 function set_queries_transaction_types(frm) {
-    frm.set_query("from_cost_center", function() {
+    frm.set_query("from_cost_center", function () {
         return {
             filters: {
                 is_group: 0,
@@ -449,7 +534,7 @@ function set_queries_transaction_types(frm) {
         };
     });
 
-    frm.set_query("to_cost_center", function() {
+    frm.set_query("to_cost_center", function () {
         return {
             filters: {
                 is_group: 0,
@@ -460,62 +545,67 @@ function set_queries_transaction_types(frm) {
         };
     });
 
-    frm.set_query("cost_center", function() {
+    frm.set_query("cost_center", function () {
         return {
             filters: {
                 is_group: 0,
                 disabled: 0,
-                company: frm.doc.company  
+                company: frm.doc.company
             }
         };
     });
 
-    frm.set_query("from_bank_account", function() {
+    frm.set_query("from_bank_account", function () {
         return {
             filters: {
                 disabled: 0,
                 is_group: 0,
+                account_type: "Bank",
                 company: frm.doc.company,
                 name: ['!=', frm.doc.to_bank_account]
             }
         };
     });
 
-    frm.set_query("to_bank_account", function() {
+    frm.set_query("to_bank_account", function () {
         return {
             filters: {
                 disabled: 0,
                 is_group: 0,
+                account_type: "Bank",
                 company: frm.doc.company,
                 name: ['!=', frm.doc.from_bank_account]
             }
         };
     });
 
-    frm.set_query("from_bank", function() {
+    frm.set_query("from_bank", function () {
         return {
             filters: {
                 disabled: 0,
                 is_group: 0,
                 account_type: "Bank",
                 company: frm.doc.company,
-                
+                name: ['!=', frm.doc.to_bank]
+
+
             }
         };
     });
-    
-    frm.set_query("to_bank", function() {
+
+    frm.set_query("to_bank", function () {
         return {
             filters: {
                 disabled: 0,
                 is_group: 0,
                 account_type: "Bank",
                 company: frm.doc.company,
-               
+                name: ['!=', frm.doc.from_bank]
+
             }
         };
     });
-    
+
 }
 
 function set_queries_funds_transfer_from(frm) {
@@ -528,7 +618,7 @@ function set_queries_funds_transfer_from(frm) {
 }
 
 function set_query_cost_center_transfer_from(frm) {
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_cost_center').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_cost_center').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -540,21 +630,21 @@ function set_query_cost_center_transfer_from(frm) {
     };
 }
 
-function set_query_subservice_area_transfer_from(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_subservice_area').get_query = function(doc, cdt, cdn) {
+function set_query_subservice_area_transfer_from(frm) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_subservice_area').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         let ffilters = row.ff_service_area === undefined
-        ? { service_area: ["!=", undefined] }
-        : { service_area: row.ff_service_area };
+            ? { service_area: ["!=", undefined] }
+            : { service_area: row.ff_service_area };
 
         return {
             filters: ffilters
         };
-        };
     };
+};
 
 function set_query_product_transfer_from(frm) {
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_product').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_product').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         let ffilters = row.ff_subservice_area === undefined
             ? { subservice_area: ["!=", undefined] }
@@ -566,35 +656,35 @@ function set_query_product_transfer_from(frm) {
     };
 }
 
-function set_query_project_transfer_from(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('project').get_query = function(doc, cdt, cdn) {
+function set_query_project_transfer_from(frm) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('project').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
                 // company: frm.doc.company,
                 custom_service_area: ["!=", ""],
                 custom_service_area: row.ff_service_area,
-                
+
             }
         };
     };
 }
 
-function set_query_account_transfer_from(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_account').get_query = function(doc, cdt, cdn) {
+function set_query_account_transfer_from(frm) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_account').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
                 company: row.ff_company,
-                
-                
+
+
             }
         };
     };
 }
 
-function set_query_ff_donor_transfer_from(frm){
-    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_donor').get_query = function(doc, cdt, cdn) {
+function set_query_ff_donor_transfer_from(frm) {
+    frm.fields_dict['funds_transfer_from'].grid.get_field('ff_donor').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -604,18 +694,18 @@ function set_query_ff_donor_transfer_from(frm){
     };
 }
 
-function set_queries_funds_transfer_to(frm){
+function set_queries_funds_transfer_to(frm) {
     set_query_cost_center(frm);
     set_query_subservice_area(frm);
     set_query_product(frm);
     set_query_project(frm);
     set_query_account(frm);
     set_query_ft_donor(frm);
- 
+
 }
 
-function set_query_cost_center(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_cost_center').get_query = function(doc, cdt, cdn) {
+function set_query_cost_center(frm) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_cost_center').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -628,8 +718,8 @@ function set_query_cost_center(frm){
     };
 }
 
-function set_query_service_area(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('service_area').get_query = function(doc, cdt, cdn) {
+function set_query_service_area(frm) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('service_area').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -640,21 +730,21 @@ function set_query_service_area(frm){
     };
 }
 
-function set_query_subservice_area(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_subservice_area').get_query = function(doc, cdt, cdn) {
+function set_query_subservice_area(frm) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_subservice_area').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         let ffilters = row.ft_service_area === undefined
-        ? { service_area: ["!=", undefined] }
-        : { service_area: row.ft_service_area };
+            ? { service_area: ["!=", undefined] }
+            : { service_area: row.ft_service_area };
 
         return {
             filters: ffilters
         };
-        };
     };
+};
 
-function set_query_product(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_product').get_query = function(doc, cdt, cdn) {
+function set_query_product(frm) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_product').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -665,35 +755,36 @@ function set_query_product(frm){
     };
 }
 
-function set_query_project(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_project').get_query = function(doc, cdt, cdn) {
+function set_query_project(frm) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_project').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
                 // company: frm.doc.company,
                 custom_program: ["!=", ""],
                 custom_program: row.ft_service_area,
-                
+
             }
         };
     };
 }
 
-function set_query_account(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_account').get_query = function(doc, cdt, cdn) {
+function set_query_account(frm) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_account').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
+                disabled: 0,
+                is_group: 0,
+                account_type: "Equity",
                 company: row.ft_company,
-                
-                
             }
         };
     };
 }
 
-function set_query_ft_donor(frm){
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_donor').get_query = function(doc, cdt, cdn) {
+function set_query_ft_donor(frm) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_donor').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
@@ -709,28 +800,28 @@ function set_cost_center_in_children(child_table, cost_center_field, cost_center
 }
 
 function set_query_service_area_transfer_from(frm) {
-   /*  frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
-        var row = locals[cdt][cdn];
-        var company = row.ff_company;
-
-        if (!company) {
-            return {
-                filters: {
-                    service_area: ["!=", ""]
-                }
-            };
-        }
-
-        return {
-            filters: {
-                company: company
-            }
-        };
-    }; */
+    /*  frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function(doc, cdt, cdn) {
+         var row = locals[cdt][cdn];
+         var company = row.ff_company;
+ 
+         if (!company) {
+             return {
+                 filters: {
+                     service_area: ["!=", ""]
+                 }
+             };
+         }
+ 
+         return {
+             filters: {
+                 company: company
+             }
+         };
+     }; */
 }
 
 function set_query_service_area_transfer_to(frm) {
-    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         var company = row.ft_company;
 
@@ -750,7 +841,7 @@ function set_query_service_area_transfer_to(frm) {
     };
 }
 
-function format_currency(amount){
+function format_currency(amount) {
     const formattedAmount = amount.toLocaleString('en-US', {
         style: 'currency',
         currency: 'PKR'

@@ -93,11 +93,14 @@
    "read_only": 1
   },
   {
+   "fetch_from": "income_type.project",
+   "fetch_if_empty": 1,
    "fieldname": "project",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Project",
-   "options": "Project"
+   "options": "Project",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -150,7 +153,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-09 12:50:24.997191",
+ "modified": "2025-07-11 17:05:25.295343",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Deduction Breakeven",

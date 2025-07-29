@@ -24,8 +24,8 @@ def get_columns():
         _("TaxPayer Address") + ":Data:140",
         _("TaxPayer Status") + ":Data:140",
         _("TaxPayer Business Name") + ":Data:140",
-        _("Taxable Amount") + ":Data:140",
-        _("Tax Amount") + ":Data:140",
+        _("Taxable Amount") + ":Currency:140",
+        _("Tax Amount") + ":Currency:140",
     ]
     return columns
 

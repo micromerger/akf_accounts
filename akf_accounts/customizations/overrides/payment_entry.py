@@ -1381,7 +1381,7 @@ class XPaymentEntry(AccountsController):
 		self.add_party_gl_entries(gl_entries)
 		self.add_bank_gl_entries(gl_entries)
 		self.add_deductions_gl_entries(gl_entries)
-		# self.add_tax_gl_entries(gl_entries) # request by zubair khan to stop...bcz we added customized entry for this.
+		self.add_tax_gl_entries(gl_entries) # request by zubair khan to stop...bcz we added customized entry for this.
 		add_regional_gl_entries(gl_entries, self)
 		return gl_entries
 
@@ -1471,6 +1471,12 @@ class XPaymentEntry(AccountsController):
 							"against_voucher_type": d.reference_doctype,
 							"against_voucher": d.reference_name,
 							"cost_center": cost_center,
+							"custom_cprn": d.custom_cprn, #nabeel 28-July' 2025					
+							"custom_tax_payer_payment_entry": d.custom_tax_payer_payment_entry, #nabeel 28-July' 2025
+							"custom_tax_payer_id": d.custom_tax_payer_id, #nabeel 28-July' 2025
+							"custom_tax_withholding_category": d.custom_tax_withholding_category, #nabeel 28-July' 2025
+							"custom_tax_payer_total_amount": d.custom_tax_payer_total_amount #nabeel 28-July' 2025
+							
 						}
 					)
 					gl_entries.append(gle)
@@ -1956,6 +1962,13 @@ def get_outstanding_reference_documents(args, validate=False):
 	if isinstance(args, str):
 		args = json.loads(args)
 
+	# # --- Custom Supplier Filter Logic implemented by Mubashir ---
+	# # If a supplier is provided in args, use it as the party filter (for supplier-type queries)
+	# if args.get("supplier"):
+	# 	args["party_type"] = "Supplier"
+	# 	args["party"] = args["supplier"]
+	# # --- End of Custom Supplier Filter Logic by Mubashir ---
+
 	if args.get("party_type") == "Member":
 		return
 
@@ -1967,6 +1980,7 @@ def get_outstanding_reference_documents(args, validate=False):
 	accounting_dimensions_filter = []
 	posting_and_due_date = []
 
+	
 	# confirm that Supplier is not blocked
 	if args.get("party_type") == "Supplier":
 		supplier_status = get_supplier_block_status(args["party"])
@@ -2023,6 +2037,7 @@ def get_outstanding_reference_documents(args, validate=False):
 			condition += " and {0} <= '{1}'".format(fieldname, args.get(date_fields[1]))
 			posting_and_due_date.append(ple[fieldname].lte(args.get(date_fields[1])))
 
+	common_filter.append(ple.company == args.get("company"))
 	if args.get("company"):
 		condition += " and company = {0}".format(frappe.db.escape(args.get("company")))
 		common_filter.append(ple.company == args.get("company"))
@@ -2034,7 +2049,10 @@ def get_outstanding_reference_documents(args, validate=False):
 		party_account = get_party_account(args.get("party_type"), args.get("party"), args.get("company"))
 	else:
 		party_account = args.get("party_account")
-
+	
+	# nabeel, 29-07-2025
+	if(args.get('supplier')): common_filter.append(ple.custom_tax_payer_id==args['supplier'])
+	
 	if args.get("get_outstanding_invoices"):
 		outstanding_invoices = get_outstanding_invoices(
 			args.get("party_type"),
@@ -2047,7 +2065,17 @@ def get_outstanding_reference_documents(args, validate=False):
 			accounting_dimensions=accounting_dimensions_filter,
 			vouchers=args.get("vouchers") or None,
 		)
-
+		
+		# # Filter Journal Entries by custom_tax_payer_id if supplier filter is set by Mubashir
+		# if args.get("supplier"):
+		# 	for i in range(len(outstanding_invoices) - 1, -1, -1):
+		# 		entry = outstanding_invoices[i]
+		# 		if entry.get("voucher_type") == "Journal Entry":
+		# 			custom_tax_payer_id = frappe.db.get_value("Journal Entry", entry.get("voucher_no"), "custom_tax_payer_id")
+		# 			if custom_tax_payer_id != args.get("supplier"):
+		# 				outstanding_invoices.pop(i)
+		# # End of Mubashir's custom filter
+		
 		outstanding_invoices = split_invoices_based_on_payment_terms(
 			outstanding_invoices, args.get("company")
 		)
@@ -2063,6 +2091,8 @@ def get_outstanding_reference_documents(args, validate=False):
 					)
 			if d.voucher_type in ("Purchase Invoice"):
 				d["bill_no"] = frappe.db.get_value(d.voucher_type, d.voucher_no, "bill_no")
+			
+			get_tax_payer_and_section_information(d)
 
 		# Get negative outstanding sales /purchase invoices
 		if args.get("party_type") != "Employee" and not args.get("voucher_no"):
@@ -2106,9 +2136,31 @@ def get_outstanding_reference_documents(args, validate=False):
 					_(ref_document_type), _(args.get("party_type")).lower(), frappe.bold(args.get("party"))
 				)
 			)
-
+	
 	return data
 
+def get_tax_payer_and_section_information(d):
+	d.update({
+		'custom_tax_payer_payment_entry': '',
+		'custom_tax_payer_id': '',
+		'custom_tax_withholding_category': '',
+		'custom_tax_payer_total_amount': '',
+	})
+	for row in frappe.db.sql(f'''
+			Select 
+				custom_payment_entry, custom_tax_payer_id, custom_tax_withholding_category, custom_total_paid_amount
+			From 
+				`tabPayment Ledger Entry`
+			Where 
+				voucher_no='{d.voucher_no}'
+		''', as_dict=1):
+		print(row)
+		d.update({
+			'custom_tax_payer_payment_entry': row.custom_payment_entry,
+			'custom_tax_payer_id': row.custom_tax_payer_id,
+			'custom_tax_withholding_category': row.custom_tax_withholding_category,
+			'custom_tax_payer_total_amount': row.custom_total_paid_amount,
+		})
 
 def split_invoices_based_on_payment_terms(outstanding_invoices, company) -> list:
 	"""Split a list of invoices based on their payment terms."""
@@ -3092,92 +3144,94 @@ def add_regional_gl_entries(gl_entries, doc):
 
 @frappe.whitelist()
 def get_filtered_tax_withholding_categories(doctype, txt, searchfield, start, page_len, filters):
-    """
-    Filter tax withholding categories based on the provided criteria
-    """
-    import csv
-    import os
-    from frappe import _
-    
-    # Path to your CSV file
-    csv_path = os.path.join(os.path.dirname(__file__), 'Final-MM tax template(1)(IT).csv')
-    
-    if not os.path.exists(csv_path):
-        frappe.throw(_("CSV file not found at {0}").format(csv_path))
-    
-    filtered_categories = []
-    
-    try:
-        with open(csv_path, 'r') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                # Check if the row matches all criteria
-                if (row['Nature Id'] == filters.get('nature_id') and
-                    row['Tax Type Id'] == filters.get('tax_type_id') and
-                    row['Tax Nature Id'] == filters.get('tax_nature_id')):
-                    
-                    # Add to filtered categories if it matches the search text
-                    if txt.lower() in row['Section'].lower():
-                        filtered_categories.append([row['Section'], row['Description']])
-    except Exception as e:
-        frappe.log_error(f"Error reading tax withholding categories: {str(e)}")
-        return []
-    
-    return filtered_categories
+	"""
+	Filter tax withholding categories based on the provided criteria
+	"""
+	import csv
+	import os
+	from frappe import _
+	
+	# Path to your CSV file
+	csv_path = os.path.join(os.path.dirname(__file__), 'Final-MM tax template(1)(IT).csv')
+	
+	if not os.path.exists(csv_path):
+		frappe.throw(_("CSV file not found at {0}").format(csv_path))
+	
+	filtered_categories = []
+	
+	try:
+		with open(csv_path, 'r') as csvfile:
+			reader = csv.DictReader(csvfile)
+			for row in reader:
+				# Check if the row matches all criteria
+				if (row['Nature Id'] == filters.get('nature_id') and
+					row['Tax Type Id'] == filters.get('tax_type_id') and
+					row['Tax Nature Id'] == filters.get('tax_nature_id')):
+					
+					# Add to filtered categories if it matches the search text
+					if txt.lower() in row['Section'].lower():
+						filtered_categories.append([row['Section'], row['Description']])
+	except Exception as e:
+		frappe.log_error(f"Error reading tax withholding categories: {str(e)}")
+		return []
+	
+	return filtered_categories
 
 @frappe.whitelist()
 def import_tax_withholding_categories():
-    """
-    Import tax withholding categories from CSV file
-    """
-    import csv
-    import os
-    from frappe import _
-    
-    # Path to your CSV file
-    csv_path = os.path.join(os.path.dirname(__file__), 'Final-MM tax template(1)(IT).csv')
-    
-    if not os.path.exists(csv_path):
-        frappe.throw(_("CSV file not found at {0}").format(csv_path))
-    
-    try:
-        with open(csv_path, 'r') as csvfile:
-            reader = csv.DictReader(csvfile)
-            
-            for row in reader:
-                # Skip empty rows
-                if not row.get('Section'):
-                    continue
-                    
-                # Check if category already exists
-                if not frappe.db.exists('Tax Withholding Category', row['Section']):
-                    # Create new Tax Withholding Category
-                    category = frappe.new_doc('Tax Withholding Category')
-                    category.name = row['Section']
-                    category.category_name = row['Description']
-                    
-                    # Add rate details
-                    category.append('rates', {
-                        'from_date': frappe.utils.getdate(),
-                        'to_date': frappe.utils.add_years(frappe.utils.getdate(), 1),
-                        'tax_withholding_rate': float(row['Tax Rate Percent']),
-                        'single_threshold': 0,
-                        'cumulative_threshold': 0
-                    })
-                    
-                    # Add company account
-                    company = frappe.get_cached_value('Company', {'is_group': 0}, 'name')
-                    if company:
-                        category.append('accounts', {
-                            'company': company,
-                            'account': frappe.get_cached_value('Company', company, 'default_tax_withholding_account')
-                        })
-                    
-                    category.insert()
-                    frappe.db.commit()
-                    
-        return "Tax Withholding Categories imported successfully"
-        
-    except Exception as e:
-        frappe.log_error(f"Error importing tax withholding categories: {str(e)}")
-        frappe.throw(_("Error importing tax withholding categories: {0}").format(str(e)))
+	"""
+	Import tax withholding categories from CSV file
+	"""
+	import csv
+	import os
+	from frappe import _
+	
+	# Path to your CSV file
+	csv_path = os.path.join(os.path.dirname(__file__), 'Final-MM tax template(1)(IT).csv')
+	
+	if not os.path.exists(csv_path):
+		frappe.throw(_("CSV file not found at {0}").format(csv_path))
+	
+	try:
+		with open(csv_path, 'r') as csvfile:
+			reader = csv.DictReader(csvfile)
+			
+			for row in reader:
+				# Skip empty rows
+				if not row.get('Section'):
+					continue
+					
+				# Check if category already exists
+				if not frappe.db.exists('Tax Withholding Category', row['Section']):
+					# Create new Tax Withholding Category
+					category = frappe.new_doc('Tax Withholding Category')
+					category.name = row['Section']
+					category.category_name = row['Description']
+					
+					# Add rate details
+					category.append('rates', {
+						'from_date': frappe.utils.getdate(),
+						'to_date': frappe.utils.add_years(frappe.utils.getdate(), 1),
+						'tax_withholding_rate': float(row['Tax Rate Percent']),
+						'single_threshold': 0,
+						'cumulative_threshold': 0
+					})
+					
+					# Add company account
+					company = frappe.get_cached_value('Company', {'is_group': 0}, 'name')
+					if company:
+						category.append('accounts', {
+							'company': company,
+							'account': frappe.get_cached_value('Company', company, 'default_tax_withholding_account')
+						})
+					
+					category.insert()
+					frappe.db.commit()
+					
+		return "Tax Withholding Categories imported successfully"
+		
+	except Exception as e:
+		frappe.log_error(f"Error importing tax withholding categories: {str(e)}")
+		frappe.throw(_("Error importing tax withholding categories: {0}").format(str(e)))
+
+

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"2U_FAlpdmQ\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Donation Flow</span>\",\"col\":12}},{\"id\":\"oo184amTip\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fund Class\",\"col\":3}},{\"id\":\"7fyNQxQlul\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget\",\"col\":3}},{\"id\":\"J_XoS66qgI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Donor\",\"col\":3}},{\"id\":\"ekwKk5ubR3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Donation\",\"col\":3}},{\"id\":\"X0JDeZggg0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Purchase Flow</b></span>\",\"col\":12}},{\"id\":\"EzfYklLVim\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":3}},{\"id\":\"GBlNqU028f\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"EJYfRw-wFF\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"xrH5Na_qN7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Funds Transfer\",\"col\":3}},{\"id\":\"d0l0uQJNcw\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"fhqPmNfvDE\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Entry\",\"col\":3}},{\"id\":\"XoeQYeA4lV\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Inventory Flow</b></span>\",\"col\":12}},{\"id\":\"QeYFwM-LpB\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"PIsmL3wyvs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Asset\",\"col\":3}},{\"id\":\"S9vVthgrqD\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Asset Movement\",\"col\":3}}]",
+ "content": "[{\"id\":\"2U_FAlpdmQ\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Donation Flow</span>\",\"col\":12}},{\"id\":\"oo184amTip\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fund Class\",\"col\":3}},{\"id\":\"7fyNQxQlul\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget\",\"col\":3}},{\"id\":\"J_XoS66qgI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Donor\",\"col\":3}},{\"id\":\"ekwKk5ubR3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Donation\",\"col\":3}},{\"id\":\"X0JDeZggg0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Purchase Flow</b></span>\",\"col\":12}},{\"id\":\"EzfYklLVim\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":3}},{\"id\":\"GBlNqU028f\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"EJYfRw-wFF\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"xrH5Na_qN7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Funds Transfer\",\"col\":3}},{\"id\":\"d0l0uQJNcw\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Invoice\",\"col\":3}},{\"id\":\"fhqPmNfvDE\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Entry\",\"col\":3}},{\"id\":\"XoeQYeA4lV\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Inventory Flow</b></span>\",\"col\":12}},{\"id\":\"QeYFwM-LpB\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"PIsmL3wyvs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Asset\",\"col\":3}},{\"id\":\"S9vVthgrqD\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Asset Movement\",\"col\":3}},{\"id\":\"DIq7VWx6np\",\"type\":\"card\",\"data\":{\"card_name\":\"Master Settings\",\"col\":4}}]",
  "creation": "2025-03-25 12:48:14.989825",
  "custom_blocks": [],
  "docstatus": 0,
@@ -12,8 +12,28 @@
  "indicator_color": "",
  "is_hidden": 0,
  "label": "Donation Flow",
- "links": [],
- "modified": "2025-05-23 15:39:39.839653",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Master Settings",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Akf Accounts Settings",
+   "link_count": 0,
+   "link_to": "Akf Accounts Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-07-21 13:06:46.779397",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation Flow",
@@ -23,7 +43,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 42.0,
+ "sequence_id": 2.0,
  "shortcuts": [
   {
    "color": "Green",

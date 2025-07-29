@@ -11,6 +11,9 @@ def apply_tax_matrix(doc, method=None):
 	set_tax_withholding_income_tax(self)
 	set_sales_tax_and_province_tax_withholding(self)
 	set_rent_slab(self)
+	self.calculate_taxes()
+	calculate_totals(self)
+
 
 # Nabeel Saleem, 20-06-2025
 def _empty_advance_taxes_and_charges(self):
@@ -28,7 +31,7 @@ def set_tax_withholding_income_tax(self):
 	order_amount = self.get_order_net_total()
 
 	net_total = flt(order_amount) + flt(self.unallocated_amount)
-
+	
 	# Adding args as purchase invoice to get TDS amount
 	args = frappe._dict(
 		{
@@ -41,7 +44,9 @@ def set_tax_withholding_income_tax(self):
 	)
 
 	tax_withholding_details = get_party_tax_withholding_details(args, self.tax_withholding_category)
-	
+	# print('--------------------------')
+	# print(f"tax_withholding_details: {tax_withholding_details}")
+	# print(f"net_total: {net_total}")
 	if not tax_withholding_details:
 		return
 
@@ -72,8 +77,10 @@ def set_tax_withholding_income_tax(self):
 				tax_withholding_details.update({"included_in_paid_amount": d.included_in_paid_amount})
 			d.update(tax_withholding_details)
 			rent_slab_row_exists = True
-
+	
 	# Only append if not already present
+	fbr_supplier = get_fbr_supplier()
+	tax_withholding_details.update({'custom_tax_supplier': fbr_supplier})
 	if not rent_slab_row_exists:
 		self.append("taxes", tax_withholding_details)
 	
@@ -144,6 +151,9 @@ def set_sales_tax_and_province_tax_withholding(self):
 			rent_slab_row_exists = True
 
 	# Only append if not already present
+	
+	tax_withholding_details.update({'custom_tax_supplier': self.custom_supplier})
+
 	if not rent_slab_row_exists:
 		self.append("taxes", tax_withholding_details)
 	
@@ -240,6 +250,8 @@ def set_rent_slab(self):
 	tax_withholding_details.update({"tax_amount": amount})
 	
 	# Only append if not already present
+	fbr_supplier = get_fbr_supplier()
+	tax_withholding_details.update({'custom_tax_supplier': fbr_supplier})
 	if not rent_slab_row_exists:
 		self.append("taxes", tax_withholding_details)
 	
@@ -322,10 +334,93 @@ def eval_condition_and_formula(self, struct_row):
 			description=_("This error can be due to invalid formula or condition."),
 		)
 
-def submit_sales_tax_provision_gl_entry(doc, method=None):
-	self = doc
+def calculate_totals(self):
+	self.custom_net_total = (self.paid_amount - self.total_taxes_and_charges)
+'''
+	Submission process of Journal Entry.
+'''
 
+def make_journal_entry(doc, method=None):
+	self = doc
 	if not self.party_type == "Supplier":
+		return
+	advance_taxes_and_charges_journal_entry(self, method=None)
+	update_payment_ledger_entry(self)
+	self.reload()
+'''
+Journal Entries code.
+'''
+
+def advance_taxes_and_charges_journal_entry(self, method=None):
+	for row in self.taxes:
+		submit_journal_entry(self, row)
+
+def submit_journal_entry(self, row):
+	
+	supplier = row.custom_tax_supplier
+	account = get_supplier_account(supplier)
+	tax_amount = row.tax_amount
+	temp_tax_wh_payable_account = row.account_head
+	reference_doctype = "Payment Entry"
+	reference_name = self.name
+	
+	args = {
+		"doctype": "Journal Entry",
+		"entry_type": "Journal Entry",
+		"posting_date": self.posting_date,
+		"company": self.company,
+		"custom_tax_payer_id": self.party,
+		"remark": "The sales tax and province of {0} has been recorded against {1} {2}".format(fmt_money(tax_amount, currency=self.paid_to_account_currency), reference_doctype, reference_name),
+		"accounts": [
+			# debit
+			{
+				"account": account,
+				"party_type": "Supplier",
+				"party": supplier,
+				"cost_center": self.cost_center,
+				"credit_in_account_currency": tax_amount,
+				"credit": tax_amount,
+				# "debit_in_account_currency": tax_amount,
+				# "debit": tax_amount,
+				# "reference_type": reference_doctype,
+				# "reference_name": reference_name
+			},
+			# credit
+			{
+				"account": temp_tax_wh_payable_account,
+				"party_type": "Supplier",
+				"party": supplier,
+				"cost_center": self.cost_center,
+				"debit_in_account_currency": tax_amount,
+				"debit": tax_amount,
+				# "credit_in_account_currency": tax_amount,
+				# "credit": tax_amount,
+				"reference_type": reference_doctype,
+				"reference_name": reference_name,
+				"is_advance": "Yes"
+			}
+		]
+	}
+	doc = frappe.get_doc(args)
+	doc.insert(ignore_permissions=True)
+	doc.submit()
+
+	# set value to row.
+	row.custom_journal_entry = doc.name
+	frappe.db.set_value("Advance Taxes and Charges", row.name, "custom_journal_entry", doc.name)
+	
+def update_payment_ledger_entry(self):
+	for tax in self.taxes:
+		entries = frappe.db.get_list('Payment Ledger Entry', filters = {'voucher_no': tax.custom_journal_entry}, fields=['name'])
+		for ple in entries:
+			frappe.db.set_value('Payment Ledger Entry', ple.name, 'custom_payment_entry', self.name)		
+			frappe.db.set_value('Payment Ledger Entry', ple.name, 'custom_tax_payer_id', self.party)
+			frappe.db.set_value('Payment Ledger Entry', ple.name, 'custom_tax_withholding_category', tax.description)
+			frappe.db.set_value('Payment Ledger Entry', ple.name, 'custom_total_paid_amount', self.paid_amount)
+
+# Not In Use
+def submit_sales_tax_provision_gl_entry(self, method=None):
+	'''if not self.party_type == "Supplier":
 		return
 
 	if not self.custom_sales_tax_and_province:
@@ -346,40 +441,17 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 			"company": self.company,
 		})
 
-	def get_supplier_account():
-		supplier_account = frappe.db.sql(f'''
-							Select account 
-							From `tabParty Account` 
-							Where docstatus=0 
-							and parent="{self.custom_supplier}" ''')
-		if(not supplier_account):
-			sp_link = get_link_to_form('Supplier', self.custom_supplier)
-			frappe.throw(f"Please select default account of supplier ` <br>{sp_link}.", 
-				title="Missing Info")
-		return supplier_account[0][0]
-
-
-	def get_tax_wh_payable_account():
-		comp = frappe.get_doc('Company', self.company)
-		
-		if(not comp.custom_tax_withholding_payable_account):
-			wh_link = get_link_to_form('Company', comp.name)
-			frappe.throw(f"Please select tax withholding payable account in company. <br>{wh_link}.", 
-				title="Missing Info")
-		
-		return comp.custom_tax_withholding_payable_account
-	
 	from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 	
 	args =  get_gl_entry_dict()
 	cargs = get_currency_args()
-	args.update(cargs)
-	tax_amount = [d.tax_amount for d in self.taxes if(d.description == self.custom_tax_withholding_category_st)][0] or 0.0
+	args.update(cargs)'''
 
-	supplier_account = get_supplier_account()
-	temp_tax_wh_payable_account = get_tax_wh_payable_account()
+	supplier_account = get_supplier_account(self.custom_supplier)
+	temp_tax_wh_payable_account = get_tax_wh_payable_account(self.company)
+	tax_amount = [d.tax_amount for d in self.taxes if(d.description == self.custom_tax_withholding_category_st)][0] or 0.0
 	
-	args.update({
+	'''args.update({
 		"party_type": "Supplier",
 		"party": self.custom_supplier,
 		"cost_center": self.cost_center,
@@ -395,16 +467,18 @@ def submit_sales_tax_provision_gl_entry(doc, method=None):
 		'credit_in_account_currency': tax_amount,
 		"credit_in_transaction_currency": tax_amount,
 		# "transaction_currency": row.currency,
-	})
-	doc = frappe.get_doc(args)
-	doc.insert(ignore_permissions=True)
-	doc.submit()
+	})'''
+	# doc = frappe.get_doc(args)
+	# doc.insert(ignore_permissions=True)
+	# doc.submit()
 
 	# create j.e to settle payable entry for tax to pay to government taxation department.
 	make_sales_tax_provision_journal_entry(self, supplier_account, temp_tax_wh_payable_account, tax_amount)
-
+'''
+Journal Entries code.
+'''
+# Not In Use
 def make_sales_tax_provision_journal_entry(self, supplier_account, temp_tax_wh_payable_account, tax_amount):
-	
 	def _create_():
 		reference_doctype = "Payment Entry"
 		reference_name = self.name
@@ -413,6 +487,7 @@ def make_sales_tax_provision_journal_entry(self, supplier_account, temp_tax_wh_p
 			"entry_type": "Journal Entry",
 			"posting_date": self.posting_date,
 			"company": self.company,
+			"custom_tax_payer_id": self.party,
 			"remark": "The sales tax and province of {0} has been recorded against {1} {2}".format(fmt_money(tax_amount, currency=self.paid_to_account_currency), "Purchase Invoice", reference_name),
 			"accounts": [
 				# debit
@@ -447,6 +522,45 @@ def make_sales_tax_provision_journal_entry(self, supplier_account, temp_tax_wh_p
 		doc.insert(ignore_permissions=True)
 		doc.submit()
 		frappe.db.set_value("Payment Entry", self.name, "custom_journal_entry_st", doc.name)
-		
 	_create_()
-	self.reload()
+'''
+GLOBAL DEFAULTS
+'''
+
+def get_fbr_supplier():
+		supplier = frappe.db.get_value("Akf Accounts Settings", None, "fbr_supplier")
+		if(not supplier):
+			as_link = get_link_to_form('Akf Accounts Settings', 'Akf Accounts Settings')
+			frappe.throw(f"Please set default FBR supplier in `{as_link}` .", 
+				title="Missing Info")
+		return supplier
+
+def get_authority_supplier(authority):
+		supplier = frappe.db.get_value("Authority", authority, "supplier")
+		if(not supplier):
+			as_link = get_link_to_form('Authority', authority)
+			frappe.throw(f"Please select supplier in `{as_link}` authority.", 
+				title="Missing Info")
+		return supplier
+
+def get_supplier_account(supplier):
+		supplier_account = frappe.db.sql(f'''
+							Select account 
+							From `tabParty Account` 
+							Where docstatus=0 
+							and parent="{supplier}" ''')
+		if(not supplier_account):
+			sp_link = get_link_to_form('Supplier', supplier)
+			frappe.throw(f"Please select default account of supplier ` <br>{sp_link}.", 
+				title="Missing Info")
+		return supplier_account[0][0]
+
+def get_tax_wh_payable_account(company):
+	comp = frappe.get_doc('Company', company)
+	
+	if(not comp.custom_tax_withholding_payable_account):
+		wh_link = get_link_to_form('Company', comp.name)
+		frappe.throw(f"Please select tax withholding payable account in company. <br>{wh_link}.", 
+			title="Missing Info")
+	
+	return comp.custom_tax_withholding_payable_account

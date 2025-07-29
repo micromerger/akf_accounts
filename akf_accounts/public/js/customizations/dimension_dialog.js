@@ -116,7 +116,7 @@ function get_donations(frm){
                 //     }
                 // }
             },
-            
+           
             {
                 label: __(""),
                 fieldname: "col_break",
@@ -129,12 +129,12 @@ function get_donations(frm){
                 options: "Cost Center",
                 read_only: 1,
                 default: frm.doc.cost_center
+            },    
+            {
+                label: __(""),
+                fieldname: "sec_break",
+                fieldtype: "Section Break",
             },
-            // {
-            //     label: __(""),
-            //     fieldname: "col_break",
-            //     fieldtype: "Column Break",
-            // },
             {
                 label: __("Fund Class"),
                 fieldname: "fund_class",
@@ -149,13 +149,41 @@ function get_donations(frm){
                 label: __(""),
                 fieldname: "col_break",
                 fieldtype: "Column Break",
-            },            
+            },
+            {
+                label: __("Transfer Amount"),
+                fieldname: "transfer_amount",
+                fieldtype: "Currency",
+                default: 0.0,
+                reqd: 1,
+                onchange: function() {
+                    /*
+                    const amount = d.get_value('transfer_amount');
+                    if (amount) {
+                        // Find and select the donor balance that matches the amount
+                        const donorBalance = d.fields_dict.donor_balance.df.data;
+                        if (donorBalance && donorBalance.length > 0) {
+                            donorBalance.forEach(row => {
+                                row.__checked = (row.balance == amount);
+                            });
+                            d.fields_dict.donor_balance.grid.refresh();
+                        }
+                    }
+                    */
+                }
+            },
+            {
+                label: __(""),
+                fieldname: "col_break",
+                fieldtype: "Column Break",
+            },      
             {
                 label: __("Get Balance"),
                 fieldname: "get_balance",
                 fieldtype: "Button",
                 options: ``,
                 click(){
+                    const transfer_amount = d.fields_dict.transfer_amount.value;
                     const filters = {
                         "service_area": d.fields_dict.service_area.value,
                         "subservice_area": d.fields_dict.subservice_area.value,
@@ -164,10 +192,20 @@ function get_donations(frm){
                         "cost_center": d.fields_dict.cost_center.value,
                         "company": frm.doc.company,
                         "doctype": frm.doc.doctype,
-                        "amount": get_consuming_amount(frm.doc)
+                        "amount": transfer_amount
+                        // "amount": get_consuming_amount(frm.doc)
                     }
                     let msg = "<p></p>";
                     let data = [];
+                    
+                    // Check if transfer amount is zero
+                    if (parseFloat(transfer_amount) === 0 || transfer_amount===null) {
+                        msg = `<b style="color: red;">Transfer Amount cannot be zero</b>`;
+                        d.fields_dict.html_message.df.options = msg;
+                        d.fields_dict.html_message.refresh();
+                        return;
+                    }
+
                     const nofilters = get_validate_filters(filters);
                     if(nofilters.notFound){
                         msg = `<b style="color: red;">Please select ${nofilters.fieldname}<b>`;
@@ -299,7 +337,8 @@ function get_donations(frm){
                             // "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
                             // "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
                             "ff_balance_amount": row.balance,
-                            "fund_class": values.fund_class
+                            "fund_class": values.fund_class,
+                            "ff_transfer_amount": values.transfer_amount
                         });
                     }else{
                         details.push({
