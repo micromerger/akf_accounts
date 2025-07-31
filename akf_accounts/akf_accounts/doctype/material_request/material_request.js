@@ -100,7 +100,7 @@ frappe.ui.form.on("Material Request", {
 
 	refresh: function (frm) {
 		// Only show Create buttons for saved (not new) docs
-		if (!frm.is_new()) {
+		if (!frm.is_new() && frm.doc.docstatus==1) {
 			const purpose_selection_enabled = frm.doc.custom_custom_disable_material_request_purpose_flag == 1;
 
 			if (purpose_selection_enabled) {
