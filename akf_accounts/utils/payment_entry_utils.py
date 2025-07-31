@@ -335,7 +335,7 @@ def eval_condition_and_formula(self, struct_row):
 		)
 
 def calculate_totals(self):
-	self.custom_net_total = (self.paid_amount - self.total_taxes_and_charges)
+	self.custom_net_total = (self.paid_amount + self.total_taxes_and_charges)
 '''
 	Submission process of Journal Entry.
 '''

@@ -72,7 +72,7 @@ frappe.ui.form.on("Material Request", {
 		erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
 
 		// Check Stock Settings flag - only apply to new records
-		if (frm.doc.__islocal) {
+		if (frm.doc.__islocal || frm.doc.docstatus<1) {
 			frappe.db.get_single_value("Stock Settings", "disable_material_request_purpose").then(value => {
 				const purpose_selection_enabled = value === 1 || value === "1";
 				frm.set_value("custom_custom_disable_material_request_purpose_flag", purpose_selection_enabled ? 1 : 0);
