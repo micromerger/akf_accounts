@@ -53,7 +53,10 @@ from akf_accounts.customizations.overrides.payment_mortization import (
 	make_mortization_gl_entries,
 	delete_all_gl_entries
 )
-
+# Nabeel Saleem, 01-08-2025
+from akf_accounts.utils.payment_entry.discount_breakeven import (
+	create_draft_donation
+)
 class InvalidPaymentEntry(ValidationError):
 	pass
 
@@ -113,6 +116,8 @@ class XPaymentEntry(AccountsController):
 		self.set_payment_references()
 		# Nabeel Saleem, 25-02-2025
 		validate_donor_balance(self)
+		# Nabeel Saleem, 01-08-2025
+		self.validate_discount_breakeven_flow()
 
 	def on_submit(self):
 		if self.difference_amount:
@@ -132,6 +137,8 @@ class XPaymentEntry(AccountsController):
 		adjust_doubtful_debt(self)
 		# Nabeel Saleem, 25-02-2025
 		make_mortization_gl_entries(self)
+		# Nabeel Saleem, 01-08-2025
+		create_draft_donation(self)
 
 	def set_liability_account(self):
 		# Auto setting liability account should only be done during 'draft' status
@@ -1872,20 +1879,20 @@ class XPaymentEntry(AccountsController):
 		if(self.custom_retention_money_payable):
 			self.set_default_retention_account()
 			self.validate_retention_amount()
-			self.set_unset_retention_amout()
+			self.set_unset_retention_amount()
 	
 	# .js api call
 	@frappe.whitelist()
 	def process_accounts_retention_flow(self):
 		if(not self.paid_amount) or (self.paid_amount==0): return
 		self.set_default_retention_account()
-		self.set_unset_retention_amout()
+		self.set_unset_retention_amount()
 	
 	# .js api call
 	@frappe.whitelist()
 	def calculate_retention_amount(self):
 		self.validate_retention_amount()
-		self.set_unset_retention_amout()
+		self.set_unset_retention_amount()
 		self.set_payment_references()
 		
 	def set_default_retention_account(self):
@@ -1904,7 +1911,7 @@ class XPaymentEntry(AccountsController):
 			elif(self.custom_retention_amount>=self.custom_actual_amount):
 				frappe.throw('Retention amount must be less than actual amount.', title="Invalid Info")
 	
-	def set_unset_retention_amout(self):
+	def set_unset_retention_amount(self):
 		if(self.custom_retention_money_payable):
 			if((self.custom_actual_amount or 0.0)<= self.paid_amount):
 				self.custom_actual_amount = self.paid_amount
@@ -1912,6 +1919,7 @@ class XPaymentEntry(AccountsController):
 		else:
 			if(self.custom_actual_amount >= self.paid_amount):
 				self.paid_amount = self.custom_actual_amount
+			self.custom_actual_amount = 0.0
 			self.custom_retention_amount = 0.0
 			self.custom_retention_payable_account = None
 	
@@ -1927,6 +1935,43 @@ class XPaymentEntry(AccountsController):
 			else:
 				row.allocated_amount = self.paid_amount
 	
+	def validate_discount_breakeven_flow(self):
+		if(self.custom_apply_discount_breakeven):
+			self.validate_discount_amount()
+			self.set_unset_discount_breakeven_amount()
+
+	def validate_discount_amount(self):
+		if(self.custom_apply_discount_breakeven):
+			if(self.custom_discount_amount<=0):
+				frappe.throw('Discount amount must be greater than zero.', title="Invalid Info")
+			elif(self.custom_discount_amount>=self.custom_amount_before_discount):
+				frappe.throw('Discount amount must be less than amount before discount.', title="Invalid Info")
+	
+	# .js api call
+	@frappe.whitelist()
+	def process_discount_breakeven_flow(self):
+		if(not self.paid_amount) or (self.paid_amount==0): return
+		self.set_unset_discount_breakeven_amount()
+
+	def set_unset_discount_breakeven_amount(self):
+		if(self.custom_apply_discount_breakeven):
+			if((self.custom_amount_before_discount or 0.0)<= self.paid_amount):
+				self.custom_amount_before_discount = self.paid_amount
+			self.paid_amount = (self.custom_amount_before_discount or 0.0) - (self.custom_discount_amount or 0.0)
+		else:
+			if(self.custom_amount_before_discount >= self.paid_amount):
+				self.paid_amount = self.custom_amount_before_discount
+			self.custom_amount_before_discount = 0.0
+			self.custom_discount_amount = 0.0
+	
+	# .js api call
+	@frappe.whitelist()
+	def calculate_discount_amount(self):
+		self.validate_discount_amount()
+		self.set_unset_discount_breakeven_amount()
+		# self.set_payment_references()
+	
+
 def validate_inclusive_tax(tax, doc):
 	def _on_previous_row_error(row_range):
 		throw(

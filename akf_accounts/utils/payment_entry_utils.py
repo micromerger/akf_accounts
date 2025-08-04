@@ -39,14 +39,13 @@ def set_tax_withholding_income_tax(self):
 			"doctype": "Payment Entry",
 			"supplier": self.party,
 			"posting_date": self.posting_date,
-			"net_total": net_total,
+			# "net_total": net_total 
+			"net_total": self.custom_amount_before_discount if(self.custom_apply_discount_breakeven and self.custom_calculate_tax_on=='Gross Amount') else net_total # nabeel, 01-08-2025
 		}
 	)
-
+	
 	tax_withholding_details = get_party_tax_withholding_details(args, self.tax_withholding_category)
-	# print('--------------------------')
-	# print(f"tax_withholding_details: {tax_withholding_details}")
-	# print(f"net_total: {net_total}")
+	
 	if not tax_withholding_details:
 		return
 
@@ -113,7 +112,8 @@ def set_sales_tax_and_province_tax_withholding(self):
 			"doctype": "Payment Entry",
 			"supplier": self.party,
 			"posting_date": self.posting_date,
-			"net_total": net_total,
+			# "net_total": net_total 
+			"net_total": self.custom_amount_before_discount if(self.custom_apply_discount_breakeven and self.custom_calculate_tax_on=='Gross Amount') else net_total # nabeel, 01-08-2025
 		}
 	)
 

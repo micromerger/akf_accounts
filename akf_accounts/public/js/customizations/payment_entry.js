@@ -219,6 +219,9 @@ frappe.ui.form.on('Payment Entry', {
 		// Clear party and party name if party type changes
 		frm.set_value('party', '');
 		frm.set_value('party_name', '');
+		if(frm.doc.party_type != 'Supplier'){
+			frm.set_value('custom_apply_discount_breakeven', 0);
+		}
 	},
 	custom_cheque_leaf: function (frm) {
 		if ([undefined, ""].includes(frm.doc.custom_cheque_leaf)) {
@@ -359,6 +362,13 @@ frappe.ui.form.on('Payment Entry', {
 		frm.set_value('custom_tax_withholding_category_st', '');
 		frm.refresh_field('custom_tax_withholding_category_st');
 	},
+	custom_apply_discount_breakeven: function(frm){
+		frm.call("process_discount_breakeven_flow");
+	},
+	custom_discount_amount: function (frm) {
+		frm.call("calculate_discount_amount");
+	},
+	
 });
 
 function update_tax_withholding_category(frm) {

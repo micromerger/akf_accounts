@@ -63,8 +63,8 @@ def get_query_result(filters):
             inner JOIN `tabAdvance Taxes and Charges` as t ON t.parent = p.name
 
             WHERE
-                p.docstatus = 0 AND p.custom_sales_tax_and_province = 1 AND p.custom_authority = 'PRA'
-
+                p.docstatus < 2 AND p.custom_sales_tax_and_province = 1 AND p.custom_authority = 'PRA'
+                {0}
             Group By 
                 p.party, p.custom_supplier, p.custom_tax_type_id_st
             ORDER BY 

@@ -288,7 +288,7 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 	tax_deducted = 0
 	if taxable_vouchers:
 		tax_deducted = get_deducted_tax(taxable_vouchers, tax_details)
-	
+
 	tax_amount = 0
 	tax_applicable_amount = 0 # nabeel, 24-06-2025
 	if party_type == "Supplier":
@@ -312,7 +312,9 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 			voucher_wise_amount = {}
 		else:
 			tax_amount = get_tds_amount(ldc, parties, inv, tax_details, vouchers)
-			
+			print('-------------------------')
+			print(f'tax_applicable_amount: {tax_applicable_amount}')
+			print(f'tax_amount: {tax_amount}')
 		
 		# nabeel, 24-06-2025 (Sales Tax & Province)
 		
@@ -324,6 +326,7 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 				formula_rate = (1 + (applicable_rate / 100)) if(tax_details.tax_payer_status in ['Filer', 'Operative', 'Active']) else (100 + applicable_rate)
 				tax_applicable_amount = (inv.tax_withholding_net_total / formula_rate) * (applicable_rate / 100)
 				tax_amount =  (tax_applicable_amount * rate)
+				
 			elif(rate > 0.0):
 				tax_amount =  (inv.tax_withholding_net_total * rate )
 			
@@ -338,9 +341,7 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 
 	if cint(tax_details.round_off_tax_amount):
 		tax_amount = normal_round(tax_amount)
-	# print('-------------------------')
-	# print(f'tax_applicable_amount: {tax_applicable_amount}')
-	# print(f'tax_amount: {tax_amount}')
+	
 	return tax_applicable_amount, tax_amount, tax_deducted, tax_deducted_on_advances, voucher_wise_amount
 
 
@@ -523,17 +524,17 @@ def get_tds_amount(ldc, parties, inv, tax_details, vouchers):
 		group_by="payment_type",
 	)
 	
+	# print(f'tax_amount: {tax_amount}')
 	supp_credit_amt += supp_jv_credit_amt
 	supp_credit_amt += inv.tax_withholding_net_total
 
 	for type in payment_entry_amounts:
 		if type.payment_type == "Pay":
-			supp_credit_amt += type.amount
+			pass	
+			# nabeel, 01-08-2025
+			# supp_credit_amt += type.amount
 		else:
 			supp_credit_amt -= type.amount
-
-	print('---------------------')
-	print(f"{supp_credit_amt}")
 
 	threshold = tax_details.get("threshold", 0)
 	cumulative_threshold = tax_details.get("cumulative_threshold", 0)
