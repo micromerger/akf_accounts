@@ -439,6 +439,7 @@ class XStockEntry(StockEntry):
             conditions += f" and subservice_area = '{row.subservice_area}' " if (row.subservice_area) else " and subservice_area IS NULL "
             conditions += f" and product = '{row.product}' " if (row.product) else " and product IS NULL "
             conditions += f" and project = '{row.project}' "
+            # frappe.throw(f"{conditions}")
             return conditions
         
         if ((self.purpose == "Material Issue") or (self.purpose == "Material Transfer")):

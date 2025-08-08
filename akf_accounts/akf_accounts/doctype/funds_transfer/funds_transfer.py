@@ -394,7 +394,7 @@ class FundsTransfer(Document):
 			if(self.from_bank_account): from_bank = self.from_bank_account
 			# Credit entry for bank account	
 			args = _get_gl_structure(self)
-			amount = self.transfer_amount if(self.transaction_type=='Inter Fund') else self.total_amount
+			amount = self.transfer_amount if(self.transaction_type=='Inter Bank') else self.total_amount
 			args.update({
 				'account': from_bank,
 				'cost_center': self.from_cost_center if(self.transaction_type == "Inter Branch") else self.cost_center,
@@ -422,7 +422,7 @@ class FundsTransfer(Document):
 			entry_Deposit_In_Transit()
 			# Debit entry for bank account
 			args = _get_gl_structure(self)
-			amount = self.transfer_amount if(self.transaction_type=='Inter Fund') else self.total_amount
+			amount = self.transfer_amount if(self.transaction_type=='Inter Bank') else self.total_amount
 			args.update({
 				'account': to_bank,
 				'cost_center': self.to_cost_center if(self.transaction_type == "Inter Branch") else self.cost_center,

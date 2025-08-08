@@ -13,8 +13,17 @@
   "section_break_kcib",
   "naming_series",
   "donor_type",
-  "profession",
+  "org_category",
+  "org_sector",
+  "org_name",
+  "orgs_country",
+  "org_email",
+  "org_website",
   "organization_contact_person",
+  "org_head_of_board",
+  "representative_person_name",
+  "representative_email",
+  "profession",
   "representative_designation",
   "company_name",
   "company_owner_name",
@@ -22,7 +31,6 @@
   "company_email_address",
   "donor_name",
   "donor_dob",
-  "old_id",
   "owner_id",
   "owner_name",
   "column_break_5",
@@ -36,8 +44,9 @@
   "contact_person",
   "contact_number",
   "column_break_fzwx",
-  "nationality_type",
+  "old_id",
   "registration_date",
+  "nationality_type",
   "status",
   "foa",
   "section_break_ygie",
@@ -307,6 +316,7 @@
    "options": "Donor Desk"
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual Donors\"",
    "fieldname": "old_id",
    "fieldtype": "Data",
    "label": "Old ID",
@@ -387,11 +397,10 @@
    "options": "\nSoftware House\nManufacture\nImporter\nExporter"
   },
   {
-   "depends_on": "eval: doc.donor_type == \"Organizational\"",
+   "depends_on": "eval: doc.donor_type == \"Organization\"",
    "fieldname": "organization_contact_person",
    "fieldtype": "Data",
-   "label": "Organization Contact Person",
-   "mandatory_depends_on": "eval: doc.donor_type == \"Organizational\""
+   "label": "ORG Contact"
   },
   {
    "depends_on": "eval: doc.donor_type == \"Organizational\"",
@@ -510,6 +519,65 @@
    "label": "Company",
    "options": "Company",
    "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organization\"",
+   "fieldname": "org_category",
+   "fieldtype": "Select",
+   "label": "ORG Category",
+   "options": "\nNGO\nINGO\nNPOs"
+  },
+  {
+   "fieldname": "org_sector",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "ORG Sector",
+   "options": "\nEducation\nHealth\nOrphans Support\nWASH"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organization\"",
+   "fieldname": "org_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "ORG Name"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organization\"",
+   "fieldname": "orgs_country",
+   "fieldtype": "Link",
+   "label": "ORG's Country",
+   "options": "Country"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organization\"",
+   "fieldname": "org_email",
+   "fieldtype": "Data",
+   "label": "ORG Email"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organization\"",
+   "fieldname": "org_website",
+   "fieldtype": "Data",
+   "label": "ORG Website"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Organization\"",
+   "fieldname": "org_head_of_board",
+   "fieldtype": "Data",
+   "label": "ORG Head of Board"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Corporate Donors\" || doc.donor_type == \"Organization\"",
+   "fieldname": "representative_person_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Representative Person Name"
+  },
+  {
+   "depends_on": "eval: doc.donor_type == \"Corporate Donors\" || doc.donor_type == \"Organization\"",
+   "fieldname": "representative_email",
+   "fieldtype": "Data",
+   "label": "Representative Email"
   }
  ],
  "image_field": "image",
@@ -523,7 +591,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-01 14:31:19.032194",
+ "modified": "2025-08-07 16:00:19.183105",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

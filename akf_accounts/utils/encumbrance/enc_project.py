@@ -26,7 +26,8 @@ def validate_donor_balance(doc, method=None):
 def make_project_encumbrance_gl_entries(doc, method=None):
 	self = doc
 	if(self.fund_class in ["", None]): return
-	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): return
+	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
+		frappe.throw("Please enable accounting dimensions dialog in company 'AKFP Accounts' tab.", title=f'{self.company}')
 	# consumed amount
 	consumed_amount = self.estimated_costing or 0.0
 	# looping for gl entry
@@ -135,7 +136,6 @@ def make_transfer_funds_gl_entries(doc, donor_balance, transfer_to=None):
 	donor_balance = frappe.parse_json(donor_balance)
 
 	transfer_to = (transfer_to or "").strip().lower()
-	frappe.msgprint(f"transfer_to received: {transfer_to}")
 
 	if transfer_to == "fund class":
 		source_fund_class = doc.get("fund_class")  # The fund class you are transferring FROM
