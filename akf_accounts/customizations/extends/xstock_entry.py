@@ -425,6 +425,7 @@ class XStockEntry(StockEntry):
 
     # or (self.purpose == "Material Transfer" and self.outgoing_stock_entry)
     def validate_qty(self):
+        return # Mubashir on 11-08-2025
         super(XStockEntry, self).validate_qty()
         
         def get_conditions(row):
