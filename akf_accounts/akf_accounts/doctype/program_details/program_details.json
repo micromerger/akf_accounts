@@ -17,6 +17,7 @@
   "project",
   "pd_donor",
   "pd_donor_name",
+  "donor_desk",
   "column_break_hkup",
   "encumbrance_project_account",
   "encumbrance_material_request_account",
@@ -168,12 +169,20 @@
    "fieldname": "is_transferred",
    "fieldtype": "Check",
    "label": "Is Transferred"
+  },
+  {
+   "fetch_from": "pd_donor.donor_desk",
+   "fieldname": "donor_desk",
+   "fieldtype": "Link",
+   "label": "Donor Desk",
+   "options": "Donor Desk",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-12 13:41:11.159545",
+ "modified": "2025-08-12 10:32:43.593334",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",
