@@ -524,6 +524,7 @@ class Donation(Document):
 			doc.submit()
 
 	def make_payment_ledger_entry(self):
+		if((self.reference_doctype=='Payment Entry') and (self.reference_docname)): return
 		if(self.is_return or self.unknown_to_known): return
 		args = {}
 		for row in self.payment_detail:
@@ -562,6 +563,7 @@ class Donation(Document):
 
 	def make_payment_entry(self):
 		if(self.contribution_type!="Donation"): return
+		if((self.reference_doctype=='Payment Entry') and (self.reference_docname)): return
 		if(self.is_return or self.unknown_to_known): return
 		args = {}
 		

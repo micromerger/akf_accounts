@@ -54,6 +54,10 @@
   "status",
   "amended_from",
   "column_break_ngsy",
+  "other_references_section",
+  "reference_doctype",
+  "column_break_goco",
+  "reference_docname",
   "connections_tab"
  ],
  "fields": [
@@ -380,12 +384,36 @@
    "allow_on_submit": 1,
    "fieldname": "column_break_ngsy",
    "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "other_references_section",
+   "fieldtype": "Section Break",
+   "label": "Other References"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference DocType",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_goco",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference DocName",
+   "options": "reference_doctype",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-27 15:13:46.163691",
+ "modified": "2025-08-12 12:24:51.637811",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

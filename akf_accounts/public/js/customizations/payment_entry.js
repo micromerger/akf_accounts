@@ -695,12 +695,14 @@ function get_outstanding_invoices_or_orders_custom(frm, get_outstanding_invoices
 		{ fieldtype: "Float", label: __("Less Than Amount"), fieldname: "outstanding_amt_less_than" },
 		{ fieldtype: "Section Break", label: __("Supplier Filter") },
 		{
-			fieldtype: "Link",
-			label: __("Supplier"),
-			fieldname: "supplier",
-			options: "Supplier",
+			fieldtype: "MultiSelectList",
+			label: __("Supplier MultiSelect"),
+			fieldname: "supplier_multiselect",
 			reqd: 0,
-			description: __("Leave blank to fetch for all suppliers.")
+			description: __("Leave blank to fetch for all suppliers."),
+			"get_data": function(txt) {
+				return frappe.db.get_link_options('Supplier', txt);
+			},
 		},
 	];
 	if (frm.dimension_filters) {
@@ -759,7 +761,7 @@ function get_outstanding_documents_custom(frm, filters, get_outstanding_invoices
 		method: 'akf_accounts.customizations.overrides.payment_entry.get_outstanding_reference_documents',
 		args: { args: args },
 		callback: function (r, rt) {
-			console.log(r.message);
+			// console.log(r.message);
 			if (r.message) {
 				var total_positive_outstanding = 0;
 				var total_negative_outstanding = 0;

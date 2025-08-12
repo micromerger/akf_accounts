@@ -2006,7 +2006,7 @@ def validate_inclusive_tax(tax, doc):
 def get_outstanding_reference_documents(args, validate=False):
 	if isinstance(args, str):
 		args = json.loads(args)
-
+	print(args)
 	# # --- Custom Supplier Filter Logic implemented by Mubashir ---
 	# # If a supplier is provided in args, use it as the party filter (for supplier-type queries)
 	# if args.get("supplier"):
@@ -2096,7 +2096,7 @@ def get_outstanding_reference_documents(args, validate=False):
 		party_account = args.get("party_account")
 	
 	# nabeel, 29-07-2025
-	if(args.get('supplier')): common_filter.append(ple.custom_tax_payer_id==args['supplier'])
+	if(args.get('supplier_multiselect')): common_filter.append(ple.custom_tax_payer_id.isin(args['supplier_multiselect']))
 	
 	if args.get("get_outstanding_invoices"):
 		outstanding_invoices = get_outstanding_invoices(

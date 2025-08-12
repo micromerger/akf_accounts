@@ -12,6 +12,7 @@
   "donor_name",
   "cnic",
   "donor_type",
+  "donor_desk_id",
   "donation_type",
   "plaque_branding",
   "column_break_uwow",
@@ -686,12 +687,20 @@
    "fieldtype": "Link",
    "label": "Fund Class Id",
    "options": "Fund Class"
+  },
+  {
+   "fetch_from": "donor_id.donor_desk",
+   "fieldname": "donor_desk_id",
+   "fieldtype": "Link",
+   "label": "Donor Desk Id",
+   "options": "Donor Type",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-27 15:07:29.501203",
+ "modified": "2025-08-12 12:46:06.219023",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

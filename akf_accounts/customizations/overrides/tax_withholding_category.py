@@ -284,10 +284,14 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 	
 	if inv.doctype == "Purchase Invoice":
 		tax_deducted_on_advances = get_taxes_deducted_on_advances_allocated(inv, tax_details)
-
+	# print('-----------------------------')
+	# print(taxable_vouchers)
+	# print(tax_details)
 	tax_deducted = 0
 	if taxable_vouchers:
 		tax_deducted = get_deducted_tax(taxable_vouchers, tax_details)
+	
+	# print(tax_deducted)
 
 	tax_amount = 0
 	tax_applicable_amount = 0 # nabeel, 24-06-2025
@@ -312,9 +316,9 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 			voucher_wise_amount = {}
 		else:
 			tax_amount = get_tds_amount(ldc, parties, inv, tax_details, vouchers)
-			print('-------------------------')
-			print(f'tax_applicable_amount: {tax_applicable_amount}')
-			print(f'tax_amount: {tax_amount}')
+			# print('-------------------------')
+			# print(f'tax_applicable_amount: {tax_applicable_amount}')
+			# print(f'tax_amount: {tax_amount}')
 		
 		# nabeel, 24-06-2025 (Sales Tax & Province)
 		
@@ -524,15 +528,15 @@ def get_tds_amount(ldc, parties, inv, tax_details, vouchers):
 		group_by="payment_type",
 	)
 	
-	# print(f'tax_amount: {tax_amount}')
+	# print(f'tax_amount: {payment_entry_amounts}')
 	supp_credit_amt += supp_jv_credit_amt
 	supp_credit_amt += inv.tax_withholding_net_total
 
 	for type in payment_entry_amounts:
 		if type.payment_type == "Pay":
-			pass	
+			# pass	
 			# nabeel, 01-08-2025
-			# supp_credit_amt += type.amount
+			supp_credit_amt += type.amount
 		else:
 			supp_credit_amt -= type.amount
 

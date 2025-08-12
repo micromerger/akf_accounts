@@ -1,6 +1,6 @@
 import frappe, erpnext
 from frappe.utils import (
-    getdate
+	getdate
 )
 
 # .js api call
@@ -77,12 +77,81 @@ def create_draft_donation(self):
 			'fund_class_id': self.custom_donation_fund_class,
 			'donation_amount': self.custom_discount_amount,
 			'mode_of_payment': self.mode_of_payment,
-			'account_paid_to': self.paid_to
+			'account_paid_to': self.paid_from
 		}],
+		'reference_doctype': self.doctype,
+		'reference_docname': self.name,
 	}
 	doc = frappe.get_doc(args)
-	doc.flags.ignore_mandatory = True		
+	doc.flags.ignore_mandatory = True
 	doc.flags.ignore_permissions = True
 	doc.save()
+	doc.submit()
 	self.db_set('custom_donation', doc.name)
+	make_gl_to_adjust_discount_breakeven(self, doc)
 	frappe.msgprint('Donation created successfully!', indicator='green', alert=1)
+
+def make_gl_to_adjust_discount_breakeven(self, doc):
+	
+	args = frappe._dict({
+			'doctype': 'GL Entry',
+			'posting_date': doc.posting_date,
+			'transaction_date': doc.posting_date,
+			'against': f"Donation: {doc.name}",
+			'against_voucher_type': doc.doctype,
+			'against_voucher': doc.name,
+			'voucher_type': doc.doctype,
+			'voucher_no': doc.name,
+			'voucher_subtype': 'Receive',
+			'company': doc.company,
+			'transaction_currency': doc.currency,
+			'transaction_exchange_rate': doc.exchange_rate,
+		})
+	for row in doc.payment_detail:
+		# Receivable creditors entry.
+		args.update({
+				"party_type": "Donor",
+				"party": row.donor_id,
+				"account": row.receivable_account,
+				"voucher_detail_no": row.name,
+				"donor": row.donor_id,
+
+				"fund_class": row.fund_class_id,
+				"service_area": row.pay_service_area,
+				"subservice_area": row.pay_subservice_area,
+				"product": row.pay_product if(row.pay_product) else row.product,
+				"donation_type": row.donation_type,
+				"donor_desk": row.donor_desk_id,
+				"cost_center": row.cost_center,
+
+				"inventory_scenario": row.inventory_scenario,
+				
+				# "debit": row.base_net_amount,
+				"credit": row.base_donation_amount,
+				# "debit_in_account_currency": row.net_amount,
+				"credit_in_account_currency": row.donation_amount,
+				# "debit_in_transaction_currency": row.net_amount,
+				"credit_in_transaction_currency": row.donation_amount,
+			})
+		doc = frappe.get_doc(args)
+		doc.flags.ignore_mandatory = True
+		doc.flags.ignore_permissions = True
+		doc.save()
+		doc.submit()
+
+		# Payable debtors entry.
+		args.update({		
+			"account": self.paid_to,
+			"debit": row.base_donation_amount,
+			"credit": 0,
+			"debit_in_account_currency": row.donation_amount,
+			"credit_in_account_currency": 0,
+			"debit_in_transaction_currency": row.donation_amount,
+			"credit_in_transaction_currency": 0,
+		})
+		doc = frappe.get_doc(args)
+		doc.flags.ignore_mandatory = True
+		doc.flags.ignore_permissions = True
+		doc.save()
+		doc.submit()
+
