@@ -693,14 +693,14 @@
    "fieldname": "donor_desk_id",
    "fieldtype": "Link",
    "label": "Donor Desk Id",
-   "options": "Donor Type",
+   "options": "Donor Desk",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-12 12:46:06.219023",
+ "modified": "2025-08-15 18:10:59.953089",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",
