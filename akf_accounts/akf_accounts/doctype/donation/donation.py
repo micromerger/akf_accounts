@@ -353,7 +353,7 @@ class Donation(Document):
 				"cost_center": row.cost_center,
 				"account": row.equity_account,
 				"donation_type": row.donation_type,
-				"donor_desk": row.donor_desk,
+				"donor_desk": row.donor_desk_id,
 				"inventory_scenario": row.inventory_scenario,
 			})
 			c_args = get_currency_args()
@@ -403,7 +403,7 @@ class Donation(Document):
 
 						# "project": rowp.project,
 						"donation_type": row.donation_type,
-						"donor_desk": row.donor_desk,
+						"donor_desk": row.donor_desk_id,
 						"inventory_scenario": row.inventory_scenario,
 						"cost_center": rowp.cost_center,
 						"account": rowp.equity_account,
@@ -515,7 +515,7 @@ class Donation(Document):
 				"product": row.product,
 				"project": row.project,
 				"donation_type": row.donation_type,
-				"donor_desk": row.donor_desk,
+				"donor_desk": row.donor_desk_id,
 				"inventory_scenario": row.inventory_scenario,
 				"voucher_detail_no": row.name,
 			})
@@ -593,7 +593,7 @@ class Donation(Document):
 				"subservice_area" : row.pay_subservice_area,
 				"product": row.product,
 				"donation_type": row.donation_type,
-				"donor_desk": row.donor_desk,
+				"donor_desk": row.donor_desk_id,
 				"inventory_scenario": row.inventory_scenario,
 				"project" : row.project,
 				"cost_center" : row.cost_center,

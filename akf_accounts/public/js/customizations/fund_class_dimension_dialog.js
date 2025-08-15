@@ -149,7 +149,48 @@ function get_donations(frm){
                 label: __(""),
                 fieldname: "col_break",
                 fieldtype: "Column Break",
-            },  {
+            },
+            {
+                label: __("Donor Desk"),
+                fieldname: "donor_desk",
+                fieldtype: "Link",
+                options: "Donor Desk",
+                reqd: 0,
+                /*get_query(){
+                    let company = d.fields_dict.company.value;
+                    return{
+                        filters:{
+                            company: company
+                        }
+                    }
+                }*/
+            }, 
+             {
+                label: __(""),
+                fieldname: "col_break",
+                fieldtype: "Column Break",
+            },
+            {
+                label: __("Intention"),
+                fieldname: "donation_type",
+                fieldtype: "Link",
+                options: "Donation Type",
+                reqd: 0,
+                /*get_query(){
+                    let company = d.fields_dict.company.value;
+                    return{
+                        filters:{
+                            company: company
+                        }
+                    }
+                }*/
+            },
+            {
+                label: __(""),
+                fieldname: "col_break",
+                fieldtype: "Column Break",
+            },  
+            {
                 label: __("Estimated Cost"),
                 fieldname: "estimated_costing",
                 fieldtype: "Currency",
@@ -194,6 +235,8 @@ function get_donations(frm){
                         "subservice_area": d.fields_dict.subservice_area.value,
                         "product": d.fields_dict.product.value,
                         "cost_center": d.fields_dict.cost_center.value,
+                        "donor_desk": d.fields_dict.donor_desk.value,
+                        "donation_type": d.fields_dict.donation_type.value,
                         "company": d.fields_dict.company.value,
                         "doctype": frm.doc.doctype,
                         "amount": d.fields_dict.estimated_costing.value
@@ -342,6 +385,8 @@ function get_donations(frm){
                         "pd_subservice_area": values.subservice_area,
                         "pd_product": values.product,
                         "pd_donor": row.donor,
+                        "donor_desk": values.donor_desk,
+                        "donation_type": values.donation_type,
                         "pd_fund_class": frm.doc.name,
                         "actual_balance": row.balance,
                         "custom_transfer_funds": values.estimated_costing,  
@@ -373,6 +418,8 @@ function get_donations(frm){
                     custom_product: values.product,
                     company: values.company,
                     cost_center: values.cost_center,
+                    custom_donor_desk: values.donor_desk,
+                    custom_donation_type: values.donation_type,
                     // custom_program_details: details
                 },(doc) => {
                     // Log the created document

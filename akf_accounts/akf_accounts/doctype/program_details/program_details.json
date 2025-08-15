@@ -18,6 +18,7 @@
   "pd_donor",
   "pd_donor_name",
   "donor_desk",
+  "donation_type",
   "column_break_hkup",
   "encumbrance_project_account",
   "encumbrance_material_request_account",
@@ -177,12 +178,19 @@
    "label": "Donor Desk",
    "options": "Donor Desk",
    "read_only": 1
+  },
+  {
+   "fieldname": "donation_type",
+   "fieldtype": "Link",
+   "label": "Intention",
+   "options": "Donation Type",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-12 10:32:43.593334",
+ "modified": "2025-08-12 14:58:01.478215",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",

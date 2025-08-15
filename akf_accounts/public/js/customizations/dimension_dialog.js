@@ -1,45 +1,45 @@
-function make_dimensions_modal(frm){
+function make_dimensions_modal(frm) {
     frappe.db.get_value('Company', frm.doc.company, 'custom_enable_accounting_dimensions_dialog')
-    .then(r => {
-        const enable_accounting_dimensions = r.message.custom_enable_accounting_dimensions_dialog; // Open
-        if (enable_accounting_dimensions && frm.doc.docstatus == 0) {
-            frm.add_custom_button(__('Donation'), () => get_donations(frm),
-                __("Get Balances"));
-        }
-    });
+        .then(r => {
+            const enable_accounting_dimensions = r.message.custom_enable_accounting_dimensions_dialog; // Open
+            if (enable_accounting_dimensions && frm.doc.docstatus == 0) {
+                frm.add_custom_button(__('Donation'), () => get_donations(frm),
+                    __("Get Balances"));
+            }
+        });
 };
 
 // events.get_donations
-function get_donations(frm){
-    if(!["", undefined].includes(frm.doc.from_cost_center)){
+function get_donations(frm) {
+    if (!["", undefined].includes(frm.doc.from_cost_center)) {
         frm.doc.cost_center = frm.doc.from_cost_center;
     }
     // if(["", undefined].includes(frm.doc.cost_center)){
     //     frappe.throw("Please select cost-center to proceed.");
     //     return;
     // }
-    
+
     const d = new frappe.ui.Dialog({
         title: __("Accounting Dimensions"),
         fields: [
-            
+
             {
                 label: __("Project"),
                 fieldname: "project",
                 fieldtype: "Link",
                 options: "Project",
-                default: ("project" in frm.doc)? frm.doc.project: "",
+                default: ("project" in frm.doc) ? frm.doc.project : "",
                 reqd: 1,
                 // read_only: ["", undefined].includes(frm.doc.project)?0:1,
-                get_query(){
-                    return{
-                        filters:{
+                get_query() {
+                    return {
+                        filters: {
                             status: ['!=', 'Completed'],
                             fund_class: ['!=', '']
                         }
                     }
                 },
-                onchange: function() {
+                onchange: function () {
                     if (this.value) {
                         frappe.db.get_value('Project', this.value, ['fund_class', 'custom_service_area', 'custom_subservice_area', 'custom_product', 'cost_center'])
                             .then(r => {
@@ -116,7 +116,7 @@ function get_donations(frm){
                 //     }
                 // }
             },
-           
+
             {
                 label: __(""),
                 fieldname: "col_break",
@@ -129,7 +129,7 @@ function get_donations(frm){
                 options: "Cost Center",
                 read_only: 1,
                 default: frm.doc.cost_center
-            },    
+            },
             {
                 label: __(""),
                 fieldname: "sec_break",
@@ -141,9 +141,34 @@ function get_donations(frm){
                 fieldtype: "Link",
                 options: "Fund Class",
                 in_list_view: 0,
-                reqd: ['Funds Transfer'].includes(frm.doc.doctype)? 1:0,
+                // reqd: ['Funds Transfer'].includes(frm.doc.doctype)? 1:0,
                 read_only: 1,
-                hidden: ['Funds Transfer'].includes(frm.doc.doctype)? 0:1,
+                // hidden: ['Funds Transfer'].includes(frm.doc.doctype)? 0:1,
+            },
+
+            {
+                label: __(""),
+                fieldname: "col_break",
+                fieldtype: "Column Break",
+            },
+            {
+                label: __("Donor Desk"),
+                fieldname: "donor_desk",
+                fieldtype: "Link",
+                options: "Donor Desk",
+                reqd: 1
+            },
+            {
+                label: __(""),
+                fieldname: "col_break",
+                fieldtype: "Column Break",
+            },
+            {
+                label: __("Intention"),
+                fieldname: "donation_type",
+                fieldtype: "Link",
+                options: "Donation Type",
+                reqd: 1
             },
             {
                 label: __(""),
@@ -156,7 +181,7 @@ function get_donations(frm){
                 fieldtype: "Currency",
                 default: 0.0,
                 reqd: 1,
-                onchange: function() {
+                onchange: function () {
                     /*
                     const amount = d.get_value('transfer_amount');
                     if (amount) {
@@ -176,13 +201,13 @@ function get_donations(frm){
                 label: __(""),
                 fieldname: "col_break",
                 fieldtype: "Column Break",
-            },      
+            },
             {
                 label: __("Get Balance"),
                 fieldname: "get_balance",
                 fieldtype: "Button",
                 options: ``,
-                click(){
+                click() {
                     const transfer_amount = d.fields_dict.transfer_amount.value;
                     const filters = {
                         "service_area": d.fields_dict.service_area.value,
@@ -190,6 +215,8 @@ function get_donations(frm){
                         "product": d.fields_dict.product.value,
                         "project": d.fields_dict.project.value,
                         "cost_center": d.fields_dict.cost_center.value,
+                        "donor_desk": d.fields_dict.donor_desk.value,
+                        "donation_type": d.fields_dict.donation_type.value,
                         "company": frm.doc.company,
                         "doctype": frm.doc.doctype,
                         "amount": transfer_amount
@@ -197,9 +224,9 @@ function get_donations(frm){
                     }
                     let msg = "<p></p>";
                     let data = [];
-                    
+
                     // Check if transfer amount is zero
-                    if (parseFloat(transfer_amount) === 0 || transfer_amount===null) {
+                    if (parseFloat(transfer_amount) === 0 || transfer_amount === null) {
                         msg = `<b style="color: red;">Transfer Amount cannot be zero</b>`;
                         d.fields_dict.html_message.df.options = msg;
                         d.fields_dict.html_message.refresh();
@@ -207,21 +234,21 @@ function get_donations(frm){
                     }
 
                     const nofilters = get_validate_filters(filters);
-                    if(nofilters.notFound){
+                    if (nofilters.notFound) {
                         msg = `<b style="color: red;">Please select ${nofilters.fieldname}<b>`;
-                    }else{
+                    } else {
                         const response = get_financial_stats(filters);
-                        
-                        if(response.length>0){
+
+                        if (response.length > 0) {
                             // Update the donor_balance table's data
                             data = response;
                             // Refresh the child table grid to reflect the new data
-                            
-                        }else{
+
+                        } else {
                             data = [];
                             msg = `<b style="color: red;">No balance found against these dimension.<b>`;
                         }
-                        
+
                     }
                     d.fields_dict.donor_balance.df.data = data;
                     d.fields_dict.donor_balance.grid.refresh();
@@ -313,16 +340,16 @@ function get_donations(frm){
         primary_action: (values) => {
             const array = values.donor_balance;
             let details = [];
-            
+
             // if(frm.doc.cost_center==undefined){
             //     d.fields_dict.html_message.df.options = `<b style="color: red;">Please select cost center to proceed.<b>`;
             //     d.fields_dict.html_message.refresh();
             //     return
             // }
-            
+
             array.forEach(row => {
-                if(row.__checked){
-                    if("funds_transfer_from" in frm.doc){
+                if (row.__checked) {
+                    if ("funds_transfer_from" in frm.doc) {
                         details.push({
                             "ff_company": frm.doc.company,
                             "ff_cost_center": row.cost_center,
@@ -332,6 +359,8 @@ function get_donations(frm){
                             "ff_product": values.product,
                             "project": values.project,
                             "ff_donor": row.donor,
+                            "donor_desk": values.donor_desk,
+                            "donation_type": values.donation_type,
                             // "encumbrance_project_account": row.encumbrance_project_account,
                             // "encumbrance_material_request_account": row.encumbrance_material_request_account,
                             // "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
@@ -340,7 +369,7 @@ function get_donations(frm){
                             "fund_class": values.fund_class,
                             "ff_transfer_amount": values.transfer_amount
                         });
-                    }else{
+                    } else {
                         details.push({
                             "pd_cost_center": row.cost_center,
                             "pd_account": row.account,
@@ -349,6 +378,8 @@ function get_donations(frm){
                             "pd_product": values.product,
                             "pd_project": values.project,
                             "pd_fund_class": values.fund_class,
+                            "donor_desk": values.donor_desk,
+                            "donation_type": values.donation_type,
                             "project": values.project,
                             "pd_donor": row.donor,
                             "encumbrance_project_account": row.encumbrance_project_account,
@@ -362,35 +393,35 @@ function get_donations(frm){
                 }
             });
             let description = '';
-            if(details.length>0){
-                let childkey =  ("custom_program_details" in frm.doc)? "custom_program_details": "program_details";
-                if("funds_transfer_from" in frm.doc){ childkey = "funds_transfer_from"; }
+            if (details.length > 0) {
+                let childkey = ("custom_program_details" in frm.doc) ? "custom_program_details" : "program_details";
+                if ("funds_transfer_from" in frm.doc) { childkey = "funds_transfer_from"; }
                 frm.set_value(childkey, details);
-                if("custom_advance_payment_by_accounting_dimension" in frm.doc){
+                if ("custom_advance_payment_by_accounting_dimension" in frm.doc) {
                     frm.set_value("custom_advance_payment_by_accounting_dimension", 1);
                 }
                 d.hide();
-            }else{
-                description =`<b style="color: red;">Please select a record to proceed.<b>`;
+            } else {
+                description = `<b style="color: red;">Please select a record to proceed.<b>`;
             }
             d.fields_dict.html_message.df.options = description;
             d.fields_dict.html_message.refresh();
-         },
+        },
         primary_action_label: __("Add Balances"),
     });
     d.show();
-      
+
 }
 
-function get_validate_filters(filters){
+function get_validate_filters(filters) {
     var noFilters = false;
     var fieldname = '';
-    for(const key in filters){
+    for (const key in filters) {
         noFilters = ['', null].includes(filters[key]);
-        if(noFilters){
+        if (noFilters) {
             fieldname = key;
             break;
-        }   
+        }
     }
 
     return {
@@ -399,15 +430,15 @@ function get_validate_filters(filters){
     }
 }
 
-function get_financial_stats(filters){
+function get_financial_stats(filters) {
     let data = [];
     frappe.call({
         method: "akf_accounts.utils.dimensional_donor_balance.get_donor_balance",
         async: false,
         args: {
-            filters: filters 
+            filters: filters
         },
-        callback: function(r){
+        callback: function (r) {
             data = r.message;
             console.log(data);
         }
@@ -415,38 +446,38 @@ function get_financial_stats(filters){
     return data
 }
 
-function get_consuming_amount(doc){
-    if("accounts" in doc){
+function get_consuming_amount(doc) {
+    if ("accounts" in doc) {
         let amount = 0.0;
         const array = doc.accounts;
-        array.forEach(row=>{
+        array.forEach(row => {
             amount += row.budget_amount;
         });
-        return (amount==null)? 0:amount;
+        return (amount == null) ? 0 : amount;
     }
-    else if("items" in doc){
+    else if ("items" in doc) {
         let amount = 0.0;
         const array = doc.items;
-        array.forEach(row=>{
+        array.forEach(row => {
             amount += row.amount;
         });
-        return (amount==null)? 0:amount;
-    }else if("paid_amount" in doc){
-        return (doc.paid_amount==null)? 0:doc.paid_amount;
+        return (amount == null) ? 0 : amount;
+    } else if ("paid_amount" in doc) {
+        return (doc.paid_amount == null) ? 0 : doc.paid_amount;
     }
     return 0.0;
 }
 
 function accounting_ledger(frm) {
-    if(frm.doc.docstatus == 1) {
+    if (frm.doc.docstatus == 1) {
         frm.add_custom_button(__('Accounting Ledger'), function () {
-            frappe.set_route("query-report", "General Ledger", {"from_date": frm.doc.posting_date, "voucher_no": frm.doc.name });
+            frappe.set_route("query-report", "General Ledger", { "from_date": frm.doc.posting_date, "voucher_no": frm.doc.name });
         }, __("View"));
     }
 }
 
-function donor_balance_set_queries(frm){
-    const childkey =  ("custom_program_details" in frm.doc)? "custom_program_details": "program_details";
+function donor_balance_set_queries(frm) {
+    const childkey = ("custom_program_details" in frm.doc) ? "custom_program_details" : "program_details";
     frm.fields_dict[childkey].grid.get_field('pd_service_area').get_query = function (doc, cdt, cdn) {
         return {
             filters: {

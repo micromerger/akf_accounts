@@ -64,7 +64,9 @@ def get_conditions(filters, accounts):
 	conditions += " and fund_class = %(fund_class)s " if(filters.get('fund_class')) else ""
 	conditions += " and project = %(project)s " if(filters.get('project')) else ""
 	conditions += " and donor = %(donor)s " if(filters.get('donor')) else ""
-	
+	conditions += " and donor_desk = %(donor_desk)s " if(filters.get('donor_desk')) else ""
+	conditions += " and donation_type = %(donation_type)s " if(filters.get('donation_type')) else ""
+
 	doctype = filters.get('doctype')
 	
 	if(doctype == "Material Request"):

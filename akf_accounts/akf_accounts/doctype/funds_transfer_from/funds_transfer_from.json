@@ -20,7 +20,9 @@
   "ff_transfer_amount",
   "column_break_tzki",
   "transfer",
-  "fund_class"
+  "fund_class",
+  "donor_desk",
+  "donation_type"
  ],
  "fields": [
   {
@@ -125,12 +127,26 @@
    "label": "Fund Class",
    "options": "Fund Class",
    "read_only": 1
+  },
+  {
+   "fieldname": "donor_desk",
+   "fieldtype": "Link",
+   "label": "Donor Desk",
+   "options": "Donor Desk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "donation_type",
+   "fieldtype": "Link",
+   "label": "Intention",
+   "options": "Donation Type",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-03 12:33:42.256251",
+ "modified": "2025-08-12 15:29:42.375143",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer From",

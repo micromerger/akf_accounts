@@ -30,7 +30,7 @@ def make_encumbrance_material_request_gl_entries(doc, method=None):
 		if(get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
 			
 			validate_donor_balance(self)
-				
+			
 			args = frappe._dict({
 				'doctype': 'GL Entry',
 				'posting_date': self.transaction_date,
@@ -68,6 +68,8 @@ def make_debit_gl_entry(args, row, amount):
 		'product': row.pd_product,
 		'project': row.pd_project,
 		'fund_class': row.pd_fund_class,
+		'donor_desk': row.donor_desk,
+		'donation_type': row.donation_type,
 		'donor': row.pd_donor,
 		'debit': amount,
 		'debit_in_account_currency': amount,
@@ -91,6 +93,8 @@ def make_credit_gl_entry(company, args, row, amount):
 		'product': row.pd_product,
 		'project': row.pd_project,
 		'fund_class': row.pd_fund_class,
+		'donor_desk': row.donor_desk,
+		'donation_type': row.donation_type,
 		'donor': row.pd_donor,
 		'credit': amount,
 		'credit_in_account_currency': amount,

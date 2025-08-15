@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_rename": 1,
  "autoname": "field:donor_type",
  "creation": "2017-09-19 16:19:16.639635",
  "doctype": "DocType",
@@ -20,7 +21,7 @@
   }
  ],
  "links": [],
- "modified": "2024-05-22 13:23:37.776375",
+ "modified": "2025-08-12 16:48:06.593863",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor Type",

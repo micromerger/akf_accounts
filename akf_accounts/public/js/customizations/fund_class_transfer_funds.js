@@ -1,4 +1,4 @@
-function get_funds(frm, transfer_to="Project"){
+function get_funds(frm, transfer_to = "Project") {
     /*if(!["", undefined].includes(frm.doc.from_cost_center)){
         frm.doc.cost_center = frm.doc.from_cost_center;
     }
@@ -6,7 +6,7 @@ function get_funds(frm, transfer_to="Project"){
         frappe.throw("Please select cost-center to proceed.");
         return;
     }*/
-    
+
     let fields = [
         {
             label: __("Fund Class"),
@@ -15,8 +15,8 @@ function get_funds(frm, transfer_to="Project"){
             options: "Fund Class",
             default: frm.doc.name,
             reqd: 1,
-            read_only:1,
-            onchange: function() {
+            read_only: 1,
+            onchange: function () {
                 // Clear cost center when company changes
                 // d.set_value('cost_center', '');
             }
@@ -96,14 +96,14 @@ function get_funds(frm, transfer_to="Project"){
                 }
             }*/
         },
-        
+
         {
             label: __(""),
             fieldname: "col_break",
             fieldtype: "Column Break",
         },
         {
-        label: __("Company"),
+            label: __("Company"),
             fieldname: "company",
             fieldtype: "Link",
             options: "Company",
@@ -114,32 +114,72 @@ function get_funds(frm, transfer_to="Project"){
             label: __(""),
             fieldname: "section_donor_balance1",
             fieldtype: "Section Break",
-        },  
+        },
         {
             label: __("Cost Center"),
             fieldname: "cost_center",
             fieldtype: "Link",
             options: "Cost Center",
             reqd: 1,
-            get_query(){
+            get_query() {
+                let company = d.fields_dict.company.value;
+                return {
+                    filters: {
+                        company: company
+                    }
+                }
+            }
+        },
+        {
+            label: __(""),
+            fieldname: "col_break",
+            fieldtype: "Column Break",
+        },
+        {
+            label: __("Donor Desk"),
+            fieldname: "donor_desk",
+            fieldtype: "Link",
+            options: "Donor Desk",
+            reqd: 0,
+            /*get_query(){
                 let company = d.fields_dict.company.value;
                 return{
                     filters:{
                         company: company
                     }
                 }
-            }
-        }, 
+            }*/
+        },
         {
             label: __(""),
             fieldname: "col_break",
             fieldtype: "Column Break",
-        },  {
+        },
+        {
+            label: __("Intention"),
+            fieldname: "donation_type",
+            fieldtype: "Link",
+            options: "Donation Type",
+            reqd: 0,
+            /*get_query(){
+                let company = d.fields_dict.company.value;
+                return{
+                    filters:{
+                        company: company
+                    }
+                }
+            }*/
+        },
+        {
+            label: __(""),
+            fieldname: "col_break",
+            fieldtype: "Column Break",
+        }, {
             label: __("Transfer Funds Cost"),
             fieldname: "estimated_costing",
             fieldtype: "Currency",
             reqd: 1,
-            onchange: function() {
+            onchange: function () {
                 const amount = d.get_value('estimated_costing');
                 if (amount) {
                     // Find and select the donor balance that matches the amount
@@ -168,7 +208,7 @@ function get_funds(frm, transfer_to="Project"){
             fieldtype: "Link",
             options: "Project",
             reqd: 1,
-            get_query: function() {
+            get_query: function () {
                 return {
                     filters: {
                         fund_class: frm.doc.name,
@@ -184,7 +224,7 @@ function get_funds(frm, transfer_to="Project"){
             fieldtype: "Link",
             options: "Fund Class",
             reqd: 1,
-            get_query: function() {
+            get_query: function () {
                 return {
                     filters: {
                         name: ["!=", frm.doc.name]
@@ -202,13 +242,15 @@ function get_funds(frm, transfer_to="Project"){
             fieldtype: "Button",
             hidden: 0,
             options: ``,
-            click(){
+            click() {
                 const filters = {
                     "fund_class": d.fields_dict.fund_class.value,
                     "service_area": d.fields_dict.service_area.value,
                     "subservice_area": d.fields_dict.subservice_area.value,
                     "product": d.fields_dict.product.value,
                     "cost_center": d.fields_dict.cost_center.value,
+                    "donor_desk": d.fields_dict.donor_desk.value,
+                    "donation_type": d.fields_dict.donation_type.value,
                     "company": d.fields_dict.company.value,
                     "doctype": frm.doc.doctype,
                     "amount": d.fields_dict.estimated_costing.value
@@ -216,7 +258,7 @@ function get_funds(frm, transfer_to="Project"){
                 }
                 let msg = "<p></p>";
                 let data = [];
-                
+
                 // Check if estimated cost is zero
                 if (parseFloat(d.fields_dict.estimated_costing.value) === 0) {
                     msg = `<b style="color: red;">Estimated Cost cannot be zero</b>`;
@@ -226,17 +268,17 @@ function get_funds(frm, transfer_to="Project"){
                 }
 
                 const nofilters = get_validate_filters(filters);
-                if(nofilters.notFound){
+                if (nofilters.notFound) {
                     // Special message for Estimated Cost field
-                    if(nofilters.fieldname === "amount") {
+                    if (nofilters.fieldname === "amount") {
                         msg = `<b style="color: red;">Please enter amount in Estimated Cost</b>`;
                     } else {
                         msg = `<b style="color: red;">Please select ${nofilters.fieldname}</b>`;
                     }
                 } else {
                     const response = get_financial_stats(filters);
-                    
-                    if(response.length>0){
+
+                    if (response.length > 0) {
                         data = response;
                     } else {
                         data = [];
@@ -250,7 +292,7 @@ function get_funds(frm, transfer_to="Project"){
                 d.fields_dict.html_message.refresh();
             }
         },
-        {   
+        {
             label: __(""),
             fieldname: "section_donor_balance1",
             fieldtype: "Section Break",
@@ -323,7 +365,7 @@ function get_funds(frm, transfer_to="Project"){
                 logs.grid.refresh();
             }, */
         },
-        
+
         {
             label: __(""),
             fieldname: "html_message",
@@ -346,14 +388,14 @@ function get_funds(frm, transfer_to="Project"){
 
             const array = values.donor_balance;
             let details = [];
-            
+
             let total_budget = 0;
-    
+
             array.forEach(row => {
-                if(row.__checked){
+                if (row.__checked) {
                     // Add to total budget
                     total_budget += parseFloat(row.balance) || 0;
-                    
+
                     details.push({
                         "pd_cost_center": row.cost_center,
                         "pd_account": row.account,
@@ -361,6 +403,8 @@ function get_funds(frm, transfer_to="Project"){
                         "pd_subservice_area": values.subservice_area,
                         "pd_product": values.product,
                         "pd_donor": row.donor,
+                        "donor_desk": values.donor_desk,
+                        "donation_type": values.donation_type,
                         "pd_fund_class": frm.doc.name,
                         "actual_balance": row.balance,
                         "amount": values.estimated_costing,
@@ -398,7 +442,7 @@ function get_funds(frm, transfer_to="Project"){
                         donor_balance: details,
                         transfer_to: "Fund Class"
                     },
-                    callback: function(r){
+                    callback: function (r) {
                         d.hide();
                         frm.reload_doc();
                     }
@@ -417,7 +461,7 @@ function get_funds(frm, transfer_to="Project"){
                         donor_balance: details,
                         transfer_to: "Project"
                     },
-                    callback: function(r){
+                    callback: function (r) {
                         d.hide();
                     }
                 });
