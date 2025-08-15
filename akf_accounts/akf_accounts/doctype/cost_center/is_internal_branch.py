@@ -12,7 +12,8 @@ def create_supplier_and_customer(self):
 			"supplier_name": self.cost_center_name,
 			"supplier_type": "Individual",
 			"is_internal_supplier": 1,
-			"cost_center": self.name
+			"cost_center": self.name,
+			"custom_resident_type": "N/A"
 			}
 		if(not frappe.db.exists("Supplier", args)):
 			args.update({"doctype": "Supplier"})
