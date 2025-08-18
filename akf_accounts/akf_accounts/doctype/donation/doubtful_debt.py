@@ -19,13 +19,16 @@ def record_provision_of_doubtful_det(self, args, values):
 			"party_type": "Donor",
 			"party": row.donor_id,
 			"voucher_detail_no": row.name,
-			# Accounting Dimensions
-			"program": row.pay_service_area,
-			"subservice_area": row.subservice_area,
-			"product": row.pay_product if(row.pay_product) else row.product,
+			
 			"fund_class": row.fund_class_id,		
 			# "project": row.project,
 			"cost_center": row.cost_center,
+			# Accounting Dimensions
+			"service_area": row.pay_service_area,
+			"subservice_area": row.subservice_area,
+			"product": row.pay_product if(row.pay_product) else row.product,
+			"donor_desk": row.donor_desk_id,
+			"donation_type": row.donation_type
 		})
 		# Bad debt expense (Debit Entry)		
 		cargs = get_currency_args()
@@ -65,13 +68,16 @@ def bad_debt_written_off(self, args, values):
 			"party_type": "Donor",
 			"party": row.donor_id,
 			"voucher_detail_no": row.name,
+			
 			# Accounting Dimensions
-			"program": row.pay_service_area,
-			"subservice_area": row.subservice_area,
-			"product": row.pay_product if(row.pay_product) else row.product,
 			"fund_class": row.fund_class_id,		
 			# "project": row.project,
 			"cost_center": row.cost_center,
+			"service_area": row.pay_service_area,
+			"subservice_area": row.subservice_area,
+			"product": row.pay_product if(row.pay_product) else row.product,
+			"donor_desk": row.donor_desk_id,
+			"donation_type": row.donation_type
 		})
 		# Bad debt expense (Credit Entry)
 		cargs = get_currency_args()
@@ -122,13 +128,16 @@ def adjust_doubtful_debt(self):
 					"party_type": "Donor",
 					"party": data.donor_id,
 					"voucher_detail_no": data.name,
+					
 					# Accounting Dimensions
-					"program": data.pay_service_area,
+					"fund_class": data.fund_class_id,		
+					# "project": row.project,
+					"cost_center": data.cost_center,
+					"service_area": data.pay_service_area,
 					"subservice_area": data.subservice_area,
 					"product": data.pay_product if(data.pay_product) else data.product,
-					"fund_class": data.fund_class_id,				
-					# "project": data.project,
-					"cost_center": data.cost_center,
+					"donor_desk": data.donor_desk_id,
+					"donation_type": data.donation_type
 				})
 				cargs = get_currency_args()
 				args.update(cargs)
