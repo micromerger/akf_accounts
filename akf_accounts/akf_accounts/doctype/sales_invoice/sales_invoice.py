@@ -39,7 +39,7 @@ from erpnext.controllers.selling_controller import SellingController
 from erpnext.projects.doctype.timesheet.timesheet import get_projectwise_timesheet_data
 from erpnext.setup.doctype.company.company import update_company_current_month_sales
 from erpnext.stock.doctype.delivery_note.delivery_note import update_billed_amount_based_on_so
-from erpnext.stock.doctype.serial_no.serial_no import get_delivery_note_serial_no, get_serial_nos
+from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
 
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
@@ -1656,10 +1656,10 @@ class SalesInvoice(SellingController):
 		self.set_serial_no_against_delivery_note()
 		self.validate_serial_against_delivery_note()
 
-	def set_serial_no_against_delivery_note(self):
+	'''def set_serial_no_against_delivery_note(self):
 		for item in self.items:
 			if item.serial_no and item.delivery_note and item.qty != len(get_serial_nos(item.serial_no)):
-				item.serial_no = get_delivery_note_serial_no(item.item_code, item.qty, item.delivery_note)
+				item.serial_no = get_delivery_note_serial_no(item.item_code, item.qty, item.delivery_note)'''
 
 	def validate_serial_against_delivery_note(self):
 		"""
