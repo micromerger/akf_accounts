@@ -128,6 +128,8 @@ class Donation(Document):
 					"amount": percentage_amount,
 					"base_amount": base_amount,
 					"cost_center": self.donation_cost_center,
+					"donor_desk_id": row.donor_desk_id,
+					"donation_type_id": row.donation_type,
 					})
 			self.append("deduction_breakeven", args)
 
@@ -514,7 +516,7 @@ class Donation(Document):
 				"subservice_area": row.subservice_area,
 				"product": row.product,
 				"project": row.project,
-				"donation_type": row.donation_type,
+				"donation_type": row.donation_type_id,
 				"donor_desk": row.donor_desk_id,
 				"inventory_scenario": row.inventory_scenario,
 				"voucher_detail_no": row.name,

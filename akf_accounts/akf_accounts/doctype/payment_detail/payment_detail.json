@@ -30,6 +30,7 @@
   "fund_class_id",
   "pay_service_area",
   "pay_subservice_area",
+  "subservice_area_copy",
   "pay_product",
   "column_break_ibfu",
   "share_no",
@@ -142,6 +143,7 @@
   {
    "fieldname": "accounting_dimensions_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Accounting Dimensions",
    "read_only": 1
   },
@@ -695,12 +697,22 @@
    "label": "Donor Desk Id",
    "options": "Donor Desk",
    "read_only": 1
+  },
+  {
+   "fetch_from": "fund_class_id.subservice_area",
+   "fetch_if_empty": 1,
+   "fieldname": "subservice_area_copy",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subservice Area Copy",
+   "options": "Subservice Area",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-15 18:10:59.953089",
+ "modified": "2025-08-18 12:11:36.547327",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

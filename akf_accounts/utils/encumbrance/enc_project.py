@@ -171,19 +171,27 @@ def make_transfer_funds_gl_entries(doc, donor_balance, transfer_to=None):
 				"doctype": "GL Entry",
 				"posting_date": posting_date,
 				"account": source_equity_account,
-				"cost_center": cost_center,
-				"fund_class": source_fund_class,
+				
 				"debit": amount,
 				"debit_in_account_currency": amount,
 				"company": company,
 				"remarks": f"Transfer from Fund Class {source_fund_class} to {target_fund_class}",
 				"voucher_type": "Fund Class",
-				"voucher_no": target_fund_class,
+				"voucher_no": source_fund_class,
 				"is_opening": "No",
 				"is_advance": "No",
 				"transaction_currency": currency,
 				"debit_in_transaction_currency": amount,
 				"project": "",
+
+				"fund_class": source_fund_class,
+				"service_area": detail.get("pd_service_area"),
+				"subservice_area": detail.get("pd_subservice_area"),
+				"product": detail.get("pd_product"),
+				"donor": detail.get("pd_donor"),
+				"donor_desk": detail.get("donor_desk"),
+				"donation_type": detail.get("donation_type"),
+				"cost_center": cost_center,
 			})
 			gl_debit.insert(ignore_permissions=True)
 			gl_debit.submit()
@@ -194,8 +202,7 @@ def make_transfer_funds_gl_entries(doc, donor_balance, transfer_to=None):
 				"doctype": "GL Entry",
 				"posting_date": posting_date,
 				"account": target_equity_account,
-				"cost_center": cost_center,
-				"fund_class": target_fund_class,
+				
 				"credit": amount,
 				"credit_in_account_currency": amount,
 				"company": company,
@@ -207,23 +214,32 @@ def make_transfer_funds_gl_entries(doc, donor_balance, transfer_to=None):
 				"transaction_currency": currency,
 				"credit_in_transaction_currency": amount,
 				"project": "",
+
+				"fund_class": target_fund_class,
+				"service_area": detail.get("pd_service_area"),
+				"subservice_area": detail.get("pd_subservice_area"),
+				"product": detail.get("pd_product"),
+				"donor": detail.get("pd_donor"),
+				"donor_desk": detail.get("donor_desk"),
+				"donation_type": detail.get("donation_type"),
+				"cost_center": cost_center,
 			})
 			gl_credit.insert(ignore_permissions=True)
 			gl_credit.submit()
 
-		# --- NEW: Update Fund Class child table ---
-		fund_class_doc = frappe.get_doc("Fund Class", doc.get("target_fund_class"))
-		enriched_rows = []
-		for detail in donor_balance:
-			# If detail is a dict, parse as needed
-			if isinstance(detail, str):
-				detail = frappe.parse_json(detail)
-			# Add currency and pd_fund_class
-			detail["currency"] = get_account_currency(detail["pd_account"])
-			detail["pd_fund_class"] = doc.get("target_fund_class")
-			enriched_rows.append(detail)
-		fund_class_doc.set("custom_program_details", enriched_rows)
-		fund_class_doc.save(ignore_permissions=True)
+		# # --- NEW: Update Fund Class child table ---
+		# fund_class_doc = frappe.get_doc("Fund Class", doc.get("target_fund_class"))
+		# enriched_rows = []
+		# for detail in donor_balance:
+		# 	# If detail is a dict, parse as needed
+		# 	if isinstance(detail, str):
+		# 		detail = frappe.parse_json(detail)
+		# 	# Add currency and pd_fund_class
+		# 	detail["currency"] = get_account_currency(detail["pd_account"])
+		# 	detail["pd_fund_class"] = doc.get("target_fund_class")
+		# 	enriched_rows.append(detail)
+		# fund_class_doc.set("custom_program_details", enriched_rows)
+		# fund_class_doc.save(ignore_permissions=True)
 		# --- END NEW ---
 
 		frappe.msgprint(

@@ -21,6 +21,10 @@
   "donation_amount",
   "amount",
   "base_amount",
+  "section_break_allc",
+  "donor_desk_id",
+  "column_break_uxes",
+  "donation_type_id",
   "accounting_dimensions_section",
   "dimension_col_break",
   "column_break_kqxo",
@@ -118,6 +122,7 @@
   {
    "fieldname": "accounting_dimensions_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Accounting Dimensions"
   },
   {
@@ -148,12 +153,32 @@
    "in_list_view": 1,
    "label": "Fund Class",
    "options": "Fund Class"
+  },
+  {
+   "fieldname": "section_break_allc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "donor_desk_id",
+   "fieldtype": "Link",
+   "label": "Donor Desk Id",
+   "options": "Donor Desk"
+  },
+  {
+   "fieldname": "column_break_uxes",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "donation_type_id",
+   "fieldtype": "Link",
+   "label": "Intention",
+   "options": "Donation Type"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-11 17:05:25.295343",
+ "modified": "2025-08-18 12:10:51.999828",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Deduction Breakeven",
