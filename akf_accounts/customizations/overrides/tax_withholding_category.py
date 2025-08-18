@@ -284,14 +284,10 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 	
 	if inv.doctype == "Purchase Invoice":
 		tax_deducted_on_advances = get_taxes_deducted_on_advances_allocated(inv, tax_details)
-	# print('-----------------------------')
-	# print(taxable_vouchers)
-	# print(tax_details)
+	
 	tax_deducted = 0
 	if taxable_vouchers:
 		tax_deducted = get_deducted_tax(taxable_vouchers, tax_details)
-	
-	# print(tax_deducted)
 
 	tax_amount = 0
 	tax_applicable_amount = 0 # nabeel, 24-06-2025
@@ -301,6 +297,7 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 		if tax_deducted:
 			net_total = inv.tax_withholding_net_total
 			
+			# print(tax_details)
 			if ldc:
 				limit_consumed = get_limit_consumed(ldc, parties)
 				if is_valid_certificate(ldc, posting_date, limit_consumed):
@@ -319,7 +316,9 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 			# print('-------------------------')
 			# print(f'tax_applicable_amount: {tax_applicable_amount}')
 			# print(f'tax_amount: {tax_amount}')
-		
+		print('----------------------12321---')
+		print(f'net_total: {net_total}')
+		print(f'tax_amount: {tax_amount}')
 		# nabeel, 24-06-2025 (Sales Tax & Province)
 		
 		if(tax_details.apply_sales_tax_and_province):

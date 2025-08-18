@@ -19,6 +19,9 @@ def apply_tax_matrix(doc, method=None):
 def _empty_advance_taxes_and_charges(self):
 	self.set("taxes", [])	
 
+def enable_akfp_accounting(company):
+	return frappe.db.get_value('Company', company, 'custom_enable_accounting_dimensions_dialog') or 0
+
 # Nabeel Saleem, 20-06-2025
 def set_tax_withholding_income_tax(self):
 	
@@ -32,6 +35,8 @@ def set_tax_withholding_income_tax(self):
 
 	net_total = flt(order_amount) + flt(self.unallocated_amount)
 	
+	if(enable_akfp_accounting(self.company)): net_total = self.paid_amount
+	
 	# Adding args as purchase invoice to get TDS amount
 	args = frappe._dict(
 		{
@@ -43,7 +48,8 @@ def set_tax_withholding_income_tax(self):
 			"net_total": self.custom_amount_before_discount if(self.custom_apply_discount_breakeven and self.custom_calculate_tax_on=='Gross Amount') else net_total # nabeel, 01-08-2025
 		}
 	)
-	
+	print('-----------------------------')
+	print(args)
 	tax_withholding_details = get_party_tax_withholding_details(args, self.tax_withholding_category)
 	
 	if not tax_withholding_details:
@@ -105,6 +111,8 @@ def set_sales_tax_and_province_tax_withholding(self):
 
 	net_total = flt(order_amount) + flt(self.unallocated_amount)
 
+	if(enable_akfp_accounting(self.company)): net_total = self.paid_amount
+
 	# Adding args as purchase invoice to get TDS amount
 	args = frappe._dict(
 		{
@@ -116,7 +124,7 @@ def set_sales_tax_and_province_tax_withholding(self):
 			"net_total": self.custom_amount_before_discount if(self.custom_apply_discount_breakeven and self.custom_calculate_tax_on=='Gross Amount') else net_total # nabeel, 01-08-2025
 		}
 	)
-
+	
 	tax_withholding_details = get_party_tax_withholding_details(args, self.custom_tax_withholding_category_st)
 	
 	if not tax_withholding_details:
@@ -178,6 +186,8 @@ def set_rent_slab(self):
 
 	net_total = flt(order_amount) + flt(self.unallocated_amount)
 
+	if(enable_akfp_accounting(self.company)): net_total = self.paid_amount
+	
 	# Adding args as purchase invoice to get TDS amount
 	args = frappe._dict(
 		{

@@ -1,12 +1,12 @@
 import frappe
 
-def update_grn_accounting_dimensions(doc, method=None):
+def update_p_i_accounting_dimensions(doc, method=None):
 	# frappe.throw(frappe.as_json(doc.custom_program_details))
-	if(hasattr(doc, 'custom_encumbrance')):
-		if(doc.docstatus==1 and doc.custom_encumbrance):
-			frappe.enqueue(grn_accounting_dimensions, doc=doc)
+	if(hasattr(doc, 'custom_program_details')):
+		if(doc.docstatus==1 and doc.custom_program_details):
+			frappe.enqueue(p_i_accounting_dimensions, doc=doc)
 
-def grn_accounting_dimensions(doc):
+def p_i_accounting_dimensions(doc):
 	for row in doc.custom_program_details:
 		frappe.db.sql(f'''
 				Update `tabGL Entry`

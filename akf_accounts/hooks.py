@@ -178,7 +178,10 @@ doc_events = {
 	},
     "Purchase Invoice": {
         "validate": "akf_accounts.utils.financial_closure.confirmation",
-        "on_submit": "akf_accounts.utils.financial_closure.confirmation"
+        "on_submit": [
+            "akf_accounts.utils.financial_closure.confirmation",
+            "akf_accounts.utils.encumbrance.enc_purchase_invoice.update_p_i_accounting_dimensions"
+        ]
 	},
     "Payment Entry": {
         "validate": [

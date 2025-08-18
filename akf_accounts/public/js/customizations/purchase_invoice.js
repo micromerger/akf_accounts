@@ -39,7 +39,7 @@ frappe.ui.form.on('Purchase Invoice', {
             console.log("On load");
             frm.doc.items.forEach(function(item) {
                 if (item.purchase_receipt) {
-                    frm.set_df_property("custom_program_details", "hidden", 1);
+                    frm.set_df_property("custom_program_details", "read_only", 1);
                     frm.set_df_property("custom_donor_list_html", "hidden", 1);
                     frm.set_df_property("update_stock", "hidden", 1);
                 }
