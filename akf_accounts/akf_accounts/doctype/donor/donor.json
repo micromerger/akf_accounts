@@ -547,6 +547,7 @@
    "label": "Company Email Address"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "no_of_company__employees",
    "fieldtype": "Select",
    "label": "No. of company  Employees",
@@ -604,42 +605,50 @@
    "options": "\nNGO\nINGO\nNPOs"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_sector",
    "fieldtype": "Select",
    "label": "ORG Sector",
    "options": "\nEducation\nHealth\nOrphans Support\nWASH"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "column_break_pzsi",
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_name",
    "fieldtype": "Small Text",
    "label": "ORG Name"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "orgs_country",
    "fieldtype": "Link",
    "label": "ORG's Country",
    "options": "Country"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_email",
    "fieldtype": "Data",
    "label": "ORG Email"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_website",
    "fieldtype": "Data",
    "label": "ORG Website"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_contact",
    "fieldtype": "Phone",
    "label": "ORG Contact"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_head_of_board",
    "fieldtype": "Small Text",
    "label": "ORG Head of Board"
@@ -762,7 +771,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-20 18:31:09.781362",
+ "modified": "2025-08-20 19:54:21.492944",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
