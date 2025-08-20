@@ -20,12 +20,14 @@
   "section_break_kcib",
   "image",
   "donor_name",
+  "gender",
   "donor_dob",
   "identification_type",
   "cnic",
   "others",
   "column_break_5",
   "contact_person",
+  "registration_date",
   "owner_id",
   "owner_name",
   "section_break_huvh",
@@ -62,8 +64,6 @@
   "org_representative_designation",
   "individual_section",
   "old_id",
-  "registration_date",
-  "gender",
   "nationality_type",
   "profession",
   "designation",
@@ -72,12 +72,13 @@
   "phone_no",
   "mobile_no",
   "email",
-  "address",
   "individual_city",
   "individual_country",
   "address_and_contact_tab",
   "address_details_column",
+  "address",
   "city",
+  "stateprovince",
   "contact_details_column",
   "country",
   "contact_no",
@@ -129,6 +130,7 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -196,15 +198,14 @@
    "depends_on": "country",
    "fieldname": "contact_no",
    "fieldtype": "Data",
-   "label": "Contact No",
-   "mandatory_depends_on": "eval: doc.country!=undefined && doc.country!=\"\";"
+   "label": "Contact No"
   },
   {
    "fieldname": "city",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "City",
-   "options": "City"
+   "options": "City",
+   "reqd": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -255,6 +256,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "nationality_type",
    "fieldtype": "Select",
    "label": "Nationality Type",
@@ -447,8 +449,7 @@
    "fieldname": "default_currency",
    "fieldtype": "Link",
    "label": "Default Currency",
-   "options": "Currency",
-   "reqd": 1
+   "options": "Currency"
   },
   {
    "fieldname": "column_break_ryga",
@@ -459,7 +460,6 @@
    "fieldname": "default_account",
    "fieldtype": "Link",
    "label": "Default Account",
-   "mandatory_depends_on": "default_currency",
    "options": "Account"
   },
   {
@@ -475,8 +475,7 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Company",
-   "reqd": 1
+   "options": "Company"
   },
   {
    "fieldname": "address_and_contact_tab",
@@ -495,18 +494,19 @@
   },
   {
    "collapsible": 1,
-   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "corporate_donors_section",
    "fieldtype": "Section Break",
    "label": "Corporate Donors"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "company_type",
    "fieldtype": "Select",
    "label": "Company Type",
    "options": "\nNational\nMulti National"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "profession__business_category",
    "fieldtype": "Select",
    "label": "Profession / Business Category",
@@ -517,26 +517,31 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "company_name",
    "fieldtype": "Small Text",
    "label": "Company Name"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "company_ownerceo_name",
    "fieldtype": "Small Text",
    "label": "Company Owner/CEO Name"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "company_ownerceo_conatct",
    "fieldtype": "Phone",
    "label": "Company Owner/CEO Conatct"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "company_website",
    "fieldtype": "Data",
    "label": "Company Website"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "company_email_address",
    "fieldtype": "Small Text",
    "label": "Company Email Address"
@@ -548,45 +553,51 @@
    "options": "\n100-200\n200-300\n300-500\n500+"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "company_turnover",
    "fieldtype": "Data",
    "label": "Company Turnover"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "companys_interest_in_services",
    "fieldtype": "Link",
    "label": "Company's Interest in Services",
    "options": "Service Area"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "representative_person_name",
    "fieldtype": "Data",
    "label": "Representative Person Name"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "representative_designation",
    "fieldtype": "Link",
    "label": "Representative Designation",
    "options": "Designation"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "representative_mobile",
    "fieldtype": "Phone",
    "label": "Representative Mobile"
   },
   {
+   "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "representative_email",
    "fieldtype": "Data",
    "label": "Representative Email"
   },
   {
    "collapsible": 1,
-   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "organization_section",
    "fieldtype": "Section Break",
    "label": "Organization"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org__category",
    "fieldtype": "Select",
    "label": "ORG  Category",
@@ -634,21 +645,25 @@
    "label": "ORG Head of Board"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_representative_name",
    "fieldtype": "Data",
    "label": "ORG Representative Name"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_representative_contact_number",
    "fieldtype": "Phone",
    "label": "ORG Representative Contact number"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_representative_email_address",
    "fieldtype": "Small Text",
    "label": "ORG Representative Email Address"
   },
   {
+   "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_representative_designation",
    "fieldtype": "Link",
    "label": "ORG Representative Designation",
@@ -668,6 +683,7 @@
    "options": "Gender"
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "profession",
    "fieldtype": "Select",
    "label": "Profession",
@@ -678,11 +694,13 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "phone_no",
    "fieldtype": "Phone",
    "label": "Phone No "
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "mobile_no",
    "fieldtype": "Phone",
    "label": "Mobile No"
@@ -690,26 +708,31 @@
   {
    "fieldname": "address",
    "fieldtype": "Small Text",
-   "label": "Address"
+   "label": "Address",
+   "reqd": 1
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "individual_city",
    "fieldtype": "Data",
    "label": "Individual City"
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "individual_country",
    "fieldtype": "Link",
    "label": "Individual Country",
    "options": "Country"
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "designation",
    "fieldtype": "Link",
    "label": "Designation",
    "options": "Designation"
   },
   {
+   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "companyorg",
    "fieldtype": "Small Text",
    "label": "Company/Org"
@@ -719,6 +742,13 @@
    "fieldtype": "Link",
    "label": "C/O Designation",
    "options": "Designation"
+  },
+  {
+   "fieldname": "stateprovince",
+   "fieldtype": "Link",
+   "label": "State/Province",
+   "options": "Province",
+   "reqd": 1
   }
  ],
  "image_field": "image",
@@ -732,7 +762,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-18 19:41:50.330829",
+ "modified": "2025-08-20 18:31:09.781362",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

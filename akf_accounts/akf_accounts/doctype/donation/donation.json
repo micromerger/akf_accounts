@@ -50,6 +50,14 @@
   "base_total_deduction",
   "base_outstanding_amount",
   "base_net_amount",
+  "in_kind_donation_tab",
+  "default_warehouse_section",
+  "stock_entry_type",
+  "to_warehouse",
+  "donor_list_section",
+  "donor_list",
+  "items_section",
+  "items",
   "more_info_tab",
   "status",
   "amended_from",
@@ -81,7 +89,8 @@
   {
    "fieldname": "donation_type",
    "fieldtype": "Link",
-   "hidden": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
    "label": "Donation Type",
    "options": "Donation Type"
   },
@@ -408,12 +417,68 @@
    "label": "Reference DocName",
    "options": "reference_doctype",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "fieldname": "in_kind_donation_tab",
+   "fieldtype": "Tab Break",
+   "label": "In Kind Donation"
+  },
+  {
+   "fieldname": "default_warehouse_section",
+   "fieldtype": "Section Break",
+   "label": "Default Warehouse"
+  },
+  {
+   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "fieldname": "to_warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "donor_list_section",
+   "fieldtype": "Section Break",
+   "label": "Donor List"
+  },
+  {
+   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "fieldname": "donor_list",
+   "fieldtype": "Table MultiSelect",
+   "in_preview": 1,
+   "label": "Donor List",
+   "options": "Donor Multiselect",
+   "reqd": 1
+  },
+  {
+   "fieldname": "items_section",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "In Kind Donation",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "fieldname": "stock_entry_type",
+   "fieldtype": "Link",
+   "label": "Stock Entry Type",
+   "options": "Stock Entry Type",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-12 12:24:51.637811",
+ "modified": "2025-08-19 17:31:42.826251",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

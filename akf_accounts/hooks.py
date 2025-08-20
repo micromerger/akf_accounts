@@ -125,7 +125,7 @@ doctype_js = {
 
 override_doctype_class = {
 	"Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
-	"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
+"Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
 	# "Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
     # "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
     # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
