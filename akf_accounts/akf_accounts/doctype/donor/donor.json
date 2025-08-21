@@ -203,8 +203,7 @@
    "fieldname": "city",
    "fieldtype": "Link",
    "label": "City",
-   "options": "City",
-   "reqd": 1
+   "options": "City"
   },
   {
    "allow_in_quick_entry": 1,
@@ -717,8 +716,7 @@
   {
    "fieldname": "address",
    "fieldtype": "Small Text",
-   "label": "Address",
-   "reqd": 1
+   "label": "Address"
   },
   {
    "depends_on": "eval: doc.donor_type == \"Individual\"",
@@ -756,8 +754,7 @@
    "fieldname": "stateprovince",
    "fieldtype": "Link",
    "label": "State/Province",
-   "options": "Province",
-   "reqd": 1
+   "options": "Province"
   }
  ],
  "image_field": "image",
@@ -771,7 +768,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-21 15:33:21.510963",
+ "modified": "2025-08-21 16:00:18.482828",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
