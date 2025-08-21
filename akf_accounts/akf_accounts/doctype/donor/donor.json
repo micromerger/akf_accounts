@@ -71,12 +71,12 @@
   "column_break_gyat",
   "phone_no",
   "mobile_no",
-  "email",
   "individual_city",
   "individual_country",
   "address_and_contact_tab",
   "address_details_column",
   "address",
+  "email",
   "city",
   "stateprovince",
   "contact_details_column",
@@ -130,7 +130,6 @@
    "reqd": 1
   },
   {
-   "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -772,7 +771,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-21 12:07:22.056173",
+ "modified": "2025-08-21 15:33:21.510963",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
