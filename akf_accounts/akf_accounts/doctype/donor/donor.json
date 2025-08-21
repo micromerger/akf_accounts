@@ -249,6 +249,7 @@
    "label": "Donor List"
   },
   {
+   "depends_on": "eval: doc.branch!=undefined || doc.branch!=\"\";",
    "fetch_from": "branch.custom_abbreviation",
    "fieldname": "branch_abbreviation",
    "fieldtype": "Small Text",
@@ -771,7 +772,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-20 19:54:21.492944",
+ "modified": "2025-08-21 12:07:22.056173",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
