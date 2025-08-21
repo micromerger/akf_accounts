@@ -130,14 +130,12 @@ class Donor(Document):
 		if(not self.parent_donor):
 			self.db_set("is_group", 1)
 	
-	# 21-08-2025 nabeel saleem
-	def before_insert(self):
-		self.create_contact()
-		self.create_address()
-		
 	def after_insert(self):
 		self.update_status()
-		
+		# 21-08-2025 nabeel saleem
+		self.create_contact()
+		self.create_address()
+
 	def update_status(self):
 		if(self.identification_type == "CNIC"):
 			formatted_cnic = str(self.cnic).replace("-", "")
