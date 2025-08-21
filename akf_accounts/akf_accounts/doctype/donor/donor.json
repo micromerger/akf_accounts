@@ -753,7 +753,7 @@
   {
    "fieldname": "stateprovince",
    "fieldtype": "Link",
-   "label": "State/Province",
+   "label": "State Province",
    "options": "Province"
   }
  ],
@@ -768,7 +768,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-21 16:00:18.482828",
+ "modified": "2025-08-21 20:43:04.995448",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
