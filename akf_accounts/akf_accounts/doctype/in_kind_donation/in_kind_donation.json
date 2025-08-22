@@ -7,16 +7,19 @@
  "engine": "InnoDB",
  "field_order": [
   "items_section",
+  "item_code",
   "item_name",
+  "new",
+  "column_break_ilbe",
   "qty",
   "basic_rate",
-  "new",
   "used",
   "accounting_dimensions_section",
   "fund_class",
   "project",
+  "column_break_gzjy",
   "service_area",
-  "sub_service_area",
+  "subservice_area",
   "product",
   "intention"
  ],
@@ -27,13 +30,11 @@
    "label": "Items"
   },
   {
+   "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_preview": 1,
+   "fieldtype": "Data",
    "label": "Item Name",
-   "options": "Item",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "bold": 1,
@@ -83,22 +84,20 @@
    "options": "Project"
   },
   {
+   "fetch_from": "fund_class.service_area",
    "fieldname": "service_area",
    "fieldtype": "Link",
    "label": "Service Area",
-   "options": "Service Area"
+   "options": "Service Area",
+   "read_only": 1
   },
   {
-   "fieldname": "sub_service_area",
-   "fieldtype": "Link",
-   "label": "Sub Service Area",
-   "options": "Service Area"
-  },
-  {
+   "fetch_from": "fund_class.product",
    "fieldname": "product",
    "fieldtype": "Link",
    "label": "Product",
-   "options": "Product"
+   "options": "Product",
+   "read_only": 1
   },
   {
    "fieldname": "intention",
@@ -111,12 +110,37 @@
    "fieldtype": "Link",
    "label": "Fund Class",
    "options": "Fund Class"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ilbe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_gzjy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "fund_class.subservice_area",
+   "fieldname": "subservice_area",
+   "fieldtype": "Link",
+   "label": "Subservice Area",
+   "options": "Subservice Area",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-19 17:34:18.835780",
+ "modified": "2025-08-22 17:36:24.875025",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "In Kind Donation",

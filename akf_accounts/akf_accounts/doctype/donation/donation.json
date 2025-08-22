@@ -8,20 +8,20 @@
  "field_order": [
   "general_information_section",
   "naming_series",
+  "donation_type",
   "donor_identity",
   "contribution_type",
-  "donation_type",
-  "column_break_gxmk",
+  "column_break_qxif",
   "company",
+  "due_date",
+  "return_against",
+  "reconcile",
+  "column_break_gxmk",
   "posting_date",
   "posting_time",
   "edit_posting_date_time",
-  "reconcile",
-  "column_break_qxif",
-  "due_date",
   "is_return",
   "unknown_to_known",
-  "return_against",
   "section_break_bezw",
   "from_currency_column",
   "currency",
@@ -50,11 +50,10 @@
   "base_total_deduction",
   "base_outstanding_amount",
   "base_net_amount",
-  "in_kind_donation_tab",
   "default_warehouse_section",
   "stock_entry_type",
   "to_warehouse",
-  "donor_list_section",
+  "column_break_gxsi",
   "donor_list",
   "items_section",
   "items",
@@ -87,21 +86,24 @@
    "reqd": 1
   },
   {
+   "default": "Cash",
    "fieldname": "donation_type",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_preview": 1,
    "label": "Donation Type",
-   "options": "Donation Type"
+   "options": "Cash\nIn Kind Donation",
+   "reqd": 1
   },
   {
+   "default": "Known",
    "fieldname": "donor_identity",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Donor Identity",
-   "options": "\nKnown\nUnknown\nMerchant - Unknown\nMerchant - Known",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.donation_type==\"Cash\";",
+   "options": "\nKnown\nUnknown\nMerchant - Unknown\nMerchant - Known"
   },
   {
    "fieldname": "general_information_section",
@@ -113,8 +115,8 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Contribution Type",
-   "options": "\nDonation\nPledge",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.donation_type==\"Cash\";",
+   "options": "\nDonation\nPledge"
   },
   {
    "bold": 1,
@@ -142,6 +144,7 @@
    "label": "Edit Posting Date and Time"
   },
   {
+   "depends_on": "eval: doc.donation_type=='Cash';",
    "fieldname": "more_info_tab",
    "fieldtype": "Tab Break",
    "label": "More Info"
@@ -182,6 +185,7 @@
   {
    "bold": 1,
    "default": "0",
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
@@ -195,6 +199,7 @@
    "options": "Deduction Breakeven"
   },
   {
+   "depends_on": "eval: doc.donation_cost_center!=undefined || doc.donation_cost_center!='';",
    "fieldname": "section_break_otbq",
    "fieldtype": "Section Break",
    "label": "Deduction Breakeven"
@@ -206,7 +211,7 @@
   },
   {
    "allow_bulk_edit": 1,
-   "depends_on": "donation_cost_center",
+   "depends_on": "donation_cost_center;",
    "fieldname": "payment_detail",
    "fieldtype": "Table",
    "options": "Payment Detail"
@@ -254,11 +259,11 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "donation_cost_center",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Cost Center",
-   "reqd": 1
+   "options": "Cost Center"
   },
   {
    "fieldname": "section_break_bezw",
@@ -286,36 +291,43 @@
    "options": "Currency"
   },
   {
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
+   "mandatory_depends_on": "eval: doc.donation_type==\"Cash\";",
    "options": "Currency"
   },
   {
    "default": "1.00",
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "exchange_rate",
    "fieldtype": "Currency",
    "label": "Exchange Rate"
   },
   {
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "base_total_donation",
    "fieldtype": "Currency",
    "label": "Total Donation ",
    "read_only": 1
   },
   {
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "base_total_deduction",
    "fieldtype": "Currency",
    "label": "Total Deduction",
    "read_only": 1
   },
   {
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "base_net_amount",
    "fieldtype": "Currency",
    "label": "Net Amount",
    "read_only": 1
   },
   {
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "base_outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
@@ -367,7 +379,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown';",
+   "depends_on": "eval: (doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown') && doc.donation_type==\"Cash\";",
    "fieldname": "mode_of_payment",
    "fieldtype": "Link",
    "label": "Mode Of Payment",
@@ -375,7 +387,7 @@
    "options": "Mode of Payment"
   },
   {
-   "depends_on": "eval: doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown';",
+   "depends_on": "eval: (doc.donor_identity=='Merchant - Known' || doc.donor_identity=='Merchant - Unknown') && doc.donation_type==\"Cash\";",
    "fieldname": "account_paid_to",
    "fieldtype": "Link",
    "label": "Account Paid To",
@@ -384,6 +396,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.donation_type=='Cash';",
    "fieldname": "unknown_to_known",
    "fieldtype": "Check",
    "label": "Unknown To Known",
@@ -419,15 +432,9 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
-   "fieldname": "in_kind_donation_tab",
-   "fieldtype": "Tab Break",
-   "label": "In Kind Donation"
-  },
-  {
    "fieldname": "default_warehouse_section",
    "fieldtype": "Section Break",
-   "label": "Default Warehouse"
+   "label": "In-Kind Donation Details"
   },
   {
    "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
@@ -440,11 +447,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "donor_list_section",
-   "fieldtype": "Section Break",
-   "label": "Donor List"
-  },
-  {
    "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
    "fieldname": "donor_list",
    "fieldtype": "Table MultiSelect",
@@ -454,6 +456,7 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval:doc.donation_type==\"In Kind Donation\";",
    "fieldname": "items_section",
    "fieldtype": "Section Break",
    "label": "Items"
@@ -473,12 +476,16 @@
    "label": "Stock Entry Type",
    "options": "Stock Entry Type",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_gxsi",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-19 17:31:42.826251",
+ "modified": "2025-08-22 18:23:30.921020",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

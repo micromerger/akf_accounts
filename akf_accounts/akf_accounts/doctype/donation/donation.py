@@ -19,7 +19,7 @@ class Donation(Document):
 		if(exchange_rate): self.exchange_rate = exchange_rate
 	
 	def validate_payment_details(self):
-		if(len(self.payment_detail)<1):
+		if(len(self.payment_detail)<1 and self.donation_type=="Cash"):
 			frappe.throw("Please provide, payment details to proceed further.")
 
 	def validate_deduction_percentages(self):
@@ -162,56 +162,57 @@ class Donation(Document):
 				donor_id = get_link_to_form("Donor", row.donor_id)
 				frappe.throw(f"<b>Row#{row.idx}</b> donor: {donor_id} currency is not {self.currency}.", title='Currency conflict')
 
-		deduction_breakeven = self.deduction_breakeven
-		self.set("deduction_breakeven", [])
-		deduction_amount=0
-		total_donation=0
+		if(self.donation_type=="Cash"):
+			deduction_breakeven = self.deduction_breakeven
+			self.set("deduction_breakeven", [])
+			deduction_amount=0
+			total_donation=0
+			
+			for row in self.payment_detail:
+				# print("payment_detail: ", row.random_id)
+				validate_active_donor(row)
+				validate_donor_currency(row)
+				verify_unique_receipt_no(row)
+				reset_mode_of_payment(row)
+				total_donation+= row.donation_amount
+				# Setup Deduction Breakeven
+				temp_deduction_amount=0
+				# Looping
+				""" _breakeven = [d for d in deduction_breakeven if(d.random_id == row.random_id)]
+				_deduction_breakeven = _breakeven if(_breakeven) else get_deduction_details(row) """
+				for args in get_deduction_details(row, deduction_breakeven):
+					# print("_deduction_breakeven: ", args.random_id)
+					percentage_amount = 0
+					base_amount = 0
+					
+					if(row.donation_amount>0 or self.is_return):
+						percentage_amount = row.donation_amount*(args.percentage/100)
+						base_amount = self.apply_currecny_exchange(percentage_amount)
+						temp_deduction_amount += percentage_amount
+					
+					set_deduction_details(row, args)			
+				
+				'''row.equity_account = get_default_accounts(row.pay_service_area, 'equity_account')'''
+				row.equity_account = get_default_accounts(row.fund_class_id, 'equity_account')
+				default_receivable_account = get_default_donor_account(row.donor_id, "default_account")
+				row.receivable_account = default_receivable_account if(default_receivable_account) else get_default_accounts(row.pay_service_area, 'receivable_account')
+				
+				row.cost_center = self.donation_cost_center
+				# Total Deduction Amount
+				deduction_amount += temp_deduction_amount
+				# account_currency
+				row.deduction_amount = temp_deduction_amount  
+				row.net_amount = (row.donation_amount-row.deduction_amount)
+				row.outstanding_amount = row.donation_amount if(self.contribution_type=="Pledge") else row.net_amount
+				# company_currency
+				row.base_donation_amount = self.apply_currecny_exchange(row.donation_amount)
+				row.base_deduction_amount = self.apply_currecny_exchange(temp_deduction_amount)
+				row.base_net_amount = self.apply_currecny_exchange(row.net_amount)
+				row.base_outstanding_amount = self.apply_currecny_exchange(row.outstanding_amount)
 		
-		for row in self.payment_detail:
-			# print("payment_detail: ", row.random_id)
-			validate_active_donor(row)
-			validate_donor_currency(row)
-			verify_unique_receipt_no(row)
-			reset_mode_of_payment(row)
-			total_donation+= row.donation_amount
-			# Setup Deduction Breakeven
-			temp_deduction_amount=0
-			# Looping
-			""" _breakeven = [d for d in deduction_breakeven if(d.random_id == row.random_id)]
-			_deduction_breakeven = _breakeven if(_breakeven) else get_deduction_details(row) """
-			for args in get_deduction_details(row, deduction_breakeven):
-				# print("_deduction_breakeven: ", args.random_id)
-				percentage_amount = 0
-				base_amount = 0
-				
-				if(row.donation_amount>0 or self.is_return):
-					percentage_amount = row.donation_amount*(args.percentage/100)
-					base_amount = self.apply_currecny_exchange(percentage_amount)
-					temp_deduction_amount += percentage_amount
-				
-				set_deduction_details(row, args)			
-			
-			'''row.equity_account = get_default_accounts(row.pay_service_area, 'equity_account')'''
-			row.equity_account = get_default_accounts(row.fund_class_id, 'equity_account')
-			default_receivable_account = get_default_donor_account(row.donor_id, "default_account")
-			row.receivable_account = default_receivable_account if(default_receivable_account) else get_default_accounts(row.pay_service_area, 'receivable_account')
-			
-			row.cost_center = self.donation_cost_center
-			# Total Deduction Amount
-			deduction_amount += temp_deduction_amount
-			# account_currency
-			row.deduction_amount = temp_deduction_amount  
-			row.net_amount = (row.donation_amount-row.deduction_amount)
-			row.outstanding_amount = row.donation_amount if(self.contribution_type=="Pledge") else row.net_amount
-   			# company_currency
-			row.base_donation_amount = self.apply_currecny_exchange(row.donation_amount)
-			row.base_deduction_amount = self.apply_currecny_exchange(temp_deduction_amount)
-			row.base_net_amount = self.apply_currecny_exchange(row.net_amount)
-			row.base_outstanding_amount = self.apply_currecny_exchange(row.outstanding_amount)
-	
-		# calculate total
-		set_total_donors()
-		self.calculate_total(total_donation, deduction_amount)
+			# calculate total
+			set_total_donors()
+			self.calculate_total(total_donation, deduction_amount)
 
 	@frappe.whitelist()
 	def update_deduction_breakeven(self):
@@ -309,13 +310,17 @@ class Donation(Document):
 
 	def on_submit(self):
 		# Credit Debit, GL Entry
-		self.make_payment_detail_gl_entry()
-		self.make_deduction_gl_entries()
-		self.make_payment_ledger_entry()
-		self.make_payment_entry()
-		self.update_status()
-		self.send_donation_emails()		# Mubashir Bashir
-		self.update_project_allocation_check() #Mubarrim
+		if(self.donation_type == "Cash"):
+			self.make_payment_detail_gl_entry()
+			self.make_deduction_gl_entries()
+			self.make_payment_ledger_entry()
+			self.make_payment_entry()
+			self.update_status()
+			self.send_donation_emails()		# Mubashir Bashir
+			# self.update_project_allocation_check() #Mubarrim
+		elif(self.donation_type in ["In Kind Donation", "In-Kind Donation", "In-Kind-Donation",]):
+			self.make_stock_entry_for_in_kind()
+		
 		
 	def get_gl_entry_dict(self):
 		return frappe._dict({
@@ -778,7 +783,7 @@ class Donation(Document):
 		self.del_child_table()
 		self.update_status()
 		self.reset_return_to_paid()
-		self.update_project_allocation_check()
+		# self.update_project_allocation_check()
 
 	def del_gl_entries(self):
 		if(frappe.db.exists({"doctype": "GL Entry", "docstatus": 1, "against_voucher": self.name})):
@@ -828,6 +833,37 @@ class Donation(Document):
 		from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import bad_debt_written_off
 		args = self.get_gl_entry_dict()
 		return bad_debt_written_off(self, args, values)
+
+	# nabeel saleem, 22-08-2025
+	def make_stock_entry_for_in_kind(self):
+		args = frappe._dict({
+			'doctype': 'Stock Entry',
+			'stock_entry_type': self.stock_entry_type,
+			'company': self.company,
+			'posting_date': self.posting_date,
+			'posting_time': self.posting_time,
+			'to_warehouse': self.to_warehouse,
+			'custom_donor_ids': self.donor_list,
+			'items': [{
+				't_warehouse': self.to_warehouse,
+				'item_code': row.item_code,
+				'qty': row.qty,
+				'basic_rate': row.basic_rate,
+				'custom_new': row.new,
+				'custom_used': row.used,
+				'fund_class': row.fund_class,
+				'service_area': row.service_area,
+				'subservice_area': row.subservice_area,
+				'product': row.product,
+				'donation_type': row.intention,
+
+			} for row in self.items]
+		})
+		doc = frappe.get_doc(args)
+		doc.flags.ignore_permissions = True
+		# doc.flags.ignore_mandatory = True
+		# doc.flags.ignore_validates = True
+		doc.insert()
 
 def get_currency_args():
 	return {
