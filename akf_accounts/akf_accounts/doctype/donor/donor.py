@@ -22,7 +22,7 @@ class Donor(Document):
 	def validate(self):
 		from frappe.utils import validate_email_address
 		if self.email: validate_email_address(self.email.strip(), True)
-		self.sum_up_dial_code_contact_no()
+		# self.sum_up_dial_code_contact_no()
 		verify_email(self)
 		self.verify_cnic()
 		self.validate_duplicate_cnic()
@@ -167,9 +167,10 @@ class Donor(Document):
 				contact.append("phone_nos", {"phone": self.mobile_no or self.representative_mobile or self.org_contact, "is_primary_mobile_no": 1})
 			
 			contact.append("links", {"link_doctype": self.doctype, "link_name": self.name, "link_title": self.donor_name})
-			
-			contact.insert(ignore_permissions=True)
-			contact.reload()  # load changes by hooks on contact
+			contact.ignore_permissions = True
+			contact.ignore_mandatory = True
+			contact.insert()
+			# contact.reload()  # load changes by hooks on contact
 			
 	def create_address(self):
 		if(self.address):
@@ -188,9 +189,10 @@ class Donor(Document):
 			)
 
 			address.append("links", {"link_doctype": self.doctype, "link_name": self.name, "link_title": self.donor_name})
-
-			address.insert(ignore_permissions=True)
-			address.reload()  # load changes by hooks on address
+			address.ignore_permissions = True
+			address.ignore_mandatory = True
+			address.insert()
+			# address.reload()  # load changes by hooks on address
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
