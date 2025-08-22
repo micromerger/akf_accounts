@@ -78,7 +78,7 @@
   "address",
   "email",
   "city",
-  "stateprovince",
+  "state",
   "contact_details_column",
   "country",
   "contact_no",
@@ -751,9 +751,9 @@
    "options": "Designation"
   },
   {
-   "fieldname": "stateprovince",
+   "fieldname": "state",
    "fieldtype": "Link",
-   "label": "State Province",
+   "label": "State",
    "options": "Province"
   }
  ],

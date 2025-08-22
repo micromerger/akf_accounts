@@ -133,8 +133,8 @@ class Donor(Document):
 	def after_insert(self):
 		self.update_status()
 		# 21-08-2025 nabeel saleem
-		self.create_contact()
-		self.create_address()
+		frappe.enqueue(create_address_and_contact, self=self, publish_progress=False)
+		
 
 	def update_status(self):
 		if(self.identification_type == "CNIC"):
@@ -143,6 +143,8 @@ class Donor(Document):
 				self.status = "Blocked"
 				process_proscribed_person_detail(self.cnic, status="Blocked")
 	
+	
+
 	def create_contact(self):
 		if(self.contact_no):
 			contact = frappe.new_doc("Contact")
@@ -181,7 +183,7 @@ class Donor(Document):
 					"address_type": 'Billing',
 					"address_line1": self.address,
 					"city": self.city,
-					"state": self.stateprovince,
+					"state": self.state,
 					"country": self.country,
 					"email_id": self.email,
 					"phone": self.contact_no,
@@ -193,6 +195,10 @@ class Donor(Document):
 			address.ignore_mandatory = True
 			address.insert()
 			# address.reload()  # load changes by hooks on address
+
+def create_address_and_contact(self, publish_progress=True):
+	self.create_contact()
+	self.create_address()
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
