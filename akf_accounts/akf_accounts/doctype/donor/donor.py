@@ -169,8 +169,8 @@ class Donor(Document):
 				contact.append("phone_nos", {"phone": self.mobile_no or self.representative_mobile or self.org_contact, "is_primary_mobile_no": 1})
 			
 			contact.append("links", {"link_doctype": self.doctype, "link_name": self.name, "link_title": self.donor_name})
-			contact.ignore_permissions = True
-			contact.ignore_mandatory = True
+			contact.flags.ignore_permissions = True
+			contact.flags.ignore_mandatory = True
 			contact.insert()
 			# contact.reload()  # load changes by hooks on contact
 			
@@ -191,8 +191,8 @@ class Donor(Document):
 			)
 
 			address.append("links", {"link_doctype": self.doctype, "link_name": self.name, "link_title": self.donor_name})
-			address.ignore_permissions = True
-			address.ignore_mandatory = True
+			address.flags.ignore_permissions = True
+			address.flags.ignore_mandatory = True
 			address.insert()
 			# address.reload()  # load changes by hooks on address
 
