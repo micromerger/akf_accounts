@@ -211,7 +211,7 @@
   },
   {
    "allow_bulk_edit": 1,
-   "depends_on": "donation_cost_center;",
+   "depends_on": "donation_cost_center",
    "fieldname": "payment_detail",
    "fieldtype": "Table",
    "options": "Payment Detail"
@@ -485,7 +485,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-22 18:23:30.921020",
+ "modified": "2025-08-25 12:49:24.917441",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
