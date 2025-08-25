@@ -530,7 +530,7 @@
   {
    "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "company_ownerceo_conatct",
-   "fieldtype": "Phone",
+   "fieldtype": "Data",
    "label": "Company Owner/CEO Conatct"
   },
   {
@@ -581,7 +581,7 @@
   {
    "depends_on": "eval: doc.donor_type ==\"Corporate Donors\";",
    "fieldname": "representative_mobile",
-   "fieldtype": "Phone",
+   "fieldtype": "Data",
    "label": "Representative Mobile"
   },
   {
@@ -643,7 +643,7 @@
   {
    "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_contact",
-   "fieldtype": "Phone",
+   "fieldtype": "Data",
    "label": "ORG Contact"
   },
   {
@@ -661,7 +661,7 @@
   {
    "depends_on": "eval: doc.donor_type==\"Organization\";",
    "fieldname": "org_representative_contact_number",
-   "fieldtype": "Phone",
+   "fieldtype": "Data",
    "label": "ORG Representative Contact number"
   },
   {
@@ -704,13 +704,13 @@
   {
    "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "phone_no",
-   "fieldtype": "Phone",
+   "fieldtype": "Data",
    "label": "Phone No "
   },
   {
    "depends_on": "eval: doc.donor_type == \"Individual\"",
    "fieldname": "mobile_no",
-   "fieldtype": "Phone",
+   "fieldtype": "Data",
    "label": "Mobile No"
   },
   {
@@ -768,7 +768,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-21 20:43:04.995448",
+ "modified": "2025-08-25 18:56:06.556953",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
