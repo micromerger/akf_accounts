@@ -185,7 +185,7 @@
   {
    "bold": 1,
    "default": "0",
-   "depends_on": "eval: doc.donation_type==\"Cash\";",
+   "depends_on": "eval: doc.donation_type==\"Cash\" && doc.donation_cost_center!=undefined;",
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
@@ -367,6 +367,7 @@
    "default": "0",
    "fieldname": "reconcile",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Reconcile"
   },
   {
@@ -485,7 +486,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-25 13:09:14.552028",
+ "modified": "2025-08-25 14:05:13.624177",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

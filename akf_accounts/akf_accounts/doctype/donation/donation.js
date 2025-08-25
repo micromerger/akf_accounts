@@ -75,6 +75,14 @@ frappe.ui.form.on('Donation', {
             });
         }
     },
+    donation_type: function(frm){
+        frm.set_value('donation_cost_center', '');
+        frm.set_value('stock_entry_type', '');
+        frm.set_value('to_warehouse', '');
+        frm.set_value('donor_list', '');
+        frm.set_value('items', []);
+
+    }
 });
 
 frappe.ui.form.on('Payment Detail', {
