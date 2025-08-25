@@ -443,8 +443,8 @@
    "in_list_view": 1,
    "in_preview": 1,
    "label": "Warehouse",
-   "options": "Warehouse",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "options": "Warehouse"
   },
   {
    "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
@@ -452,8 +452,8 @@
    "fieldtype": "Table MultiSelect",
    "in_preview": 1,
    "label": "Donor List",
-   "options": "Donor Multiselect",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "options": "Donor Multiselect"
   },
   {
    "depends_on": "eval:doc.donation_type==\"In Kind Donation\";",
@@ -466,16 +466,16 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
-   "options": "In Kind Donation",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "options": "In Kind Donation"
   },
   {
    "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
    "fieldname": "stock_entry_type",
    "fieldtype": "Link",
    "label": "Stock Entry Type",
-   "options": "Stock Entry Type",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "options": "Stock Entry Type"
   },
   {
    "fieldname": "column_break_gxsi",
@@ -485,7 +485,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-25 12:49:24.917441",
+ "modified": "2025-08-25 13:09:14.552028",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
