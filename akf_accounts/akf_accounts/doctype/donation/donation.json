@@ -97,6 +97,7 @@
   },
   {
    "default": "Known",
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "donor_identity",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -111,6 +112,7 @@
    "label": "General Information"
   },
   {
+   "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "contribution_type",
    "fieldtype": "Select",
    "in_standard_filter": 1,
@@ -486,7 +488,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-25 14:05:13.624177",
+ "modified": "2025-08-25 16:18:30.808088",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
