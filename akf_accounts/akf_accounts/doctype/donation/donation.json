@@ -52,9 +52,8 @@
   "base_net_amount",
   "default_warehouse_section",
   "stock_entry_type",
-  "to_warehouse",
   "column_break_gxsi",
-  "donor_list",
+  "warehouse",
   "items_section",
   "items",
   "more_info_tab",
@@ -437,34 +436,17 @@
   {
    "fieldname": "default_warehouse_section",
    "fieldtype": "Section Break",
-   "label": "In-Kind Donation Details"
-  },
-  {
-   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
-   "fieldname": "to_warehouse",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_preview": 1,
-   "label": "Warehouse",
-   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
-   "options": "Warehouse"
-  },
-  {
-   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
-   "fieldname": "donor_list",
-   "fieldtype": "Table MultiSelect",
-   "in_preview": 1,
-   "label": "Donor List",
-   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
-   "options": "Donor Multiselect"
+   "hide_border": 1,
+   "label": "In Kind Donation Details"
   },
   {
    "depends_on": "eval:doc.donation_type==\"In Kind Donation\";",
    "fieldname": "items_section",
    "fieldtype": "Section Break",
-   "label": "Items"
+   "hide_border": 1
   },
   {
+   "bold": 1,
    "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
    "fieldname": "items",
    "fieldtype": "Table",
@@ -483,12 +465,22 @@
   {
    "fieldname": "column_break_gxsi",
    "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Warehouse",
+   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "options": "Warehouse"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-25 16:18:30.808088",
+ "modified": "2025-08-25 20:31:50.243804",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

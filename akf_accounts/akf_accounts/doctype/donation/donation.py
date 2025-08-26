@@ -319,7 +319,7 @@ class Donation(Document):
 			self.send_donation_emails()		# Mubashir Bashir
 			# self.update_project_allocation_check() #Mubarrim
 		elif(self.donation_type in ["In Kind Donation", "In-Kind Donation", "In-Kind-Donation",]):
-			self.make_stock_entry_for_in_kind()
+			self.make_stock_entry_for_in_kind_donation()
 		
 		
 	def get_gl_entry_dict(self):
@@ -835,7 +835,7 @@ class Donation(Document):
 		return bad_debt_written_off(self, args, values)
 
 	# nabeel saleem, 22-08-2025
-	def make_stock_entry_for_in_kind(self):
+	def make_stock_entry_for_in_kind_donation(self):
 		args = frappe._dict({
 			'doctype': 'Stock Entry',
 			'stock_entry_type': self.stock_entry_type,
@@ -851,11 +851,19 @@ class Donation(Document):
 				'basic_rate': row.basic_rate,
 				'custom_new': row.new,
 				'custom_used': row.used,
-				'fund_class': row.fund_class,
-				'service_area': row.service_area,
-				'subservice_area': row.subservice_area,
-				'product': row.product,
-				'donation_type': row.intention,
+				
+				'custom_fund_class_id': row.fund_class,
+				'custom_target_project': row.project,
+				'custom_service_area_id': row.service_area,
+				'custom_subservice_area_id': row.service_area,
+				'custom_product_id': row.product,
+				'custom_donor_id': row.donor,			
+				'custom_donor_desk_id': row.donor_desk,
+				'custom_donor_type_id': row.doctype_type,
+				'custom_intention_id': row.intention,
+				'custom_cost_center_id': row.cost_center,
+				'custom_transaction_type_id': row.transction_type,
+				'custom_asset_category_id': row.asset_category
 
 			} for row in self.items]
 		})

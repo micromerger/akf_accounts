@@ -8,20 +8,31 @@
  "field_order": [
   "items_section",
   "item_code",
-  "item_name",
-  "new",
-  "column_break_ilbe",
   "qty",
+  "column_break_ilbe",
+  "item_name",
   "basic_rate",
+  "section_break_eheo",
+  "new",
+  "column_break_ceog",
   "used",
   "accounting_dimensions_section",
-  "fund_class",
-  "project",
   "column_break_gzjy",
+  "project",
+  "cost_center",
+  "fund_class",
   "service_area",
   "subservice_area",
   "product",
-  "intention"
+  "column_break_ljvd",
+  "donor",
+  "donor_name",
+  "donor_type",
+  "donor_desk",
+  "column_break_varc",
+  "intention",
+  "transaction_type",
+  "asset_category"
  ],
  "fields": [
   {
@@ -81,10 +92,12 @@
    "fieldname": "project",
    "fieldtype": "Link",
    "label": "Project",
-   "options": "Project"
+   "options": "Project",
+   "reqd": 1
   },
   {
-   "fetch_from": "fund_class.service_area",
+   "fetch_from": "project.custom_service_area",
+   "fetch_if_empty": 1,
    "fieldname": "service_area",
    "fieldtype": "Link",
    "label": "Service Area",
@@ -92,7 +105,8 @@
    "read_only": 1
   },
   {
-   "fetch_from": "fund_class.product",
+   "fetch_from": "project.custom_product",
+   "fetch_if_empty": 1,
    "fieldname": "product",
    "fieldtype": "Link",
    "label": "Product",
@@ -103,13 +117,17 @@
    "fieldname": "intention",
    "fieldtype": "Link",
    "label": "Intention",
-   "options": "Donation Type"
+   "options": "Donation Type",
+   "reqd": 1
   },
   {
+   "fetch_from": "project.fund_class",
+   "fetch_if_empty": 1,
    "fieldname": "fund_class",
    "fieldtype": "Link",
    "label": "Fund Class",
-   "options": "Fund Class"
+   "options": "Fund Class",
+   "read_only": 1
   },
   {
    "fieldname": "item_code",
@@ -129,18 +147,92 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "fund_class.subservice_area",
+   "fetch_from": "project.custom_subservice_area",
+   "fetch_if_empty": 1,
    "fieldname": "subservice_area",
    "fieldtype": "Link",
    "label": "Subservice Area",
    "options": "Subservice Area",
    "read_only": 1
+  },
+  {
+   "fetch_from": "donor.donor_desk",
+   "fetch_if_empty": 1,
+   "fieldname": "donor_desk",
+   "fieldtype": "Link",
+   "label": "Donor Desk",
+   "mandatory_depends_on": "donor",
+   "options": "Donor Desk",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "donor.donor_type",
+   "fetch_if_empty": 1,
+   "fieldname": "donor_type",
+   "fieldtype": "Link",
+   "label": "Donor Type",
+   "options": "Donor Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "project.cost_center",
+   "fetch_if_empty": 1,
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transaction_type",
+   "fieldtype": "Link",
+   "label": "Transaction Type",
+   "options": "Transaction Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ljvd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "donor",
+   "fieldtype": "Link",
+   "label": "Donor",
+   "options": "Donor",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_varc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_eheo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_ceog",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "donor.donor_name",
+   "fetch_if_empty": 1,
+   "fieldname": "donor_name",
+   "fieldtype": "Data",
+   "label": "Donor Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "asset_category",
+   "fieldtype": "Link",
+   "label": "Asset Category",
+   "options": "Asset Category",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-22 17:36:24.875025",
+ "modified": "2025-08-25 20:29:27.169051",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "In Kind Donation",

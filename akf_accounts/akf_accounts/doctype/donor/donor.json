@@ -169,7 +169,8 @@
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Department",
-   "options": "Department"
+   "options": "Department",
+   "reqd": 1
   },
   {
    "bold": 1,
@@ -324,7 +325,8 @@
    "fieldname": "donor_desk",
    "fieldtype": "Link",
    "label": "Donor Desk",
-   "options": "Donor Desk"
+   "options": "Donor Desk",
+   "reqd": 1
   },
   {
    "depends_on": "eval: doc.donor_type == \"Individual\"",
@@ -768,7 +770,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-25 18:56:06.556953",
+ "modified": "2025-08-25 20:27:01.829016",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",
@@ -789,6 +791,7 @@
    "write": 1
   }
  ],
+ "search_fields": "donor_name, donor_type, donor_identity, donor_desk",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

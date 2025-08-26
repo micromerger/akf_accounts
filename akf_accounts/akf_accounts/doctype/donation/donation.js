@@ -78,8 +78,7 @@ frappe.ui.form.on('Donation', {
     donation_type: function(frm){
         frm.set_value('donation_cost_center', '');
         frm.set_value('stock_entry_type', '');
-        frm.set_value('to_warehouse', '');
-        frm.set_value('donor_list', '');
+        frm.set_value('warehouse', '');
         frm.set_value('items', []);
 
     }
@@ -401,6 +400,17 @@ function set_queries(frm) {
             }
         };
     });
+
+    frm.set_query('to_warehouse', function () {
+        return {
+            filters: {
+                is_group: 0,
+                is_rejected_warehouse: 0,
+                company: frm.doc.company
+            }
+        };
+    });
+
     set_queries_payment_details(frm);
 }
 
