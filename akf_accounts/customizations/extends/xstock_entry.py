@@ -5,8 +5,9 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt
 
 # Mubarrim, 07-03-2025
-from akf_stock.utils.inventory_to_asset  import create_asset_item_and_asset
-from akf_stock.utils.restricted_inventory import create_restricted_inventory_gl_entries
+
+from akf_accounts.utils.stock_entry.inventory_to_asset  import create_asset_item_and_asset
+from akf_accounts.utils.stock_entry.restricted_inventory import create_restricted_inventory_gl_entries
 
 class XStockEntry(StockEntry):
     def before_validate(self):
@@ -241,19 +242,22 @@ class XStockEntry(StockEntry):
                         UPDATE `tabStock Ledger Entry`
                         SET 
                             custom_new = {row.custom_new}, 
-                            custom_used = {row.custom_used}, 
-                            custom_target_service_area = '{row.to_service_area}', 
-                            custom_target_subservice_area = '{row.to_subservice_area}', 
-                            custom_target_product = '{row.to_product}', 
-                            custom_target_project = '{row.custom_target_project}',
-                            service_area = '{row.service_area}', 
-                            subservice_area = '{row.subservice_area}', 
-                            product = '{row.product}', 
-                            project = '{row.project}', 
-                            inventory_flag = '{row.inventory_flag}', 
-                            inventory_scenario = '{row.inventory_scenario}', 
-                            custom_cost_center = '{target_cost_center}', 
-                            custom_department = '{self.custom_department}'
+                            custom_used = {row.custom_used},
+                            
+                            project = "{row.custom_target_project or ''}",
+                            fund_class = "{row.custom_fund_class_id or ''}",
+                            service_area = "{row.custom_service_area_id or ''}",
+                            subservice_area = "{row.custom_subservice_area_id or ''}",
+                            product = "{row.custom_product_id or ''}",
+                            donor = "{row.custom_donor_id or ''}",			
+                            donor_desk = "{row.custom_donor_desk_id or ''}",
+                            donor_type = "{row.custom_donor_type_id or ''}",
+                            donation_type = "{row.custom_intention_id or ''}",
+                            cost_center = "{target_cost_center}",
+                            transaction_type = "{row.custom_transaction_type_id or ''}",
+                            inventory_flag = "{row.inventory_flag or ''}",
+                            asset_category = "{row.custom_asset_category_id or ''}"
+
                         WHERE 
                             docstatus=1 
                             and voucher_detail_no = '{row.name}'
@@ -268,18 +272,24 @@ class XStockEntry(StockEntry):
                         SET 
                             custom_new = {row.custom_new}, 
                             custom_used = {row.custom_used}, 
-                            custom_target_service_area='{row.to_service_area}', 
-                            custom_target_subservice_area='{row.to_subservice_area}', 
-                            custom_target_product='{row.to_product}', 
-                            custom_target_project='{row.custom_target_project}',
-                            service_area = '{row.service_area}', 
-                            subservice_area = '{row.subservice_area}', 
-                            product = '{row.product}', 
-                            project = '{row.project}',
-                            inventory_flag='{row.inventory_flag}', 
-                            inventory_scenario='{row.inventory_scenario}', 
-                            custom_cost_center='{source_cost_center}', 
-                            custom_department='{self.custom_department}'
+                            
+                            custom_department= "{self.custom_department or ''}"
+                            
+                            project = "{row.custom_target_project or ''}",
+                            fund_class = "{row.custom_fund_class_id or ''}",
+                            service_area = "{row.custom_service_area_id or ''}",
+                            subservice_area = "{row.custom_subservice_area_id or ''}",
+                            product = "{row.custom_product_id or ''}",
+                            donor = "{row.custom_donor_id or ''}",			
+                            donor_desk = "{row.custom_donor_desk_id or ''}",
+                            donor_type = "{row.custom_donor_type_id or ''}",
+                            donation_type = "{row.custom_intention_id or ''}",
+                            cost_center = "{source_cost_center}",
+                            transaction_type = "{row.custom_transaction_type_id or ''}",
+                            inventory_flag = "{row.inventory_flag or ''}",
+                            asset_category = "{row.custom_asset_category_id or ''}"
+                            
+                            
                         WHERE 
                             docstatus=1 
                             and voucher_detail_no = '{row.name}'
@@ -293,18 +303,23 @@ class XStockEntry(StockEntry):
                         SET 
                             custom_new = {row.custom_new}, 
                             custom_used = {row.custom_used}, 
-                            custom_target_service_area='{row.to_service_area}', 
-                            custom_target_subservice_area='{row.to_subservice_area}', 
-                            custom_target_product='{row.to_product}', 
-                            custom_target_project='{row.custom_target_project}',
-                            service_area = '{row.service_area}', 
-                            subservice_area = '{row.subservice_area}', 
-                            product = '{row.product}', 
-                            project = '{row.project}',
-                            inventory_flag='{row.inventory_flag}', 
-                            inventory_scenario='{row.inventory_scenario}', 
-                            custom_cost_center='{source_cost_center}', 
-                            custom_department='{self.custom_department}'
+                            
+                            custom_department = "{self.custom_department or ''}",
+                            
+                            project = "{row.custom_target_project or ''}",
+                            fund_class = "{row.custom_fund_class_id or ''}",
+                            service_area = "{row.custom_service_area_id or ''}",
+                            subservice_area = "{row.custom_subservice_area_id or ''}",
+                            product = "{row.custom_product_id or ''}",
+                            donor = "{row.custom_donor_id or ''}",			
+                            donor_desk = "{row.custom_donor_desk_id or ''}",
+                            donor_type = "{row.custom_donor_type_id or ''}",
+                            donation_type = "{row.custom_intention_id or ''}",
+                            cost_center = "{source_cost_center}",
+                            transaction_type = "{row.custom_transaction_type_id or ''}",
+                            inventory_flag = "{row.inventory_flag or ''}",
+                            asset_category = "{row.custom_asset_category_id or ''}"
+                            
                         WHERE 
                             docstatus=1 
                             and voucher_detail_no = '{row.name}'
@@ -321,18 +336,22 @@ class XStockEntry(StockEntry):
                         SET 
                             custom_new = {row.custom_new}, 
                             custom_used = {row.custom_used}, 
-                            custom_target_service_area='{row.to_service_area}', 
-                            custom_target_subservice_area='{row.to_subservice_area}', 
-                            custom_target_product='{row.to_product}', 
-                            custom_target_project='{row.custom_target_project}',
-                            service_area = '{row.service_area}', 
-                            subservice_area = '{row.subservice_area}', 
-                            product = '{row.product}', 
-                            project = '{row.project}', 
-                            inventory_flag='{row.inventory_flag}', 
-                            inventory_scenario='{row.inventory_scenario}', 
-                            custom_cost_center='{target_cost_center}', 
-                            custom_department='{self.custom_department}'
+                            
+                            custom_department='{self.custom_department or ''}',
+                            
+                            project = "{row.custom_target_project or ''}",
+                            fund_class = "{row.custom_fund_class_id or ''}",
+                            service_area = "{row.custom_service_area_id or ''}",
+                            subservice_area = "{row.custom_subservice_area_id or ''}",
+                            product = "{row.custom_product_id or ''}",
+                            donor = "{row.custom_donor_id or ''}",			
+                            donor_desk = "{row.custom_donor_desk_id or ''}",
+                            donor_type = "{row.custom_donor_type_id or ''}",
+                            donation_type = "{row.custom_intention_id or ''}",
+                            cost_center = "{target_cost_center}",
+                            transaction_type = "{row.custom_transaction_type_id or ''}",
+                            inventory_flag = "{row.inventory_flag or ''}",
+                            asset_category = "{row.custom_asset_category_id or ''}"
                         WHERE 
                             docstatus=1 
                             and voucher_detail_no = '{row.name}'
