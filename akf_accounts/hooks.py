@@ -329,4 +329,4 @@ accounting_dimension_doctypes = [
 	"Deduction Breakeven",
     "Stock Ledger Entry"
 ]
-fixtures = ['Inventory Dimension']
+# fixtures = ['Inventory Dimension']
