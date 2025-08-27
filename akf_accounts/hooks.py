@@ -12,7 +12,20 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/akf_accounts/css/akf_accounts.css"
 # app_include_js = "/assets/akf_accounts/js/akf_accounts.js"
-
+app_include_js = [
+    "/assets/akf_accounts/js/jquery.inputmask.min.js",
+    "/assets/akf_accounts/js/jquery.mask.js",
+    "/assets/akf_accounts/js/highcharts_apis/highcharts.js",
+    "/assets/akf_accounts/js/highcharts_apis/data.js",
+    "/assets/akf_accounts/js/highcharts_apis/export-data.js",
+    "/assets/akf_accounts/js/highcharts_apis/exporting.js",
+    "/assets/akf_accounts/js/highcharts_apis/accessibility.js",
+    "/assets/akf_accounts/js/highcharts_apis/variable-pie.js",
+    "/assets/akf_accounts/js/d3.v7.min.js",
+    "/assets/akf_accounts/js/d3-org-chart.js",
+    "/assets/akf_accounts/js/d3-flextree.js",
+    "/assets/akf_accounts/js/html2canvas.js",
+]
 # include js, css files in header of web template
 # web_include_css = "/assets/akf_accounts/css/akf_accounts.css"
 # web_include_js = "/assets/akf_accounts/js/akf_accounts.js"
@@ -205,19 +218,9 @@ doc_events = {
 scheduler_events = {
 
       "cron": {
-          
-        # "0 0 * * *": [
-        #     "akf_hrms.services.cron_jobs.employee_absent.send_absent_employee_notification",
-        # ],        		
-       
         "*/5 * * * *": [
-            # "akf_hrms.services.cron_jobs.attendance.mark_attendance",
              "akf_accounts.customizations.extends.depreciation.post_depreciation_entries",
         ],      
-       
-        # "*/20 * * * *": [
-        #     "akf_hrms.services.cron_jobs.attendance.mark_proxy_attendance_logs",
-        # ]
     },
  	"all": [
  		# "akf_accounts.tasks.all"
