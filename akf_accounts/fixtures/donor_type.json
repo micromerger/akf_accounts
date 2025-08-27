@@ -1,0 +1,44 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Donor Type",
+  "donor_type": "Organization",
+  "modified": "2025-08-12 16:46:35.653174",
+  "name": "Organization"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Donor Type",
+  "donor_type": "Corporate Donors",
+  "modified": "2025-07-31 17:37:18.504339",
+  "name": "Corporate Donors"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Donor Type",
+  "donor_type": "Dummy",
+  "modified": "2024-12-30 19:25:09.027556",
+  "name": "Dummy"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Donor Type",
+  "donor_type": "Individual Donor",
+  "modified": "2025-07-31 17:36:55.326788",
+  "name": "Individual Donor"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Donor Type",
+  "donor_type": "Individual",
+  "modified": "2025-01-07 09:38:44.816461",
+  "name": "Individual"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Donor Type",
+  "donor_type": "Alkhidmat International Network Member",
+  "modified": "2025-07-31 17:37:09.265729",
+  "name": "Alkhidmat International Network Member"
+ }
+]
