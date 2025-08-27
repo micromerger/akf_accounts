@@ -10,16 +10,17 @@
   "random_id",
   "donor_id",
   "donor_name",
-  "cnic",
   "donor_type",
   "donor_desk_id",
-  "donation_type",
-  "plaque_branding",
-  "column_break_uwow",
-  "contact_no",
+  "cnic",
   "email",
+  "contact_no",
   "city",
   "address",
+  "column_break_uwow",
+  "intention_id",
+  "transaction_type_id",
+  "plaque_branding",
   "care_of_details_column",
   "co_name",
   "co_contact_no",
@@ -27,6 +28,7 @@
   "co_address",
   "relationship_with_donor",
   "section_break_iela",
+  "fund_class_info_column",
   "fund_class_id",
   "pay_service_area",
   "pay_subservice_area",
@@ -82,6 +84,7 @@
   "accounting_dimensions_section",
   "dimension_col_break",
   "fund_class",
+  "donation_type",
   "column_break_mftg",
   "paid",
   "is_return",
@@ -179,7 +182,8 @@
   },
   {
    "fieldname": "column_break_ibfu",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "label": "Share Info (In case of subservice  area `Qurbani`)"
   },
   {
    "fieldname": "equity_account",
@@ -310,6 +314,7 @@
    "reqd": 1
   },
   {
+   "depends_on": "co_name",
    "fieldname": "care_of_details_column",
    "fieldtype": "Column Break",
    "label": "Care Of Details"
@@ -707,12 +712,31 @@
    "label": "Subservice Area Copy",
    "options": "Subservice Area",
    "read_only": 1
+  },
+  {
+   "fieldname": "fund_class_info_column",
+   "fieldtype": "Column Break",
+   "label": "Fund Class Info"
+  },
+  {
+   "fieldname": "intention_id",
+   "fieldtype": "Link",
+   "label": "Intention ID",
+   "options": "Donation Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "transaction_type_id",
+   "fieldtype": "Link",
+   "label": "Transaction Type ID",
+   "options": "Transaction Type",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-18 12:11:36.547327",
+ "modified": "2025-08-26 18:49:03.055800",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

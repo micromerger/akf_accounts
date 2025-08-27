@@ -31,7 +31,7 @@ def create_asset_item_and_asset(self):
 				"is_fixed_asset": 1,
 				"asset_category": asset_category,
 				"custom_source_of_asset_acquistion": f'{row.inventory_flag}',
-				"custom_type_of_asset": f'{row.inventory_scenario}'
+				"custom_type_of_asset": f'{row.custom_transaction_type_id}'
 			})
 			doc.insert(ignore_permissions=True)
 			return doc.name
@@ -42,21 +42,36 @@ def create_asset_item_and_asset(self):
 			"company": self.company,
 			"location": row.custom_asset_location,
 			# "custom_source_of_asset_acquistion": f'{row.inventory_flag}',
-			# "custom_type_of_asset": f'{row.inventory_scenario}',
+			# "custom_type_of_asset": f'{row.custom_transaction_type_id}',
 			"available_for_use_date": frappe.utils.nowdate(),
 			"gross_purchase_amount": row.basic_rate,
 			"asset_quantity": 1,
 			"is_existing_asset": 1,
 			"custom_against_stock_entry": self.name,
-			"cost_center": row.cost_center,
-			"service_area": row.service_area,
-			"subservice_area": row.subservice_area,
-			"product": row.product,
-			"project": row.project,
-			"donor": row.donor,
-			"task": row.task,
-			"inventory_flag": row.inventory_flag,
-			"inventory_scenario":row.inventory_scenario
+
+			# "cost_center": row.cost_center,
+			# "service_area": row.service_area,
+			# "subservice_area": row.subservice_area,
+			# "product": row.product,
+			# "project": row.project,
+			# "donor": row.donor,
+			# "task": row.task,
+			# "inventory_flag": row.inventory_flag,
+			# "inventory_scenario":row.inventory_scenario
+			#Updated Dimensions, Mubarrim - August 26, 2023
+			"project" : row.custom_target_project,
+			"fund_class" : row.custom_fund_class_id,
+			"service_area" : row.custom_service_area_id,
+			"subservice_area" : row.custom_subservice_area_id,
+			"product" : row.custom_product_id,
+			"donor" : row.custom_donor_id,			
+			"donor_desk" : row.custom_donor_desk_id,
+			"donor_type" : row.custom_donor_type_id,
+			"donation_type" : row.custom_intention_id,
+			"cost_center" : row.custom_cost_center_id,
+			"transaction_type" : row.custom_transaction_type_id,
+			"inventory_flag" : row.inventory_flag,
+			"asset_category" : row.custom_asset_category_id
 		})
 		doc.insert(ignore_permissions=True)
 	assets_list = []

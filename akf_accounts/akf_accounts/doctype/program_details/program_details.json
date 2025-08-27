@@ -6,26 +6,31 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "pd_project",
   "pd_cost_center",
-  "pd_account",
-  "currency",
+  "pd_fund_class",
   "pd_service_area",
   "pd_subservice_area",
   "pd_product",
-  "pd_project",
-  "pd_fund_class",
-  "project",
+  "column_break_romi",
   "pd_donor",
   "pd_donor_name",
-  "donor_desk",
-  "donation_type",
+  "pd_donor_type",
+  "pd_donor_desk",
+  "column_break_ebpb",
+  "pd_intention",
+  "pd_transaction_type",
+  "pd_account",
+  "currency",
+  "section_break_fodz",
   "column_break_hkup",
   "encumbrance_project_account",
-  "encumbrance_material_request_account",
   "encumbrance_purchase_order_account",
-  "amortise_designated_asset_fund_account",
   "amortise_inventory_fund_account",
   "actual_balance",
+  "column_break_fabc",
+  "encumbrance_material_request_account",
+  "amortise_designated_asset_fund_account",
   "amount",
   "is_transferred"
  ],
@@ -77,8 +82,8 @@
    "fetch_from": "pd_donor.donor_name",
    "fieldname": "pd_donor_name",
    "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Donor Name"
+   "label": "Donor Name",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_hkup",
@@ -126,6 +131,7 @@
   {
    "fieldname": "amortise_designated_asset_fund_account",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Amortise Designated Asset Fund Account",
    "options": "Account",
    "read_only": 1
@@ -133,22 +139,15 @@
   {
    "fieldname": "amortise_inventory_fund_account",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Amortise Inventory Fund Account",
    "options": "Account",
    "read_only": 1
   },
   {
-   "fieldname": "project",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "in_list_view": 1,
-   "label": "Project",
-   "options": "Project",
-   "read_only": 1
-  },
-  {
    "fieldname": "encumbrance_purchase_order_account",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Encumbrance Purchase Order Account",
    "options": "Account",
    "read_only": 1
@@ -169,28 +168,60 @@
    "default": "0",
    "fieldname": "is_transferred",
    "fieldtype": "Check",
-   "label": "Is Transferred"
-  },
-  {
-   "fetch_from": "pd_donor.donor_desk",
-   "fieldname": "donor_desk",
-   "fieldtype": "Link",
-   "label": "Donor Desk",
-   "options": "Donor Desk",
+   "label": "Is Transferred",
    "read_only": 1
   },
   {
-   "fieldname": "donation_type",
+   "fieldname": "column_break_romi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ebpb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_fodz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_fabc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pd_intention",
    "fieldtype": "Link",
    "label": "Intention",
    "options": "Donation Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pd_transaction_type",
+   "fieldtype": "Link",
+   "label": "Transaction Type",
+   "options": "Transaction Type"
+  },
+  {
+   "fetch_from": "pd_donor.donor_type",
+   "fetch_if_empty": 1,
+   "fieldname": "pd_donor_type",
+   "fieldtype": "Link",
+   "label": "Donor Type",
+   "options": "Donor Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "pd_donor.donor_desk",
+   "fieldname": "pd_donor_desk",
+   "fieldtype": "Link",
+   "label": "Donor Desk",
+   "options": "Donor Desk",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-12 14:58:01.478215",
+ "modified": "2025-08-27 13:41:55.677020",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",

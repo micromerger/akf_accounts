@@ -20,7 +20,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-25 15:21:25.203497",
+ "modified": "2025-08-26 18:46:05.274600",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Transaction Type",
@@ -40,6 +40,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

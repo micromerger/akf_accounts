@@ -9,7 +9,22 @@ function get_funds(frm, transfer_to = "Project") {
 
     let fields = [
         {
-            label: __("Fund Class"),
+            label: __("Company"),
+            fieldname: "company",
+            fieldtype: "Link",
+            options: "Company",
+            reqd: 1,
+            read_only: 1,
+            default: frappe.boot.sysdefaults.company
+            // default: "Alkhidmat Foundation Pakistan"
+        },
+        // {
+        //     label: __(""),
+        //     fieldname: "section_donor_balance1",
+        //     fieldtype: "Section Break",
+        // },
+        {
+            label: __(transfer_to === "Project"? "Fund Class": "Source Fund Class"),
             fieldname: "fund_class",
             fieldtype: "Link",
             options: "Fund Class",
@@ -31,11 +46,11 @@ function get_funds(frm, transfer_to = "Project") {
                 }
             }*/
         },
-        {
-            label: __(""),
-            fieldname: "col_break",
-            fieldtype: "Column Break",
-        },
+        // {
+        //     label: __(""),
+        //     fieldname: "col_break",
+        //     fieldtype: "Column Break",
+        // },
         {
             label: __("Service Area"),
             fieldname: "service_area",
@@ -52,11 +67,11 @@ function get_funds(frm, transfer_to = "Project") {
                 }
             }*/
         },
-        {
-            label: __(""),
-            fieldname: "col_break",
-            fieldtype: "Column Break",
-        },
+        // {
+        //     label: __(""),
+        //     fieldname: "col_break",
+        //     fieldtype: "Column Break",
+        // },
         {
             label: __("Subservice Area"),
             fieldname: "subservice_area",
@@ -74,11 +89,11 @@ function get_funds(frm, transfer_to = "Project") {
                 }
             }*/
         },
-        {
-            label: __(""),
-            fieldname: "col_break",
-            fieldtype: "Column Break",
-        },
+        // {
+        //     label: __(""),
+        //     fieldname: "col_break",
+        //     fieldtype: "Column Break",
+        // },
         {
             label: __("Product"),
             fieldname: "product",
@@ -97,23 +112,15 @@ function get_funds(frm, transfer_to = "Project") {
             }*/
         },
 
+        // {
+        //     label: __(""),
+        //     fieldname: "col_break",
+        //     fieldtype: "Column Break",
+        // },
         {
             label: __(""),
             fieldname: "col_break",
             fieldtype: "Column Break",
-        },
-        {
-            label: __("Company"),
-            fieldname: "company",
-            fieldtype: "Link",
-            options: "Company",
-            reqd: 1,
-            default: "Alkhidmat Foundation Pakistan"
-        },
-        {
-            label: __(""),
-            fieldname: "section_donor_balance1",
-            fieldtype: "Section Break",
         },
         {
             label: __("Cost Center"),
@@ -130,34 +137,38 @@ function get_funds(frm, transfer_to = "Project") {
                 }
             }
         },
+        // {
+        //     label: __(""),
+        //     fieldname: "col_break",
+        //     fieldtype: "Column Break",
+        // },
         {
-            label: __(""),
-            fieldname: "col_break",
-            fieldtype: "Column Break",
+            label: __("Donor Type"),
+            fieldname: "donor_type",
+            fieldtype: "Link",
+            options: "Donor Type",
+            reqd: 0
         },
+        // {
+        //     label: __(""),
+        //     fieldname: "col_break",
+        //     fieldtype: "Column Break",
+        // },
         {
             label: __("Donor Desk"),
             fieldname: "donor_desk",
             fieldtype: "Link",
             options: "Donor Desk",
-            reqd: 0,
-            /*get_query(){
-                let company = d.fields_dict.company.value;
-                return{
-                    filters:{
-                        company: company
-                    }
-                }
-            }*/
+            reqd: 0
         },
-        {
-            label: __(""),
-            fieldname: "col_break",
-            fieldtype: "Column Break",
-        },
+        // {
+        //     label: __(""),
+        //     fieldname: "col_break",
+        //     fieldtype: "Column Break",
+        // },
         {
             label: __("Intention"),
-            fieldname: "donation_type",
+            fieldname: "intention",
             fieldtype: "Link",
             options: "Donation Type",
             reqd: 0,
@@ -170,34 +181,32 @@ function get_funds(frm, transfer_to = "Project") {
                 }
             }*/
         },
+        // {
+        //     label: __(""),
+        //     fieldname: "col_break",
+        //     fieldtype: "Column Break",
+        // },
+        {
+            label: __("Transaction Type"),
+            fieldname: "transaction_type",
+            fieldtype: "Link",
+            options: "Transaction Type",
+            reqd: 0,
+            /*get_query(){
+                let company = d.fields_dict.company.value;
+                return{
+                    filters:{
+                        company: company
+                    }
+                }
+            }*/
+        },
         {
             label: __(""),
             fieldname: "col_break",
             fieldtype: "Column Break",
-        }, {
-            label: __("Transfer Funds Cost"),
-            fieldname: "estimated_costing",
-            fieldtype: "Currency",
-            reqd: 1,
-            onchange: function () {
-                const amount = d.get_value('estimated_costing');
-                if (amount) {
-                    // Find and select the donor balance that matches the amount
-                    const donorBalance = d.fields_dict.donor_balance.df.data;
-                    if (donorBalance && donorBalance.length > 0) {
-                        donorBalance.forEach(row => {
-                            row.__checked = (row.balance == amount);
-                        });
-                        d.fields_dict.donor_balance.grid.refresh();
-                    }
-                }
-            }
         },
-        {
-            label: __(""),
-            fieldname: "col_break2",
-            fieldtype: "Column Break",
-        }
+
     ];
 
     // Insert either Project or Fund Class field
@@ -219,7 +228,7 @@ function get_funds(frm, transfer_to = "Project") {
         });
     } else {
         fields.push({
-            label: __("Fund Class"),
+            label: __("Target Fund Class"),
             fieldname: "target_fund_class",
             fieldtype: "Link",
             options: "Fund Class",
@@ -234,6 +243,31 @@ function get_funds(frm, transfer_to = "Project") {
         });
     }
 
+    fields.push({
+        label: __("Transfer Funds Cost"),
+        fieldname: "estimated_costing",
+        fieldtype: "Currency",
+        reqd: 1,
+        onchange: function () {
+            const amount = d.get_value('estimated_costing');
+            if (amount) {
+                // Find and select the donor balance that matches the amount
+                const donorBalance = d.fields_dict.donor_balance.df.data;
+                if (donorBalance && donorBalance.length > 0) {
+                    donorBalance.forEach(row => {
+                        row.__checked = (row.balance == amount);
+                    });
+                    d.fields_dict.donor_balance.grid.refresh();
+                }
+            }
+        }
+    },)
+    // {
+    //     label: __(""),
+    //     fieldname: "col_break2",
+    //     fieldtype: "Column Break",
+    // }
+
     // ... then add the rest of your fields (Get Balance, donor_balance, html_message, etc.) ...
     fields = fields.concat([
         {
@@ -244,14 +278,16 @@ function get_funds(frm, transfer_to = "Project") {
             options: ``,
             click() {
                 const filters = {
+                    "company": d.fields_dict.company.value,
                     "fund_class": d.fields_dict.fund_class.value,
                     "service_area": d.fields_dict.service_area.value,
                     "subservice_area": d.fields_dict.subservice_area.value,
                     "product": d.fields_dict.product.value,
                     "cost_center": d.fields_dict.cost_center.value,
+                    "donor_type": d.fields_dict.donor_type.value,
                     "donor_desk": d.fields_dict.donor_desk.value,
-                    "donation_type": d.fields_dict.donation_type.value,
-                    "company": d.fields_dict.company.value,
+                    "intention": d.fields_dict.intention.value,
+                    "transaction_type": d.fields_dict.transaction_type.value,
                     "doctype": frm.doc.doctype,
                     "amount": d.fields_dict.estimated_costing.value
                     // "amount": get_consuming_amount(frm.doc)
@@ -397,15 +433,19 @@ function get_funds(frm, transfer_to = "Project") {
                     total_budget += parseFloat(row.balance) || 0;
 
                     details.push({
-                        "pd_cost_center": row.cost_center,
                         "pd_account": row.account,
+
+                        "pd_cost_center": row.cost_center,
+                        "pd_fund_class": frm.doc.name,
                         "pd_service_area": values.service_area,
                         "pd_subservice_area": values.subservice_area,
                         "pd_product": values.product,
                         "pd_donor": row.donor,
-                        "donor_desk": values.donor_desk,
-                        "donation_type": values.donation_type,
-                        "pd_fund_class": frm.doc.name,
+                        "pd_donor_type": values.donor_type,
+                        "pd_donor_desk": values.donor_desk,
+                        "pd_intention": values.intention,
+                        "pd_transaction_type": values.transaction_type,
+
                         "actual_balance": row.balance,
                         "amount": values.estimated_costing,
                         "is_transferred": values.estimated_costing,

@@ -75,14 +75,19 @@ def make_debit_normal_equity_account(self, row, amount):
 		'party_type': 'Donor',
 		'party': row.pd_donor,
 		'account': row.pd_account,
+		
+		'project': row.pd_project or self.name,		
 		'cost_center': row.pd_cost_center,
 		'fund_class': self.fund_class,	
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,
 		'product': row.pd_product,
-		'donor_desk': row.donor_desk,
-		'donation_type': row.donation_type,
 		'donor': row.pd_donor,
+		'donor_type': row.pd_donor_type,		
+		'donor_desk': row.pd_donor_desk,
+		'donation_type': row.pd_intention,
+		'transaction_type': row.pd_transaction_type,
+  
 		'debit': amount,
 		'debit_in_account_currency': amount,
 		'transaction_currency': row.currency,
@@ -102,15 +107,19 @@ def make_credit_temporary_encumbrance_project(self, row, amount):
 		'party_type': 'Donor',
 		'party': row.pd_donor,
 		'account': row.encumbrance_project_account,
+
+		'project': row.pd_project  or self.name,
 		'cost_center': row.pd_cost_center,
-		'fund_class': self.fund_class,		
+		'fund_class': self.fund_class,	
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,
 		'product': row.pd_product,
-		'project': self.name,
 		'donor': row.pd_donor,
-		'donor_desk': row.donor_desk,
-		'donation_type': row.donation_type,
+		'donor_type': row.pd_donor_type,		
+		'donor_desk': row.pd_donor_desk,
+		'donation_type': row.pd_intention,
+		'transaction_type': row.pd_transaction_type,
+  
 		'credit': amount,
 		'credit_in_account_currency': amount,
 		'transaction_currency': row.currency,
@@ -183,15 +192,17 @@ def make_transfer_funds_gl_entries(doc, donor_balance, transfer_to=None):
 				"transaction_currency": currency,
 				"debit_in_transaction_currency": amount,
 				"project": "",
-
+				
+				"cost_center": cost_center,
 				"fund_class": source_fund_class,
 				"service_area": detail.get("pd_service_area"),
 				"subservice_area": detail.get("pd_subservice_area"),
 				"product": detail.get("pd_product"),
 				"donor": detail.get("pd_donor"),
-				"donor_desk": detail.get("donor_desk"),
-				"donation_type": detail.get("donation_type"),
-				"cost_center": cost_center,
+				'donor_type': detail.get("pd_donor_type"),
+				"donor_desk": detail.get("pd_donor_desk"),
+				"donation_type": detail.get("pd_intention"),
+				'transaction_type': detail.get("pd_transaction_type"),
 			})
 			gl_debit.insert(ignore_permissions=True)
 			gl_debit.submit()
@@ -213,16 +224,18 @@ def make_transfer_funds_gl_entries(doc, donor_balance, transfer_to=None):
 				"is_advance": "No",
 				"transaction_currency": currency,
 				"credit_in_transaction_currency": amount,
+    
 				"project": "",
-
+				"cost_center": cost_center,
 				"fund_class": target_fund_class,
 				"service_area": detail.get("pd_service_area"),
 				"subservice_area": detail.get("pd_subservice_area"),
 				"product": detail.get("pd_product"),
 				"donor": detail.get("pd_donor"),
-				"donor_desk": detail.get("donor_desk"),
-				"donation_type": detail.get("donation_type"),
-				"cost_center": cost_center,
+				'donor_type': detail.get("pd_donor_type"),
+				"donor_desk": detail.get("pd_donor_desk"),
+				"donation_type": detail.get("pd_intention"),
+				'transaction_type': detail.get("pd_transaction_type"),
 			})
 			gl_credit.insert(ignore_permissions=True)
 			gl_credit.submit()

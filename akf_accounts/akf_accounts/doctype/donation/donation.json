@@ -33,10 +33,9 @@
   "column_break_futi",
   "mode_of_payment",
   "account_paid_to",
-  "column_break_kchn",
-  "total_donors",
   "payment_details_section",
   "payment_detail",
+  "total_donors",
   "section_break_otbq",
   "deduction_breakeven",
   "section_break_wznb",
@@ -263,7 +262,7 @@
    "depends_on": "eval: doc.donation_type==\"Cash\";",
    "fieldname": "donation_cost_center",
    "fieldtype": "Link",
-   "label": "Branch",
+   "label": "Branch (Cost Center)",
    "options": "Cost Center"
   },
   {
@@ -359,10 +358,6 @@
   {
    "fieldname": "section_break_rutf",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_kchn",
-   "fieldtype": "Column Break"
   },
   {
    "default": "0",
@@ -480,7 +475,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-25 20:31:50.243804",
+ "modified": "2025-08-26 18:41:55.262637",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

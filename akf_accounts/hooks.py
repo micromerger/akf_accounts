@@ -173,7 +173,8 @@ doc_events = {
     "Purchase Receipt": {
         "validate": "akf_accounts.utils.financial_closure.confirmation",
         "on_submit": ["akf_accounts.utils.financial_closure.confirmation",
-            "akf_accounts.utils.encumbrance.enc_purchase_receipt.update_grn_accounting_dimensions"
+            "akf_accounts.utils.encumbrance.enc_purchase_receipt.update_grn_accounting_dimensions",
+            "akf_accounts.utils.purchase_receipt.stock_ledger_entry.update_stock_dimensions"
         ]
 	},
     "Purchase Invoice": {

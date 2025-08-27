@@ -46,9 +46,9 @@ class Donation(Document):
 					frappe.throw(msg=f"{msg}", title="Payment Detail")
 
 	# def get_deduction_details(self, row):
-	# 		# if(row.donation_type=="Zakat"): return []
+	# 		# if(row.intention_id=="Zakat"): return []
 	# 		#Added by Aqsa
-	# 		if row.donation_type in ["", "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]: return []
+	# 		if row.intention_id in ["", "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]: return []
 
 	# 		result = frappe.db.sql(f"""
 	# 				SELECT 
@@ -81,8 +81,8 @@ class Donation(Document):
 		def get_deduction_details(row, deduction_breakeven):
 			# Added by Aqsa
 			# Mobeen said no deduction only on Zakat
-			# if (row.donation_type in [None, "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]): 
-			if (row.donation_type in [None, "Zakat"]) or (self.contribution_type=='Pledge'): 
+			# if (row.intention_id in [None, "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]): 
+			if (row.intention_id in [None, "Zakat"]) or (self.contribution_type=='Pledge'): 
 				return []
 
 			_breakeven = [d for d in deduction_breakeven if(d.random_id == row.random_id)]
@@ -118,18 +118,23 @@ class Donation(Document):
 			args.update({
 					"random_id": row.random_id,
 					"company": self.company,
-					"donor": row.donor_id,
-					"fund_class": row.fund_class_id,				
-					"project": args.project, # for income-type				
-					"service_area": row.pay_service_area,
-					"subservice_area": row.pay_subservice_area,
-					"product": row.pay_product,
+
+					"project_id": args.project, # for income-type		
+					"cost_center_id": self.donation_cost_center,				
+					"fund_class_id": row.fund_class_id,
+					"service_area_id": row.pay_service_area,
+					"subservice_area_id": row.pay_subservice_area,
+					"product_id": row.pay_product,
+					"donor_id": row.donor_id,
+					"donor_type_id": row.donor_type,				
+					"donor_desk_id": row.donor_desk_id,
+					"intention_id": row.intention_id,
+					"transaction_type_id": row.transaction_type_id,
+
 					"donation_amount": row.donation_amount,
 					"amount": percentage_amount,
-					"base_amount": base_amount,
-					"cost_center": self.donation_cost_center,
-					"donor_desk_id": row.donor_desk_id,
-					"donation_type_id": row.donation_type,
+					"base_amount": base_amount
+					
 					})
 			self.append("deduction_breakeven", args)
 
@@ -240,27 +245,31 @@ class Donation(Document):
 
 					args = {
 					"random_id": row1.random_id,
-					"company": row2.company, 
+									
 					"income_type": row2.income_type,
-					"fund_class": row1.fund_class_id,
-					"project": row2.project,
+    				"project_id": row2.project_id,
 					"account": row2.account, 
+
 					"percentage": row2.percentage, 
 					"min_percent": row2.min_percent, 
 					"max_percent": row2.max_percent,
 
-					"donor": row1.donor_id,
-					"service_area": row1.pay_service_area,
-					"subservice_area": row1.pay_subservice_area,
-					"product": row1.pay_product,
-
+					"company": row2.company, 
+					"cost_center_id": row1.cost_center,
+					"fund_class": row1.fund_class_id,
+					"service_area_id": row1.pay_service_area,
+					"subservice_area_id": row1.pay_subservice_area,
+					"product_id": row1.pay_product,
+					"donor_id": row1.donor_id,
+					"donor_type_id": row1.donor_type,
+					"donor_desk_id": row1.donor_desk_id,
+					"intention_id": row1.intention_id,
+					"transaction_type_id": row1.transaction_type_id,
+     
 					"donation_amount": row1.donation_amount,
 					"amount": percentage_amount,
 					"base_amount": base_amount,
-					# "service_area": row1.pay_service_area,
-					# "project": row1.pay_project,
 
-					"cost_center": row1.cost_center,
 					"payment_detail_id": row1.idx,
 					}
 					breakeven_list.append(args)
@@ -352,6 +361,10 @@ class Donation(Document):
 				"party": "",
 				"voucher_detail_no": row.name,
 				"donor": row.donor_id,
+				"donor_type": row.donor_type,
+				"donor_desk": row.donor_desk_id,
+				"donation_type": row.intention_id,
+				"transaction_type": row.transaction_type_id,
 				"fund_class": row.fund_class_id,
 				"service_area": row.pay_service_area,
 				"subservice_area": row.pay_subservice_area,
@@ -359,9 +372,6 @@ class Donation(Document):
 				# "project": row.project,
 				"cost_center": row.cost_center,
 				"account": row.equity_account,
-				"donation_type": row.donation_type,
-				"donor_desk": row.donor_desk_id,
-				"inventory_scenario": row.inventory_scenario,
 			})
 			c_args = get_currency_args()
 			args.update(c_args)
@@ -402,17 +412,19 @@ class Donation(Document):
 						"party_type": "",
 						"party": "",
 						"voucher_detail_no": row.name,
+      
 						"donor": rowp.donor_id,
+						"donor_type": rowp.donor_type,
+						"donor_desk": rowp.donor_desk_id,
+						"donation_type": rowp.intention_id,
+						"transaction_type": rowp.transaction_type_id,
+						"fund_class": rowp.fund_class_id,
 						"service_area": rowp.pay_service_area,
-						"subservice_area": row.pay_subservice_area,
+						"subservice_area": rowp.pay_subservice_area,
 						"product": rowp.pay_product if(rowp.pay_product) else rowp.product,
-						"fund_class": row.fund_class_id,
-
-						# "project": rowp.project,
-						"donation_type": row.donation_type,
-						"donor_desk": row.donor_desk_id,
-						"inventory_scenario": row.inventory_scenario,
+						# "project": row.project,
 						"cost_center": rowp.cost_center,
+      
 						"account": rowp.equity_account,
 						"debit": row.base_net_amount,
 						"credit": 0,
@@ -514,17 +526,19 @@ class Donation(Document):
 
 			args.update({
 				"account": row.account,
-				"cost_center": row.cost_center,
-				"donor": row.donor,
-				"fund_class": row.fund_class,
-				"service_area": row.service_area,
-				"subservice_area": row.subservice_area,
-				"product": row.product,
-				"project": row.project,
-				"donation_type": row.donation_type_id,
-				"donor_desk": row.donor_desk_id,
-				"inventory_scenario": row.inventory_scenario,
 				"voucher_detail_no": row.name,
+				
+				"donor": row.donor_id,
+				"donor_type": row.donor_type_id,
+				"donor_desk": row.donor_desk_id,
+				"donation_type": row.intention_id,
+				"transaction_type": row.transaction_type_id,
+				"fund_class": row.fund_class_id,
+				"service_area": row.service_area_id,
+				"subservice_area": row.subservice_area_id,
+				"product": row.product_id,
+				"project": row.project_id,
+				"cost_center": row.cost_center_id,
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
@@ -594,16 +608,19 @@ class Donation(Document):
 				"cost_center" : row.cost_center,
 				"paid_amount" : row.donation_amount,
 				"received_amount" : row.base_donation_amount,
+				# Dimensions
 				"donor": row.donor_id,
-				"fund_class": row.fund_class_id,
-				"service_area" : row.pay_service_area,
-				"subservice_area" : row.pay_subservice_area,
-				"product": row.product,
-				"donation_type": row.donation_type,
+				"donor_type": row.donor_type,
 				"donor_desk": row.donor_desk_id,
-				"inventory_scenario": row.inventory_scenario,
-				"project" : row.project,
-				"cost_center" : row.cost_center,
+				"donation_type": row.intention_id,
+				"transaction_type": row.transaction_type_id,
+				"fund_class": row.fund_class_id,
+				"service_area": row.pay_service_area,
+				"subservice_area": row.pay_subservice_area,
+				"product": row.pay_product if(row.pay_product) else row.product,
+				# "project": row.project,
+				"cost_center": row.cost_center,
+    
 				"references": [{
 						"reference_doctype": self.doctype,
 						"reference_name" : self.name,
@@ -973,16 +990,22 @@ def pledge_payment_entry(doc, values):
 		"paid_from" : row.receivable_account,
 		"paid_to" : values.account_paid_to,
 		"reference_date" : curdate,
-		"cost_center" : row.cost_center,
-		"paid_amount" : values.paid_amount ,
+		"paid_amount" : values.paid_amount,
 		"received_amount" : (values.paid_amount * exchange_rate),
-		"fund_class" : row.fund_class_id,		
-		"service_area" : row.pay_service_area,
-		"subservice_area" : row.pay_subservice_area,
-		"product" : row.pay_product,
-		# "project" : row.project,
-		"cost_center" : row.cost_center,
+		# Dimensions
 		"donor": row.donor_id,
+		"donor_type": row.donor_type,
+		"donor_desk": row.donor_desk_id,
+		"donation_type": row.intention_id,
+		"transaction_type": row.transaction_type_id,
+		"fund_class": row.fund_class_id,
+		"service_area": row.pay_service_area,
+		"subservice_area": row.pay_subservice_area,
+		"product": row.pay_product if(row.pay_product) else row.product,
+		# "project": row.project,
+		"cost_center": row.cost_center,
+		"account": row.equity_account,
+
 		"references": [{
 				"reference_doctype": "Donation",
 				"reference_name" : doc.name,
@@ -1030,16 +1053,21 @@ def return_payment_entry(doc):
 			"paid_from" : row.account_paid_to,
 			"paid_to" : row.receivable_account,
 			"reference_no" : row.transaction_no_cheque_no,
-			"cost_center" : row.cost_center,
 			"paid_amount" : row.outstanding_amount,
 			"received_amount" : row.outstanding_amount,
-			"fund_class" : row.fund_class_id,
-			"service_area" : row.pay_service_area,
-			"subservice_area" : row.pay_subservice_area,
-			"product" : row.pay_product,
-			# "project" : row.project,
-			"cost_center" : row.cost_center,
+
+			# Dimensions
 			"donor": row.donor_id,
+			"donor_type": row.donor_type,
+			"donor_desk": row.donor_desk_id,
+			"donation_type": row.intention_id,
+			"transaction_type": row.transaction_type_id,
+			"fund_class": row.fund_class_id,
+			"service_area": row.pay_service_area,
+			"subservice_area": row.pay_subservice_area,
+			"product": row.pay_product if(row.pay_product) else row.product,
+			# "project": row.project,
+			"cost_center": row.cost_center,
 
 			"references": [{
 					"reference_doctype": "Donation",

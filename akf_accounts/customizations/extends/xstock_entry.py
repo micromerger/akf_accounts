@@ -273,7 +273,7 @@ class XStockEntry(StockEntry):
                             custom_new = {row.custom_new}, 
                             custom_used = {row.custom_used}, 
                             
-                            custom_department= "{self.custom_department or ''}"
+                            custom_department= "{self.custom_department or ''}",
                             
                             project = "{row.custom_target_project or ''}",
                             fund_class = "{row.custom_fund_class_id or ''}",

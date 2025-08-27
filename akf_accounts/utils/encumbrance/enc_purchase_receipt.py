@@ -18,8 +18,10 @@ def grn_accounting_dimensions(doc):
 					subservice_area='{row.pd_subservice_area}',
 					product='{row.pd_product}',
 					donor = '{row.pd_donor}',
-					donor_desk = '{row.donor_desk}',
-					donation_type = '{row.donation_type}'
+					donor_type = '{row.pd_donor_type}',				
+					donor_desk = '{row.pd_donor_desk}',
+					donation_type = '{row.pd_intention}',
+					transaction_type = '{row.pd_transaction_type}'
 				Where
 					voucher_no='{doc.name}'
 				''')
