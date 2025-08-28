@@ -869,7 +869,7 @@ class Donation(Document):
 				'custom_new': row.new,
 				'custom_used': row.used,
 
-				'custom_target_project': row.project,
+				# 'custom_target_project': row.project,
 				'custom_fund_class_id': row.fund_class,
 				'custom_service_area_id': row.service_area,
 				'custom_subservice_area_id': row.subservice_area,

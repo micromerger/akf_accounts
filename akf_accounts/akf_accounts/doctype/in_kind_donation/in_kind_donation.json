@@ -18,7 +18,6 @@
   "used",
   "accounting_dimensions_section",
   "column_break_gzjy",
-  "project",
   "cost_center",
   "fund_class",
   "service_area",
@@ -89,14 +88,7 @@
    "label": "Accounting Dimensions"
   },
   {
-   "fieldname": "project",
-   "fieldtype": "Link",
-   "label": "Project",
-   "options": "Project",
-   "reqd": 1
-  },
-  {
-   "fetch_from": "project.custom_service_area",
+   "fetch_from": "fund_class.service_area",
    "fetch_if_empty": 1,
    "fieldname": "service_area",
    "fieldtype": "Link",
@@ -105,7 +97,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "project.custom_product",
+   "fetch_from": "fund_class.product",
    "fetch_if_empty": 1,
    "fieldname": "product",
    "fieldtype": "Link",
@@ -121,13 +113,11 @@
    "reqd": 1
   },
   {
-   "fetch_from": "project.fund_class",
-   "fetch_if_empty": 1,
    "fieldname": "fund_class",
    "fieldtype": "Link",
    "label": "Fund Class",
    "options": "Fund Class",
-   "read_only": 1
+   "reqd": 1
   },
   {
    "fieldname": "item_code",
@@ -147,7 +137,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "project.custom_subservice_area",
+   "fetch_from": "fund_class.subservice_area",
    "fetch_if_empty": 1,
    "fieldname": "subservice_area",
    "fieldtype": "Link",
@@ -172,15 +162,6 @@
    "fieldtype": "Link",
    "label": "Donor Type",
    "options": "Donor Type",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "project.cost_center",
-   "fetch_if_empty": 1,
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "label": "Cost Center",
-   "options": "Cost Center",
    "read_only": 1
   },
   {
@@ -225,14 +206,20 @@
    "fieldname": "asset_category",
    "fieldtype": "Link",
    "label": "Asset Category",
-   "options": "Asset Category",
+   "options": "Asset Category"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-25 20:29:27.169051",
+ "modified": "2025-08-27 19:49:37.980026",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "In Kind Donation",

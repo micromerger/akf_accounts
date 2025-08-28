@@ -475,8 +475,7 @@
    "fieldname": "donation_type",
    "fieldtype": "Link",
    "label": "Intention",
-   "options": "Donation Type",
-   "reqd": 1
+   "options": "Donation Type"
   },
   {
    "depends_on": "eval: doc.mode_of_payment!='Cash' && doc.mode_of_payment!=undefined && doc.mode_of_payment!=\"\";",
@@ -736,7 +735,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-26 18:49:03.055800",
+ "modified": "2025-08-28 11:58:58.050720",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

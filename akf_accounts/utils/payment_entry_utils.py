@@ -48,8 +48,8 @@ def set_tax_withholding_income_tax(self):
 			"net_total": self.custom_amount_before_discount if(self.custom_apply_discount_breakeven and self.custom_calculate_tax_on=='Gross Amount') else net_total # nabeel, 01-08-2025
 		}
 	)
-	print('-----------------------------')
-	print(args)
+	# print('-----------------------------')
+	# print(args)
 	tax_withholding_details = get_party_tax_withholding_details(args, self.tax_withholding_category)
 	
 	if not tax_withholding_details:

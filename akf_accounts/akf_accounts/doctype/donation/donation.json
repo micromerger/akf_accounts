@@ -450,12 +450,14 @@
    "options": "In Kind Donation"
   },
   {
+   "default": "Material Receipt",
    "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
    "fieldname": "stock_entry_type",
    "fieldtype": "Link",
    "label": "Stock Entry Type",
    "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
-   "options": "Stock Entry Type"
+   "options": "Stock Entry Type",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_gxsi",
@@ -475,7 +477,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-26 18:41:55.262637",
+ "modified": "2025-08-27 19:55:09.292329",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
