@@ -17,16 +17,16 @@ def get_donor_balances(filters=None):
 	
 	accounts = get_company_defaults(filters.get("company"))
 
-	response = frappe.db.sql(""" 
- 		Select 
-   			cost_center, account, donor, 
+	query = """ 
+		Select 
+			cost_center, account, donor, 
 			(select donor_name from `tabDonor` where name=gl.donor limit 1) as donor_name,
 			sum(credit-debit) as balance
 
 		From 
-  			`tabGL Entry` gl
+			`tabGL Entry` gl
 		Where 
-  			docstatus=1
+			docstatus=1
 			and is_cancelled=0
 			and account in (select name from tabAccount where account_type="Equity")
 			and ifnull(project, "")=""
@@ -37,7 +37,9 @@ def get_donor_balances(filters=None):
 			balance>0
 		Order By
 			balance desc
-	""".format(get_conditions(filters, accounts)), filters, as_dict=1)
+	""".format(get_conditions(filters, accounts))
+
+	response = frappe.db.sql(query, filters, as_dict=1)
 	
 	amount = filters.get("amount")
 	

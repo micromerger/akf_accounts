@@ -170,8 +170,7 @@
    "fieldname": "transaction_type",
    "fieldtype": "Link",
    "label": "Transaction Type",
-   "options": "Transaction Type",
-   "read_only": 1
+   "options": "Transaction Type"
   },
   {
    "fieldname": "column_break_hrwc",
@@ -181,7 +180,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-02 14:23:19.641320",
+ "modified": "2025-09-02 15:23:01.518178",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer To",
