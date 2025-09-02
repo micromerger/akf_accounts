@@ -587,7 +587,7 @@ class Donation(Document):
 		if((self.reference_doctype=='Payment Entry') and (self.reference_docname)): return
 		if(self.is_return or self.unknown_to_known): return
 		args = {}
-		
+		MERCHANT_LIST = ["Merchant - Known", "Merchant - Unknown"]
 		for row in self.payment_detail:
 			args = frappe._dict({
 				"doctype": "Payment Entry",
@@ -632,7 +632,7 @@ class Donation(Document):
 				}]
 			})
 			# frappe.throw(frappe.as_json(args))
-			if(self.donor_identity == "Merchant - Known"):
+			if(self.donor_identity in MERCHANT_LIST):
 				pass
 			else:
 				doc = frappe.get_doc(args)
@@ -643,7 +643,7 @@ class Donation(Document):
 					# set Payment Entry id in payment_detail child table.
 					frappe.db.set_value("Payment Detail", row.name, "payment_entry", doc.name)
 
-		if(self.donor_identity == "Merchant - Known"):
+		if(self.donor_identity in MERCHANT_LIST):
 			args.update({
 				"paid_amount" : self.total_donation,
 				"received_amount" : self.total_donation,
