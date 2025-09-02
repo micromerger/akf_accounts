@@ -131,6 +131,7 @@
    "read_only": 1
   },
   {
+   "fetch_from": "project.fund_class",
    "fieldname": "fund_class",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -180,7 +181,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-02 12:54:07.315738",
+ "modified": "2025-09-02 14:23:19.641320",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer To",

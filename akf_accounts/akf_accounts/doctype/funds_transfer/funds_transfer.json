@@ -28,12 +28,11 @@
   "to_bank",
   "account_balance_to",
   "inter_branch_accounts_info_section",
+  "inter_branch_accounts_info_column",
   "desposit_in_transit_account",
-  "column_break_fwiz",
   "ibft_equity_account",
-  "section_break_gcax",
+  "column_break_fwiz",
   "from_gl_entry",
-  "column_break_cugq",
   "to_gl_entry",
   "section_break_jrzi",
   "funds_transfer_from",
@@ -209,15 +208,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_gcax",
-   "fieldtype": "Section Break",
-   "label": "Workflow GL Entries (Inter Branch)"
-  },
-  {
-   "fieldname": "column_break_cugq",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "0",
    "fieldname": "from_gl_entry",
    "fieldtype": "Check",
@@ -234,7 +224,7 @@
   {
    "fieldname": "inter_branch_accounts_info_section",
    "fieldtype": "Section Break",
-   "label": "Inter Branch (Accounts) Info"
+   "hide_border": 1
   },
   {
    "depends_on": "eval: doc.transaction_type==\"Inter Branch\" || doc.transaction_type==\"Inter Bank\";",
@@ -247,8 +237,10 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval: doc.transaction_type==\"Inter Branch\" ;",
    "fieldname": "column_break_fwiz",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "label": "Workflow GL Entries (Inter Branch)"
   },
   {
    "depends_on": "eval:  doc.transaction_type==\"Inter Branch\";",
@@ -285,6 +277,7 @@
    "depends_on": "eval: doc.transaction_type == \"Inter Branch\";",
    "fieldname": "inter_branch_section",
    "fieldtype": "Section Break",
+   "hide_border": 1,
    "label": "Inter Branch"
   },
   {
@@ -319,12 +312,17 @@
    "fieldtype": "Currency",
    "label": "Transfer Amount",
    "mandatory_depends_on": "eval: doc.account_balance_from > 0;"
+  },
+  {
+   "fieldname": "inter_branch_accounts_info_column",
+   "fieldtype": "Column Break",
+   "label": "Inter Branch (Accounts) Info"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-22 13:31:29.064268",
+ "modified": "2025-09-02 14:29:30.543730",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",

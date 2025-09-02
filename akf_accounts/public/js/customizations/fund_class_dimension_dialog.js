@@ -399,7 +399,7 @@ function get_donations(frm) {
                         "pd_subservice_area": values.subservice_area,
                         "pd_product": values.product,
                         "pd_donor": row.donor,
-                        "pd_donor_type": values.donor_desk,
+                        "pd_donor_type": values.donor_type,
                         "pd_donor_desk": values.donor_desk,
                         "pd_intention": values.intention,
                         "pd_transaction_type": values.transaction_type,
@@ -415,8 +415,8 @@ function get_donations(frm) {
                     });
                 }
             });
-            console.log(values.estimated_costing);
-            console.log(total_budget);
+            // console.log(values.estimated_costing);
+            // console.log(total_budget);
             // Check if estimated cost is greater than total budget
             if (parseFloat(values.estimated_costing) > total_budget) {
                 d.fields_dict.html_message.df.options = `<b style="color: red;">Estimated Cost (${values.estimated_costing}) cannot be greater than total budget (${total_budget})</b>`;
@@ -435,7 +435,7 @@ function get_donations(frm) {
                     custom_product: values.product,
                     custom_donor_type: values.donor_type,
                     custom_donor_desk: values.donor_desk,
-                    custom_donation_type: values.donation_type,
+                    custom_donation_type: values.intention,
                     custom_transaction_type: values.transaction_type,
                     cost_center: values.cost_center,
                     // custom_program_details: details
