@@ -48,10 +48,12 @@ def get_donor_balance(filters=None):
 		row["amortise_inventory_fund_account"] = accounts.default_inventory_fund_account
 		if(row.balance<=amount):
 			amount -= row.balance
+			row["transfer_amount"] = row.balance
 			row["__checked"] = 1
 		elif(amount>0 and row.balance>=amount):
-			amount -= amount
+			row["transfer_amount"] = amount
 			row["__checked"] = 1
+			amount -= amount
 		
 	return response
 

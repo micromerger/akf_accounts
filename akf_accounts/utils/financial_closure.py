@@ -5,6 +5,7 @@ def confirmation(doc, method=None): # By Nabeel Saleem
 	if(doc.doctype in ["Donation", "Material Request", "Purchase Receipt", "Purchase Invoice", "Payment Entry"]):
 		if(hasattr(doc, "payment_detail")): child_table = doc.payment_detail
 		elif(hasattr(doc, "program_details")): child_table = doc.program_details
+		elif(hasattr(doc, "custom_program_details")): child_table = doc.custom_program_details
 	
 	project = None
 	for row in child_table:

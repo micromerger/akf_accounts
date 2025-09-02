@@ -346,6 +346,13 @@ function get_donations(frm) {
                         in_list_view: 1,
                         read_only: 1,
                     },
+                    {
+                        fieldname: "transfer_amount",
+                        label: __("Transfer Amount"),
+                        fieldtype: "Currency",
+                        in_list_view: 1,
+                        read_only: 1,
+                    },
                 ],
                 /* on_add_row: (idx) => {
                   // idx = visible idx of the row starting from 1
@@ -400,7 +407,7 @@ function get_donations(frm) {
                             // "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
                             "ff_balance_amount": row.balance,
                             
-                            "ff_transfer_amount": values.transfer_amount
+                            "ff_transfer_amount": row.transfer_amount
                         });
                     } else {
                         details.push({
@@ -423,6 +430,7 @@ function get_donations(frm) {
                             "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
                             "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
                             "actual_balance": row.balance,
+                            "transfer_amount": row.transfer_amount,
                         });
                     }
                 }
@@ -442,7 +450,7 @@ function get_donations(frm) {
             d.fields_dict.html_message.df.options = description;
             d.fields_dict.html_message.refresh();
         },
-        primary_action_label: __("Add Balances"),
+        primary_action_label: __("Add"),
     });
     d.show();
 

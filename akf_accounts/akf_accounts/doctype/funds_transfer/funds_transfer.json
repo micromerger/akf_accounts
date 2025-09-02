@@ -63,6 +63,7 @@
    "search_index": 1
   },
   {
+   "bold": 1,
    "default": "Inter Fund",
    "fieldname": "transaction_type",
    "fieldtype": "Select",
@@ -323,7 +324,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-02 15:19:37.541098",
+ "modified": "2025-09-02 15:32:05.272769",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",
