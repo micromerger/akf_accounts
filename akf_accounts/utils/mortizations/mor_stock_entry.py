@@ -3,7 +3,7 @@ from frappe.utils import get_link_to_form, fmt_money
 from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 from erpnext.accounts.utils import get_company_default
 from akf_accounts.utils.accounts_defaults import (
-    get_company_defaults
+	get_company_defaults
 )
 stock_entry_type_list = ['Material Issue']
 
@@ -59,7 +59,7 @@ def make_mortizations_gl_entries(doc, method=None):
 
 			restricted_income_account_gl_entry(args, row, difference_amount, accounts.default_income)
 			material_request_encumbrance_debit_gl_entry(args, row, difference_amount) # debit
-			# make_inventory_account_gl_entry(self.company, args, row, difference_amount, accounts.default_inventory_fund_account) # credit
+			make_inventory_account_gl_entry(self.company, args, row, difference_amount, accounts.default_inventory_fund_account) # credit
 			restricted_expense_account_gl_entry(args, row, difference_amount, accounts.restricted_expense_account)
 
 def restricted_income_account_gl_entry(args, row, amount, default_income):
@@ -69,13 +69,20 @@ def restricted_income_account_gl_entry(args, row, amount, default_income):
 		'party_type': 'Donor',
 		'party': row.pd_donor,
 		'account': default_income, # Restricted Income 
-		'cost_center': row.pd_cost_center,
-		'service_area': row.pd_service_area,
-		'subservice_area': row.pd_subservice_area,
-		'product': row.pd_product,
-		'project': row.pd_project,
-		'fund_class': row.pd_fund_class,
-		'donor': row.pd_donor,
+
+		"project" : row.pd_project,
+		"fund_class" : row.pd_fund_class,
+		"service_area" : row.pd_service_area,
+		"subservice_area" : row.pd_subservice_area,
+		"product" : row.pd_product,
+		"donor" : row.pd_donor,			
+		"donor_desk" : row.pd_donor_desk,
+		"donor_type" : row.pd_donor_type,
+		"donation_type" : row.pd_intention,
+		"cost_center" : row.pd_cost_center,
+		"transaction_type" : row.pd_transaction_type,
+		
+   
 		'credit': amount,
 		'credit_in_account_currency': amount,
 		'transaction_currency': row.currency,
@@ -92,13 +99,19 @@ def material_request_encumbrance_debit_gl_entry(args, row, amount):
 		'party_type': 'Donor',
 		'party': row.pd_donor,
 		'account': row.encumbrance_material_request_account,
-		'cost_center': row.pd_cost_center,
-		'service_area': row.pd_service_area,
-		'subservice_area': row.pd_subservice_area,
-		'product': row.pd_product,
-		'project': row.pd_project,
-		'fund_class': row.pd_fund_class,
-		'donor': row.pd_donor,
+		
+		"project" : row.pd_project,
+		"fund_class" : row.pd_fund_class,
+		"service_area" : row.pd_service_area,
+		"subservice_area" : row.pd_subservice_area,
+		"product" : row.pd_product,
+		"donor" : row.pd_donor,			
+		"donor_desk" : row.pd_donor_desk,
+		"donor_type" : row.pd_donor_type,
+		"donation_type" : row.pd_intention,
+		"cost_center" : row.pd_cost_center,
+		"transaction_type" : row.pd_transaction_type,
+		
 		'debit': amount,
 		'debit_in_account_currency': amount,
 		'transaction_currency': row.currency,
@@ -115,13 +128,20 @@ def make_inventory_account_gl_entry(company, args, row, amount, default_inventor
 		'party_type': 'Donor',
 		'party': row.pd_donor,
 		'account': default_inventory_fund_account,
-		'cost_center': row.pd_cost_center,
-		'service_area': row.pd_service_area,
-		'subservice_area': row.pd_subservice_area,
-		'product': row.pd_product,
-		'project': row.pd_project,
-		'fund_class': row.pd_fund_class,
-		'donor': row.pd_donor,
+  
+		"project" : row.pd_project,
+		"fund_class" : row.pd_fund_class,
+		"service_area" : row.pd_service_area,
+		"subservice_area" : row.pd_subservice_area,
+		"product" : row.pd_product,
+		"donor" : row.pd_donor,			
+		"donor_desk" : row.pd_donor_desk,
+		"donor_type" : row.pd_donor_type,
+		"donation_type" : row.pd_intention,
+		"cost_center" : row.pd_cost_center,
+		"transaction_type" : row.pd_transaction_type,
+		
+  
 		'credit': amount,
 		'credit_in_account_currency': amount,
 		'transaction_currency': row.currency,
@@ -138,13 +158,19 @@ def restricted_expense_account_gl_entry(args, row, amount, restricted_expense_ac
 		'party_type': 'Donor',
 		'party': row.pd_donor,
 		'account': restricted_expense_account,
-		'cost_center': row.pd_cost_center,
-		'service_area': row.pd_service_area,
-		'subservice_area': row.pd_subservice_area,
-		'product': row.pd_product,
-		'project': row.pd_project,
-		'fund_class': row.pd_fund_class,
-		'donor': row.pd_donor,
+
+		"project" : row.pd_project,
+		"fund_class" : row.pd_fund_class,
+		"service_area" : row.pd_service_area,
+		"subservice_area" : row.pd_subservice_area,
+		"product" : row.pd_product,
+		"donor" : row.pd_donor,			
+		"donor_desk" : row.pd_donor_desk,
+		"donor_type" : row.pd_donor_type,
+		"donation_type" : row.pd_intention,
+		"cost_center" : row.pd_cost_center,
+		"transaction_type" : row.pd_transaction_type,
+
 		'debit': amount,
 		'debit_in_account_currency': amount,
 		'transaction_currency': row.currency,

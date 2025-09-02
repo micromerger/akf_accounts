@@ -6,6 +6,7 @@ def get_data():
 		'non_standard_fieldnames': {
 			'Payment Entry': 'reference_name',
 			"Donation": "return_against",
+			"Stock Entry": "donation"
 		},
 		# "internal_links": {
 		# 	"Donation": ["payment_detail", "reverse_against"],
@@ -21,6 +22,10 @@ def get_data():
 			{
 				"label": _("Returns | Unknown To Known"), 
 				"items": ["Donation"]
+			},
+			{
+				"label": _("In Kind Donation"), 
+				"items": ["Stock Entry"]
 			},
 		]
 	}

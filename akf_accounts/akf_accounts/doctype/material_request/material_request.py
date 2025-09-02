@@ -779,7 +779,8 @@ def make_stock_entry(source_name, target_doc=None):
 		# target.purpose = source.material_request_type
 		target.purpose = material_request_type
 		target.from_warehouse = source.set_from_warehouse
-		target.to_warehouse = source.set_warehouse
+		if(material_request_type!= "Inventory to Asset"):
+			target.to_warehouse = source.set_warehouse
 
 		if source.job_card:
 			target.purpose = "Material Transfer for Manufacture"

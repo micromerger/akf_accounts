@@ -244,7 +244,7 @@ class XStockEntry(StockEntry):
                             custom_new = {row.custom_new}, 
                             custom_used = {row.custom_used},
                             
-                            project = "{row.custom_target_project or ''}",
+                            project = "{row.custom_project_id or ''}",
                             fund_class = "{row.custom_fund_class_id or ''}",
                             service_area = "{row.custom_service_area_id or ''}",
                             subservice_area = "{row.custom_subservice_area_id or ''}",
@@ -275,7 +275,7 @@ class XStockEntry(StockEntry):
                             
                             custom_department= "{self.custom_department or ''}",
                             
-                            project = "{row.custom_target_project or ''}",
+                            project = "{row.custom_project_id or ''}",
                             fund_class = "{row.custom_fund_class_id or ''}",
                             service_area = "{row.custom_service_area_id or ''}",
                             subservice_area = "{row.custom_subservice_area_id or ''}",
@@ -306,7 +306,7 @@ class XStockEntry(StockEntry):
                             
                             custom_department = "{self.custom_department or ''}",
                             
-                            project = "{row.custom_target_project or ''}",
+                            project = "{row.custom_project_id or ''}",
                             fund_class = "{row.custom_fund_class_id or ''}",
                             service_area = "{row.custom_service_area_id or ''}",
                             subservice_area = "{row.custom_subservice_area_id or ''}",
@@ -339,7 +339,7 @@ class XStockEntry(StockEntry):
                             
                             custom_department='{self.custom_department or ''}',
                             
-                            project = "{row.custom_target_project or ''}",
+                            project = "{row.custom_project_id or ''}",
                             fund_class = "{row.custom_fund_class_id or ''}",
                             service_area = "{row.custom_service_area_id or ''}",
                             subservice_area = "{row.custom_subservice_area_id or ''}",

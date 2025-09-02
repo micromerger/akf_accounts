@@ -59,7 +59,7 @@ def create_asset_item_and_asset(self):
 			# "inventory_flag": row.inventory_flag,
 			# "inventory_scenario":row.inventory_scenario
 			#Updated Dimensions, Mubarrim - August 26, 2023
-			"project" : row.custom_target_project,
+			"project" : row.custom_project_id,
 			"fund_class" : row.custom_fund_class_id,
 			"service_area" : row.custom_service_area_id,
 			"subservice_area" : row.custom_subservice_area_id,

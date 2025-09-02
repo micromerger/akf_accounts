@@ -156,8 +156,7 @@
    "fieldname": "pd_fund_class",
    "fieldtype": "Link",
    "label": "Fund Class",
-   "options": "Fund Class",
-   "read_only": 1
+   "options": "Fund Class"
   },
   {
    "fieldname": "amount",
@@ -221,7 +220,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-27 13:41:55.677020",
+ "modified": "2025-08-28 12:40:22.646970",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",

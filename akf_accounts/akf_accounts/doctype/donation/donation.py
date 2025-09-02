@@ -861,6 +861,7 @@ class Donation(Document):
 			'posting_time': self.posting_time,
 			'to_warehouse': self.warehouse,
 			# 'custom_donor_ids': self.donor_list,
+			'donation': self.name,
 			'items': [{
 				't_warehouse': self.warehouse,
 				'item_code': row.item_code,
@@ -868,7 +869,6 @@ class Donation(Document):
 				'basic_rate': row.basic_rate,
 				'custom_new': row.new,
 				'custom_used': row.used,
-
 				# 'custom_target_project': row.project,
 				'custom_fund_class_id': row.fund_class,
 				'custom_service_area_id': row.service_area,
@@ -881,7 +881,6 @@ class Donation(Document):
 				'custom_cost_center_id': row.cost_center,
 				'custom_transaction_type_id': row.transaction_type,
 				'custom_asset_category_id': row.asset_category
-
 			} for row in self.items]
 		})
 		doc = frappe.get_doc(args)
