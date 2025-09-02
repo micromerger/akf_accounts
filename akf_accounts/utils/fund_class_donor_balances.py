@@ -68,6 +68,7 @@ def get_conditions(filters, accounts):
 	conditions += " and donor_type = %(donor_type)s " if(filters.get('donor_type')) else ""
 	conditions += " and donor_desk = %(donor_desk)s " if(filters.get('donor_desk')) else ""
 	conditions += " and donation_type = %(intention)s " if(filters.get('intention')) else ""
+	conditions += " and transaction_type = %(transaction_type)s " if(filters.get('transaction_type')) else ""
 
 	doctype = filters.get('doctype')
 	

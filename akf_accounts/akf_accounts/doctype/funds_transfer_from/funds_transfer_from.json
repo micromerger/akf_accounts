@@ -7,22 +7,25 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "ff_company",
-  "ff_account",
-  "ff_cost_center",
+  "project",
+  "fund_class",
   "ff_service_area",
   "ff_subservice_area",
   "ff_product",
-  "project",
+  "column_break_xadf",
   "ff_donor",
   "ff_donor_name",
+  "donor_type",
+  "donor_desk",
+  "donation_type",
+  "transaction_type",
+  "column_break_tzki",
+  "ff_company",
+  "ff_cost_center",
+  "ff_account",
   "ff_balance_amount",
   "ff_transfer_amount",
-  "column_break_tzki",
-  "transfer",
-  "fund_class",
-  "donor_desk",
-  "donation_type"
+  "transfer"
  ],
  "fields": [
   {
@@ -141,12 +144,30 @@
    "label": "Intention",
    "options": "Donation Type",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xadf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "donor_type",
+   "fieldtype": "Link",
+   "label": "Donor Type",
+   "options": "Donor Desk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transaction_type",
+   "fieldtype": "Link",
+   "label": "Transaction Type",
+   "options": "Transaction Type",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-12 15:29:42.375143",
+ "modified": "2025-09-02 12:32:47.544792",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer From",
