@@ -76,7 +76,7 @@ def make_debit_normal_equity_account(self, row, amount):
 		'party': row.pd_donor,
 		'account': row.pd_account,
 		
-		'project': row.pd_project or self.name,		
+		# 'project': row.pd_project or self.name,
 		'cost_center': row.pd_cost_center,
 		'fund_class': self.fund_class,	
 		'service_area': row.pd_service_area,
