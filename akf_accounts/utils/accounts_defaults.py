@@ -59,3 +59,14 @@ def get_company_defaults(company):
 		# Income (In Transit)
 		"default_income": doc.custom_default_income,
 	})
+ 
+
+# sudo bench --site erp.alkhidmat.com --force restore /home/master/Frappe-alkhidmat/sites/erp.alkhidmat.com/private/backups/20250902_185810-erp_alkhidmat_com-database.sql
+# pv /home/master/Frappe-alkhidmat/sites/erp.alkhidmat.com/private/backups/20250902_185810-erp_alkhidmat_com-database.sql | mysql -u root -p erp_alkhidmat_com
+# U%itW&Zt4FJM^h
+#  bench --site erp.alkhidmat.com execute akf_accounts.utils.accounts_defaults.datalist
+# ls -lh /home/master/Frappe-alkhidmat/sites/backups/20250902_190111-erp_alkhidmat_com-database.sql
+
+def datalist():
+	resp = frappe.db.sql('select name from `tabCompany`')
+	print(resp)

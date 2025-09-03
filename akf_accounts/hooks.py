@@ -138,13 +138,14 @@ doctype_js = {
 # Override standard doctype classes
 
 override_doctype_class = {
-	"Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
+    "Material Request": "akf_accounts.customizations.overrides.cdoctype.material_request.MaterialRequest",
     "Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
-	# "Purchase Receipt" : "akf_accounts.customizations.extends.xpurchase_receipt.XAssetInvenPurchase",
-    # "Purchase Invoice" : "akf_accounts.customizations.extends.xpurchase_invoice.XPurchaseInvoice",
+	"Purchase Receipt" : "akf_accounts.customizations.overrides.cdoctype.purchase_receipt.PurchaseReceipt",
+    "Purchase Invoice" : "akf_accounts.customizations.overrides.cdoctype.purchase_invoice.PurchaseInvoice",
     # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
-    # "Asset": "akf_accounts.customizations.extends.XAsset.AssetExtendedClass",
-    # "Asset Movement": "akf_accounts.customizations.extends.XAssetMovement.AssetMovementExtendedClass"
+    "Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
+    "Asset": "akf_accounts.customizations.overrides.cdoctype.asset.Asset",
+    "Asset Movement": "akf_accounts.customizations.overrides.cdoctype.asset.AssetMovement"
    
 }
 # Document Events
@@ -210,6 +211,13 @@ doc_events = {
 	},
     # "Tax Withholding Category": {
     #     "validate": "akf_accounts.utils.taxation.tax_withholding_category.set_sales_tax_and_province_rate",
+    # }
+    # "Asset Movement": {
+    #     "on_submit": [
+    #         "akf_accounts.utils.asset_gle_entry.asset_movement.make_asset_movement_gl_entries",
+    #         "akf_accounts.utils.asset_gle_entry.asset_movement.make_asset_inter_fund_transfer_gl_entries",
+    #     ],
+    #     "on_cancel": "akf_accounts.utils.asset_gle_entry.asset_movement.delete_all_gl_entries",
     # }
 }
 
