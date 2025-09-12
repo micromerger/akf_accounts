@@ -343,14 +343,15 @@ accounting_dimension_doctypes = [
     "Stock Ledger Entry"
 ]
 # fixtures = ['Inventory Dimension', 'Accounting Dimension', 'Country', 'Donor Type', 'Donation Type']
-fixtures = [
-    {
-        "dt": "Custom Field",
-        "filters": [
-            ["dt", "in", ["Company", "Cost Center", ""]],
-            ["module", "in", ["AKF Accounts"]]
-        ]
-    }
-]
+# fixtures = ["Company", "Cost Center", "Account"]
+# fixtures = [
+#     {
+#         "dt": "Custom Field",
+#         "filters": [
+#             ["dt", "in", ["Company", "Cost Center", ""]],
+#             ["module", "in", ["AKF Accounts"]]
+#         ]
+#     }
+# ]
 
 # bench --site al-khidmat.com export-fixtures
