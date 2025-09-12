@@ -855,7 +855,7 @@ class Donation(Document):
 	def make_stock_entry_for_in_kind_donation(self):
 		args = frappe._dict({
 			'doctype': 'Stock Entry',
-			'stock_entry_type': self.stock_entry_type,
+			'stock_entry_type': self.stock_entry_type or "Material Receipt",
 			'company': self.company,
 			'posting_date': self.posting_date,
 			'posting_time': self.posting_time,

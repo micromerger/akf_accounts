@@ -455,7 +455,6 @@
    "fieldname": "stock_entry_type",
    "fieldtype": "Link",
    "label": "Stock Entry Type",
-   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
    "options": "Stock Entry Type",
    "read_only": 1
   },
@@ -477,7 +476,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-27 19:55:09.292329",
+ "modified": "2025-09-12 20:31:30.495126",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
@@ -499,6 +498,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [
