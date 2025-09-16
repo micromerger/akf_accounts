@@ -110,6 +110,8 @@ class MaterialRequest(BuyingController):
 
 	def validate(self):
 		super(MaterialRequest, self).validate()
+		
+		self.flags.ignore_mandatory = True # Nabeel Saleem, 16-09-2025
 
 		self.validate_schedule_date()
 		self.check_for_on_hold_or_closed_status("Sales Order", "sales_order")
