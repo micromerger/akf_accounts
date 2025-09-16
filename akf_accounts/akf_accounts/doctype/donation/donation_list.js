@@ -18,15 +18,20 @@ frappe.listview_settings['Donation'] = {
 			"Overdue": "red",
 			"Partly Paid": "yellow",
 			"Internal Transfer": "darkgrey",
-			"Unknown To Known": "green"
+			"Unknown To Known": "green",
+			"In Kind": "green",
 		};
 		// console.log(doc.unknown_to_known);
 		// console.log(doc.status);
 		if(doc.unknown_to_known || doc.status=="Unknown To Known"){
 			return [__("Unknown To Known"), status_colors["Unknown To Known"], "status,=,"+"Unknown To Known"];
 		}
-		else if((doc.status=="Paid" || doc.outstanding_amount==0) && (!doc.is_return) ){
-			return [__("Paid"), status_colors["Paid"], "status,=,"+"Paid"];
+		else if((doc.outstanding_amount==0) && (!doc.is_return) ){
+			if(doc.status=="Paid"){
+				return [__("Paid"), status_colors["Paid"], "status,=,"+"Paid"];
+			}else if(doc.status=="In Kind"){
+				return [__("In Kind"), status_colors["In Kind"], "status,=,"+"In Kind"];
+			}
 		}
 		else if(doc.is_return || doc.status=="Return"){
 			return [__("Return"), status_colors["Return"], "status,=,"+"Paid"];

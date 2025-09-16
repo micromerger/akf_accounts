@@ -63,7 +63,7 @@ def get_gl_entry_dict(self):
 		"service_area": self.service_area,
 		"subservice_area": self.subservice_area,
 		"product": self.product,
-		"project": self.project,
+		"project": self.project if(hasattr(self, "project")) else "",
 		"donor": self.donor,
 	})
 

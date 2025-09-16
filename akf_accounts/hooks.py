@@ -46,9 +46,12 @@ doctype_js = {
 	# "Purchase Receipt" : "public/js/customizations/purchase_receipt.js",
     "Purchase Invoice" : "public/js/customizations/purchase_invoice.js",
     # "Asset" : "public/js/customizations/asset.js",
-    "Asset Movement": "public/js/customizations/asset_movement.js",
+    # "Asset Movement": "public/js/customizations/asset_movement.js",
 	# "Purchase Order": "public/js/customizations/enc_purchase_order.js",
-    "Material Request": "public/js/customizations/enc_material_request.js",
+    "Material Request": [
+        "public/js/customizations/material_request.js",
+        "public/js/customizations/enc_material_request.js"
+    ],
     "Project": "public/js/customizations/enc_project.js",
     "Stock Entry": "public/js/customizations/material_request_get_items_from.js"
 }
@@ -145,7 +148,7 @@ override_doctype_class = {
     # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
     "Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
     "Asset": "akf_accounts.customizations.overrides.cdoctype.asset.Asset",
-    "Asset Movement": "akf_accounts.customizations.overrides.cdoctype.asset.AssetMovement"
+    # "Asset Movement": "akf_accounts.customizations.overrides.cdoctype.asset_movement.AssetMovement"
    
 }
 # Document Events
@@ -338,8 +341,8 @@ override_whitelisted_methods = {
 # fixtures = ["Inventory Flag", "Inventory Scenario", "Accounting Dimension"]
 
 accounting_dimension_doctypes = [
-	"Payment Detail",
-	"Deduction Breakeven",
+	# "Payment Detail",
+	# "Deduction Breakeven",
     "Stock Ledger Entry"
 ]
 # fixtures = ['Inventory Dimension', 'Accounting Dimension', 'Country', 'Donor Type', 'Donation Type']

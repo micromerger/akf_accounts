@@ -155,7 +155,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nUnpaid\nPaid\nPartly Paid\nOverdue\nPartly Return\nReturn\nCredit Note Issued\nUnknown To Known",
+   "options": "Draft\nUnpaid\nPaid\nPartly Paid\nOverdue\nPartly Return\nReturn\nCredit Note Issued\nUnknown To Known\nIn Kind",
    "read_only": 1
   },
   {
@@ -267,8 +267,7 @@
   },
   {
    "fieldname": "section_break_bezw",
-   "fieldtype": "Section Break",
-   "label": "Currency Exchange"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_gruy",
@@ -357,7 +356,8 @@
   },
   {
    "fieldname": "section_break_rutf",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hide_border": 1
   },
   {
    "default": "0",
@@ -476,7 +476,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-12 20:31:30.495126",
+ "modified": "2025-09-15 15:07:46.865730",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",

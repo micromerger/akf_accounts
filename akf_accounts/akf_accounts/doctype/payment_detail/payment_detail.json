@@ -6,8 +6,9 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "donor_details_section",
   "random_id",
+  "donor_details_section",
+  "donor_details_column",
   "donor_id",
   "donor_name",
   "donor_type",
@@ -17,22 +18,23 @@
   "contact_no",
   "city",
   "address",
-  "column_break_uwow",
-  "intention_id",
-  "transaction_type_id",
-  "plaque_branding",
   "care_of_details_column",
   "co_name",
   "co_contact_no",
   "co_email",
   "co_address",
   "relationship_with_donor",
+  "section_break_oqbl",
+  "intention_id",
+  "column_break_fpsm",
+  "transaction_type_id",
+  "column_break_jkkd",
+  "plaque_branding",
   "section_break_iela",
   "fund_class_info_column",
   "fund_class_id",
   "pay_service_area",
   "pay_subservice_area",
-  "subservice_area_copy",
   "pay_product",
   "column_break_ibfu",
   "share_no",
@@ -81,15 +83,6 @@
   "column_break_gevy",
   "doubtful_debt_amount",
   "is_written_off",
-  "accounting_dimensions_section",
-  "dimension_col_break",
-  "fund_class",
-  "donation_type",
-  "column_break_mftg",
-  "paid",
-  "is_return",
-  "unknown_to_known",
-  "payment_entry",
   "other_info_section",
   "column_break_sezm",
   "donation_amount",
@@ -100,7 +93,15 @@
   "base_donation_amount",
   "base_deduction_amount",
   "base_net_amount",
-  "base_outstanding_amount"
+  "base_outstanding_amount",
+  "transaction_details_section",
+  "dimension_col_break",
+  "paid",
+  "payment_entry",
+  "column_break_mftg",
+  "is_return",
+  "column_break_jalm",
+  "unknown_to_known"
  ],
  "fields": [
   {
@@ -144,13 +145,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "accounting_dimensions_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Accounting Dimensions",
-   "read_only": 1
-  },
-  {
    "fieldname": "dimension_col_break",
    "fieldtype": "Column Break"
   },
@@ -177,8 +171,7 @@
   },
   {
    "fieldname": "section_break_iela",
-   "fieldtype": "Section Break",
-   "label": "Service Details"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_ibfu",
@@ -203,8 +196,7 @@
   },
   {
    "fieldname": "donor_details_section",
-   "fieldtype": "Section Break",
-   "label": "Donor Details"
+   "fieldtype": "Section Break"
   },
   {
    "fetch_from": "donor_id.donor_name",
@@ -220,10 +212,6 @@
    "label": "Donor Type",
    "options": "Donor Type",
    "read_only": 1
-  },
-  {
-   "fieldname": "column_break_uwow",
-   "fieldtype": "Column Break"
   },
   {
    "fetch_from": "donor_id.contact_no",
@@ -284,7 +272,7 @@
   {
    "fieldname": "accounts_detail_section",
    "fieldtype": "Section Break",
-   "label": "Accounts Detail"
+   "label": "Accounts Details"
   },
   {
    "fieldname": "column_break_wlkz",
@@ -363,7 +351,7 @@
    "default": "0",
    "fieldname": "paid",
    "fieldtype": "Check",
-   "label": "Paid",
+   "label": "Is Paid",
    "read_only": 1
   },
   {
@@ -472,12 +460,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "donation_type",
-   "fieldtype": "Link",
-   "label": "Intention",
-   "options": "Donation Type"
-  },
-  {
    "depends_on": "eval: doc.mode_of_payment!='Cash' && doc.mode_of_payment!=undefined && doc.mode_of_payment!=\"\";",
    "fieldname": "reference_date",
    "fieldtype": "Date",
@@ -496,7 +478,8 @@
    "default": "0",
    "fieldname": "is_return",
    "fieldtype": "Check",
-   "label": "Is Return"
+   "label": "Is Return",
+   "read_only": 1
   },
   {
    "fieldname": "location",
@@ -683,12 +666,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "fund_class",
-   "fieldtype": "Link",
-   "label": "Fund Class",
-   "options": "Fund Class"
-  },
-  {
    "fieldname": "fund_class_id",
    "fieldtype": "Link",
    "label": "Fund Class Id",
@@ -703,19 +680,8 @@
    "read_only": 1
   },
   {
-   "fetch_from": "fund_class_id.subservice_area",
-   "fetch_if_empty": 1,
-   "fieldname": "subservice_area_copy",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Subservice Area Copy",
-   "options": "Subservice Area",
-   "read_only": 1
-  },
-  {
    "fieldname": "fund_class_info_column",
-   "fieldtype": "Column Break",
-   "label": "Fund Class Info"
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "intention_id",
@@ -730,17 +696,44 @@
    "label": "Transaction Type ID",
    "options": "Transaction Type",
    "reqd": 1
+  },
+  {
+   "fieldname": "transaction_details_section",
+   "fieldtype": "Section Break",
+   "label": "More Info"
+  },
+  {
+   "fieldname": "column_break_jalm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_oqbl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_fpsm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_jkkd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "donor_details_column",
+   "fieldtype": "Column Break",
+   "label": "Donor Details"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-28 11:58:58.050720",
+ "modified": "2025-09-15 13:38:04.716691",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

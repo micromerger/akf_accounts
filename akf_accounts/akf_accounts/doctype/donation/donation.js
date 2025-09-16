@@ -401,7 +401,7 @@ function set_queries(frm) {
         };
     });
 
-    frm.set_query('to_warehouse', function () {
+    frm.set_query('warehouse', function () {
         return {
             filters: {
                 is_group: 0,
@@ -411,7 +411,9 @@ function set_queries(frm) {
         };
     });
 
+
     set_queries_payment_details(frm);
+    set_queries_items(frm);
 }
 
 function set_queries_payment_details(frm) {
@@ -425,7 +427,16 @@ function set_queries_payment_details(frm) {
     set_query_account_paid_to(frm);
     set_query_mode_of_payment(frm);
 }
-
+// 15-09-2025, Nabeel Saleem
+function set_queries_items(frm){
+    frm.fields_dict['items'].grid.get_field('item_code').get_query = function (doc, cdt, cdn) {
+        return {
+            filters: {
+                disabled: 0,
+            }
+        };
+    };
+}
 function set_query_donor_id(frm) {
     frm.fields_dict['payment_detail'].grid.get_field('donor_id').get_query = function (doc, cdt, cdn) {
         // var row = locals[cdt][cdn];
@@ -580,6 +591,7 @@ function set_query_mode_of_payment(frm) {
     };
 }
 /* END APPLYING SET QUERIES */
+
 function set_exchange_rate_msg(frm) {
     if (frm.doc.currency == "") {
         frm.set_value("currency", frm.doc.to_currency);

@@ -7,7 +7,10 @@
  "engine": "InnoDB",
  "field_order": [
   "random_id",
+  "column_break_xcll",
   "payment_detail_id",
+  "company",
+  "section_break_ygeb",
   "income_type",
   "project_id",
   "account",
@@ -15,11 +18,13 @@
   "percentage",
   "min_percent",
   "max_percent",
+  "section_break_iipa",
   "donation_amount",
+  "column_break_gwwd",
   "amount",
+  "column_break_fgpz",
   "base_amount",
   "section_break_allc",
-  "company",
   "cost_center_id",
   "fund_class_id",
   "service_area_id",
@@ -32,14 +37,7 @@
   "donor_desk_id",
   "column_break_wfow",
   "intention_id",
-  "transaction_type_id",
-  "accounting_dimensions_section",
-  "dimension_col_break",
-  "column_break_kqxo",
-  "project",
-  "cost_center",
-  "fund_class",
-  "service_area"
+  "transaction_type_id"
  ],
  "fields": [
   {
@@ -47,14 +45,16 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Income Type",
-   "options": "Income Type"
+   "options": "Income Type",
+   "read_only": 1
   },
   {
    "fieldname": "account",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Account",
-   "options": "Account"
+   "options": "Account",
+   "read_only": 1
   },
   {
    "fieldname": "percentage",
@@ -68,32 +68,29 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Amount",
-   "options": "currency"
+   "options": "currency",
+   "read_only": 1
   },
   {
    "fieldname": "min_percent",
    "fieldtype": "Percent",
    "in_list_view": 1,
-   "label": "Min Percent"
+   "label": "Min Percent",
+   "read_only": 1
   },
   {
    "fieldname": "max_percent",
    "fieldtype": "Percent",
    "in_list_view": 1,
-   "label": "Max Percent"
+   "label": "Max Percent",
+   "read_only": 1
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Company",
-   "options": "Company"
-  },
-  {
-   "fieldname": "service_area",
-   "fieldtype": "Link",
-   "label": "Service Area",
-   "options": "Service Area",
+   "options": "Company",
    "read_only": 1
   },
   {
@@ -108,41 +105,12 @@
    "read_only": 1
   },
   {
-   "fetch_from": "income_type.project",
-   "fetch_if_empty": 1,
-   "fieldname": "project",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Project",
-   "options": "Project",
-   "read_only": 1
-  },
-  {
    "default": "0",
    "fieldname": "donation_amount",
    "fieldtype": "Currency",
    "label": "Donation Amount",
-   "options": "currency"
-  },
-  {
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "label": "Cost Center",
-   "options": "Cost Center"
-  },
-  {
-   "fieldname": "accounting_dimensions_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Accounting Dimensions"
-  },
-  {
-   "fieldname": "dimension_col_break",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_kqxo",
-   "fieldtype": "Column Break"
+   "options": "currency",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -159,16 +127,9 @@
    "read_only": 1
   },
   {
-   "fieldname": "fund_class",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Fund Class",
-   "options": "Fund Class"
-  },
-  {
    "fieldname": "section_break_allc",
    "fieldtype": "Section Break",
-   "label": "Accounts Dimensions"
+   "label": "Accounting Dimensions"
   },
   {
    "fetch_from": "donor_id.donor_desk",
@@ -187,7 +148,8 @@
    "fieldname": "fund_class_id",
    "fieldtype": "Link",
    "label": "Fund Class ID",
-   "options": "Fund Class"
+   "options": "Fund Class",
+   "read_only": 1
   },
   {
    "fetch_from": "fund_class_id.service_area",
@@ -215,13 +177,15 @@
    "fieldname": "intention_id",
    "fieldtype": "Link",
    "label": "Intention ID",
-   "options": "Donation Type"
+   "options": "Donation Type",
+   "read_only": 1
   },
   {
    "fieldname": "transaction_type_id",
    "fieldtype": "Link",
    "label": "Transaction Type ID",
-   "options": "Transaction Type"
+   "options": "Transaction Type",
+   "read_only": 1
   },
   {
    "fetch_from": "fund_class_id.product",
@@ -244,7 +208,8 @@
    "fieldname": "donor_id",
    "fieldtype": "Link",
    "label": "Donor ID",
-   "options": "Donor"
+   "options": "Donor",
+   "read_only": 1
   },
   {
    "fetch_from": "donor_id.donor_type",
@@ -268,18 +233,40 @@
    "fieldname": "cost_center_id",
    "fieldtype": "Link",
    "label": "Cost Center ID",
-   "options": "Cost Center"
+   "options": "Cost Center",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xcll",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ygeb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_iipa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_gwwd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fgpz",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-26 19:29:52.047739",
+ "modified": "2025-09-15 13:45:39.263941",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Deduction Breakeven",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
