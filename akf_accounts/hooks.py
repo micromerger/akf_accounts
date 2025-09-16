@@ -99,7 +99,7 @@ doctype_js = {
 # Uninstallation
 # ------------
 
-# before_uninstall = "akf_accounts.uninstall.before_uninstall"
+before_uninstall = "akf_accounts.uninstall.before_uninstall"
 # after_uninstall = "akf_accounts.uninstall.after_uninstall"
 
 # Integration Setup
@@ -351,7 +351,7 @@ accounting_dimension_doctypes = [
 #     {
 #         "dt": "Custom Field",
 #         "filters": [
-#             ["dt", "in", ["Company", "Cost Center", ""]],
+#             ["dt", "in", ["Material Request", "Material Request Item"]],
 #             ["module", "in", ["AKF Accounts"]]
 #         ]
 #     }
