@@ -100,7 +100,6 @@ class MaterialRequest(BuyingController):
 					(so_no, item),
 				)
 				actual_so_qty = actual_so_qty and flt(actual_so_qty[0][0]) or 0
-
 				if actual_so_qty and (flt(so_items[so_no][item]) + already_indented > actual_so_qty):
 					frappe.throw(
 						_("Material Request of maximum {0} can be made for Item {1} against Sales Order {2}").format(
