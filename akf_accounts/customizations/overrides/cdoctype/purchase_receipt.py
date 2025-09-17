@@ -20,10 +20,6 @@ from erpnext.accounts.utils import get_balance_on
 
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
-# Nabeel Saleem, 12-03-2025
-from akf_stock.utils.purchase_receipt.validations import validate_donor_balance
-# Mubarrim, 17-04-2025
-from akf_stock.akf_stock.doctype.purchase_receipt.update_stock_ledger_entry import update_stock_ledger_entry
 class PurchaseReceipt(BuyingController):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -252,7 +248,6 @@ class PurchaseReceipt(BuyingController):
 		# frappe.msgprint(frappe.as_json(party_balance))
 
 		self.set_warehouse_cost_centers() #custom funcioncalled
-		validate_donor_balance(self) # Nabeel Saleem, 12-03-2025
 		
 
 	def validate_cwip_accounts(self):

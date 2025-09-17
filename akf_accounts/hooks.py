@@ -189,7 +189,10 @@ doc_events = {
     #     "on_cancel": "akf_accounts.utils.encumbrance.enc_purchase_order.del_encumbrance_gl_entries",
     # },
     "Purchase Receipt": {
-        "validate": "akf_accounts.utils.financial_closure.confirmation",
+        "validate": [
+            "akf_accounts.utils.financial_closure.confirmation",
+            "akf_accounts.utils.purchase_receipt.donor_balance.validations"
+        ],
         "on_submit": ["akf_accounts.utils.financial_closure.confirmation",
             "akf_accounts.utils.encumbrance.enc_purchase_receipt.update_grn_accounting_dimensions",
             "akf_accounts.utils.purchase_receipt.stock_ledger_entry.update_stock_dimensions"
