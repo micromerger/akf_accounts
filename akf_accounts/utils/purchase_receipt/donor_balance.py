@@ -2,7 +2,8 @@ import frappe
 from frappe.utils import fmt_money
 from erpnext.accounts.utils import get_company_default
 
-def validations(self):
+def validations(doc, method=None):
+	self=doc
 	if(self.is_new()): return
 	if(self.custom_type_of_transaction=="Normal"): return
 	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
