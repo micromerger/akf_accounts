@@ -377,9 +377,7 @@ class PurchaseReceipt(BuyingController):
 		self.repost_future_sle_and_gle()
 		self.set_consumed_qty_in_subcontract_order()
 		self.reserve_stock_for_sales_order()
-
 		self.set_warehouse_cost_centers() #Custom function  called
-		update_stock_ledger_entry(self) # Mubarrim, 17-04-2025
 
 	def check_next_docstatus(self):
 		submit_rv = frappe.db.sql(
