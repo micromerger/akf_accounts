@@ -316,9 +316,9 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 			# print('-------------------------')
 			# print(f'tax_applicable_amount: {tax_applicable_amount}')
 			# print(f'tax_amount: {tax_amount}')
-		print('----------------------12321---')
-		print(f'net_total: {net_total}')
-		print(f'tax_amount: {tax_amount}')
+		# print('----------------------12321---')
+		# print(f'net_total: {net_total}')
+		# print(f'tax_amount: {tax_amount}')
 		# nabeel, 24-06-2025 (Sales Tax & Province)
 		
 		if(tax_details.apply_sales_tax_and_province):

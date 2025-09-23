@@ -28,7 +28,7 @@ def get_donor_balance(filters=None):
 		Where 
   			docstatus=1
 			and is_cancelled=0
-			and account in (select name from tabAccount where account_type="Equity")
+			and account in (select name from tabAccount where is_group=0 and disabled = 0 and docstatus=0 and (account_type="Equity" or root_type="Equity"))
 			{0}
 		Group By
 			cost_center, account, donor
@@ -37,7 +37,7 @@ def get_donor_balance(filters=None):
 		Order By
 			balance desc
 	""".format(get_conditions(filters, accounts)), filters, as_dict=1)
-	
+	# print('---------------------: ', response)
 	amount = filters.get("amount")
 	
 	for row in response:
@@ -64,8 +64,8 @@ def get_conditions(filters, accounts):
 	conditions += " and subservice_area = %(subservice_area)s " if(filters.get('subservice_area')) else ""
 	conditions += " and product = %(product)s " if(filters.get('product')) else ""
 	conditions = " and cost_center = %(cost_center)s " if(filters.get('cost_center')) else ""
-	# conditions += " and project = %(project)s " if(filters.get('project')) else ""
-	# conditions += " and donor = %(donor)s " if(filters.get('donor')) else ""
+	conditions += " and project = %(project)s " if(filters.get('project')) else ""
+	conditions += " and donor = %(donor)s " if(filters.get('donor')) else ""
 	conditions += " and donor_type = %(donor_type)s " if(filters.get('donor_type')) else ""	
 	conditions += " and donor_desk = %(donor_desk)s " if(filters.get('donor_desk')) else ""
 	conditions += " and donation_type = %(intention)s " if(filters.get('intention')) else ""
@@ -86,7 +86,9 @@ def get_conditions(filters, accounts):
 	# 	filters.update({'account': accounts.encumbrance_material_request_account})
 	# elif(doctype == "Budget"):
 	# 	conditions += " and account not like '%%encumbrance%%' "
-
+	print('-----------------------------')
+	print(conditions)
+	print(filters)
 	return conditions
 
 @frappe.whitelist()

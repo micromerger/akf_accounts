@@ -783,8 +783,8 @@ def make_stock_entry(source_name, target_doc=None):
 		if material_request_type == "Customer Provided":
 			target.purpose = "Material Receipt"
 				
-		target.set_transfer_qty()
-		target.set_actual_qty()
+		# target.set_transfer_qty()
+		# target.set_actual_qty()
 		target.calculate_rate_and_amount(raise_error_if_no_rate=False)
 		target.stock_entry_type = target.purpose
 		target.stock_entry_type = material_request_type

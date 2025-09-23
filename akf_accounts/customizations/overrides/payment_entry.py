@@ -1875,6 +1875,196 @@ class XPaymentEntry(AccountsController):
 
 		return current_tax_fraction
 	
+	def set_matched_unset_payment_requests_to_response(self):
+		"""
+		Find matched Payment Requests for those references which have no Payment Request set.\n
+		And set to `frappe.response` to show in the frontend for allocation.
+		"""
+		if not self.references:
+			return
+
+		matched_payment_requests = get_matched_payment_request_of_references(
+			[row for row in self.references if not row.payment_request]
+		)
+
+		if not matched_payment_requests:
+			return
+
+		frappe.response["matched_payment_requests"] = matched_payment_requests
+
+	@frappe.whitelist()
+	def allocate_amount_to_references(self, paid_amount, paid_amount_change, allocate_payment_amount):
+		"""
+		Allocate `Allocated Amount` and `Payment Request` against `Reference` based on `Paid Amount` and `Outstanding Amount`.\n
+		:param paid_amount: Paid Amount / Received Amount.
+		:param paid_amount_change: Flag to check if `Paid Amount` is changed or not.
+		:param allocate_payment_amount: Flag to allocate amount or not. (Payment Request is also dependent on this flag)
+		"""
+		if not self.references:
+			return
+
+		if not allocate_payment_amount:
+			for ref in self.references:
+				ref.allocated_amount = 0
+			return
+
+		# calculating outstanding amounts
+		precision = self.precision("paid_amount")
+		total_positive_outstanding_including_order = 0
+		total_negative_outstanding = 0
+		paid_amount -= sum(flt(d.amount, precision) for d in self.deductions)
+
+		for ref in self.references:
+			reference_outstanding_amount = flt(ref.outstanding_amount)
+			abs_outstanding_amount = abs(reference_outstanding_amount)
+
+			if reference_outstanding_amount > 0:
+				total_positive_outstanding_including_order += abs_outstanding_amount
+			else:
+				total_negative_outstanding += abs_outstanding_amount
+
+		# calculating allocated outstanding amounts
+		allocated_negative_outstanding = 0
+		allocated_positive_outstanding = 0
+
+		# checking party type and payment type
+		if (self.payment_type == "Receive" and self.party_type == "Customer") or (
+			self.payment_type == "Pay" and self.party_type in ("Supplier", "Employee")
+		):
+			if total_positive_outstanding_including_order > paid_amount:
+				remaining_outstanding = flt(
+					total_positive_outstanding_including_order - paid_amount, precision
+				)
+				allocated_negative_outstanding = min(remaining_outstanding, total_negative_outstanding)
+
+			allocated_positive_outstanding = paid_amount + allocated_negative_outstanding
+
+		elif self.party_type in ("Supplier", "Customer"):
+			if paid_amount > total_negative_outstanding:
+				if total_negative_outstanding == 0:
+					frappe.msgprint(
+						_("Cannot {0} from {1} without any negative outstanding invoice").format(
+							self.payment_type,
+							self.party_type,
+						)
+					)
+				else:
+					frappe.msgprint(
+						_("Paid Amount cannot be greater than total negative outstanding amount {0}").format(
+							total_negative_outstanding
+						)
+					)
+
+				return
+
+			else:
+				allocated_positive_outstanding = flt(total_negative_outstanding - paid_amount, precision)
+				allocated_negative_outstanding = paid_amount + min(
+					total_positive_outstanding_including_order, allocated_positive_outstanding
+				)
+
+		# inner function to set `allocated_amount` to those row which have no PR
+		def _allocation_to_unset_pr_row(
+			row, outstanding_amount, allocated_positive_outstanding, allocated_negative_outstanding
+		):
+			if outstanding_amount > 0 and allocated_positive_outstanding >= 0:
+				row.allocated_amount = min(allocated_positive_outstanding, outstanding_amount)
+				allocated_positive_outstanding = flt(
+					allocated_positive_outstanding - row.allocated_amount, precision
+				)
+			elif outstanding_amount < 0 and allocated_negative_outstanding:
+				row.allocated_amount = min(allocated_negative_outstanding, abs(outstanding_amount)) * -1
+				allocated_negative_outstanding = flt(
+					allocated_negative_outstanding - abs(row.allocated_amount), precision
+				)
+			return allocated_positive_outstanding, allocated_negative_outstanding
+
+		# allocate amount based on `paid_amount` is changed or not
+		if not paid_amount_change:
+			for ref in self.references:
+				allocated_positive_outstanding, allocated_negative_outstanding = _allocation_to_unset_pr_row(
+					ref,
+					ref.outstanding_amount,
+					allocated_positive_outstanding,
+					allocated_negative_outstanding,
+				)
+
+			allocate_open_payment_requests_to_references(self.references, self.precision("paid_amount"))
+
+		else:
+			payment_request_outstanding_amounts = (
+				get_payment_request_outstanding_set_in_references(self.references) or {}
+			)
+			references_outstanding_amounts = get_references_outstanding_amount(self.references) or {}
+			remaining_references_allocated_amounts = references_outstanding_amounts.copy()
+
+			# Re allocate amount to those references which have PR set (Higher priority)
+			for ref in self.references:
+				if not (ref.reference_doctype and ref.reference_name and ref.payment_request):
+					continue
+
+				# fetch outstanding_amount of `Reference` (Payment Term) and `Payment Request` to allocate new amount
+				key = (ref.reference_doctype, ref.reference_name, ref.get("payment_term"))
+				reference_outstanding_amount = references_outstanding_amounts[key]
+				pr_outstanding_amount = payment_request_outstanding_amounts[ref.payment_request]
+
+				if reference_outstanding_amount > 0 and allocated_positive_outstanding >= 0:
+					# allocate amount according to outstanding amounts
+					outstanding_amounts = (
+						allocated_positive_outstanding,
+						reference_outstanding_amount,
+						pr_outstanding_amount,
+					)
+
+					ref.allocated_amount = min(outstanding_amounts)
+
+					# update amounts to track allocation
+					allocated_amount = ref.allocated_amount
+					allocated_positive_outstanding = flt(
+						allocated_positive_outstanding - allocated_amount, precision
+					)
+					remaining_references_allocated_amounts[key] = flt(
+						remaining_references_allocated_amounts[key] - allocated_amount, precision
+					)
+					payment_request_outstanding_amounts[ref.payment_request] = flt(
+						payment_request_outstanding_amounts[ref.payment_request] - allocated_amount, precision
+					)
+
+				elif reference_outstanding_amount < 0 and allocated_negative_outstanding:
+					# allocate amount according to outstanding amounts
+					outstanding_amounts = (
+						allocated_negative_outstanding,
+						abs(reference_outstanding_amount),
+						pr_outstanding_amount,
+					)
+
+					ref.allocated_amount = min(outstanding_amounts) * -1
+
+					# update amounts to track allocation
+					allocated_amount = abs(ref.allocated_amount)
+					allocated_negative_outstanding = flt(
+						allocated_negative_outstanding - allocated_amount, precision
+					)
+					remaining_references_allocated_amounts[key] += allocated_amount  # negative amount
+					payment_request_outstanding_amounts[ref.payment_request] = flt(
+						payment_request_outstanding_amounts[ref.payment_request] - allocated_amount, precision
+					)
+			# Re allocate amount to those references which have no PR (Lower priority)
+			for ref in self.references:
+				if ref.payment_request or not (ref.reference_doctype and ref.reference_name):
+					continue
+
+				key = (ref.reference_doctype, ref.reference_name, ref.get("payment_term"))
+				reference_outstanding_amount = remaining_references_allocated_amounts[key]
+
+				allocated_positive_outstanding, allocated_negative_outstanding = _allocation_to_unset_pr_row(
+					ref,
+					reference_outstanding_amount,
+					allocated_positive_outstanding,
+					allocated_negative_outstanding,
+				)
+
+
 	def process_retention_flow(self):
 		if(self.custom_retention_money_payable):
 			self.set_default_retention_account()
@@ -2006,7 +2196,7 @@ def validate_inclusive_tax(tax, doc):
 def get_outstanding_reference_documents(args, validate=False):
 	if isinstance(args, str):
 		args = json.loads(args)
-	print(args)
+	# print(args)
 	# # --- Custom Supplier Filter Logic implemented by Mubashir ---
 	# # If a supplier is provided in args, use it as the party filter (for supplier-type queries)
 	# if args.get("supplier"):
@@ -2099,6 +2289,8 @@ def get_outstanding_reference_documents(args, validate=False):
 	if(args.get('supplier_multiselect')): common_filter.append(ple.custom_tax_payer_id.isin(args['supplier_multiselect']))
 	
 	if args.get("get_outstanding_invoices"):
+		print('---------------------')
+		print(common_filter)
 		outstanding_invoices = get_outstanding_invoices(
 			args.get("party_type"),
 			args.get("party"),
@@ -3279,4 +3471,107 @@ def import_tax_withholding_categories():
 		frappe.log_error(f"Error importing tax withholding categories: {str(e)}")
 		frappe.throw(_("Error importing tax withholding categories: {0}").format(str(e)))
 
+
+
+def get_matched_payment_request_of_references(references=None):
+	"""
+	Get those `Payment Requests` which are matched with `References`.\n
+	        - Amount must be same.
+	        - Only single `Payment Request` available for this amount.
+
+	Example: [(reference_doctype, reference_name, allocated_amount, payment_request), ...]
+	"""
+	if not references:
+		return
+
+	# to fetch matched rows
+	refs = {
+		(row.reference_doctype, row.reference_name, row.allocated_amount)
+		for row in references
+		if row.reference_doctype and row.reference_name and row.allocated_amount
+	}
+
+	if not refs:
+		return
+
+	PR = frappe.qb.DocType("Payment Request")
+
+	# query to group by reference_doctype, reference_name, outstanding_amount
+	subquery = (
+		frappe.qb.from_(PR)
+		.select(
+			PR.reference_doctype,
+			PR.reference_name,
+			PR.outstanding_amount.as_("allocated_amount"),
+			PR.name.as_("payment_request"),
+			Count("*").as_("count"),
+		)
+		.where(Tuple(PR.reference_doctype, PR.reference_name, PR.outstanding_amount).isin(refs))
+		.where(PR.status != "Paid")
+		.where(PR.docstatus == 1)
+		.groupby(PR.reference_doctype, PR.reference_name, PR.outstanding_amount)
+	)
+
+	# query to fetch matched rows which are single
+	matched_prs = (
+		frappe.qb.from_(subquery)
+		.select(
+			subquery.reference_doctype,
+			subquery.reference_name,
+			subquery.allocated_amount,
+			subquery.payment_request,
+		)
+		.where(subquery.count == 1)
+		.run()
+	)
+
+	return matched_prs if matched_prs else None
+
+
+def get_references_outstanding_amount(references=None):
+	"""
+	Fetch accurate outstanding amount of `References`.\n
+	    - If `Payment Term` is set, then fetch outstanding amount from `Payment Schedule`.
+	    - If `Payment Term` is not set, then fetch outstanding amount from `References` it self.
+
+	Example: {(reference_doctype, reference_name, payment_term): outstanding_amount, ...}
+	"""
+	if not references:
+		return
+
+	refs_with_payment_term = get_outstanding_of_references_with_payment_term(references) or {}
+	refs_without_payment_term = get_outstanding_of_references_with_no_payment_term(references) or {}
+
+	return {**refs_with_payment_term, **refs_without_payment_term}
+
+
+def get_outstanding_of_references_with_payment_term(references=None):
+	"""
+	Fetch outstanding amount of `References` which have `Payment Term` set.\n
+	Example: {(reference_doctype, reference_name, payment_term): outstanding_amount, ...}
+	"""
+	if not references:
+		return
+
+	refs = {
+		(row.reference_doctype, row.reference_name, row.payment_term)
+		for row in references
+		if row.reference_doctype and row.reference_name and row.payment_term
+	}
+
+	if not refs:
+		return
+
+	PS = frappe.qb.DocType("Payment Schedule")
+
+	response = (
+		frappe.qb.from_(PS)
+		.select(PS.parenttype, PS.parent, PS.payment_term, PS.outstanding)
+		.where(Tuple(PS.parenttype, PS.parent, PS.payment_term).isin(refs))
+	).run(as_dict=True)
+
+	if not response:
+		return
+
+	return {(row.parenttype, row.parent, row.payment_term): row.outstanding for row in response}
 

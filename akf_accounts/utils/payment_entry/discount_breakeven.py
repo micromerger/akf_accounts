@@ -115,17 +115,16 @@ def make_gl_to_adjust_discount_breakeven(self, doc):
 				"account": row.receivable_account,
 				"voucher_detail_no": row.name,
 				"donor": row.donor_id,
-
 				"fund_class": row.fund_class_id,
 				"service_area": row.pay_service_area,
 				"subservice_area": row.pay_subservice_area,
-				"product": row.pay_product if(row.pay_product) else row.product,
-				"donation_type": row.donation_type,
+				"product": row.pay_product,
+				"donor": row.donor_id,				
+				"donor_type": row.donor_type,			
 				"donor_desk": row.donor_desk_id,
 				"cost_center": row.cost_center,
-
-				"inventory_scenario": row.inventory_scenario,
-				
+				"donation_type": row.intention_id,
+				"transaction_type": row.transaction_type_id,
 				# "debit": row.base_net_amount,
 				"credit": row.base_donation_amount,
 				# "debit_in_account_currency": row.net_amount,

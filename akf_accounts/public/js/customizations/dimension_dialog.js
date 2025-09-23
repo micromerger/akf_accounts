@@ -3,7 +3,7 @@ function make_dimensions_modal(frm) {
         .then(r => {
             const enable_accounting_dimensions = r.message.custom_enable_accounting_dimensions_dialog; // Open
             if (enable_accounting_dimensions && frm.doc.docstatus == 0) {
-                frm.add_custom_button(__('Donation'), () => get_donations(frm),
+                frm.add_custom_button(__('Donors'), () => get_donations(frm),
                     __("Get Balances"));
             }
         });
@@ -20,7 +20,7 @@ function get_donations(frm) {
     // }
 
     const d = new frappe.ui.Dialog({
-        title: __("Accounting Dimensions"),
+        title: __("Accounting Dimensions (*for donors balances)"),
         fields: [
 
             {
@@ -226,7 +226,7 @@ function get_donations(frm) {
             //     fieldtype: "Column Break",
             // },
             {
-                label: __("Get Balance"),
+                label: __("Get Balances"),
                 fieldname: "get_balance",
                 fieldtype: "Button",
                 options: ``,
@@ -293,7 +293,7 @@ function get_donations(frm) {
             {
                 fieldname: "donor_balance",
                 fieldtype: "Table",
-                label: __("Donor Balance"),
+                label: __("Donors Balance"),
                 cannot_add_rows: true,
                 in_place_edit: false,
                 // data: [{'donation': 1, 'donor': 2, 'balance': 1000}],

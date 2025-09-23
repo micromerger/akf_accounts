@@ -7,7 +7,9 @@ from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import (
     today, fmt_money, get_link_to_form
 )
-from akf_projects.customizations.overrides.project.financial_stats import get_transactions
+from akf_accounts.customizations.overrides.cdoctype.project.financial_stats import (
+    get_transactions
+)
 
 # from frappe import today
 
