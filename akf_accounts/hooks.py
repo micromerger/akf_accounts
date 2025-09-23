@@ -149,7 +149,7 @@ before_uninstall = "akf_accounts.uninstall.before_uninstall"
 override_doctype_class = {
     "Material Request": "akf_accounts.customizations.overrides.cdoctype.material_request.MaterialRequest",
     "Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
-	"Purchase Receipt" : "akf_accounts.customizations.overrides.cdoctype.purchase_receipt.PurchaseReceipt",
+	# "Purchase Receipt" : "akf_accounts.customizations.overrides.cdoctype.purchase_receipt.PurchaseReceipt",
     "Purchase Invoice" : "akf_accounts.customizations.overrides.cdoctype.purchase_invoice.PurchaseInvoice",
     # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
     "Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
