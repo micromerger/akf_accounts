@@ -819,11 +819,11 @@ def make_stock_entry(source_name, target_doc=None):
 					"uom": "stock_uom",
 					"job_card_item": "job_card_item",
 				},
-				"postprocess": update_item,
-				"condition": lambda doc: (
-					flt(doc.ordered_qty, doc.precision("ordered_qty"))
-					< flt(doc.stock_qty, doc.precision("ordered_qty"))
-				),
+				# "postprocess": update_item,
+				# "condition": lambda doc: (
+				# 	flt(doc.ordered_qty, doc.precision("ordered_qty"))
+				# 	< flt(doc.stock_qty, doc.precision("ordered_qty"))
+				# ),
 			},
 		},
 		target_doc,
