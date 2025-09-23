@@ -44,7 +44,10 @@ app_include_js = [
 doctype_js = {
 	"Payment Entry" : "public/js/customizations/payment_entry.js",
 	# "Purchase Receipt" : "public/js/customizations/purchase_receipt.js",
-    "Purchase Invoice" : "public/js/customizations/purchase_invoice.js",
+    "Purchase Invoice" : [
+        "public/js/customizations/purchase_invoice.js",
+        "public/js/customizations/expense_on_behalf_of.js",
+    ],
     # "Asset" : "public/js/customizations/asset.js",
     # "Asset Movement": "public/js/customizations/asset_movement.js",
 	# "Purchase Order": "public/js/customizations/enc_purchase_order.js",
@@ -52,7 +55,10 @@ doctype_js = {
         "public/js/customizations/material_request.js",
         "public/js/customizations/enc_material_request.js"
     ],
-    "Project": "public/js/customizations/enc_project.js",
+    "Project": [
+        "public/js/customizations/project/enc_project.js",
+        "public/js/customizations/project/project_financial_dashboard.js",
+    ],
     "Stock Entry": "public/js/customizations/material_request_get_items_from.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -280,9 +286,9 @@ override_whitelisted_methods = {
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "akf_accounts.task.get_dashboard_data"
-# }
+override_doctype_dashboards = {
+    "Project": "akf_accounts.customizations.overrides.cdoctype.project.project_dashboard.get_dashboard_data"
+}
 
 # exempt linked doctypes from being automatically cancelled
 #
@@ -354,7 +360,7 @@ accounting_dimension_doctypes = [
 #     {
 #         "dt": "Custom Field",
 #         "filters": [
-#             ["dt", "in", ["Material Request", "Material Request Item"]],
+#             ["dt", "not in", []],
 #             ["module", "in", ["AKF Accounts"]]
 #         ]
 #     }

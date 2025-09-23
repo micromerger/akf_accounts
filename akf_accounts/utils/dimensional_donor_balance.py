@@ -1,7 +1,7 @@
 import frappe, ast
 
 from akf_accounts.utils.accounts_defaults import get_company_defaults
-from akf_projects.customizations.overrides.project.financial_stats import (
+from akf_accounts.customizations.overrides.cdoctype.project.financial_stats import (
 	get_donation, 
 	get_funds_transfer, 
 	get_purchasing
@@ -64,8 +64,8 @@ def get_conditions(filters, accounts):
 	conditions += " and subservice_area = %(subservice_area)s " if(filters.get('subservice_area')) else ""
 	conditions += " and product = %(product)s " if(filters.get('product')) else ""
 	conditions = " and cost_center = %(cost_center)s " if(filters.get('cost_center')) else ""
-	conditions += " and project = %(project)s " if(filters.get('project')) else ""
-	conditions += " and donor = %(donor)s " if(filters.get('donor')) else ""
+	# conditions += " and project = %(project)s " if(filters.get('project')) else ""
+	# conditions += " and donor = %(donor)s " if(filters.get('donor')) else ""
 	conditions += " and donor_type = %(donor_type)s " if(filters.get('donor_type')) else ""	
 	conditions += " and donor_desk = %(donor_desk)s " if(filters.get('donor_desk')) else ""
 	conditions += " and donation_type = %(intention)s " if(filters.get('intention')) else ""
@@ -77,15 +77,15 @@ def get_conditions(filters, accounts):
 		conditions += " and account = %(account)s "	
 		filters.update({'account': accounts.encumbrance_project_account})
 	
-	elif(doctype == "Purchase Order"):
-		conditions += " and account = %(account)s "	
-		filters.update({'account': accounts.encumbrance_material_request_account})
+	# elif(doctype == "Purchase Order"):
+	# 	conditions += " and account = %(account)s "	
+	# 	filters.update({'account': accounts.encumbrance_material_request_account})
 
-	elif(doctype == "Payment Entry"):
-		conditions += " and account = %(account)s "	
-		filters.update({'account': accounts.encumbrance_material_request_account})
-	elif(doctype == "Budget"):
-		conditions += " and account not like '%%encumbrance%%' "
+	# elif(doctype == "Payment Entry"):
+	# 	conditions += " and account = %(account)s "	
+	# 	filters.update({'account': accounts.encumbrance_material_request_account})
+	# elif(doctype == "Budget"):
+	# 	conditions += " and account not like '%%encumbrance%%' "
 
 	return conditions
 
