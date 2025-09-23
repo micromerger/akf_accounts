@@ -360,7 +360,7 @@ accounting_dimension_doctypes = [
 #     {
 #         "dt": "Custom Field",
 #         "filters": [
-#             ["dt", "not in", ["Purhcase Invoice", "Purchase Receipt", "Purchase Order"]],
+#             ["dt", "in", ["Purhcase Invoice", "Purchase Receipt", "Purchase Order"]],
 #             ["module", "in", ["AKF Accounts"]]
 #         ]
 #     }
