@@ -356,14 +356,14 @@ accounting_dimension_doctypes = [
 ]
 # fixtures = ['Inventory Dimension', 'Accounting Dimension', 'Country', 'Donor Type', 'Donation Type']
 # fixtures = ["Company", "Cost Center", "Account"]
-# fixtures = [
-#     {
-#         "dt": "Custom Field",
-#         "filters": [
-#             ["dt", "in", ["Purhcase Invoice", "Purchase Receipt", "Purchase Order"]],
-#             ["module", "in", ["AKF Accounts"]]
-#         ]
-#     }
-# ]
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["dt", "in", ["Purhcase Invoice", "Purchase Receipt", "Purchase Order", "Advance Taxes And Charges", "Payment Entry", "Purchase Receipt Item"]],
+            ["module", "in", ["AKF Accounts"]]
+        ]
+    }
+]
 
 # bench --site al-khidmat.com export-fixtures
