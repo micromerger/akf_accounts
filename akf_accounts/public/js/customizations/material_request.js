@@ -22,11 +22,11 @@ frappe.ui.form.on("Material Request", {
 			return doc.stock_qty <= doc.ordered_qty ? "green" : "orange";
 		});
 
-		frm.set_query("item_code", "items", function () {
-			return {
-				query: "erpnext.controllers.queries.item_query",
-			};
-		});
+		// frm.set_query("item_code", "items", function () {
+		// 	return {
+		// 		query: "erpnext.controllers.queries.item_query",
+		// 	};
+		// });
 
 		frm.set_query("from_warehouse", "items", function (doc) {
 			return {
@@ -651,7 +651,8 @@ erpnext.buying.MaterialRequestController = class MaterialRequestController exten
 			} else {
 				return {
 					query: "erpnext.controllers.queries.item_query",
-					filters: { is_stock_item: 1 },
+					// filters: { is_stock_item: 1 },
+					filters: { disabled: 0,  is_fixed_asset: 0},
 				};
 			}
 		});
