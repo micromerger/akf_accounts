@@ -4,7 +4,8 @@ from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_arg
 from erpnext.accounts.utils import get_company_default
 
 def validate_donor_balance(self):
-	if(self.is_new()): return
+	if(self.is_new()): 
+		return
 	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
 		self.set("custom_program_details", [])
 		return
@@ -18,7 +19,7 @@ def validate_donor_balance(self):
 		frappe.throw(f"Item amount: <b>Rs.{fmt_money(item_amount)}</b> exceeding the available balance: <b>Rs.{fmt_money(donor_balance)}</b>.", title='Donor Balance')
 
 def make_on_behalf_of_gl_entries(self):
-	if(not self.on_behalf_of): 
+	if(not self.custom_on_behalf_of): 
 		return
 	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
 		return
@@ -53,8 +54,8 @@ def make_branchB_expense_gl_entry(self, args, row, amount):
 		'remarks': f"Branch 'A' purchasing on behalf of Branch 'B'.",
 		# 'party_type': 'Donor',
 		# 'party': row.pd_donor,
-		'account': self.expense_account,
-		'cost_center': self.purchasing_branch,
+		'account': self.custom_expense_account,
+		'cost_center': self.custom_purchasing_branch,
 		
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,
@@ -80,8 +81,8 @@ def make_branchB_equity_gl_entry(self, args, row, amount):
 		'remarks': f"Branch 'A' purchasing on behalf of Branch 'B'.",
 		# 'party_type': 'Donor',
 		# 'party': row.pd_donor,
-		'account': self.equity_account,
-		'cost_center': self.purchasing_branch,
+		'account': self.custom_equity_account,
+		'cost_center': self.custom_purchasing_branch,
 		
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,
@@ -115,10 +116,10 @@ def make_branchB_income_gl_entry(self, args, row, amount):
 	args.update({
 		'voucher_subtype': 'Equity',
 		'remarks': f"Branch 'A' purchasing on behalf of Branch 'B'.",
-		# 'party_type': 'Donor',
-		# 'party': row.pd_donor,
-		'account': self.income_account,
-		'cost_center': self.purchasing_branch,
+		'party_type': 'Supplier',
+		'party': self.custom_receiving_supplier,
+		'account': self.custom_income_account,
+		'cost_center': self.custom_purchasing_branch,
 		
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,
@@ -142,9 +143,9 @@ def make_branchB_receivalbe_gl_entry(self, args, row, amount):
 		'voucher_subtype': 'Equity',
 		'remarks': f"Branch 'A' purchasing on behalf of Branch 'B'.",
 		'party_type': 'Customer',
-		'party': self.receiving_customer,
-		'account': self.inter_branch_receivable_account,
-		'cost_center': self.purchasing_branch,
+		'party': self.custom_receiving_customer,
+		'account': self.custom_inter_branch_receivable_account_of_customer,
+		'cost_center': self.custom_purchasing_branch,
 		
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,
@@ -168,9 +169,9 @@ def make_branchA_payable_gl_entry(self, args, row, amount):
 		'voucher_subtype': 'Equity',
 		'remarks': f"Branch 'A' purchasing on behalf of Branch 'B'.",
 		'party_type': 'Supplier',
-		'party': self.purchasing_supplier,
-		'account': self.inter_branch_payable_account,
-		'cost_center': self.receiving_branch,
+		'party': self.custom_purchasing_supplier,
+		'account': self.custom_inter_branch_payable_account_of_supplier,
+		'cost_center': self.custom_receiving_branch,
 		
 		'service_area': row.pd_service_area,
 		'subservice_area': row.pd_subservice_area,

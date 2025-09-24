@@ -221,6 +221,9 @@ doc_events = {
             "akf_accounts.utils.payment_entry_utils.make_journal_entry"
         ]
 	},
+    "Cost Center":{
+        "validate": "akf_accounts.utils.cost_center.on_behalf_of.process_internal_branch_struct"
+    }
     # "Tax Withholding Category": {
     #     "validate": "akf_accounts.utils.taxation.tax_withholding_category.set_sales_tax_and_province_rate",
     # }
@@ -287,7 +290,8 @@ override_whitelisted_methods = {
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 override_doctype_dashboards = {
-    "Project": "akf_accounts.customizations.overrides.cdoctype.project.project_dashboard.get_dashboard_data"
+    "Project": "akf_accounts.customizations.overrides.cdoctype.project.project_dashboard.get_dashboard_data",
+    "Cost Center": "akf_accounts.utils.cost_center.cost_center_dashboard.get_dashboard_data"
 }
 
 # exempt linked doctypes from being automatically cancelled
@@ -356,14 +360,14 @@ accounting_dimension_doctypes = [
 ]
 # fixtures = ['Inventory Dimension', 'Accounting Dimension', 'Country', 'Donor Type', 'Donation Type']
 # fixtures = ["Company", "Cost Center", "Account"]
-fixtures = [
-    {
-        "dt": "Custom Field",
-        "filters": [
-            ["dt", "in", ["Purhcase Invoice", "Purchase Receipt", "Purchase Order", "Advance Taxes And Charges", "Payment Entry", "Purchase Receipt Item"]],
-            ["module", "in", ["AKF Accounts"]]
-        ]
-    }
-]
+# fixtures = [
+#     {
+#         "dt": "Custom Field",
+#         "filters": [
+#             ["dt", "in", ["Purhcase Invoice", "Purchase Receipt", "Purchase Order", "Advance Taxes And Charges", "Payment Entry", "Purchase Receipt Item"]],
+#             ["module", "in", ["AKF Accounts"]]
+#         ]
+#     }
+# ]
 
 # bench --site al-khidmat.com export-fixtures

@@ -60,7 +60,7 @@ from akf_accounts.utils.mortization import (
 	make_mortization_gl_entries,
 	delete_all_gl_entries
 )
-from akf_accounts.utils.purchase_on_behalf_of import (
+from akf_accounts.utils.purchase_invoice.expense_on_behalf_of import (
 	make_on_behalf_of_gl_entries
 )
 
