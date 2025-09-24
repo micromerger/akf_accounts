@@ -105,6 +105,7 @@ frappe.ui.form.on("Material Request", {
 
 			if (purpose_selection_enabled) {
 				// Show ALL Create buttons if purpose selection was disabled at creation
+				frm.add_custom_button(__("Inventory to Asset"), () => frm.events.make_stock_entry(frm, "Inventory to Asset"), __("Create"));
 				frm.add_custom_button(__("Issue Material"), () => frm.events.make_stock_entry(frm, "Material Issue"), __("Create"));
 				frm.add_custom_button(__("Material Transfer"), () => frm.events.make_stock_entry(frm, "Material Transfer"), __("Create"));
 				frm.add_custom_button(__("Material Transfer (In Transit)"), () => frm.events.make_in_transit_stock_entry(frm), __("Create"));
@@ -118,6 +119,7 @@ frappe.ui.form.on("Material Request", {
 				// Show buttons based on selected purpose
 				switch (frm.doc.material_request_type) {
 					case "Material Issue":
+						frm.add_custom_button(__("Inventory to Asset"), () => frm.events.make_stock_entry(frm, "Inventory to Asset"), __("Create"));
 						frm.add_custom_button(__("Issue Material"), () => frm.events.make_stock_entry(frm, "Material Issue"), __("Create"));
 						break;
 					case "Material Transfer":

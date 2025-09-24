@@ -5,7 +5,7 @@ from erpnext.accounts.utils import get_company_default
 from akf_accounts.utils.accounts_defaults import (
 	get_company_defaults
 )
-stock_entry_type_list = ['Material Issue']
+stock_entry_type_list = ['Material Issue', 'Inventory to Asset']
 
 def validate_donor_balance(doc, method=None):
 	self = doc
@@ -29,38 +29,37 @@ def validate_donor_balance(doc, method=None):
 
 def make_mortizations_gl_entries(doc, method=None):
 	self = doc
+	if(self.stock_entry_type in stock_entry_type_list): 
+		if(get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
+			validate_donor_balance(self)
+			update_accounting_dimensions(self)
+			args = frappe._dict({
+				'doctype': 'GL Entry',
+				'posting_date': self.posting_date,
+				'transaction_date': self.posting_date,
+				'against': f"{self.doctype}: {self.name}",
+				'against_voucher_type': self.doctype,
+				'against_voucher': self.name,
+				'voucher_type': self.doctype,
+				'voucher_no': self.name,
+				'voucher_subtype': 'Receive',
+				'remarks': f"Morization of {self.doctype}, {self.stock_entry_type}",
+				'is_opening': 'No',
+				'is_advance': 'No',
+				'company': self.company,
+			})
+			
+			amount = sum([d.amount for d in self.items])
+			# Looping
+			accounts = get_company_defaults(self.company)
+			for row in self.custom_program_details:
+				difference_amount = amount if(row.actual_balance>=amount) else (amount - row.actual_balance)
+				amount = amount - difference_amount
 
-	if(get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
-		
-		validate_donor_balance(self)
-		update_accounting_dimensions(self)
-		args = frappe._dict({
-			'doctype': 'GL Entry',
-			'posting_date': self.posting_date,
-			'transaction_date': self.posting_date,
-			'against': f"{self.doctype}: {self.name}",
-			'against_voucher_type': self.doctype,
-			'against_voucher': self.name,
-			'voucher_type': self.doctype,
-			'voucher_no': self.name,
-			'voucher_subtype': 'Receive',
-			'remarks': f"Morization of {self.doctype}, {self.stock_entry_type}",
-			'is_opening': 'No',
-			'is_advance': 'No',
-			'company': self.company,
-		})
-		
-		amount = sum([d.amount for d in self.items])
-		# Looping
-		accounts = get_company_defaults(self.company)
-		for row in self.custom_program_details:
-			difference_amount = amount if(row.actual_balance>=amount) else (amount - row.actual_balance)
-			amount = amount - difference_amount
-
-			restricted_income_account_gl_entry(args, row, difference_amount, accounts.default_income)
-			material_request_encumbrance_debit_gl_entry(args, row, difference_amount) # debit
-			make_inventory_account_gl_entry(self.company, args, row, difference_amount, accounts.default_inventory_fund_account) # credit
-			restricted_expense_account_gl_entry(args, row, difference_amount, accounts.restricted_expense_account)
+				restricted_income_account_gl_entry(args, row, difference_amount, accounts.default_income if(doc.stock_entry_type=="Material Issue") else accounts.default_designated_asset_fund_account)
+				material_request_encumbrance_debit_gl_entry(args, row, difference_amount) # debit
+				# make_inventory_account_gl_entry(self.company, args, row, difference_amount, accounts.default_inventory_fund_account) # credit
+				# restricted_expense_account_gl_entry(args, row, difference_amount, accounts.restricted_expense_account)
 
 def restricted_income_account_gl_entry(args, row, amount, default_income):
 	cargs = get_currency_args()

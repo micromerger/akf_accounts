@@ -451,7 +451,7 @@ class PurchaseInvoice(BuyingController):
 
 	def set_expense_account(self, for_validate=False):
 		auto_accounting_for_stock = erpnext.is_perpetual_inventory_enabled(self.company)
-
+		frappe.throw(f'{auto_accounting_for_stock}')
 		if auto_accounting_for_stock:
 			stock_not_billed_account = self.get_company_default("stock_received_but_not_billed")
 			stock_items = self.get_stock_items()
