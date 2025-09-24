@@ -59,7 +59,7 @@ def make_mortizations_gl_entries(doc, method=None):
 
 			restricted_income_account_gl_entry(args, row, difference_amount, accounts.default_income)
 			material_request_encumbrance_debit_gl_entry(args, row, difference_amount) # debit
-			# make_inventory_account_gl_entry(self.company, args, row, difference_amount, accounts.default_inventory_fund_account) # credit
+			make_inventory_account_gl_entry(self.company, args, row, difference_amount, accounts.default_inventory_fund_account) # credit
 			restricted_expense_account_gl_entry(args, row, difference_amount, accounts.restricted_expense_account)
 
 def restricted_income_account_gl_entry(args, row, amount, default_income):
