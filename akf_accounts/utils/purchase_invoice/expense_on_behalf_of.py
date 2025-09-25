@@ -40,7 +40,7 @@ def make_on_behalf_of_gl_entries(self):
 	for row in self.custom_program_details:
 		difference_amount = amount if(row.actual_balance>=amount) else (amount - row.actual_balance)
 		amount = amount - difference_amount
-		make_branchB_expense_gl_entry(self, args, row, difference_amount)
+		# make_branchB_expense_gl_entry(self, args, row, difference_amount)
 		make_branchB_equity_gl_entry(self, args, row, difference_amount)
 		make_branchB_income_gl_entry(self, args, row, difference_amount)
 		make_branchB_receivalbe_gl_entry(self, args, row, difference_amount)

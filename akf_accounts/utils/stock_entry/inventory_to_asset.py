@@ -35,6 +35,7 @@ def create_asset_item_and_asset(self):
 				"custom_type_of_asset": f'{row.custom_transaction_type_id}'
 			})
 			doc.insert(ignore_permissions=True)
+			frappe.msgprint(f"{doc}")
 			return doc.name
 	def create_asset(row, item_code):
 		doc = frappe.get_doc({
