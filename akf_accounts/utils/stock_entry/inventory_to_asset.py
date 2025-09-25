@@ -2,7 +2,7 @@ import frappe
 def create_asset_item_and_asset(self):
 	if (self.stock_entry_type != "Inventory to Asset"):
 		return
-	def create_asset_category(row):
+	'''def create_asset_category(row):
 		if(frappe.db.exists("Asset Category", {"asset_category_name": row.item_group})):
 			return row.item_group
 		else:
@@ -16,8 +16,9 @@ def create_asset_item_and_asset(self):
 					}]
 				})
 			doc.insert(ignore_permissions=True)
-			return doc.name
-	def create_asset_item(row, asset_category):
+			return doc.name'''
+
+	def create_asset_item(row):
 		if (frappe.db.exists("Item", {"item_name":f"Asset-{row.item_name}"})):
 			return frappe.db.get_value("Item", {"item_name":f"Asset-{row.item_name}"}, "name")
 		else:
@@ -25,11 +26,11 @@ def create_asset_item_and_asset(self):
 				"doctype": "Item",
 				"item_code": f"Asset-{row.item_name}",
 				"item_name": f"Asset-{row.item_name}",
-				"item_group": asset_category, 
+				"item_group": row.item_group, 
 				"stock_uom": row.uom,
 				"is_stock_item": 0,
 				"is_fixed_asset": 1,
-				"asset_category": asset_category,
+				"asset_category": frappe.db.get_value('Item', row.item_code, 'asset_category'),
 				"custom_source_of_asset_acquistion": f'{row.inventory_flag}',
 				"custom_type_of_asset": f'{row.custom_transaction_type_id}'
 			})
@@ -76,8 +77,8 @@ def create_asset_item_and_asset(self):
 		doc.insert(ignore_permissions=True)
 	assets_list = []
 	for row in self.items:
-		asset_category = create_asset_category(row)
-		item_code = create_asset_item(row, asset_category)
+		# asset_category = create_asset_category(row)
+		item_code = create_asset_item(row)
 		for asset_qty in range(int(row.qty)):  
 			create_asset(row, item_code)
 		assets_list.append(item_code)
