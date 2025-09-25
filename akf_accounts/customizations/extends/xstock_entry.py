@@ -27,7 +27,7 @@ class XStockEntry(StockEntry):
 			company = frappe.get_doc("Company", self.company)
 			for d in self.get("items"):
 				if(self.donation and self.stock_entry_type == "Material Receipt"): 
-        			d.expense_account = company.custom_default_inventory_fund_account
+					d.expense_account = company.custom_default_inventory_fund_account
 				elif(self.stock_entry_type == "Inventory to Asset"):
 					d.expense_account = get_asset_category_account(d.item_code)
 
