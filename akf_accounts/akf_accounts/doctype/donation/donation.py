@@ -1249,6 +1249,8 @@ def make_return_doc(
 		# target_doc.donation_amount = -1 * source_doc.donation_amount
 		target_doc.donation_amount = source_doc.donation_amount
 		target_doc.paid = 0
+		# Clear receipt_number for return documents to avoid duplicate key error
+		target_doc.receipt_number = ""
 
 	doclist = get_mapped_doc(
 		doctype,
