@@ -27,6 +27,7 @@ class Donor(Document):
 		self.verify_cnic()
 		self.validate_duplicate_cnic()
 		self.validate_proscribed_person()
+		self.validate_unique_unknown_identity()
 		self.validate_default_currency()
 		self.validate_default_account()
 		self.set_is_group()
@@ -77,6 +78,21 @@ class Donor(Document):
 				""", title="Duplicate CNIC")
 		
 		compare_cnic_with_other()
+
+	def validate_unique_unknown_identity(self):
+		"""Ensure only one Donor with donor_identity = 'Unknown' exists."""
+		if getattr(self, "donor_identity", None) != "Unknown":
+			return
+		exists = frappe.db.exists("Donor", {
+			"donor_identity": "Unknown",
+			"name": ["!=", self.name],
+		})
+		if exists:
+			frappe.throw(
+				"Donor with the donor_identity 'Unknown' already exists",
+				title="Duplicate Donor Identity"
+			)
+		
 	
 	def validate_proscribed_person(self):
 		formatted_cnic = str(self.cnic).replace("-", "")

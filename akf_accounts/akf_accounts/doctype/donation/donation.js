@@ -178,6 +178,20 @@ frappe.ui.form.on('Payment Detail', {
         // toggleModeOfPaymentRowWise(frm);
         showHideModeOfPaymentForSingleRow(frm, row);
         fill_mode_of_payment_and_account(frm, row);
+        // Auto-populate donor when donor identity is Unknown (or Merchant - Unknown)
+        const identity = frm.doc.donor_identity;
+        if (identity === "Unknown" || identity === "Merchant - Unknown") {
+            frappe.db.get_value('Donor', { donor_identity: identity }, 'name').then(r => {
+                const donorId = r.message && r.message.name;
+                if (donorId) {
+                    row.donor_id = donorId;
+                    row.donor = donorId;
+                    if (frm.fields_dict['payment_detail'] && frm.fields_dict['payment_detail'].grid && frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn]) {
+                        frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn].refresh_field('donor_id');
+                    }
+                }
+            });
+        }
         frm.refresh_field("payment_detail");
         // if(frm.doc.is_return){
         //     frm.call("update_deduction_breakeven");

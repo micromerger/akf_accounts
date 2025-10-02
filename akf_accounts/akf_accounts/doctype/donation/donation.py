@@ -15,10 +15,13 @@ class Donation(Document):
 		self.validate_payment_details()
 		self.validate_deduction_percentages()
 		self.validate_pledge_contribution_type()
-		self.validate_is_return()
+		# self.validate_is_return()
 		self.set_deduction_breakeven()
 		self.update_status()
-		
+	def before_submit(self):
+		self.validate_is_return()
+
+
 	def set_exchange_rate(self):
 		exchange_rate = get_exchange_rate(self.currency, self.to_currency, self.posting_date)
 		if(exchange_rate): self.exchange_rate = exchange_rate
@@ -31,7 +34,7 @@ class Donation(Document):
 		for row in self.get('deduction_breakeven'):
 			if row.account:
 				# min_percentage, max_percentage = get_min_max_percentage(row.service_area, row.account)
-				min_percentage, max_percentage = get_min_max_percentage(row.fund_class_id, row.account)			
+				min_percentage, max_percentage = get_min_max_percentage(row.fund_class_id, row.account)
 				if min_percentage is not None and max_percentage is not None:
 					if row.percentage < min_percentage or row.percentage > max_percentage:
 						frappe.throw(f"Row#{row.idx}; Percentage for account '{row.account}' must be between {min_percentage}% and {max_percentage}%.")
@@ -1221,6 +1224,9 @@ def get_total_donors_return(return_against):
 Nabeel Saleem 
 -> Return / Credit Note 
 """
+
+import frappe
+from frappe.model.mapper import get_mapped_doc
 
 @frappe.whitelist()
 def make_donation_return(source_name, target_doc=None):
