@@ -9,16 +9,16 @@
   "company",
   "posting_date",
   "column_break_qciy",
-  "transaction_type",
+  "transaction_purpose",
   "transfer_type",
   "amended_from",
   "inter_fund_section",
   "cost_center",
   "inter_branch_section",
   "from_cost_center",
-  "to_cost_center",
-  "column_break_vhvz",
   "from_bank_account",
+  "column_break_vhvz",
+  "to_cost_center",
   "to_bank_account",
   "inter_bank_section",
   "from_bank",
@@ -30,9 +30,9 @@
   "inter_branch_accounts_info_section",
   "inter_branch_accounts_info_column",
   "desposit_in_transit_account",
-  "ibft_equity_account",
-  "column_break_fwiz",
   "from_gl_entry",
+  "column_break_fwiz",
+  "ibft_equity_account",
   "to_gl_entry",
   "section_break_jrzi",
   "funds_transfer_from",
@@ -63,15 +63,6 @@
    "search_index": 1
   },
   {
-   "bold": 1,
-   "default": "Inter Fund",
-   "fieldname": "transaction_type",
-   "fieldtype": "Select",
-   "label": "Transaction Type",
-   "options": "Inter Fund\nInter Branch\nInter Bank",
-   "reqd": 1
-  },
-  {
    "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
@@ -83,18 +74,19 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval: doc.transaction_type != \"Inter Bank\";",
+   "depends_on": "eval: doc.transaction_purpose != \"Inter Bank\";",
    "fieldname": "funds_transfer_from",
    "fieldtype": "Table",
    "label": "Funds Transfer From",
-   "options": "Funds Transfer From"
+   "options": "Funds Transfer From",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_pwtm",
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval: doc.transaction_type != \"Inter Bank\";",
+   "depends_on": "eval: doc.transaction_purpose != \"Inter Bank\";",
    "fieldname": "funds_transfer_to",
    "fieldtype": "Table",
    "label": "Funds Transfer To",
@@ -105,7 +97,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "depends_on": "eval: doc.transaction_purpose === 'Inter Branch'",
    "fieldname": "deduction_breakeven",
    "fieldtype": "Table",
    "label": "Deduction Breakeven",
@@ -120,31 +112,23 @@
    "reqd": 1
   },
   {
-   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "depends_on": "eval: doc.transaction_purpose === 'Inter Branch'",
    "fieldname": "from_cost_center",
    "fieldtype": "Link",
    "label": "From Branch",
-   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "mandatory_depends_on": "eval: doc.transaction_purpose === 'Inter Branch'",
    "options": "Cost Center"
   },
   {
-   "depends_on": "eval: doc.transaction_type === 'Inter Fund' || doc.transaction_type === 'Inter Bank';",
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "label": "Branch",
-   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Fund';",
-   "options": "Cost Center"
-  },
-  {
-   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "depends_on": "from_cost_center",
    "fieldname": "from_bank_account",
    "fieldtype": "Link",
    "label": "From Bank Account",
-   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Branch'",
-   "options": "Account"
+   "mandatory_depends_on": "from_cost_center",
+   "options": "Bank Account"
   },
   {
-   "depends_on": "eval:doc.transaction_type === 'Inter Bank';",
+   "depends_on": "eval:doc.transaction_purpose === 'Inter Bank';",
    "fieldname": "from_bank",
    "fieldtype": "Link",
    "label": "From Bank",
@@ -156,23 +140,23 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "depends_on": "eval: doc.transaction_purpose === 'Inter Branch'",
    "fieldname": "to_cost_center",
    "fieldtype": "Link",
    "label": "To Branch",
-   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "mandatory_depends_on": "eval: doc.transaction_purpose === 'Inter Branch'",
    "options": "Cost Center"
   },
   {
-   "depends_on": "eval: doc.transaction_type === 'Inter Branch'",
+   "depends_on": "to_cost_center",
    "fieldname": "to_bank_account",
    "fieldtype": "Link",
    "label": "To Bank Account",
-   "mandatory_depends_on": "eval: doc.transaction_type === 'Inter Branch'",
-   "options": "Account"
+   "mandatory_depends_on": "to_cost_center",
+   "options": "Bank Account"
   },
   {
-   "depends_on": "eval:doc.transaction_type === 'Inter Bank';",
+   "depends_on": "eval:doc.transaction_purpose === 'Inter Bank';",
    "fieldname": "to_bank",
    "fieldtype": "Link",
    "label": "To Bank",
@@ -210,7 +194,7 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.transaction_type==\"Inter Branch\" ;",
+   "depends_on": "eval: doc.transaction_purpose==\"Inter Branch\" ;",
    "fieldname": "from_gl_entry",
    "fieldtype": "Check",
    "label": "1st GL Entry",
@@ -218,7 +202,7 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.transaction_type==\"Inter Branch\" ;",
+   "depends_on": "eval: doc.transaction_purpose==\"Inter Branch\" ;",
    "fieldname": "to_gl_entry",
    "fieldtype": "Check",
    "label": "2nd GL Entry",
@@ -230,7 +214,7 @@
    "hide_border": 1
   },
   {
-   "depends_on": "eval: doc.transaction_type==\"Inter Branch\" || doc.transaction_type==\"Inter Bank\";",
+   "depends_on": "eval: doc.transaction_purpose==\"Inter Branch\" || doc.transaction_purpose==\"Inter Bank\";",
    "fetch_from": "company.custom_deposit_in_transit_account",
    "fetch_if_empty": 1,
    "fieldname": "desposit_in_transit_account",
@@ -241,11 +225,10 @@
   },
   {
    "fieldname": "column_break_fwiz",
-   "fieldtype": "Column Break",
-   "label": "Workflow GL Entries (Inter Branch)"
+   "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:  doc.transaction_type==\"Inter Branch\";",
+   "depends_on": "eval:  doc.transaction_purpose==\"Inter Branch\";",
    "fetch_from": "company.custom_ibft_equity_account_",
    "fetch_if_empty": 1,
    "fieldname": "ibft_equity_account",
@@ -270,13 +253,13 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.transaction_type == \"Inter Fund\";",
+   "depends_on": "eval: doc.transaction_purpose == \"Inter Fund\";",
    "fieldname": "inter_fund_section",
    "fieldtype": "Section Break",
    "label": "Inter Fund"
   },
   {
-   "depends_on": "eval: doc.transaction_type == \"Inter Branch\";",
+   "depends_on": "eval: doc.transaction_purpose == \"Inter Branch\";",
    "fieldname": "inter_branch_section",
    "fieldtype": "Section Break",
    "hide_border": 1,
@@ -288,7 +271,7 @@
   },
   {
    "default": "Project",
-   "depends_on": "eval: doc.transaction_type==\"Inter Fund\"; ",
+   "depends_on": "eval: doc.transaction_purpose==\"Inter Fund\"; ",
    "fieldname": "transfer_type",
    "fieldtype": "Select",
    "label": "Transfer Type",
@@ -317,14 +300,30 @@
   },
   {
    "fieldname": "inter_branch_accounts_info_column",
-   "fieldtype": "Column Break",
-   "label": "Inter Branch (Accounts) Info"
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "default": "Inter Fund",
+   "fieldname": "transaction_purpose",
+   "fieldtype": "Select",
+   "label": "Transaction Purpose",
+   "options": "Inter Fund\nInter Branch\nInter Bank",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.transaction_purpose === 'Inter Fund' || doc.transaction_purpose === 'Inter Bank';",
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "mandatory_depends_on": "eval: doc.transaction_purpose === 'Inter Fund';",
+   "options": "Cost Center"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-02 15:32:05.272769",
+ "modified": "2025-10-03 17:15:28.077795",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",
@@ -345,6 +344,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

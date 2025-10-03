@@ -1,11 +1,11 @@
 import frappe, ast
 
 from akf_accounts.utils.accounts_defaults import get_company_defaults
-from akf_projects.customizations.overrides.project.financial_stats import (
-	get_donation, 
-	get_funds_transfer, 
-	get_purchasing
-)
+# from akf_projects.customizations.overrides.project.financial_stats import (
+# 	get_donation, 
+# 	get_funds_transfer, 
+# 	get_purchasing
+# )
 """ 
 Nabeel Saleem
 Date: 17-02-2025

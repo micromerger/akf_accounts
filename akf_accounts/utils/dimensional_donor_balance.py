@@ -13,13 +13,15 @@ Date: 17-02-2025
 # 
 @frappe.whitelist()
 def get_donor_balance(filters=None):
+	print(type(filters))
 	if(type(filters) == str): filters = ast.literal_eval(filters)
-	
+	print(type(filters))
 	accounts = get_company_defaults(filters.get("company"))
 
 	response = frappe.db.sql(""" 
  		Select 
    			cost_center, account, donor, 
+			donor_type, donor_desk, (donation_type) as intention, transaction_type,
 			(select donor_name from `tabDonor` where name=gl.donor limit 1) as donor_name,
 			sum(credit-debit) as balance
 
@@ -35,7 +37,7 @@ def get_donor_balance(filters=None):
 		Having
 			balance>0
 		Order By
-			balance desc
+			balance asc
 	""".format(get_conditions(filters, accounts)), filters, as_dict=1)
 	# print('---------------------: ', response)
 	amount = filters.get("amount")
@@ -63,19 +65,24 @@ def get_conditions(filters, accounts):
 	conditions += " and service_area = %(service_area)s " if(filters.get('service_area')) else ""
 	conditions += " and subservice_area = %(subservice_area)s " if(filters.get('subservice_area')) else ""
 	conditions += " and product = %(product)s " if(filters.get('product')) else ""
-	conditions = " and cost_center = %(cost_center)s " if(filters.get('cost_center')) else ""
+	conditions += " and cost_center = %(cost_center)s " if(filters.get('cost_center')) else ""
 	conditions += " and project = %(project)s " if(filters.get('project')) else ""
 	conditions += " and donor = %(donor)s " if(filters.get('donor')) else ""
 	conditions += " and donor_type = %(donor_type)s " if(filters.get('donor_type')) else ""	
 	conditions += " and donor_desk = %(donor_desk)s " if(filters.get('donor_desk')) else ""
 	conditions += " and donation_type = %(intention)s " if(filters.get('intention')) else ""
 	conditions += " and transaction_type = %(transaction_type)s " if(filters.get('transaction_type')) else ""
+	conditions += " and account = %(account)s " if(filters.get('account')) else ""
 
 	doctype = filters.get('doctype')
 	
 	if(doctype == "Material Request"):
 		conditions += " and account = %(account)s "	
 		filters.update({'account': accounts.encumbrance_project_account})
+
+	# elif(doctype == "Funds Transfer"):
+	# 	conditions += " and voucher_type = %(voucher_type)s "	
+	# 	filters.update({'voucher_type': 'Project'})
 	
 	# elif(doctype == "Purchase Order"):
 	# 	conditions += " and account = %(account)s "	
@@ -86,9 +93,9 @@ def get_conditions(filters, accounts):
 	# 	filters.update({'account': accounts.encumbrance_material_request_account})
 	# elif(doctype == "Budget"):
 	# 	conditions += " and account not like '%%encumbrance%%' "
-	print('-----------------------------')
-	print(conditions)
-	print(filters)
+	# print('-----------------------------')
+	# print(conditions)
+	# print(filters)
 	return conditions
 
 @frappe.whitelist()

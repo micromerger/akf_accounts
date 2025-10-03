@@ -9,6 +9,8 @@ function make_dimensions_modal(frm) {
         });
 };
 
+const AccountingDimensions = ['project', 'fund_class', 'service_area', 'subservice_area', 'product', 'cost_center', 'donor_type', 'donor_desk', 'intention', 'transaction_type']
+
 // events.get_donations
 function get_donations(frm) {
     if (!["", undefined].includes(frm.doc.from_cost_center)) {
@@ -35,7 +37,8 @@ function get_donations(frm) {
                     return {
                         filters: {
                             status: ['!=', 'Completed'],
-                            fund_class: ['!=', '']
+                            fund_class: ['!=', ''],
+                            cost_center: frm.doc.cost_center
                         }
                     }
                 },
@@ -142,8 +145,9 @@ function get_donations(frm) {
                 fieldname: "cost_center",
                 fieldtype: "Link",
                 options: "Cost Center",
-                read_only: 0,
-                default: frm.doc.cost_center
+                reqd: 1,
+                read_only: 1,
+                default: frm.doc.doctype === "Funds Transfer"? frm.doc.cost_center: '',
             },
             // {
             //     label: __(""),
@@ -160,7 +164,7 @@ function get_donations(frm) {
                 fieldname: "donor_type",
                 fieldtype: "Link",
                 options: "Donor Type",
-                reqd: 1
+                reqd: 0
             },
             // {
             //     label: __(""),
@@ -172,7 +176,7 @@ function get_donations(frm) {
                 fieldname: "donor_desk",
                 fieldtype: "Link",
                 options: "Donor Desk",
-                reqd: 1
+                reqd: 0
             },
             // {
             //     label: __(""),
@@ -184,14 +188,14 @@ function get_donations(frm) {
                 fieldname: "intention",
                 fieldtype: "Link",
                 options: "Donation Type",
-                reqd: 1
+                reqd: 0
             },
             {
                 label: __("Transaction Type"),
                 fieldname: "transaction_type",
                 fieldtype: "Link",
                 options: "Transaction Type",
-                reqd: 1
+                reqd: 0
             },
             {
                 label: __(""),
@@ -238,18 +242,14 @@ function get_donations(frm) {
                         "service_area": d.fields_dict.service_area.value,
                         "subservice_area": d.fields_dict.subservice_area.value,
                         "product": d.fields_dict.product.value,
-                        
                         "cost_center": d.fields_dict.cost_center.value,
-                        "donor_type": d.fields_dict.donor_type.value,
-                        "donor_desk": d.fields_dict.donor_desk.value,
-                        "intention": d.fields_dict.intention.value,
-                        "transaction_type": d.fields_dict.transaction_type.value,
-
                         "company": frm.doc.company,
                         "doctype": frm.doc.doctype,
                         "amount": transfer_amount
                         // "amount": get_consuming_amount(frm.doc)
                     }
+                    
+                    
                     let msg = "<p></p>";
                     let data = [];
 
@@ -262,6 +262,13 @@ function get_donations(frm) {
                     }
 
                     const nofilters = get_validate_filters(filters);
+                    
+                    // if(!["", null].includes(d.fields_dict.cost_center.value)) filters.cost_center = d.fields_dict.cost_center.value;
+                    if(!["", null].includes(d.fields_dict.donor_type.value)) filters.donor_type = d.fields_dict.donor_type.value;
+                    if(!["", null].includes(d.fields_dict.donor_desk.value)) filters.donor_desk = d.fields_dict.donor_desk.value;
+                    if(!["", null].includes(d.fields_dict.intention.value)) filters.intention = d.fields_dict.intention.value;
+                    if(!["", null].includes(d.fields_dict.transaction_type.value)) filters.transaction_type = d.fields_dict.transaction_type.value;
+                    
                     if (nofilters.notFound) {
                         msg = `<b style="color: red;">Please select ${nofilters.fieldname}<b>`;
                     } else {
@@ -304,7 +311,7 @@ function get_donations(frm) {
                         label: __("Cost Center"),
                         fieldtype: "Link",
                         options: "Cost Center",
-                        in_list_view: 1,
+                        in_list_view: 0,
                         read_only: 1,
                     },
                     {
@@ -312,7 +319,7 @@ function get_donations(frm) {
                         label: __("Account"),
                         fieldtype: "Link",
                         options: "Account",
-                        in_list_view: 1,
+                        in_list_view: 0,
                         read_only: 1,
                     },
                     {
@@ -320,7 +327,7 @@ function get_donations(frm) {
                         label: __("Donor"),
                         fieldtype: "Link",
                         options: "Donor",
-                        in_list_view: 1,
+                        in_list_view: 0,
                         read_only: 1,
                     },
                     {
@@ -332,13 +339,45 @@ function get_donations(frm) {
                         read_only: 1,
                     },
                     {
-                        fieldname: "temporary_account",
-                        label: __("Temporary Account"),
+                        fieldname: "donor_type",
+                        label: __("Donor Type"),
                         fieldtype: "Link",
-                        options: "Account",
+                        options: "Donor Type",
+                        in_list_view: 1,
+                        read_only: 1,
+                    },
+                    {
+                        fieldname: "donor_desk",
+                        label: __("Donor Desk"),
+                        fieldtype: "Link",
+                        options: "Donor Desk",
+                        in_list_view: 1,
+                        read_only: 1,
+                    },
+                    {
+                        fieldname: "intention",
+                        label: __("Intention"),
+                        fieldtype: "Link",
+                        options: "Donation Type",
+                        in_list_view: 1,
+                        read_only: 1,
+                    },
+                    {
+                        fieldname: "transaction_type",
+                        label: __("Transaction Type"),
+                        fieldtype: "Link",
+                        options: "Transaction Type",
                         in_list_view: 0,
                         read_only: 1,
                     },
+                    // {
+                    //     fieldname: "temporary_account",
+                    //     label: __("Temporary Account"),
+                    //     fieldtype: "Link",
+                    //     options: "Account",
+                    //     in_list_view: 0,
+                    //     read_only: 1,
+                    // },
                     {
                         fieldname: "balance",
                         label: __("Balance"),
@@ -381,6 +420,11 @@ function get_donations(frm) {
             //     d.fields_dict.html_message.refresh();
             //     return
             // }
+            
+            // AccountingDimensions.forEach(dimension =>{
+            //     //  let value = values[dimension];
+            //     frm.set_value(dimension, values[dimension])
+            // });
 
             array.forEach(row => {
                 if (row.__checked) {
@@ -397,10 +441,10 @@ function get_donations(frm) {
                             "ff_product": values.product,
                             
                             "ff_donor": row.donor,
-                            "donor_type": values.donor_type,
-                            "donor_desk": values.donor_desk,
-                            "donation_type": values.intention,
-                            "transaction_type": values.transaction_type,
+                            "donor_type": row.donor_type,
+                            "donor_desk": row.donor_desk,
+                            "donation_type": row.intention,
+                            "transaction_type": row.transaction_type,
                             // "encumbrance_project_account": row.encumbrance_project_account,
                             // "encumbrance_material_request_account": row.encumbrance_material_request_account,
                             // "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,

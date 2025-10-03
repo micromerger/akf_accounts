@@ -13,30 +13,29 @@
   "ft_service_area",
   "ft_subservice_area",
   "ft_product",
-  "column_break_tnbb",
-  "ft_donor",
-  "ft_donor_name",
-  "donor_type",
-  "donor_desk",
-  "intention",
-  "transaction_type",
   "column_break_hrwc",
   "ft_company",
   "ft_cost_center",
   "ft_account",
   "ft_balance_amount",
   "ft_amount",
-  "outstanding_amount"
+  "outstanding_amount",
+  "section_break_hmxp",
+  "column_break_tnbb",
+  "ft_donor",
+  "ft_donor_name",
+  "donor_type",
+  "donor_desk",
+  "intention",
+  "transaction_type"
  ],
  "fields": [
   {
    "fieldname": "ft_cost_center",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Cost Center",
-   "options": "Cost Center",
-   "read_only": 1,
-   "reqd": 1
+   "options": "Cost Center"
   },
   {
    "fieldname": "ft_service_area",
@@ -65,27 +64,25 @@
   {
    "fieldname": "ft_donor",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Donor",
-   "options": "Donor",
-   "reqd": 1
+   "options": "Donor"
   },
   {
    "fieldname": "ft_company",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Company",
-   "options": "Company",
-   "read_only": 1,
-   "reqd": 1
+   "options": "Company"
   },
   {
    "fieldname": "ft_account",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Account",
-   "options": "Account",
-   "reqd": 1
+   "options": "Account"
   },
   {
    "fieldname": "ft_amount",
@@ -112,8 +109,8 @@
    "default": "0",
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
-   "label": "Outstanding Amount",
-   "read_only": 1
+   "hidden": 1,
+   "label": "Outstanding Amount"
   },
   {
    "fetch_from": "ft_donor.donor_name",
@@ -127,8 +124,7 @@
    "fieldname": "ft_balance_amount",
    "fieldtype": "Currency",
    "hidden": 1,
-   "label": "Balance Amount",
-   "read_only": 1
+   "label": "Balance Amount"
   },
   {
    "fetch_from": "project.fund_class",
@@ -163,29 +159,36 @@
   {
    "fieldname": "intention",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Intention",
    "options": "Donation Type"
   },
   {
    "fieldname": "transaction_type",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Transaction Type",
    "options": "Transaction Type"
   },
   {
    "fieldname": "column_break_hrwc",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_hmxp",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-02 15:23:01.518178",
+ "modified": "2025-10-02 17:42:51.254226",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer To",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

@@ -7,11 +7,23 @@ from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import (
     today, fmt_money, get_link_to_form
 )
-from akf_accounts.customizations.overrides.cdoctype.project.financial_stats import (
-    get_transactions
+# from akf_accounts.customizations.overrides.cdoctype.project.financial_stats import (
+#     get_transactions
+# )
+from akf_accounts.utils.dimensional_donor_balance import (
+	get_donor_balance
 )
-
 # from frappe import today
+
+from akf_accounts.akf_accounts.doctype.funds_transfer.gl_entries.inter_fund_project import (
+	make_inter_fund_project_gl_entries
+)
+from akf_accounts.akf_accounts.doctype.funds_transfer.gl_entries.inter_fund_class import (
+	make_inter_fund_class_gl_entries
+)
+from akf_accounts.akf_accounts.doctype.funds_transfer.gl_entries.inter_branch import (
+	make_inter_branch_gl_entries
+)
 
 class FundsTransfer(Document):
 	def validate(self):
@@ -25,12 +37,12 @@ class FundsTransfer(Document):
 		self.calculate_totals()
 
 	def validate_cost_center(self):
-		if self.transaction_type == 'Inter Branch':
+		if self.transaction_purpose == 'Inter Branch':
 			if self.from_cost_center == self.to_cost_center:
 				frappe.throw("Cost Centers cannot be same in Inter Branch Transfer")
 
 	def validate_inter_branch_accounts(self):
-		if self.transaction_type == 'Inter Branch':
+		if self.transaction_purpose == 'Inter Branch':
 			if self.from_bank_account == self.to_bank_account:
 				frappe.throw("Banks cannot be same in Inter Branch Transfer")
 			if (not self.desposit_in_transit_account or not self.ibft_equity_account):
@@ -38,88 +50,59 @@ class FundsTransfer(Document):
 				frappe.throw(f"[Desposit In Transit Account, IBFT (Equity) Account] are need to be set in company {clink}", title="Inter Branch (Accounts Settings)")
 
 	def validate_inter_bank(self):
-		if self.transaction_type == 'Inter Bank':
+		if self.transaction_purpose == 'Inter Bank':
 			if self.account_balance_from <= 0.0:
 				frappe.throw(f"ZERO balance in {self.from_bank}", title="No Balance")
 			if self.account_balance_from < self.transfer_amount :
-				frappe.throw(f"Transfer amount <b>{self.transfer_amount}</b> is greater than available balance <b>{self.account_balance_from}</b>", title="Exceeding balance")
+				frappe.throw(f"Transfer to <b>{self.transfer_amount}</b> is greater than available balance <b>{self.account_balance_from}</b>", title="Exceeding balance")
  
 	@frappe.whitelist()
 	def update_funds_tranfer_from(self):
-		ftf_dict = frappe._dict()
-
-		for row in self.funds_transfer_to:
-			amount = row.ft_amount
-
-			if(row.ft_donor in ftf_dict): 
-				ftf_dict[f'{row.ft_donor}'] += amount
-			else: 
-				ftf_dict.update({f'{row.ft_donor}': amount})
+		if(self.transaction_purpose == "Inter Fund" and self.transaction_purpose == "Fund Project"):
+			total_transfer_amount = 0
+			for row in self.funds_transfer_to:
+				amount = row.ft_amount
+				if(amount<=0.0):
+					frappe.throw(f"""In <b>Row#{row.idx}</b>, the amount cannot be negative or zero to transfer.""", 
+						title="Funds Transfer To")
+				total_transfer_amount += amount
 			
-			if(amount<=0.0):
-				frappe.throw(f"""In <b>Row#{row.idx}</b>, the amount cannot be negative or zero to transfer.""", 
-					title="Funds Transfer To")
-		
-		for donorId in ftf_dict:
-			IS_DONOR = False
-			transfer_amount = ftf_dict[donorId]
+			total_available_balance = 0
+
+			temp_total_transfer_amount = total_transfer_amount
+			# update the transfer-amount and also calcuate total balance.
 			for row in self.funds_transfer_from:
-				if(donorId == row.ff_donor):
-					balance_amount = row.ff_balance_amount
-					if(transfer_amount > balance_amount):
-						actualMoney = fmt_money(balance_amount, currency="PKR")
-						transferMoney = fmt_money(transfer_amount, currency="PKR")
-						extraMoney = fmt_money((transfer_amount - balance_amount), currency="PKR")
-						frappe.throw(f"""In <b>Row#{row.idx}</b>, the balance amount is <b>{actualMoney}</b> and you're transfering <b>{transferMoney}</b> with extra of <b>{extraMoney}</b>.""", 
-							title="Funds Transfer From")
-					
-					row.ff_transfer_amount = transfer_amount
-					row.transfer = True
-					IS_DONOR = True
-			
-			if(not IS_DONOR):
-				frappe.throw(f"""Donor <b>{donorId}</b> not found in <b>Funds Tranfer From`</b> table.""" , title="Funds Transfer To")
-		
-		# for row1 in self.funds_transfer_to:
-		# 	actual_balance = 0.0
-		# 	is_found = True
-		# 	donor_not_found = True
-		# 	remaining_balance = row1.ft_amount
-		# 	# if user enters -ve or zero values.
-		# 	if(remaining_balance<=0.0):
-		# 		frappe.throw(f"""In <b>Row#{row1.idx}</b>, the amount cannot be negative or zero to transfer.""", 
-		# 			title="Funds Transfer To")
+				balance_amount = row.ff_balance_amount
+				total_available_balance += balance_amount # calcuate total balance
+
+				row.ff_transfer_amount =  0
+				row.transfer = False
+
+				if(temp_total_transfer_amount > 0 and temp_total_transfer_amount <= balance_amount):
+					row.ff_transfer_amount =  temp_total_transfer_amount
+					row.transfer = 1
+					temp_total_transfer_amount = 0
+
+				if(temp_total_transfer_amount > balance_amount):
+					row.ff_transfer_amount = balance_amount
+					row.transfer = 1
+					temp_total_transfer_amount = (temp_total_transfer_amount - balance_amount)
 				
-		# 	for row2 in self.funds_transfer_from:
-		# 		balance_amount = row2.ff_balance_amount
-		# 		if(row1.ft_donor == row2.ff_donor):
-		# 			row2.ff_transfer_amount = 0.0
-		# 			row2.transfer = 0
-		# 			if (remaining_balance>0.0) and (remaining_balance<=balance_amount) and (is_found):
-		# 				row2.ff_transfer_amount = remaining_balance
-		# 				remaining_balance -= remaining_balance
-		# 				row2.transfer = 1
-		# 				is_found = False
-		# 			elif(remaining_balance>row2.ff_balance_amount):
-		# 				row2.ff_transfer_amount = balance_amount
-		# 				remaining_balance -= balance_amount
-		# 				row2.transfer = 1
-		# 			actual_balance += balance_amount
-		# 			donor_not_found = False
-			
-		# 	if(donor_not_found):
-		# 		frappe.throw(f"""In <b>Row#{row1.idx}</b>,  Donor <b>{row1.ft_donor_name}</b> not found in <b>Funds Tranfer From`</b> table.""" , title="Funds Transfer To")
-			
-		# 	if(remaining_balance>0.0):
-		# 		actualMoney = fmt_money(actual_balance, currency="PKR")
-		# 		transferMoney = fmt_money(row1.ft_amount, currency="PKR")
-		# 		remainingMoney = fmt_money(remaining_balance, currency="PKR")
-		# 		frappe.throw(f"""In <b>Row#{row1.idx}</b>, the actual amount is <b>{actualMoney}</b> and you're transfering <b>{transferMoney}</b> with extra of <b>{remainingMoney}</b>.""", 
-		# 			title="Funds Transfer To")
-			
+
+			# Show message to user you're exceeding balance limit.
+			if(total_transfer_amount > total_available_balance):
+				frappe.throw(f"""
+						Transfer amount: <b>{fmt_money(total_transfer_amount, currency="PKR")}</b> 
+						<br> 
+						Available amount: <b>{fmt_money(total_available_balance, currency="PKR")}</b>
+						<br>
+						Differecne: <b>{fmt_money((total_transfer_amount - total_available_balance), currency="PKR")}</b>""", 
+						title="Exceeding available balance")
+
+
 	@frappe.whitelist()
 	def set_deduction_breakeven(self):
-		if(self.transaction_type=='Inter Branch'): 
+		if(self.transaction_purpose=='Inter Branch'): 
 			from akf_accounts.akf_accounts.doctype.funds_transfer.deduction_breakeven import apply_deduction_breakeven
 			apply_deduction_breakeven(self)
 		else: self.set("deduction_breakeven", [])
@@ -131,121 +114,54 @@ class FundsTransfer(Document):
 
 	@frappe.whitelist()
 	def donor_list_data_funds_transfer(self, is_valid=False):
-		def validate_missing_info(row):
-			conditions = ""
-			for field1, field2 in [
-				('subservice_area', "ff_subservice_area"),
-				('donor', "ff_donor"),
-				('project', "project"),
-				('cost_center', "ff_cost_center"),
-				('product', "ff_product"),
-				('service_area', "ff_service_area"),
-				('company', "ff_company"),
-				('account', "ff_account")]:
-				value2 = row.get(field2)
-				if(value2):
-					conditions += f" and {field1} = '{value2}' "
-				else:
-					label =  field2.replace("ff_", "")
-					label =  label.replace("_", " ")
-					frappe.msgprint(f"Row#{row.idx}, please select <b>{label.capitalize()}</b>", title="Funds Transfer From")
-			return conditions
-
-		def get_donor_entries(condition):
-			""" sql by nabeel saleem """
-			query = f"""  Select 
-					ifnull((sum(distinct gl.credit) - sum(distinct gl.debit)),0) as total_balance,
-					gl.donor,
-					(select donor_name from `tabDonor` where name=gl.donor) as donor_name,
-					gl.service_area,
-					gl.subservice_area,
-					gl.project,
-					gl.cost_center,
-					gl.product,
-					gl.company,
-					gl.account
-				From 
-					`tabGL Entry` gl, `tabDonation` d, `tabFunds Transfer` ft
-				Where 
-					(gl.voucher_no = d.name or gl.voucher_no = ft.name)
-					and d.contribution_type ='Donation'
-					and gl.is_cancelled=0
-					and voucher_type  in ('Donation', 'Funds Transfer')
-					and gl.account in (select name from `tabAccount` where disabled=0 and account_type='Equity' and name=gl.account)
-					{f'{condition}' if condition else ''}
-				Having 
-					total_balance>0
-				Order By 
-					total_balance desc
-				"""
-			return frappe.db.sql(query, as_dict=True)
-
-				
-		def validate_duplicates(row, entry_key, duplicate_entries):
-			if(entry_key in duplicate_entries):
-				if(is_valid):
-					frappe.throw(f'In <b>Row#{row.idx}</b>; duplicate entry exists for donor "{row.ff_donor}" with provided details.</span>', title="Funds Transfer From")
-				else:
-					frappe.msgprint(f'In <b>Row#{row.idx}</b>; duplicate entry exists for donor "{row.ff_donor}" with provided details.</span>', title="Funds Transfer From")
-
+		
 		def validate_balance(row, financial_stats):
-				remaining_amount = financial_stats['remaining_amount'] 
-				if(remaining_amount<=0.0): 
-					row.ff_balance_amount = 0.0
-					if(is_valid):
-						frappe.throw(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{row.ff_donor}</b> with provided details""", 
-								title="Funds Transfer From")
-					else:
-						frappe.msgprint(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{row.ff_donor}</b> with provided details""", 
-								title="Funds Transfer From")
-				else:
-					row.ff_balance_amount = remaining_amount
-
+			if(is_valid and (not financial_stats)):
+				frappe.throw(f"""<b>Row#{row.idx}</b>; no balance exists for <b>{row.ff_donor}</b> with provided details""", 
+							title="Funds Transfer From")
+		
 		def execute_funds_transfer_from():
-			duplicate_entries = set()
 			filters = set()
 			for row in self.funds_transfer_from:
-				# validate_missing_info(row) # If some filters are missed
-				entry_key = (
-					row.ff_company,
-					row.ff_cost_center,
-					row.ff_service_area,
-					row.ff_subservice_area,
-					row.ff_product,
-					row.project,
-					row.ff_donor,
-					row.ff_account,
-				)
-				validate_duplicates(row, entry_key, duplicate_entries) # If same filters in new row
-				duplicate_entries.add(entry_key) # update set of duplicate entries
 				filters = {
-					'subservice_area': row.ff_subservice_area,
-					'donor': row.ff_donor,
-					'project': row.project,
-					'cost_center': row.ff_cost_center,
-					'product': row.ff_product,
-					'service_area': row.ff_service_area,
 					'company': row.ff_company,
-					'account': row.ff_account
+					'cost_center': row.ff_cost_center,
+					'project': row.project,				
+					'fund_class': row.fund_class,
+					'service_area': row.ff_service_area,
+					'subservice_area': row.ff_subservice_area,
+					'product': row.ff_product,
+					'donor': row.ff_donor,
+					'donor_type': row.donor_type,
+					'donor_desk': row.donor_desk,
+					'intention': row.donation_type,
+					'transaction_type': row.transaction_type,
+					'account': row.ff_account,
+					'amount': row.ff_transfer_amount
 				}
-				financial_stats = get_transactions(filters) # get complete stats
+				# financial_stats = get_transactions(filters) # get complete stats
+				financial_stats = get_donor_balance(filters)
+				# print('|--------------------------|')
+				# print(financial_stats)
 				validate_balance(row, financial_stats) # validate balance against filters
+				
 				# donor_entries = get_donor_entries(condition)
 	
 		if(self.docstatus==0): execute_funds_transfer_from()
 
 	def on_update(self): 
-		if ((self.from_gl_entry) and (not self.to_gl_entry)): self.make_gl_entries()
+		pass
 
 	def on_submit(self):
-		transaction_types = ['Inter Branch', 'Inter Fund', 'Inter Bank']
-		if self.transaction_type in transaction_types:
-			self.make_gl_entries()
-			# self.create_gl_entries_for_inter_funds_transfer()
-		if(self.transaction_type == 'Inter Branch'): 
-			from akf_accounts.akf_accounts.doctype.funds_transfer.deduction_breakeven import make_deduction_gl_entries
-			make_deduction_gl_entries(self)
-
+		make_inter_fund_project_gl_entries(self) # Project only
+		make_inter_fund_class_gl_entries(self) # Fund Class only
+		make_inter_branch_gl_entries(self) # Inter Branch
+		# transaction_purposes = ['Inter Branch', 'Inter Fund', 'Inter Bank']
+		# if self.transaction_purpose in transaction_purposes:
+		# 	self.make_gl_entries()
+		# 	# self.create_gl_entries_for_inter_funds_transfer()
+		# if(self.transaction_purpose == 'Inter Branch'): 
+		
 	def on_trash(self):
 		self.delete_all_gl_entries()
 
@@ -257,262 +173,6 @@ class FundsTransfer(Document):
 		if(hasattr(self, 'workflow_state')): 
 			frappe.db.set_value(self.doctype, self.name, 'workflow_state', 'Cancelled') 
 			self.reload
-
-	def make_gl_entries(self):
-		
-		def validate_funds_transfer_to():
-			if (not self.funds_transfer_to and self.transaction_type!="Inter Bank"):
-				frappe.throw("There is no information to transfer funds.", title="Funds Transfer To")
-				
-		# make debit entries
-		def gl_entries_funds_transfer_from():
-			args = _get_gl_structure(self)
-			for row in self.funds_transfer_from:
-				# Debit entry for previous dimension; funds transfer from
-				if(row.transfer):
-					args = _get_gl_structure(self)
-					args.update({
-						'account': row.ff_account,
-						'party_type': 'Donor',
-						'party': row.ff_donor,
-						'cost_center': row.ff_cost_center,
-						'against': row.ff_account,
-						'company': row.ff_company,
-						'project': row.project,
-						'service_area': row.ff_service_area,
-						'subservice_area': row.ff_subservice_area,
-						'product': row.ff_product,      
-						'donor': row.ff_donor, 
-						# 
-						'debit': row.ff_transfer_amount,
-						'debit_in_account_currency': row.ff_transfer_amount,
-						'debit_in_transaction_currency': row.ff_transfer_amount,
-					})
-					doc = frappe.get_doc(args)
-					doc.insert(ignore_permissions=True)
-					doc.submit()
-
-					if(self.transaction_type != "Inter Bank"):
-						if(self.from_gl_entry and not self.to_gl_entry):
-							# def entry_Deposit_In_Transit():
-							if(self.transaction_type in ["Inter Branch"]):
-								args.update({
-									'account': self.desposit_in_transit_account,
-									'cost_center': self.from_cost_center,
-									'against': self.desposit_in_transit_account,
-
-								})
-								doc = frappe.get_doc(args)
-								doc.insert(ignore_permissions=True)
-								doc.submit()
-							
-								# def entry_IBFT_Equity():
-								args.update({
-									'account': self.ibft_equity_account,
-									'cost_center': self.from_cost_center,
-									'against': self.ibft_equity_account,
-									'credit': row.ff_transfer_amount,
-									'credit_in_account_currency': row.ff_transfer_amount,						
-									'credit_in_transaction_currency': row.ff_transfer_amount,
-									'debit': 0,
-									'debit_in_account_currency': 0,
-									'debit_in_transaction_currency': 0
-								})
-								doc = frappe.get_doc(args)
-								doc.insert(ignore_permissions=True)
-								doc.submit()
-			
-		# make credit entries
-		def gl_entries_funds_transfer_to():
-			for row in self.funds_transfer_to:
-				# for bank from gl entry purpose
-				# sum_ft_amount += row.ft_amount
-				# Debit entry for previous dimension; funds transfer from
-				amount = row.outstanding_amount if(row.outstanding_amount>0) else row.ft_amount
-				args = _get_gl_structure(self)
-				args.update({
-					'account': row.ft_account,
-					'against': row.ft_account,
-					'party_type': 'Donor',
-					'party': row.ft_donor,
-					'cost_center': row.ft_cost_center,
-					# 
-					'credit': amount,
-					'credit_in_account_currency': amount,
-					'credit_in_transaction_currency': amount,
-					# 
-					'project': row.project,
-					'fund_class': row.fund_class if(self.transaction_type != "Inter Bank") else "",
-					'service_area': row.ft_service_area,
-					'subservice_area': row.ft_subservice_area,
-					'product': row.ft_product,      
-					'donor': row.ft_donor	
-				})
-				doc = frappe.get_doc(args)
-				doc.insert(ignore_permissions=True)
-				doc.submit()
-
-				if(self.transaction_type !="Inter Bank"):
-					if(self.to_gl_entry):
-						# def entry_Deposit_In_Transit():
-						if(self.transaction_type in ["Inter Branch"]):
-							args.update({
-								'account': self.desposit_in_transit_account,
-								'cost_center': self.from_cost_center,
-								'against': self.desposit_in_transit_account,
-								# 
-								'credit': row.ft_amount,
-								'credit_in_account_currency': row.ft_amount,
-								'credit_in_transaction_currency': row.ft_amount,
-								#
-							})
-							doc = frappe.get_doc(args)
-							doc.insert(ignore_permissions=True)
-							doc.submit()
-							# def entry_IBFT_Equity():
-							args.update({
-								'account': self.ibft_equity_account,
-								'cost_center': self.from_cost_center,
-								'against': self.ibft_equity_account,
-								'debit': row.ft_amount,
-								'debit_in_account_currency': row.ft_amount,					
-								'debit_in_transaction_currency': row.ft_amount,
-								'credit': 0,
-								'credit_in_account_currency': 0,
-								'credit_in_transaction_currency': 0
-							})
-							doc = frappe.get_doc(args)
-							doc.insert(ignore_permissions=True)
-							doc.submit()
-			# return sum_ft_amount
-		
-		# make credit entries
-		def gl_entry_bank_from():
-			from_bank = None
-			# if(not self.from_bank) and (self.transaction_type=='Inter Fund'): return
-			if(self.transaction_type=='Inter Fund'): return
-			if(not self.from_bank_account) and (self.transaction_type=='Inter Branch'): return
-			if(self.from_bank): from_bank = self.from_bank
-			if(self.from_bank_account): from_bank = self.from_bank_account
-			# Credit entry for bank account	
-			args = _get_gl_structure(self)
-			amount = self.transfer_amount if(self.transaction_type=='Inter Bank') else self.total_amount
-			args.update({
-				'account': from_bank,
-				'cost_center': self.from_cost_center if(self.transaction_type == "Inter Branch") else self.cost_center,
-				'against': from_bank,			
-				'credit': amount,
-				'credit_in_account_currency': amount,						
-				'credit_in_transaction_currency': amount
-			})
-			doc = frappe.get_doc(args)
-			doc.insert(ignore_permissions=True)
-			doc.submit()
-			# In transit bank entry debit
-			entry_Deposit_In_Transit()
-		
-		# make debit entries
-		def gl_entry_bank_to():
-			to_bank = None
-			# if(not self.to_bank) and (self.transaction_type=='Inter Fund'): return
-			if(self.transaction_type=='Inter Fund'): return
-			if(not self.to_bank_account) and (self.transaction_type=='Inter Branch'): return
-			if(self.to_bank): to_bank = self.to_bank
-			if(self.to_bank_account): to_bank = self.to_bank_account
-			
-			# In transit bank entry credit
-			entry_Deposit_In_Transit()
-			# Debit entry for bank account
-			args = _get_gl_structure(self)
-			amount = self.transfer_amount if(self.transaction_type=='Inter Bank') else self.total_amount
-			args.update({
-				'account': to_bank,
-				'cost_center': self.to_cost_center if(self.transaction_type == "Inter Branch") else self.cost_center,
-				'against': to_bank,			
-				'debit': amount,
-				'debit_in_account_currency': amount,
-				'debit_in_transaction_currency': amount
-			})
-			doc = frappe.get_doc(args)
-			doc.insert(ignore_permissions=True)
-			doc.submit()
-
-		def entry_Deposit_In_Transit():
-			'''if(self.transaction_type=="Inter Branch"):
-				args = _get_gl_structure(self)
-				if(self.from_gl_entry and not self.to_gl_entry):
-					args.update({
-						'account': self.desposit_in_transit_account,
-						'cost_center': self.from_cost_center,
-						'against': self.desposit_in_transit_account,			
-						'debit': self.total_amount,
-						'debit_in_account_currency': self.total_amount,						
-						'debit_in_transaction_currency': self.total_amount
-					})'''
-
-			if(self.transaction_type=="Inter Bank"):
-				args = _get_gl_structure(self)
-				if(self.from_gl_entry and not self.to_gl_entry):
-					args.update({
-						'account': self.desposit_in_transit_account,
-						'cost_center': self.from_cost_center,
-						'against': self.desposit_in_transit_account,			
-						'debit': self.transfer_amount,
-						'debit_in_account_currency': self.transfer_amount,						
-						'debit_in_transaction_currency': self.transfer_amount
-					})
-				elif(self.to_gl_entry):
-					args.update({
-						'account': self.desposit_in_transit_account,
-						'cost_center': self.from_cost_center,
-						'against': self.desposit_in_transit_account,			
-						'credit': self.transfer_amount,
-						'credit_in_account_currency': self.transfer_amount,						
-						'credit_in_transaction_currency': self.transfer_amount
-					})
-				
-				doc = frappe.get_doc(args)	
-				doc.insert(ignore_permissions=True)
-				doc.submit()
-		
-		def entry_IBFT_Equity():
-			if(self.transaction_type=="Inter Branch"):
-				args = _get_gl_structure(self)
-				if(self.from_gl_entry and not self.to_gl_entry):
-					args.update({
-						'account': self.ibft_equity_account,
-						'cost_center': self.from_cost_center,
-						'against': self.ibft_equity_account,
-						'credit': self.total_amount,
-						'credit_in_account_currency': self.total_amount,						
-						'credit_in_transaction_currency': self.total_amount
-					})
-
-				elif(self.to_gl_entry):
-					args.update({
-						'account': self.ibft_equity_account,
-						'cost_center': self.from_cost_center,
-						'against': self.ibft_equity_account,			
-						'debit': self.total_amount,
-						'debit_in_account_currency': self.total_amount,						
-						'debit_in_transaction_currency': self.total_amount
-					})
-				
-				doc = frappe.get_doc(args)	
-				doc.insert(ignore_permissions=True)
-				doc.submit()
-
-		# Start Execution
-		validate_funds_transfer_to()
-		
-		if(self.from_gl_entry and not self.to_gl_entry): 
-			gl_entries_funds_transfer_from()
-			gl_entry_bank_from()
-		# total_transfer_amount = gl_entries_funds_transfer_to()
-		
-		if(self.to_gl_entry): 
-			gl_entries_funds_transfer_to()
-			gl_entry_bank_to()
 
 	def create_gl_entries_for_inter_funds_transfer(self):
 		today_date = today()
@@ -1450,4 +1110,3 @@ def _get_gl_structure(self):
 		'debit_in_transaction_currency': 0.0,
 		'credit_in_transaction_currency': 0.0
 	}
-

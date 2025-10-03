@@ -333,7 +333,7 @@ class Donation(Document):
 			self.make_payment_detail_gl_entry()
 			self.make_deduction_gl_entries()
 			self.make_payment_ledger_entry()
-			self.make_payment_entry()
+			# self.make_payment_entry()
 			self.update_status()
 			self.send_donation_emails()		# Mubashir Bashir
 			# self.update_project_allocation_check() #Mubarrim
