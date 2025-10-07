@@ -25,6 +25,10 @@ from akf_accounts.akf_accounts.doctype.funds_transfer.gl_entries.inter_branch im
 	make_inter_branch_gl_entries
 )
 
+from akf_accounts.akf_accounts.doctype.funds_transfer.gl_entries.inter_bank import (
+    make_inter_bank_gl_entries
+)
+
 class FundsTransfer(Document):
 	def validate(self):
 		self.posting_date = today()
@@ -43,6 +47,7 @@ class FundsTransfer(Document):
 
 	def validate_inter_branch_accounts(self):
 		if self.transaction_purpose == 'Inter Branch':
+			self.transfer_type = ""
 			if self.from_bank_account == self.to_bank_account:
 				frappe.throw("Banks cannot be same in Inter Branch Transfer")
 			if (not self.desposit_in_transit_account or not self.ibft_equity_account):
@@ -51,6 +56,7 @@ class FundsTransfer(Document):
 
 	def validate_inter_bank(self):
 		if self.transaction_purpose == 'Inter Bank':
+			self.transfer_type = ""
 			if self.account_balance_from <= 0.0:
 				frappe.throw(f"ZERO balance in {self.from_bank}", title="No Balance")
 			if self.account_balance_from < self.transfer_amount :
@@ -156,6 +162,7 @@ class FundsTransfer(Document):
 		make_inter_fund_project_gl_entries(self) # Project only
 		make_inter_fund_class_gl_entries(self) # Fund Class only
 		make_inter_branch_gl_entries(self) # Inter Branch
+		make_inter_bank_gl_entries(self) # Inter Bank
 		# transaction_purposes = ['Inter Branch', 'Inter Fund', 'Inter Bank']
 		# if self.transaction_purpose in transaction_purposes:
 		# 	self.make_gl_entries()

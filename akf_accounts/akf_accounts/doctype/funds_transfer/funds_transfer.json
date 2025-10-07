@@ -214,7 +214,7 @@
    "hide_border": 1
   },
   {
-   "depends_on": "eval: doc.transaction_purpose==\"Inter Branch\" || doc.transaction_purpose==\"Inter Bank\";",
+   "depends_on": "eval: doc.transaction_purpose==\"Inter Branch\";",
    "fetch_from": "company.custom_deposit_in_transit_account",
    "fetch_if_empty": 1,
    "fieldname": "desposit_in_transit_account",
@@ -243,7 +243,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.transaction_type == \"Inter Bank\";",
+   "depends_on": "eval: doc.transaction_purpose == \"Inter Bank\";",
    "fieldname": "inter_bank_section",
    "fieldtype": "Section Break",
    "label": "Inter Bank"
@@ -292,7 +292,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.transaction_type==\"Inter Bank\" && doc.account_balance_from>0;",
+   "depends_on": "eval: doc.transaction_purpose==\"Inter Bank\" && doc.account_balance_from>0;",
    "fieldname": "transfer_amount",
    "fieldtype": "Currency",
    "label": "Transfer Amount",
@@ -323,7 +323,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-03 17:15:28.077795",
+ "modified": "2025-10-07 15:32:49.247007",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",
