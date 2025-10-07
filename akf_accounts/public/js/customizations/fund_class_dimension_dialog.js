@@ -247,10 +247,6 @@ function get_donations(frm) {
                         "subservice_area": d.fields_dict.subservice_area.value,
                         "product": d.fields_dict.product.value,
                         "cost_center": d.fields_dict.cost_center.value,
-                        "donor_type": d.fields_dict.donor_type.value,
-                        "donor_desk": d.fields_dict.donor_desk.value,
-                        "intention": d.fields_dict.intention.value,
-                        "transaction_type": d.fields_dict.transaction_type.value,
                         "doctype": frm.doc.doctype,
                         "amount": d.fields_dict.estimated_costing.value
                     }
@@ -266,6 +262,12 @@ function get_donations(frm) {
                     }
 
                     const nofilters = get_validate_filters(filters);
+
+                    if (!["", null].includes(d.fields_dict.donor_type.value)) filters.donor_type = d.fields_dict.donor_type.value;
+                    if (!["", null].includes(d.fields_dict.donor_desk.value)) filters.donor_desk = d.fields_dict.donor_desk.value;
+                    if (!["", null].includes(d.fields_dict.intention.value)) filters.intention = d.fields_dict.intention.value;
+                    if (!["", null].includes(d.fields_dict.transaction_type.value)) filters.transaction_type = d.fields_dict.transaction_type.value;
+
                     if (nofilters.notFound) {
                         // Special message for Estimated Cost field
                         if (nofilters.fieldname === "amount") {

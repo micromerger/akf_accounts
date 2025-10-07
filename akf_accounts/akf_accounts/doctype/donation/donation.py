@@ -34,7 +34,7 @@ class Donation(Document):
 		for row in self.get('deduction_breakeven'):
 			if row.account:
 				# min_percentage, max_percentage = get_min_max_percentage(row.service_area, row.account)
-				min_percentage, max_percentage = get_min_max_percentage(row.fund_class_id, row.account)
+				min_percentage, max_percentage = get_min_max_percentage(row.fund_class, row.account)
 				if min_percentage is not None and max_percentage is not None:
 					if row.percentage < min_percentage or row.percentage > max_percentage:
 						frappe.throw(f"Row#{row.idx}; Percentage for account '{row.account}' must be between {min_percentage}% and {max_percentage}%.")
@@ -53,26 +53,6 @@ class Donation(Document):
 					msg = f"<b>Row#{d.idx}:</b> {msg}"
 					frappe.throw(msg=f"{msg}", title="Payment Detail")
 
-	# def get_deduction_details(self, row):
-	# 		# if(row.intention_id=="Zakat"): return []
-	# 		#Added by Aqsa
-	# 		if row.intention_id in ["", "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]: return []
-
-	# 		result = frappe.db.sql(f"""
-	# 				SELECT 
-	# 					company, income_type,
-	# 					(select project from `tabIncome Type` where name = dd.income_type) as project, 
-	# 					account, percentage, min_percent, max_percent
-	# 				FROM 
-	# 					`tabDeduction Details` dd
-	# 				WHERE 
-	# 					ifnull(account, "")!=""
-	# 					and company = '{self.company}'
-	# 					and parent = '{row.pay_service_area}'
-	# 					and project = '{row.project}'
-	# 				""", as_dict=True)	
-	# 		return result
-
 	@frappe.whitelist()
 	def set_deduction_breakeven(self):
 
@@ -89,10 +69,10 @@ class Donation(Document):
 		def get_deduction_details(row, deduction_breakeven):
 			# Added by Aqsa
 			# Mobeen said no deduction only on Zakat
-			# if (row.intention_id in [None, "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]):
+			# if (row.intention in [None, "Zakat", "Fitrana", "Sadqa Jaria", "Sadqaat" , "Cash"]):
 			'''Deduction in case of Pledge again applied on request of Zubair Khan, Usama. 15-09-2025'''
-			# if (row.intention_id in [None, "Zakat"]) or (self.contribution_type=='Pledge'):
-			if (row.intention_id in [None, "Zakat"]): 
+			# if (row.intention in [None, "Zakat"]) or (self.contribution_type=='Pledge'):
+			if (row.intention in [None, "Zakat"]): 
 				return []
 
 			_breakeven = [d for d in deduction_breakeven if(d.random_id == row.random_id)]
@@ -119,7 +99,7 @@ class Donation(Document):
 						ifnull(account, "")!=""
 						and company = '{self.company}'
 						and parenttype="Fund Class"
-						and parent = '{row.fund_class_id}'
+						and parent = '{row.fund_class}'
 					""", as_dict=True)
 			
 			return result
@@ -129,17 +109,17 @@ class Donation(Document):
 					"random_id": row.random_id,
 					"company": self.company,
 
-					# "project_id": args.project, # for income-type		
-					"cost_center_id": self.donation_cost_center,				
-					"fund_class_id": row.fund_class_id,
-					"service_area_id": row.pay_service_area,
-					"subservice_area_id": row.pay_subservice_area,
-					"product_id": row.pay_product,
-					"donor_id": row.donor_id,
-					"donor_type_id": row.donor_type,				
-					"donor_desk_id": row.donor_desk_id,
-					"intention_id": row.intention_id,
-					"transaction_type_id": row.transaction_type_id,
+					# "project": args.project, # for income-type		
+					"cost_center": self.donation_cost_center,				
+					"fund_class": row.fund_class,
+					"service_area": row.pay_service_area,
+					"subservice_area": row.pay_subservice_area,
+					"product": row.pay_product,
+					"donor": row.donor,
+					"donor_type": row.donor_type,				
+					"donor_desk": row.donor_desk,
+					"intention": row.intention,
+					"transaction_type": row.transaction_type,
 
 					"donation_amount": row.donation_amount,
 					"amount": percentage_amount,
@@ -151,11 +131,11 @@ class Donation(Document):
 		'''def get_default_accounts(service_area, fieldname):
 			return frappe.db.get_value('Accounts Default', {'parent': service_area, 'company': self.company}, fieldname)
 		'''
-		def get_default_accounts(fund_class_id, fieldname):
-			return frappe.db.get_value('Accounts Default', {'parent': fund_class_id, 'company': self.company}, fieldname)
+		def get_default_accounts(fund_class, fieldname):
+			return frappe.db.get_value('Accounts Default', {'parent': fund_class, 'company': self.company}, fieldname)
 		
-		def get_default_donor_account(donor_id, fieldname):
-			return frappe.db.get_value('Donor', {'name': donor_id}, fieldname)
+		def get_default_donor_account(donor, fieldname):
+			return frappe.db.get_value('Donor', {'name': donor}, fieldname)
 
 		def set_total_donors():
 			self.total_donors = len(self.payment_detail)
@@ -168,14 +148,14 @@ class Donation(Document):
 		
 		# 31-12-2024 nabeel saleem
 		def validate_active_donor(row):
-			if(frappe.db.exists("Donor", {"name": row.donor_id, "status": "Blocked"})):
-				frappe.throw(f"<b>Row#{row.idx}</b> donor: {row.donor_id} is blocked.", title='Blocked Donor.')
+			if(frappe.db.exists("Donor", {"name": row.donor, "status": "Blocked"})):
+				frappe.throw(f"<b>Row#{row.idx}</b> donor: {row.donor} is blocked.", title='Blocked Donor.')
 				
 		# 31-12-2024 nabeel saleem
 		def validate_donor_currency(row):
-			if(not frappe.db.exists("Donor", {"name": row.donor_id, "default_currency": self.currency})):
-				donor_id = get_link_to_form("Donor", row.donor_id)
-				frappe.throw(f"<b>Row#{row.idx}</b> donor: {donor_id} currency is not {self.currency}.", title='Currency conflict')
+			if(not frappe.db.exists("Donor", {"name": row.donor, "default_currency": self.currency})):
+				donor = get_link_to_form("Donor", row.donor)
+				frappe.throw(f"<b>Row#{row.idx}</b> donor: {donor} currency is not {self.currency}.", title='Currency conflict')
 
 		if(self.donation_type=="Cash"):
 			deduction_breakeven = self.deduction_breakeven
@@ -208,8 +188,8 @@ class Donation(Document):
 					set_deduction_details(row, args)			
 				
 				'''row.equity_account = get_default_accounts(row.pay_service_area, 'equity_account')'''
-				row.equity_account = get_default_accounts(row.fund_class_id, 'equity_account')
-				default_receivable_account = get_default_donor_account(row.donor_id, "default_account")
+				row.equity_account = get_default_accounts(row.fund_class, 'equity_account')
+				default_receivable_account = get_default_donor_account(row.donor, "default_account")
 				row.receivable_account = default_receivable_account if(default_receivable_account) else get_default_accounts(row.pay_service_area, 'receivable_account')
 				
 				row.cost_center = self.donation_cost_center
@@ -257,7 +237,7 @@ class Donation(Document):
 					"random_id": row1.random_id,
 									
 					"income_type": row2.income_type,
-    				"project_id": row2.project_id,
+    				"project": row2.project,
 					"account": row2.account, 
 
 					"percentage": row2.percentage, 
@@ -265,16 +245,16 @@ class Donation(Document):
 					"max_percent": row2.max_percent,
 
 					"company": row2.company, 
-					"cost_center_id": row1.cost_center,
-					"fund_class": row1.fund_class_id,
-					"service_area_id": row1.pay_service_area,
-					"subservice_area_id": row1.pay_subservice_area,
-					"product_id": row1.pay_product,
-					"donor_id": row1.donor_id,
-					"donor_type_id": row1.donor_type,
-					"donor_desk_id": row1.donor_desk_id,
-					"intention_id": row1.intention_id,
-					"transaction_type_id": row1.transaction_type_id,
+					"cost_center": row1.cost_center,
+					"fund_class": row1.fund_class,
+					"service_area": row1.pay_service_area,
+					"subservice_area": row1.pay_subservice_area,
+					"product": row1.pay_product,
+					"donor": row1.donor,
+					"donor_type": row1.donor_type,
+					"donor_desk": row1.donor_desk,
+					"intention": row1.intention,
+					"transaction_type": row1.transaction_type,
      
 					"donation_amount": row1.donation_amount,
 					"amount": percentage_amount,
@@ -370,12 +350,12 @@ class Donation(Document):
 				"party_type": "",
 				"party": "",
 				"voucher_detail_no": row.name,
-				"donor": row.donor_id,
+				"donor": row.donor,
 				"donor_type": row.donor_type,
-				"donor_desk": row.donor_desk_id,
-				"donation_type": row.intention_id,
-				"transaction_type": row.transaction_type_id,
-				"fund_class": row.fund_class_id,
+				"donor_desk": row.donor_desk,
+				"donation_type": row.intention,
+				"transaction_type": row.transaction_type,
+				"fund_class": row.fund_class,
 				"service_area": row.pay_service_area,
 				"subservice_area": row.pay_subservice_area,
 				"product": row.pay_product if(row.pay_product) else row.product,
@@ -423,12 +403,12 @@ class Donation(Document):
 						"party": "",
 						"voucher_detail_no": row.name,
       
-						"donor": rowp.donor_id,
+						"donor": rowp.donor,
 						"donor_type": rowp.donor_type,
-						"donor_desk": rowp.donor_desk_id,
-						"donation_type": rowp.intention_id,
-						"transaction_type": rowp.transaction_type_id,
-						"fund_class": rowp.fund_class_id,
+						"donor_desk": rowp.donor_desk,
+						"donation_type": rowp.intention,
+						"transaction_type": rowp.transaction_type,
+						"fund_class": rowp.fund_class,
 						"service_area": rowp.pay_service_area,
 						"subservice_area": rowp.pay_subservice_area,
 						"product": rowp.pay_product if(rowp.pay_product) else rowp.product,
@@ -453,7 +433,7 @@ class Donation(Document):
 			args.update(c_args)
 			args.update({
 				"party_type": "Donor",
-				"party": row.donor_id,
+				"party": row.donor,
 				"account": row.receivable_account,
 			})
 			if(self.is_return): # credit
@@ -538,17 +518,17 @@ class Donation(Document):
 				"account": row.account,
 				"voucher_detail_no": row.name,
 				
-				"donor": row.donor_id,
-				"donor_type": row.donor_type_id,
-				"donor_desk": row.donor_desk_id,
-				"donation_type": row.intention_id,
-				"transaction_type": row.transaction_type_id,
-				"fund_class": row.fund_class_id,
-				"service_area": row.service_area_id,
-				"subservice_area": row.subservice_area_id,
-				"product": row.product_id,
-				"project": row.project_id,
-				"cost_center": row.cost_center_id,
+				"donor": row.donor,
+				"donor_type": row.donor_type,
+				"donor_desk": row.donor_desk,
+				"donation_type": row.intention,
+				"transaction_type": row.transaction_type,
+				"fund_class": row.fund_class,
+				"service_area": row.service_area,
+				"subservice_area": row.subservice_area,
+				"product": row.product,
+				"project": row.project,
+				"cost_center": row.cost_center,
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
@@ -566,7 +546,7 @@ class Donation(Document):
 				"account_type": "Receivable",
 				"account": row.receivable_account,
 				"party_type": "Donor",
-				"party": row.donor_id,
+				"party": row.donor,
 				"due_date": self.due_date,
 				"voucher_type": self.doctype,
 				"voucher_no": self.name,
@@ -603,7 +583,7 @@ class Donation(Document):
 				"doctype": "Payment Entry",
 				"payment_type" : "Receive",
 				"party_type" : "Donor",
-				"party" : row.donor_id,
+				"party" : row.donor,
 				"party_name" : row.donor_name,
 				"posting_date" : self.posting_date,
 				"company" : self.company,
@@ -619,12 +599,12 @@ class Donation(Document):
 				"paid_amount" : row.donation_amount,
 				"received_amount" : row.base_donation_amount,
 				# Dimensions
-				"donor": row.donor_id,
+				"donor": row.donor,
 				"donor_type": row.donor_type,
-				"donor_desk": row.donor_desk_id,
-				"donation_type": row.intention_id,
-				"transaction_type": row.transaction_type_id,
-				"fund_class": row.fund_class_id,
+				"donor_desk": row.donor_desk,
+				"donation_type": row.intention,
+				"transaction_type": row.transaction_type,
+				"fund_class": row.fund_class,
 				"service_area": row.pay_service_area,
 				"subservice_area": row.pay_subservice_area,
 				"product": row.pay_product if(row.pay_product) else row.product,
@@ -669,15 +649,15 @@ class Donation(Document):
 				from `tabPayment Detail` 
 				where 
 					docstatus=1
-					and donor_id='{row.donor_id}'
+					and donor='{row.donor}'
 					and pay_service_area='{row.pay_service_area}'
 					and pay_subservice_area='{row.pay_subservice_area}'
 					and pay_product='{row.pay_product}'
-					and fund_class_id='{row.fund_class_id}'
+					and fund_class='{row.fund_class}'
 					and random_id = '{row.random_id}'
 					and parent= '{self.return_against}'
 			""")
-			# and project_id='{row.project_id}'
+			# and project='{row.project}'
 			if(result):
 				donation_amount = result[0][0]
 				if(row.donation_amount>donation_amount):
@@ -694,16 +674,16 @@ class Donation(Document):
 					where 
 						d.docstatus=1
 						and d.return_against='{self.return_against}' 
-						and pd.donor_id='{row.donor_id}'
+						and pd.donor='{row.donor}'
 						and pd.pay_service_area='{row.pay_service_area}'
 						and pd.pay_subservice_area='{row.pay_subservice_area}'
 						and pd.pay_product='{row.pay_product}'
-						and pd.fund_class_id='{row.fund_class_id}'
+						and pd.fund_class='{row.fund_class}'
 						and pd.random_id = '{row.random_id}'
 						and pd.parent!= '{self.name}' """)):
 					error_msg += f" <b>Row #{row.idx}: </b> [{row.donor_name}]<br>"
 				stop_exceeding_donation_amount(row)
-				# and pd.project_id='{row.project_id}'
+				# and pd.project='{row.project}'
 			if(error_msg!=""):	
 				frappe.throw(error_msg, title='Return entries already exist.')
 
@@ -730,16 +710,16 @@ class Donation(Document):
 		Sends email notifications to all users linked to the project when a new donation is added.
 		"""
 		for payment in self.payment_detail:
-			project_id = payment.project_id
-			if project_id:
-				project_name = frappe.db.get_value('Project', project_id, 'project_name')
+			project = payment.project
+			if project:
+				project_name = frappe.db.get_value('Project', project, 'project_name')
 				project_users = frappe.db.sql(
 					"""
 					SELECT email, full_name
 					FROM `tabProject User`
 					WHERE parent = %s
 					""",
-					(project_id,),
+					(project,),
 					as_dict=True,
 				)
 				
@@ -761,7 +741,7 @@ class Donation(Document):
 					We are excited to inform you that a new {self.contribution_type} has been received for the project: <b>{project_name}</b>.<br><br>
 					<b>{self.contribution_type} Details:</b><br>
 					- <b>Project Name:</b> {project_name}<br>
-					- <b>Project ID:</b> {project_id}<br>
+					- <b>Project ID:</b> {project}<br>
 					- <b>{self.contribution_type} Amount:</b> {formatted_amount}<br>
 					Your contribution and effort towards this project are greatly appreciated. Please feel free to reach out if you have any questions.<br><br>
 					Best regards,<br>
@@ -776,29 +756,6 @@ class Donation(Document):
 
 	def update_project_allocation_check(self): #Mubarrim 08-01-2025
 		if(self.unknown_to_known): return
-		# for project in self.payment_detail:
-		# 	project_id = project.project_id
-		# 	costing=frappe.db.get_values("Project", project_id, ["estimated_costing", "custom_total_allocation"])
-		# 	estimated_cost=costing[0][0]
-		# 	total_allocation=costing[0][1]
-		# 	if(total_allocation >= estimated_cost):
-		# 		frappe.db.sql(f""" 
-		# 					Update 
-		# 						`tabProject`
-		# 					Set 
-		# 						custom_allocation_check = 1
-		# 					Where 
-		# 						name = '{project_id}'
-		# 						""")
-		# 	else:
-		# 		frappe.db.sql(f""" 
-		# 					Update 
-		# 						`tabProject`
-		# 					Set 
-		# 						custom_allocation_check = 0
-		# 					Where 
-		# 						name = '{project_id}'
-		# 						""")
 
 	def before_cancel(self):
 		self.del_gl_entries()
@@ -890,7 +847,7 @@ def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool, is
 		# conditions = " and is_written_off=0 "
 	result = frappe.db.sql(f""" 
 				Select 
-					donor_id, idx, (outstanding_amount-doubtful_debt_amount) as remaining_amount
+					donor, idx, (outstanding_amount-doubtful_debt_amount) as remaining_amount
 				From 
 					`tabPayment Detail` 
 				Where
@@ -925,7 +882,7 @@ def get_outstanding(filters):
 		-- base_outstanding_amount
 		from `tabPayment Detail` 
 		where docstatus=1
-		and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters)
+		and parent = %(name)s and donor = %(donor_id)s and idx = %(idx)s """, filters)
 	args = {
 		"outstanding_amount": 0.0,
 		"doubtful_debt_amount": 0.0,
@@ -946,7 +903,7 @@ def pledge_payment_entry(doc, values):
 
 	doc = frappe._dict(ast.literal_eval(doc))
 	values = frappe._dict(ast.literal_eval(values))
-	row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor_id': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
+	row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
 
 	if(not row): frappe.throw(f"You're paying more than donation amount.")
 	exchange_rate = get_exchange_rate(doc.currency, doc.to_currency, curdate)
@@ -954,7 +911,7 @@ def pledge_payment_entry(doc, values):
 		"doctype": "Payment Entry",
 		"payment_type" : "Receive",
 		"party_type" : "Donor",
-		"party" : row.donor_id,
+		"party" : row.donor,
 		"party_name" : row.donor_name,
 		"posting_date" : curdate,
 		"company" : doc.company,
@@ -968,12 +925,12 @@ def pledge_payment_entry(doc, values):
 		"paid_amount" : values.paid_amount,
 		"received_amount" : (values.paid_amount * exchange_rate),
 		# Dimensions
-		"donor": row.donor_id,
+		"donor": row.donor,
 		"donor_type": row.donor_type,
-		"donor_desk": row.donor_desk_id,
-		"donation_type": row.intention_id,
-		"transaction_type": row.transaction_type_id,
-		"fund_class": row.fund_class_id,
+		"donor_desk": row.donor_desk,
+		"donation_type": row.intention,
+		"transaction_type": row.transaction_type,
+		"fund_class": row.fund_class,
 		"service_area": row.pay_service_area,
 		"subservice_area": row.pay_subservice_area,
 		"product": row.pay_product if(row.pay_product) else row.product,
@@ -1022,7 +979,7 @@ def return_payment_entry(doc):
 	for row in doc.payment_detail:
 		row = frappe._dict(row)
 		args.update({
-			"party" : row.donor_id,
+			"party" : row.donor,
 			"party_name" : row.donor_name,
 			"mode_of_payment" :  row.mode_of_payment,
 			"paid_from" : row.account_paid_to,
@@ -1032,12 +989,12 @@ def return_payment_entry(doc):
 			"received_amount" : row.outstanding_amount,
 
 			# Dimensions
-			"donor": row.donor_id,
+			"donor": row.donor,
 			"donor_type": row.donor_type,
-			"donor_desk": row.donor_desk_id,
-			"donation_type": row.intention_id,
-			"transaction_type": row.transaction_type_id,
-			"fund_class": row.fund_class_id,
+			"donor_desk": row.donor_desk,
+			"donation_type": row.intention,
+			"transaction_type": row.transaction_type,
+			"fund_class": row.fund_class,
 			"service_area": row.pay_service_area,
 			"subservice_area": row.pay_subservice_area,
 			"product": row.pay_product if(row.pay_product) else row.product,
@@ -1113,7 +1070,7 @@ def set_unknown_to_known(name, values):
 			`tabPayment Detail`
 		Set 
 			reverse_donor = 'Unknown To Known', 
-			donor_id = '{info.name}', donor_name='{info.donor_name}',
+			donor = '{info.name}', donor_name='{info.donor_name}',
 			donor = '{info.name}',
 			donor_type='{info.donor_type if (info.donor_type) else ""}', 
 			contact_no='{info.contact_no if (info.contact_no) else "" }',  
@@ -1376,7 +1333,7 @@ def get_donation_details(filters):
 	return frappe.db.sql(""" select donation_amount, outstanding_amount, doubtful_debt_amount, bad_debt_expense, provision_doubtful_debt
 		from `tabPayment Detail` 
 		where docstatus=1
-		and parent = %(name)s and donor_id = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
+		and parent = %(name)s and donor = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
 
 # @frappe.whitelist()
 # def record_doubtful_debt(doc, values):

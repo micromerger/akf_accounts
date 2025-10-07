@@ -30,7 +30,8 @@
   "donor_desk",
   "column_break_varc",
   "intention",
-  "transaction_type"
+  "transaction_type",
+  "inventory_flag"
  ],
  "fields": [
   {
@@ -206,12 +207,20 @@
    "fieldtype": "Data",
    "label": "Donor Name",
    "read_only": 1
+  },
+  {
+   "default": "Donated",
+   "fieldname": "inventory_flag",
+   "fieldtype": "Link",
+   "label": "Inventory Flag",
+   "options": "Inventory Flag",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-15 14:14:50.665649",
+ "modified": "2025-10-07 19:05:02.176305",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "In Kind Donation",

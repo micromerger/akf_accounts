@@ -85,9 +85,9 @@ frappe.ui.form.on('Donation', {
 });
 
 frappe.ui.form.on('Payment Detail', {
-    donor_id: function (frm, cdt, cdn) {
+    donor: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        row.donor = row.donor_id;
+        row.donor = row.donor;
         // frm.call("set_deduction_breakeven");        
     },
     donation_type: function (frm) {
@@ -97,10 +97,10 @@ frappe.ui.form.on('Payment Detail', {
             frm.call("set_deduction_breakeven");
         }
     },
-    fund_class_id: function(frm, cdt, cdn) {
+    fund_class: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        row.fund_class = row.fund_class_id;
-        if (row.fund_class_id != undefined || row.fund_class_id != "") {
+        row.fund_class = row.fund_class;
+        if (row.fund_class != undefined || row.fund_class != "") {
             if (frm.doc.is_return) {
                 frm.call("update_deduction_breakeven");
             } else {
@@ -123,9 +123,9 @@ frappe.ui.form.on('Payment Detail', {
         row.product = row.pay_product;
         frm.refresh_field("payment_detail")
     },*/
-    project_id: function (frm, cdt, cdn) {
+    project: function (frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        row.project = row.project_id;
+        row.project = row.project;
 
         if (row.pay_service_area != undefined || row.pay_service_area != "") {
             if (frm.doc.is_return) {
@@ -155,22 +155,9 @@ frappe.ui.form.on('Payment Detail', {
         frm.refresh_field("payment_detail");
     },
     donation_amount: function (frm, cdt, cdn) {
-        // if(frm.doc.is_return){
-        // frm.call("update_deduction_breakeven");
-        // }else{
         frm.call("set_deduction_breakeven");
-        // frm.call("just_breakeven", {row: row});
-        // }
     },
-    /* payment_detail_add: function(frm, cdt ,cdn){
-        let row = locals[cdt][cdn];
-        if(frm.doc.donor_identity == "Unknown" || frm.doc.donor_identity == "Merchant"){
-            row.donor_id = "DONOR-2024-00004";
-        }else {
-            row.donor_id = null;
-        }
-        frm.refresh_field("payment_detail");
-    }, */
+    
     payment_detail_add: function (frm, cdt, cdn) {
         if (frm.doc.is_return) { return; }
         let row = locals[cdt][cdn];
@@ -184,10 +171,10 @@ frappe.ui.form.on('Payment Detail', {
             frappe.db.get_value('Donor', { donor_identity: identity }, 'name').then(r => {
                 const donorId = r.message && r.message.name;
                 if (donorId) {
-                    row.donor_id = donorId;
+                    row.donor = donorId;
                     row.donor = donorId;
                     if (frm.fields_dict['payment_detail'] && frm.fields_dict['payment_detail'].grid && frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn]) {
-                        frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn].refresh_field('donor_id');
+                        frm.fields_dict['payment_detail'].grid.grid_rows_by_docname[cdn].refresh_field('donor');
                     }
                 }
             });
@@ -452,7 +439,7 @@ function set_queries_items(frm){
     };
 }
 function set_query_donor_id(frm) {
-    frm.fields_dict['payment_detail'].grid.get_field('donor_id').get_query = function (doc, cdt, cdn) {
+    frm.fields_dict['payment_detail'].grid.get_field('donor').get_query = function (doc, cdt, cdn) {
         // var row = locals[cdt][cdn];
         return {
             filters: {
@@ -542,7 +529,7 @@ function set_query_account(frm) {
 }
 // Payment Detail
 function set_query_project(frm) {
-    frm.fields_dict['payment_detail'].grid.get_field('project_id').get_query = function (doc, cdt, cdn) {
+    frm.fields_dict['payment_detail'].grid.get_field('project').get_query = function (doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         let service_area = row.pay_service_area == undefined ? ["!=", undefined] : row.pay_service_area;
         return {

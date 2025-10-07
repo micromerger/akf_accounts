@@ -9,10 +9,10 @@
   "random_id",
   "donor_details_section",
   "donor_details_column",
-  "donor_id",
+  "donor",
   "donor_name",
   "donor_type",
-  "donor_desk_id",
+  "donor_desk",
   "cnic",
   "email",
   "contact_no",
@@ -25,14 +25,14 @@
   "co_address",
   "relationship_with_donor",
   "section_break_oqbl",
-  "intention_id",
+  "intention",
   "column_break_fpsm",
-  "transaction_type_id",
+  "transaction_type",
   "column_break_jkkd",
   "plaque_branding",
   "section_break_iela",
   "fund_class_info_column",
-  "fund_class_id",
+  "fund_class",
   "pay_service_area",
   "pay_subservice_area",
   "pay_product",
@@ -68,7 +68,7 @@
   "reference_date",
   "remarks",
   "project_location_section",
-  "project_id",
+  "project",
   "region",
   "tehsil",
   "latitude",
@@ -114,7 +114,7 @@
    "reqd": 1
   },
   {
-   "fetch_from": "fund_class_id.service_area",
+   "fetch_from": "fund_class.service_area",
    "fetch_if_empty": 1,
    "fieldname": "pay_service_area",
    "fieldtype": "Link",
@@ -125,7 +125,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "fund_class_id.subservice_area",
+   "fetch_from": "fund_class.subservice_area",
    "fetch_if_empty": 1,
    "fieldname": "pay_subservice_area",
    "fieldtype": "Link",
@@ -135,7 +135,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "fund_class_id.product",
+   "fetch_from": "fund_class.product",
    "fetch_if_empty": 1,
    "fieldname": "pay_product",
    "fieldtype": "Link",
@@ -199,14 +199,16 @@
    "fieldtype": "Section Break"
   },
   {
-   "fetch_from": "donor_id.donor_name",
+   "fetch_from": "donor.donor_name",
+   "fetch_if_empty": 1,
    "fieldname": "donor_name",
    "fieldtype": "Data",
    "label": "Donor Name",
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.donor_type",
+   "fetch_from": "donor.donor_type",
+   "fetch_if_empty": 1,
    "fieldname": "donor_type",
    "fieldtype": "Link",
    "label": "Donor Type",
@@ -214,56 +216,63 @@
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.contact_no",
+   "fetch_from": "donor.contact_no",
+   "fetch_if_empty": 1,
    "fieldname": "contact_no",
    "fieldtype": "Data",
    "label": "Contact No",
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.email",
+   "fetch_from": "donor.email",
+   "fetch_if_empty": 1,
    "fieldname": "email",
    "fieldtype": "Data",
    "label": "Email",
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.city",
+   "fetch_from": "donor.city",
+   "fetch_if_empty": 1,
    "fieldname": "city",
    "fieldtype": "Data",
    "label": "City",
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.address",
+   "fetch_from": "donor.address",
+   "fetch_if_empty": 1,
    "fieldname": "address",
    "fieldtype": "Small Text",
    "label": "Address",
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.co_name",
+   "fetch_from": "donor.co_name",
    "fieldname": "co_name",
    "fieldtype": "Data",
    "label": "C/O Name",
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.contact_no",
+   "fetch_from": "donor.co_contact_no",
+   "fetch_if_empty": 1,
    "fieldname": "co_contact_no",
    "fieldtype": "Data",
    "label": "C/O Contact No",
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.co_email",
+   "fetch_from": "donor.co_email",
+   "fetch_if_empty": 1,
    "fieldname": "co_email",
    "fieldtype": "Data",
    "label": "C/O Email",
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.co_address",
+   "fetch_from": "donor.co_address",
+   "fetch_if_empty": 1,
    "fieldname": "co_address",
    "fieldtype": "Data",
    "label": "C/O Address",
@@ -293,22 +302,14 @@
    "mandatory_depends_on": "eval: doc.mode_of_payment == \"bank\" || doc.mode_of_payment == \"Cheque\" || doc.mode_of_payment == \"Bank Draft\" "
   },
   {
-   "fieldname": "donor_id",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Donor ID",
-   "options": "Donor",
-   "reqd": 1
-  },
-  {
    "depends_on": "co_name",
    "fieldname": "care_of_details_column",
    "fieldtype": "Column Break",
    "label": "Care Of Details"
   },
   {
-   "fetch_from": "donor_id.cnic",
+   "fetch_from": "donor.cnic",
+   "fetch_if_empty": 1,
    "fieldname": "cnic",
    "fieldtype": "Data",
    "label": "CNIC",
@@ -378,7 +379,8 @@
    "read_only": 1
   },
   {
-   "fetch_from": "donor_id.relationship_with_donor",
+   "fetch_from": "donor.relationship_with_donor",
+   "fetch_if_empty": 1,
    "fieldname": "relationship_with_donor",
    "fieldtype": "Data",
    "label": "Relationship With Donor",
@@ -438,13 +440,6 @@
    "fieldtype": "Data",
    "label": "Longitude",
    "read_only": 1
-  },
-  {
-   "fieldname": "project_id",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Project ID",
-   "options": "Project"
   },
   {
    "default": "0",
@@ -666,36 +661,8 @@
    "read_only": 1
   },
   {
-   "fieldname": "fund_class_id",
-   "fieldtype": "Link",
-   "label": "Fund Class Id",
-   "options": "Fund Class"
-  },
-  {
-   "fetch_from": "donor_id.donor_desk",
-   "fieldname": "donor_desk_id",
-   "fieldtype": "Link",
-   "label": "Donor Desk Id",
-   "options": "Donor Desk",
-   "read_only": 1
-  },
-  {
    "fieldname": "fund_class_info_column",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "intention_id",
-   "fieldtype": "Link",
-   "label": "Intention ID",
-   "options": "Donation Type",
-   "reqd": 1
-  },
-  {
-   "fieldname": "transaction_type_id",
-   "fieldtype": "Link",
-   "label": "Transaction Type ID",
-   "options": "Transaction Type",
-   "reqd": 1
   },
   {
    "fieldname": "transaction_details_section",
@@ -722,12 +689,57 @@
    "fieldname": "donor_details_column",
    "fieldtype": "Column Break",
    "label": "Donor Details"
+  },
+  {
+   "fieldname": "donor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Donor",
+   "options": "Donor",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "donor.donor_desk",
+   "fetch_if_empty": 1,
+   "fieldname": "donor_desk",
+   "fieldtype": "Link",
+   "label": "Donor Desk",
+   "options": "Donor Desk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "intention",
+   "fieldtype": "Link",
+   "label": "Intention",
+   "options": "Donation Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "transaction_type",
+   "fieldtype": "Link",
+   "label": "Transaction Type",
+   "options": "Transaction Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fund_class",
+   "fieldtype": "Link",
+   "label": "Fund Class",
+   "options": "Fund Class"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Project",
+   "options": "Project"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-15 13:38:04.716691",
+ "modified": "2025-10-07 19:25:47.850470",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

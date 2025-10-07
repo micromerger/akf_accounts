@@ -29,6 +29,7 @@ def make_stock_entry_for_in_kind_donation(self):
 			'custom_intention_id': row.intention,
 			'custom_cost_center_id': row.cost_center,
 			'custom_transaction_type_id': row.transaction_type,
+			'inventory_flag': row.inventory_flag
 			# 'custom_asset_category_id': row.asset_category
 		} for row in self.items]
 	})
@@ -37,5 +38,5 @@ def make_stock_entry_for_in_kind_donation(self):
 	# doc.flags.ignore_mandatory = True
 	# doc.flags.ignore_validates = True
 	doc.insert()
-	doc.submit()
+	# doc.submit()
 
