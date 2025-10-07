@@ -217,39 +217,6 @@ frappe.ui.form.on("Funds Transfer From", {
         frappe.model.set_value(cdt, cdn, 'ff_subservice_area', '');
         frappe.model.set_value(cdt, cdn, 'ff_product', '');
         frappe.model.set_value(cdt, cdn, 'project', '');
-
-        frappe.call({
-            method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
-            args: {
-                doc: frm.doc
-            },
-            callback: function (r) {
-                // console.log("SERVICE AREA QUERY!!!");
-                // console.log(r.message);  
-
-                frm.fields_dict['funds_transfer_from'].grid.get_field('ff_service_area').get_query = function (doc, cdt, cdn) {
-                    var row = locals[cdt][cdn];
-                    var company = row.ff_company;
-
-                    if (!company) {
-                        return {
-                            filters: {
-                                service_area: ["!=", ""]
-                            }
-                        };
-                    }
-
-                    return {
-                        filters: {
-                            company: company,
-                            service_area: ["in", r.message]
-                        }
-                    };
-                };
-
-                frm.refresh_field('funds_transfer_from'); // Corrected method call
-            }
-        });
     },
 
     ff_service_area: function (frm, cdt, cdn) {
@@ -347,39 +314,6 @@ frappe.ui.form.on("Funds Transfer To", {
         frappe.model.set_value(cdt, cdn, 'ft_subservice_area', '');
         frappe.model.set_value(cdt, cdn, 'ft_product', '');
         frappe.model.set_value(cdt, cdn, 'ft_project', '');
-
-        /*frappe.call({
-            method: "akf_accounts.akf_accounts.doctype.funds_transfer.funds_transfer.get_service_areas",
-            args: {
-                doc: frm.doc
-            },
-            callback: function(r) {
-                // console.log("SERVICE AREA QUERY!!!");
-                // console.log(r.message);  
-
-                frm.fields_dict['funds_transfer_to'].grid.get_field('ft_service_area').get_query = function(doc, cdt, cdn) {
-                    var row = locals[cdt][cdn];
-                    var company = row.ft_company;
-
-                    if (!company) {
-                        return {
-                            filters: {
-                                service_area: ["!=", ""]
-                            }
-                        };
-                    }
-
-                    return {
-                        filters: {
-                            company: company,
-                            service_area: ["in", r.message]  
-                        }
-                    };
-                };
-
-                frm.fields_dict['funds_transfer_to'].grid.refresh_field('ft_service_area');
-            }
-        });*/
     },
     ft_service_area: function (frm, cdt, cdn) {
         /*let row = locals[cdt][cdn];
