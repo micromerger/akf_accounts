@@ -52,7 +52,7 @@ frappe.ui.form.on("Funds Transfer", {
         frm.call("set_deduction_breakeven");
     },
     open_dimension_dialog: function (frm) { // Nabeel Saleem, 12-03-2025
-        if (!frm.doc.from_gl_entry && frm.doc.transaction_purpose!="Inter Bank") {
+        if (!frm.doc.from_gl_entry && frm.doc.transaction_purpose != "Inter Bank") {
             frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function () {
                 if (typeof make_dimensions_modal === "function" && (typeof donor_balance_set_queries === "function")) {
                     make_dimensions_modal(frm);
@@ -72,17 +72,19 @@ frappe.ui.form.on("Funds Transfer", {
         frm.set_value('funds_transfer_to', []);
         frm.refresh_field('funds_transfer_to');
         frm.set_df_property('funds_transfer_to', 'hidden', true);
-       
+
         frm.trigger('transfer_type_func');
     },
-    transfer_type_func: function(frm){
-        if(frm.doc.transfer_type == "Project"){
+    transfer_type_func: function (frm) {
+        if (frm.doc.transfer_type == "Project") {
             frm.set_df_property('funds_transfer_to', 'hidden', false);
-        }else if(frm.doc.transfer_type == "Fund Class"){
+        } else if (frm.doc.transfer_type == "Fund Class") {
             frm.set_df_property('funds_transfer_to', 'hidden', true);
         }
-        if(frm.doc.transaction_purpose == 'Inter Branch'){
-             frm.set_df_property('funds_transfer_to', 'hidden', true);
+    },
+    inter_branch_func: function (frm) {
+        if (frm.doc.transaction_purpose == 'Inter Branch') {
+            frm.set_df_property('funds_transfer_to', 'hidden', true);
         }
     },
     // Inter Bank
@@ -92,8 +94,8 @@ frappe.ui.form.on("Funds Transfer", {
     to_bank: function (frm) {
         frm.events.set_inter_bank_balance(frm, "account_balance_to", frm.doc.to_bank);
     },
-    set_inter_bank_balance: function(frm, balance_field, bankAccount){
-        if(bankAccount!=""){
+    set_inter_bank_balance: function (frm, balance_field, bankAccount) {
+        if (bankAccount != "") {
             frappe.call({
                 method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_account_details",
                 args: {
@@ -104,17 +106,17 @@ frappe.ui.form.on("Funds Transfer", {
                 callback: function (r, rt) {
                     const account_balance = r.message['account_balance'];
                     frm.set_value(balance_field, account_balance);
-                    frm.set_df_property(balance_field, 'description', account_balance>0? "": "<b style='color:red;'>No balance found.</b>");
+                    frm.set_df_property(balance_field, 'description', account_balance > 0 ? "" : "<b style='color:red;'>No balance found.</b>");
 
                 }
             });
-        }else{
-            frm.set_value(balance_field, 0.0); 
+        } else {
+            frm.set_value(balance_field, 0.0);
             frm.set_df_property(balance_field, 'description', "<b style='color:red;'>No balance found.</b>");
         }
-        
+
     },
-    
+
 });
 
 function handle_transaction_type_logic(frm) {
@@ -273,8 +275,8 @@ frappe.ui.form.on("Funds Transfer To", {
                 doctype: "Project",
                 name: row.project
             },
-            callback: function(r) {
-                const data  = r.message;
+            callback: function (r) {
+                const data = r.message;
                 if (data) {
                     row.ft_service_area = data.custom_service_area;
                     row.ft_subservice_area = data.custom_subservice_area;
@@ -293,8 +295,8 @@ frappe.ui.form.on("Funds Transfer To", {
                 doctype: "Fund Class",
                 name: row.fund_class
             },
-            callback: function(r) {
-                const data  = r.message;
+            callback: function (r) {
+                const data = r.message;
                 if (data) {
                     row.ft_service_area = data.service_area;
                     row.ft_subservice_area = data.subservice_area;
@@ -348,19 +350,19 @@ frappe.ui.form.on("Funds Transfer To", {
             frappe.model.set_value(row.doctype, row.name, "ft_cost_center", to_costcenter);
             // frappe.model.set_value(row.doctype, row.name, "ft_account", bank_account); 
         }
-        const isProject = (frm.doc.transfer_type == 'Project')? true: false;
-        const isFundClass = (frm.doc.transfer_type == 'Fund Class')? true: false;
-        
+        const isProject = (frm.doc.transfer_type == 'Project') ? true : false;
+        const isFundClass = (frm.doc.transfer_type == 'Fund Class') ? true : false;
+
         // Make "project" required only in this row
         frm.fields_dict["funds_transfer_to"].grid.toggle_enable("project", isProject, cdn);
         frm.fields_dict["funds_transfer_to"].grid.toggle_reqd("project", isProject, cdn);
         // Make "fund class" required only in this row
         frm.fields_dict["funds_transfer_to"].grid.toggle_enable("fund_class", isFundClass, cdn);
         frm.fields_dict["funds_transfer_to"].grid.toggle_reqd("fund_class", isFundClass, cdn);
-        
+
         frm.refresh_field("funds_transfer_to");
     },
-    
+
 });
 
 frappe.ui.form.on('Deduction Breakeven', {
@@ -632,7 +634,7 @@ function set_query_ff_donor_transfer_from(frm) {
 }
 
 function set_queries_funds_transfer_to(frm) {
-    
+
     set_query_cost_center(frm);
     set_query_subservice_area(frm);
     set_query_product(frm);
