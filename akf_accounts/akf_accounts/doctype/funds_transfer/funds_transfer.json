@@ -8,6 +8,7 @@
   "section_break_jlrv",
   "company",
   "posting_date",
+  "receiving_date",
   "column_break_qciy",
   "transaction_purpose",
   "transfer_type",
@@ -305,6 +306,7 @@
   {
    "bold": 1,
    "default": "Inter Fund",
+   "depends_on": "eval:doc.transaction_purpose==\"Inter Branch\" && doc.",
    "fieldname": "transaction_purpose",
    "fieldtype": "Select",
    "label": "Transaction Purpose",
@@ -318,12 +320,19 @@
    "label": "Branch",
    "mandatory_depends_on": "eval: doc.transaction_purpose === 'Inter Fund';",
    "options": "Cost Center"
+  },
+  {
+   "depends_on": "eval: doc.transaction_type==\"Inter Branch\" && doc.from_gl_entry==1;",
+   "fieldname": "receiving_date",
+   "fieldtype": "Date",
+   "label": "Receiving Date",
+   "mandatory_depends_on": "eval: doc.transaction_type==\"Inter Branch\" && doc.from_gl_entry==1;"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-07 15:32:49.247007",
+ "modified": "2025-10-07 17:07:24.793792",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",
