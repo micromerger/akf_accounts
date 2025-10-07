@@ -425,13 +425,15 @@ function get_donations(frm) {
             //     //  let value = values[dimension];
             //     frm.set_value(dimension, values[dimension])
             // });
-
+            let total_transfer_amount = values.transfer_amount;
+            console.log(total_transfer_amount);
+            
+            
             array.forEach(row => {
+                console.log(row.__checked);
                 if (row.__checked) {
+                    const transfer_amount = (total_transfer_amount<=row.balance)? total_transfer_amount:row.balance;
                     if ("funds_transfer_from" in frm.doc) {
-                        let total_transfer_amount = values.transfer_amount;
-                        const transfer_amount = (total_transfer_amount<=row.balance)? total_transfer_amount:row.balance;
-                        total_transfer_amount = total_transfer_amount - transfer_amount;
                         if(total_transfer_amount > 0){
                             details.push({
                                 "ff_company": frm.doc.company,
@@ -455,7 +457,7 @@ function get_donations(frm) {
                                 // "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
                                 "ff_balance_amount": row.balance,
                                 
-                                "ff_transfer_amount": row.transfer_amount
+                                "ff_transfer_amount": transfer_amount
                             });
                         }
                     } else {
@@ -479,9 +481,10 @@ function get_donations(frm) {
                             "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
                             "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
                             "actual_balance": row.balance,
-                            "transfer_amount": row.transfer_amount,
+                            "transfer_amount": transfer_amount,
                         });
                     }
+                    total_transfer_amount = total_transfer_amount - transfer_amount;
                 }
             });
             let description = '';
