@@ -7,24 +7,42 @@ from akf_accounts.akf_accounts.doctype.funds_transfer.gl_entries.gl_structure im
 from akf_accounts.akf_accounts.doctype.funds_transfer.deduction_breakeven import (
     make_deduction_gl_entries
 )
-
-def make_inter_branch_gl_entries(self):
-	if(self.transaction_purpose=="Inter Branch"):
-		# if(self.from_gl_entry):
-		for entry in get_from_gl_entries(self):
-			gl_struct = get_gl_structure(self)
-			create_gl_entry(gl_struct, entry)
 		
-		# if(self.to_gl_entry):
-		for entry in get_to_gl_entries(self):
-			gl_struct = get_gl_structure(self)
-			create_gl_entry(gl_struct, entry)
+# Workflow Start.
+def first_workflow_gl_entry_inter_branch(self):
+	if(self.transaction_purpose == "Inter Branch"):
+		if(self.from_gl_entry and (not self.to_gl_entry)):
+			for entry in get_from_gl_entries(self):
+				gl_struct = get_gl_structure(self)
+				create_gl_entry(gl_struct, entry)
+			# 
+			make_deduction_gl_entries(self)
 
-		make_deduction_gl_entries(self)
+def second_workflow_gl_entry_inter_branch(self):
+	if(self.transaction_purpose == "Inter Branch"):
+		if(self.from_gl_entry and  self.to_gl_entry):
+			for entry in get_to_gl_entries(self):
+				gl_struct = get_gl_structure(self)
+				create_gl_entry(gl_struct, entry)
+			return False	
+	return True
+	
+# Workflow End.
+def without_workflow_inter_branch(self):
+	if(self.transaction_purpose == "Inter Branch"):
+		if((not self.from_gl_entry) and  (not self.to_gl_entry)):
+			for entry in get_from_gl_entries(self):
+				gl_struct = get_gl_structure(self)
+				create_gl_entry(gl_struct, entry)
+			# 
+			make_deduction_gl_entries(self)
+
+			for entry in get_to_gl_entries(self):
+				gl_struct = get_gl_structure(self)
+				create_gl_entry(gl_struct, entry)
 
 def create_gl_entry(gl_struct, entry):
 	gl_struct.update(entry)
-	print(gl_struct)
 	# Create GL Entry
 	doc = frappe.get_doc(gl_struct)
 	doc.flags.ignore_permissions = True
