@@ -321,17 +321,17 @@
    "options": "Cost Center"
   },
   {
-   "depends_on": "eval: doc.transaction_purpose===\"Inter Branch\" && doc.to_gl_entry===1;",
+   "depends_on": "eval: doc.transaction_purpose===\"Inter Branch\" && doc.from_gl_entry===1;",
    "fieldname": "receiving_date",
    "fieldtype": "Date",
    "label": "Receiving Date",
-   "mandatory_depends_on": "eval: doc.transaction_purpose===\"Inter Branch\" && doc.to_gl_entry===1;"
+   "mandatory_depends_on": "eval: doc.transaction_purpose===\"Inter Branch\" && doc.from_gl_entry===1;"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-07 17:27:44.819141",
+ "modified": "2025-10-07 17:40:38.926769",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Funds Transfer",

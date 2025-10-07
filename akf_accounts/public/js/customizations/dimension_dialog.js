@@ -429,30 +429,35 @@ function get_donations(frm) {
             array.forEach(row => {
                 if (row.__checked) {
                     if ("funds_transfer_from" in frm.doc) {
-                        details.push({
-                            "ff_company": frm.doc.company,
-                            "ff_account": row.account,
+                        let total_transfer_amount = values.transfer_amount;
+                        const transfer_amount = (total_transfer_amount<=row.balance)? total_transfer_amount:row.balance;
+                        total_transfer_amount = total_transfer_amount - transfer_amount;
+                        if(total_transfer_amount > 0){
+                            details.push({
+                                "ff_company": frm.doc.company,
+                                "ff_account": row.account,
 
-                            "project": values.project,
-                            "ff_cost_center": row.cost_center,
-                            "fund_class": values.fund_class,
-                            "ff_service_area": values.service_area,
-                            "ff_subservice_area": values.subservice_area,
-                            "ff_product": values.product,
-                            
-                            "ff_donor": row.donor,
-                            "donor_type": row.donor_type,
-                            "donor_desk": row.donor_desk,
-                            "donation_type": row.intention,
-                            "transaction_type": row.transaction_type,
-                            // "encumbrance_project_account": row.encumbrance_project_account,
-                            // "encumbrance_material_request_account": row.encumbrance_material_request_account,
-                            // "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
-                            // "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
-                            "ff_balance_amount": row.balance,
-                            
-                            "ff_transfer_amount": row.transfer_amount
-                        });
+                                "project": values.project,
+                                "ff_cost_center": row.cost_center,
+                                "fund_class": values.fund_class,
+                                "ff_service_area": values.service_area,
+                                "ff_subservice_area": values.subservice_area,
+                                "ff_product": values.product,
+                                
+                                "ff_donor": row.donor,
+                                "donor_type": row.donor_type,
+                                "donor_desk": row.donor_desk,
+                                "donation_type": row.intention,
+                                "transaction_type": row.transaction_type,
+                                // "encumbrance_project_account": row.encumbrance_project_account,
+                                // "encumbrance_material_request_account": row.encumbrance_material_request_account,
+                                // "amortise_designated_asset_fund_account": row.amortise_designated_asset_fund_account,
+                                // "amortise_inventory_fund_account": row.amortise_inventory_fund_account,
+                                "ff_balance_amount": row.balance,
+                                
+                                "ff_transfer_amount": row.transfer_amount
+                            });
+                        }
                     } else {
                         details.push({
                             "pd_cost_center": row.cost_center,
