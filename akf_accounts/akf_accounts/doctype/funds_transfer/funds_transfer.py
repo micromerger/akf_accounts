@@ -5,7 +5,7 @@ import json
 import datetime
 from erpnext.accounts.utils import get_fiscal_year
 from frappe.utils import (
-    today, fmt_money, get_link_to_form
+    getdate, today, fmt_money, get_link_to_form
 )
 # from akf_accounts.customizations.overrides.cdoctype.project.financial_stats import (
 #     get_transactions
@@ -37,6 +37,7 @@ class FundsTransfer(Document):
 		self.validate_cost_center()
 		self.validate_inter_branch_accounts()
 		self.validate_inter_bank()
+		self.validate_receiving_date()
 		self.donor_list_data_funds_transfer(is_valid=True)
 		self.update_funds_tranfer_from()
 		self.set_deduction_breakeven()
@@ -63,7 +64,13 @@ class FundsTransfer(Document):
 				frappe.throw(f"ZERO balance in {self.from_bank}", title="No Balance")
 			if self.account_balance_from < self.transfer_amount :
 				frappe.throw(f"Transfer to <b>{self.transfer_amount}</b> is greater than available balance <b>{self.account_balance_from}</b>", title="Exceeding balance")
- 
+	
+	def validate_receiving_date(self):
+		posting_date = getdate(self.posting_date)		
+		receiving_date = getdate(self.receiving_date)
+		if(receiving_date < posting_date):
+			frappe.throw(f"Receiving date cannot be less than posting date.", title="Invalid Dates")
+
 	@frappe.whitelist()
 	def update_funds_tranfer_from(self):
 		if(self.transaction_purpose == "Inter Fund" and self.transaction_purpose == "Fund Project"):

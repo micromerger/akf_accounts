@@ -137,7 +137,8 @@ def get_to_gl_entries(self):
 		total_amount += credit_debit
 		# Common fields in gl entry
 		entry = {
-				
+				'posting_date': self.receiving_date if(self.receiving_date) else self.posting_date,
+				'transaction_date': self.receiving_date if(self.receiving_date) else self.posting_date,
 				'against_voucher_type': 'Project',
 				'against_voucher': row.project,
 				'donor': row.ff_donor,
@@ -201,6 +202,8 @@ def get_to_gl_entries(self):
 
 def get_gl_to_bank_account(self, amount):
 	return {
+			'posting_date': self.receiving_date if(self.receiving_date) else self.posting_date,
+			'transaction_date': self.receiving_date if(self.receiving_date) else self.posting_date,
 			'account': get_bank_account(self.to_bank_account),
 			'cost_center': self.to_cost_center,
 			'against': self.to_bank_account,			
