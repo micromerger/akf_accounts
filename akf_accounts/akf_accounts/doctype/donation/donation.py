@@ -806,10 +806,10 @@ class Donation(Document):
 			frappe.db.set_value("Donation", self.return_against, 'status', 'Paid')
 
 	@frappe.whitelist()
-	def provision_doubtful_debt(self, values: dict):
-		from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import record_provision_of_doubtful_det
+	def provision_doubtful_debt_func(self, values: dict):
+		from akf_accounts.akf_accounts.doctype.donation.doubtful_debt import provision_doubtful_debt_func
 		args = self.get_gl_entry_dict()
-		return record_provision_of_doubtful_det(self, args, values)
+		return provision_doubtful_debt_func(self, args, values)
 	
 	@frappe.whitelist()
 	def bad_debt_written_off(self, values: dict):
@@ -834,16 +834,20 @@ def get_currency_args():
 @frappe.whitelist()
 def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool, is_payment_entry: bool):
 	conditions = ""
-	if(is_doubtful_debt):
-		conditions = " and ifnull(provision_doubtful_debt, '')='' "
+	# if(is_doubtful_debt):
+	# 	conditions = " and ifnull(provision_doubtful_debt, '')=''  "
 	if(is_written_off):
-		conditions = " and is_written_off=0 and ifnull(provision_doubtful_debt, '')!='' "
+		# conditions = " and is_written_off=0 and ifnull(provision_doubtful_debt, '')!='' "
+		conditions = " and  doubtful_debt_amount>bad_debt_amount "
 	if(is_payment_entry):
 		pass
 		# conditions = " and is_written_off=0 "
 	result = frappe.db.sql(f""" 
 				Select 
-					donor, idx, (outstanding_amount-doubtful_debt_amount) as remaining_amount
+					donor, 
+     				idx, 
+					(outstanding_amount- bad_debt_amount) as remaining_amount
+     				-- (outstanding_amount-doubtful_debt_amount) as remaining_amount
 				From 
 					`tabPayment Detail` 
 				Where
@@ -873,12 +877,18 @@ def get_idx_list_unknown(donation_id):
 @frappe.whitelist()
 def get_outstanding(filters):
 	filters = ast.literal_eval(filters)
-	result = frappe.db.sql(""" select outstanding_amount, doubtful_debt_amount,
-		(case when is_written_off=1 then (outstanding_amount-doubtful_debt_amount) else 0 end) remaining_amount
-		-- base_outstanding_amount
-		from `tabPayment Detail` 
-		where docstatus=1
-		and parent = %(name)s and donor = %(donor_id)s and idx = %(idx)s """, filters)
+	result = frappe.db.sql(""" 
+		Select 
+			outstanding_amount, 
+			doubtful_debt_amount,
+			bad_debt_amount,
+			(case when is_written_off=1 then (outstanding_amount - bad_debt_amount) else 0 end) remaining_amount
+			-- base_outstanding_amount
+		From 
+  			`tabPayment Detail` 
+		Where 
+  			docstatus=1
+			and parent = %(name)s and donor = %(donor_id)s and idx = %(idx)s """, filters)
 	args = {
 		"outstanding_amount": 0.0,
 		"doubtful_debt_amount": 0.0,
@@ -887,7 +897,8 @@ def get_outstanding(filters):
 		args.update({
 			"outstanding_amount": result[0][0],
 			"doubtful_debt_amount": result[0][1],
-			"remaining_amount": result[0][2],
+			'bad_debt_amount': result[0][2],
+			"remaining_amount": result[0][3],
 		})
 	return args
 
@@ -1326,11 +1337,30 @@ def notify_overdue_tasks(project):	#Mubashir
 @frappe.whitelist()
 def get_donation_details(filters):
 	filters = ast.literal_eval(filters)
-	return frappe.db.sql(""" select donation_amount, outstanding_amount, doubtful_debt_amount, bad_debt_expense, provision_doubtful_debt
-		from `tabPayment Detail` 
-		where docstatus=1
-		and parent = %(name)s and donor = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
-
+	# frappe.msgprint(f"{filters}")
+	if(filters.get("is_doubtful_debt")):
+		return frappe.db.sql("""
+            Select 
+            	donation_amount, 
+				(outstanding_amount-doubtful_debt_amount) as outstanding_amount,
+				0 as doubtful_debt_amount, 
+    			bad_debt_expense, 
+       			provision_doubtful_debt
+			From 
+   				`tabPayment Detail` 
+			Where docstatus=1
+				and parent = %(name)s and donor = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
+	elif(filters.get("is_written_off")):
+		return frappe.db.sql(""" select 
+                    donation_amount, 
+                    outstanding_amount, 
+                    (doubtful_debt_amount - bad_debt_amount) AS doubtful_debt_amount, 
+                    bad_debt_expense, 
+                    provision_doubtful_debt
+			from `tabPayment Detail` 
+			where docstatus=1
+			and parent = %(name)s and donor = %(donor_id)s and idx = %(idx)s """, filters, as_dict=1)[0]
+		
 # @frappe.whitelist()
 # def record_doubtful_debt(doc, values):
 # 	frappe.msgprint('under development')

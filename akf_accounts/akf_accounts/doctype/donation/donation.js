@@ -616,7 +616,7 @@ function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_
         },
         callback: function (r) {
             let data = r.message;
-            // console.log(data);
+            console.log(data);
             donors_list = data['donors_list'];
             idx_list = data['idx_list'];
         }
@@ -687,11 +687,17 @@ function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_
                         frappe.call({
                             method: "akf_accounts.akf_accounts.doctype.donation.donation.get_donation_details",
                             args: {
-                                filters: { "name": frm.doc.name, "donor_id": donor_id, "idx": serial_no },
+                                filters: { 
+                                    "name": frm.doc.name, 
+                                    "donor_id": donor_id, 
+                                    "idx": serial_no,
+                                    "is_doubtful_debt": is_doubtful_debt==true? 1:0,
+                                    "is_written_off": is_written_off==true? 1:0
+                                },
                             },
                             callback: function (r) {
                                 const data = r.message;
-                                // console.log(data);
+                                console.log(data);
                                 d.fields_dict.donation_amount.value = data.outstanding_amount;
                                 d.fields_dict.donation_amount.refresh();
                                 d.fields_dict.doubtful_amount.value = data.doubtful_debt_amount;
@@ -714,6 +720,7 @@ function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_
                 options: `currency`,
                 default: 0,
                 reqd: 1,
+                read_only: is_doubtful_debt?0:1,
                 onchange: function (val) {
                     let donation_amount = d.fields_dict.donation_amount.value;
                     let doubtful_amount = d.fields_dict.doubtful_amount.value;
@@ -726,6 +733,28 @@ function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_
                     }
                     d.fields_dict.doubtful_amount.df.description = description_msg
                     d.fields_dict.doubtful_amount.refresh();
+                }
+            },
+            {
+                label: 'Bad Debt Amount',
+                fieldname: 'bad_debt_amount',
+                fieldtype: 'Currency',
+                options: `currency`,
+                default: 0,
+                reqd: is_written_off?1:0,
+                hidden: is_written_off?0:1,
+                onchange: function (val) {
+                    let doubtful_amount = d.fields_dict.doubtful_amount.value;
+                    let bad_debt_amount = d.fields_dict.bad_debt_amount.value;
+                    
+                    description_msg = ""
+                    if(bad_debt_amount > doubtful_amount){
+                        description_msg = "<small style='color: red;'>Bad debt amount should be less than doubtful amount.<small>"
+                    }else if(bad_debt_amount<=0){
+                        description_msg = "<small style='color: red;'>Bad debt amount should be greater than zero.<small>" 
+                    }
+                    d.fields_dict.bad_debt_amount.df.description = description_msg
+                    d.fields_dict.bad_debt_amount.refresh();
                 }
             },
             {
@@ -786,14 +815,28 @@ function doubtful_debtors_dialog(frm, title, action_label, is_doubtful_debt, is_
         size: 'small', // small, large, extra-large 
         primary_action_label: action_label,
         primary_action(values) {
-            console.log(values);
-            if (values.doubtful_amount>0 && values.doubtful_amount <= values.donation_amount) {
-                const method = is_doubtful_debt?"provision_doubtful_debt": "bad_debt_written_off";
-                frm.call(method, { values: values }).then((r)=>{
-                    d.hide();
-                    frm.refresh();
-                });
+            if(is_doubtful_debt){
+                if (values.doubtful_amount>0 && values.doubtful_amount <= values.donation_amount) {
+                    frm.call("provision_doubtful_debt_func", { values: values }).then((r)=>{
+                        d.hide();
+                        frm.refresh();
+                    });
+                }
+            }else if(is_written_off){
+                if (values.bad_debt_amount>0 && values.bad_debt_amount <= values.doubtful_amount) {
+                frm.call("bad_debt_written_off", { values: values }).then((r)=>{
+                        d.hide();
+                        frm.refresh();
+                    });
+                }
             }
+        }
+    });
+    // 🛠️ Add this to block Enter key from triggering submit
+    d.$wrapper.on('keydown', 'input', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
         }
     });
     d.show();
@@ -878,9 +921,9 @@ function pledge_payment_entry(frm) {
                     // console.log(donor_id)
                 }
             },
-            {
-                label: 'Remaining Amount.',
-                fieldname: 'remaining_amount',
+             {
+                label: 'Bad Debt Amount.',
+                fieldname: 'bad_debt_amount',
                 fieldtype: 'Currency',
                 options: "currency",
                 default: 0,
@@ -891,6 +934,19 @@ function pledge_payment_entry(frm) {
                     // console.log(donor_id)
                 }
             },
+            // {
+            //     label: 'Remaining Amount.',
+            //     fieldname: 'remaining_amount',
+            //     fieldtype: 'Currency',
+            //     options: "currency",
+            //     default: 0,
+            //     reqd: 0,
+            //     read_only: 1,
+            //     onchange: function (val) {
+            //         // let donor_id = d.fields_dict.donor_id.value;
+            //         // console.log(donor_id)
+            //     }
+            // },
             {
                 label: '',
                 fieldname: 'col_break',
@@ -920,9 +976,12 @@ function pledge_payment_entry(frm) {
 
                                 d.fields_dict.doubtful_debt_amount.value = data.doubtful_debt_amount;
                                 d.fields_dict.doubtful_debt_amount.refresh();
-
-                                d.fields_dict.remaining_amount.value = data.remaining_amount;
-                                d.fields_dict.remaining_amount.refresh();
+                                
+                                d.fields_dict.bad_debt_amount.value = data.bad_debt_amount;
+                                d.fields_dict.bad_debt_amount.refresh();
+                                
+                                // d.fields_dict.remaining_amount.value = data.remaining_amount;
+                                // d.fields_dict.remaining_amount.refresh();
                                 
 
                             }
@@ -939,9 +998,14 @@ function pledge_payment_entry(frm) {
                 default: 0,
                 reqd: 1,
                 onchange: function (val) {
-                    let remaining_amount = d.fields_dict.remaining_amount.value;
+                    // let remaining_amount = d.fields_dict.remaining_amount.value;
+                    // let paid_amount = d.fields_dict.paid_amount.value;
+                    // remaining_amount = (remaining_amount==0)? d.fields_dict.outstanding_amount:remaining_amount;
+
+                    let remaining_amount = d.fields_dict.outstanding_amount.value;
                     let paid_amount = d.fields_dict.paid_amount.value;
                     remaining_amount = (remaining_amount==0)? d.fields_dict.outstanding_amount:remaining_amount;
+                    
                     const description = (paid_amount > remaining_amount)? `<b style="color: red;">Paid amount is exceeding remaining amount.<b>`: "<b></b>";  
                     d.fields_dict.paid_amount.df.description = description;
                     d.fields_dict.paid_amount.refresh();
@@ -1039,7 +1103,8 @@ function pledge_payment_entry(frm) {
         primary_action_label: 'Create Payment Entry',
         primary_action(values) {
             let description = "<b></b>";
-            if (values.paid_amount > values.remaining_amount) {
+            // if (values.paid_amount > values.remaining_amount) {
+            if (values.paid_amount > values.outstanding_amount) {
                 description = `<b style="color: red;">Paid amount is exceeding remaining amount.<b>`
             }
             else if (values) {

@@ -1,60 +1,80 @@
 import frappe
 
-
 def updating_donation(self, cancelled=False):
-    for row in self.references:
-        if (row.reference_doctype == "Donation") and (row.outstanding_amount >= 0):
-            outstanding_amount = updating_outstanding_amount(self, row, cancelled)
-            updating_status(row, outstanding_amount)
-            """  if(cancelled):
-                # payment detail base-outstanding-amount
-                details = frappe.db.get_value('Payment Detail', row.custom_donation_payment_detail, ['net_amount', 'outstanding_amount'], as_dict=1)
-                if(details):
-                    outstanding_amount = (details.outstanding_amount + row.allocated_amount)
-                    frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "outstanding_amount", outstanding_amount)
-                    frappe.db.set_value('Payment Detail', row.custom_donation_payment_detail, "paid", 0)
-                # end... """
+	for row in self.references:
+		if (row.reference_doctype == "Donation") and (row.outstanding_amount >= 0):
+			updating_outstanding_amount(self, row, cancelled)
+			
 
 def updating_outstanding_amount(self, row, cancelled):
-    def payment_detail():
-        payment_detail_id  = row.custom_donation_payment_detail
-        outstanding_amount = 0.0
-        if(payment_detail_id):
-            data = get_payment_detail(payment_detail_id)
-            if(cancelled):
-                outstanding_amount = (data.outstanding_amount + self.paid_amount)
-            else:
-                outstanding_amount = (data.outstanding_amount - self.paid_amount)
-            
-            frappe.db.set_value("Payment Detail", payment_detail_id, 
-                        "outstanding_amount", outstanding_amount)
-    
-    def donation():
-        doc = frappe.get_doc(row.reference_doctype, row.reference_name)
-        if(cancelled):
-            outstanding_amount = (doc.outstanding_amount + self.paid_amount)
-        else:
-            outstanding_amount = (doc.outstanding_amount - self.paid_amount)
-        
-        frappe.db.set_value("Donation", row.reference_name, 
-                "outstanding_amount", outstanding_amount)
-        
-        return outstanding_amount 
-    
-    payment_detail()
-    return donation()
+	def set_payment_detail():
+		payment_detail_id  = row.custom_donation_payment_detail
+		outstanding_amount = 0.0
+		if(payment_detail_id):
+			data = get_payment_detail(payment_detail_id)
+			donation_amount = data.donation_amount
+			outstanding = data.outstanding_amount
+			paid_amount = self.paid_amount
+			
+			if(cancelled):
+				if(outstanding> donation_amount): 
+					outstanding_amount = donation_amount
+				else:
+					outstanding_amount = outstanding + paid_amount
 
-def updating_status(row, outstanding_amount):
-    status = None
-    if (outstanding_amount == 0 ):
-        status = "Paid"
-    elif(row.total_amount == outstanding_amount):
-        status = "Unpaid"
-    elif(outstanding_amount>0):
-        status = "Partly Paid"
-    if(frappe.db.exists(row.reference_doctype, {"docstatus": 1,"name": row.reference_name, "is_return": 1})):
-        status = "Return"
-    frappe.db.set_value("Donation", row.reference_name, "status", status)
-        
+			else:
+				# outstanding_amount = 660,000 - 600,000
+				outstanding_amount = outstanding - paid_amount
+			
+			frappe.db.set_value("Payment Detail", payment_detail_id, 
+						"outstanding_amount", outstanding_amount)
+	
+	def set_donation():
+		doc = frappe.get_doc(row.reference_doctype, row.reference_name)
+		total_payments_outstanding_amount = sum(d.outstanding_amount for d in doc.payment_detail) or 0
+		
+		frappe.db.set_value("Donation", doc.name, "outstanding_amount", total_payments_outstanding_amount)
+		doc.reload()
+		
+		paid_amount = frappe.db.sql(f'''
+			Select 
+   				ifnull(sum(allocated_amount),0) as paid_amount
+			From 
+   				`tabPayment Entry Reference`
+			Where
+				docstatus=1
+				and reference_name = '{doc.name}'
+		''')
+		set_status(doc, paid_amount, total_payments_outstanding_amount)
+
+	set_payment_detail()
+	set_donation()
+
+def set_status(doc, paid_amount, outstanding_amount):	
+	status = None
+	print('------------------------')
+	print(paid_amount)
+	
+	if(not paid_amount):
+		status = "Unpaid"
+	if(paid_amount):
+		paid_amount = paid_amount[0][0] or 0
+		
+		if(paid_amount > 0):
+			if(outstanding_amount > 0):
+				status = "Partly Paid"
+			else:
+				status = "Paid"
+		else:
+			status = "Unpaid"
+		
+	if(frappe.db.exists(doc.doctype, {"docstatus": 1,"name": doc.name, "is_return": 1})):
+		status = "Return"
+
+	frappe.db.set_value("Donation", doc.name, {
+		"status": status
+	})
+		
 def get_payment_detail(payment_detail_id):
-    return frappe.db.get_value("Payment Detail", payment_detail_id, "*", as_dict=1)
+	return frappe.db.get_value("Payment Detail", payment_detail_id, "*", as_dict=1)
+

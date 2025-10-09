@@ -78,10 +78,11 @@
   "uc",
   "longitude",
   "doubtful_debt_details_section",
-  "bad_debt_expense",
   "provision_doubtful_debt",
-  "column_break_gevy",
   "doubtful_debt_amount",
+  "column_break_gevy",
+  "bad_debt_expense",
+  "bad_debt_amount",
   "is_written_off",
   "other_info_section",
   "column_break_sezm",
@@ -162,12 +163,12 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
-   "options": "currency",
-   "read_only": 1
+   "options": "currency"
   },
   {
    "fieldname": "section_break_iela",
@@ -392,7 +393,8 @@
    "label": "Project Location"
   },
   {
-   "fetch_from": "project_id.custom_region",
+   "fetch_from": "project.custom_region",
+   "fetch_if_empty": 1,
    "fieldname": "region",
    "fieldtype": "Link",
    "label": "Region",
@@ -400,7 +402,8 @@
    "read_only": 1
   },
   {
-   "fetch_from": "project_id.custom_tehsil",
+   "fetch_from": "project.custom_tehsil",
+   "fetch_if_empty": 1,
    "fieldname": "tehsil",
    "fieldtype": "Link",
    "label": "Tehsil",
@@ -408,7 +411,8 @@
    "read_only": 1
   },
   {
-   "fetch_from": "project_id.custom_latitude",
+   "fetch_from": "project.custom_latitude",
+   "fetch_if_empty": 1,
    "fieldname": "latitude",
    "fieldtype": "Data",
    "label": "Latitude",
@@ -419,7 +423,8 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "project_id.custom_district",
+   "fetch_from": "project.custom_district",
+   "fetch_if_empty": 1,
    "fieldname": "district",
    "fieldtype": "Link",
    "label": "District",
@@ -427,7 +432,8 @@
    "read_only": 1
   },
   {
-   "fetch_from": "project_id.custom_uc",
+   "fetch_from": "project.custom_uc",
+   "fetch_if_empty": 1,
    "fieldname": "uc",
    "fieldtype": "Link",
    "label": "UC",
@@ -435,7 +441,8 @@
    "read_only": 1
   },
   {
-   "fetch_from": "project_id.custom_longitude",
+   "fetch_from": "project.custom_longitude",
+   "fetch_if_empty": 1,
    "fieldname": "longitude",
    "fieldtype": "Data",
    "label": "Longitude",
@@ -709,6 +716,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "intention",
    "fieldtype": "Link",
    "label": "Intention",
@@ -716,6 +724,7 @@
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "transaction_type",
    "fieldtype": "Link",
    "label": "Transaction Type",
@@ -734,18 +743,25 @@
    "hidden": 1,
    "label": "Project",
    "options": "Project"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "bad_debt_expense",
+   "fieldname": "bad_debt_amount",
+   "fieldtype": "Currency",
+   "label": "Bad Debt Amount",
+   "options": "currency"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-07 19:25:47.850470",
+ "modified": "2025-10-09 18:45:14.911893",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",
  "owner": "Administrator",
  "permissions": [],
- "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
