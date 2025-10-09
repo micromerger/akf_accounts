@@ -27,7 +27,7 @@ def make_return_doc(
 		doc.set("payment_detail", [])
 		for d in payment_detail:
 			if(int(d.idx)==int(args.serial_no)):
-				d.donor_id = args.donor
+				d.donor = args.donor
 				doc.append("payment_detail", d)
 				break
 	

@@ -14,20 +14,20 @@ def update_payment_detail(row, values, written_off):
 def record_provision_of_doubtful_det(self, args, values):
 	values = frappe._dict(values)
 	values["parent"] = self.name
-	for row in frappe.db.sql("select * from `tabPayment Detail` where idx=%(serial_no)s and donor_id=%(donor_id)s and parent=%(parent)s", values, as_dict=1):
+	for row in frappe.db.sql("select * from `tabPayment Detail` where idx=%(serial_no)s and donor=%(donor_id)s and parent=%(parent)s", values, as_dict=1):
 		args.update({
 			"party_type": "Donor",
-			"party": row.donor_id,
+			"party": row.donor,
 			"voucher_detail_no": row.name,
 			
-			"fund_class": row.fund_class_id,		
+			"fund_class": row.fund_class,		
 			# "project": row.project,
 			"cost_center": row.cost_center,
 			# Accounting Dimensions
 			"service_area": row.pay_service_area,
 			"subservice_area": row.subservice_area,
 			"product": row.pay_product if(row.pay_product) else row.product,
-			"donor_desk": row.donor_desk_id,
+			"donor_desk": row.donor_desk,
 			"donation_type": row.donation_type
 		})
 		# Bad debt expense (Debit Entry)		
@@ -63,20 +63,20 @@ def bad_debt_written_off(self, args, values):
 	values = frappe._dict(values)
 	values["parent"] = self.name
 	for row in frappe.db.sql("""select * from `tabPayment Detail` 
-			where idx=%(serial_no)s and donor_id=%(donor_id)s and parent=%(parent)s""", values, as_dict=1):
+			where idx=%(serial_no)s and donor=%(donor_id)s and parent=%(parent)s""", values, as_dict=1):
 		args.update({
 			"party_type": "Donor",
-			"party": row.donor_id,
+			"party": row.donor,
 			"voucher_detail_no": row.name,
 			
 			# Accounting Dimensions
-			"fund_class": row.fund_class_id,		
+			"fund_class": row.fund_class,		
 			# "project": row.project,
 			"cost_center": row.cost_center,
 			"service_area": row.pay_service_area,
 			"subservice_area": row.subservice_area,
 			"product": row.pay_product if(row.pay_product) else row.product,
-			"donor_desk": row.donor_desk_id,
+			"donor_desk": row.donor_desk,
 			"donation_type": row.donation_type
 		})
 		# Bad debt expense (Credit Entry)
@@ -126,17 +126,17 @@ def adjust_doubtful_debt(self):
 					"transaction_date": self.posting_date,
 					"account": data.bad_debt_expense,
 					"party_type": "Donor",
-					"party": data.donor_id,
+					"party": data.donor,
 					"voucher_detail_no": data.name,
 					
 					# Accounting Dimensions
-					"fund_class": data.fund_class_id,		
+					"fund_class": data.fund_class,		
 					# "project": row.project,
 					"cost_center": data.cost_center,
 					"service_area": data.pay_service_area,
 					"subservice_area": data.subservice_area,
 					"product": data.pay_product if(data.pay_product) else data.product,
-					"donor_desk": data.donor_desk_id,
+					"donor_desk": data.donor_desk,
 					"donation_type": data.donation_type
 				})
 				cargs = get_currency_args()

@@ -9,7 +9,6 @@ def make_stock_entry_for_in_kind_donation(self):
 		'posting_date': self.posting_date,
 		'posting_time': self.posting_time,
 		'to_warehouse': self.warehouse,
-		# 'custom_donor_ids': self.donor_list,
 		'donation': self.name,
 		'items': [{
 			't_warehouse': self.warehouse,
@@ -19,18 +18,18 @@ def make_stock_entry_for_in_kind_donation(self):
 			'custom_new': row.new,
 			'custom_used': row.used,
 			# 'custom_target_project': row.project,
-			'custom_fund_class_id': row.fund_class,
-			'custom_service_area_id': row.service_area,
-			'custom_subservice_area_id': row.subservice_area,
-			'custom_product_id': row.product,
-			'custom_donor_id': row.donor,			
-			'custom_donor_desk_id': row.donor_desk,
-			'custom_donor_type_id': row.donor_type,
-			'custom_intention_id': row.intention,
-			'custom_cost_center_id': row.cost_center,
-			'custom_transaction_type_id': row.transaction_type,
-			'inventory_flag': row.inventory_flag
-			# 'custom_asset_category_id': row.asset_category
+			'fund_class': row.fund_class,
+			'service_area': row.service_area,
+			'subservice_area': row.subservice_area,
+			'product': row.product,
+			'donor': row.donor,			
+			'donor_desk': row.donor_desk,
+			'donor_type': row.donor_type,
+			'intention': row.intention,
+			'cost_center': row.cost_center,
+			'transaction_type': row.transaction_type,
+			'inventory_flag': row.inventory_flag or "Donated"
+			# 'asset_category': row.asset_category
 		} for row in self.items]
 	})
 	doc = frappe.get_doc(args)
