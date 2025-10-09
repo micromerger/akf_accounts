@@ -313,10 +313,10 @@ class Donation(Document):
 			self.make_payment_detail_gl_entry()
 			self.make_deduction_gl_entries()
 			self.make_payment_ledger_entry()
-			# self.make_payment_entry()
+			self.make_payment_entry()
 			self.update_status()
 			self.send_donation_emails()		# Mubashir Bashir
-			# self.update_project_allocation_check() #Mubarrim
+			
 		elif(self.donation_type in ["In Kind Donation", "In-Kind Donation", "In-Kind-Donation",]):
 			make_stock_entry_for_in_kind_donation(self) # nabeel saleem, 22-08-2025
 		
@@ -754,9 +754,6 @@ class Donation(Document):
 					)
 			#Mubashir Bashir End 3-12-24
 
-	def update_project_allocation_check(self): #Mubarrim 08-01-2025
-		if(self.unknown_to_known): return
-
 	def before_cancel(self):
 		self.del_gl_entries()
 		self.del_payment_ledger_entry()
@@ -770,7 +767,6 @@ class Donation(Document):
 		self.del_child_table()
 		self.update_status()
 		self.reset_return_to_paid()
-		# self.update_project_allocation_check()
 
 	def del_gl_entries(self):
 		if(frappe.db.exists({"doctype": "GL Entry", "docstatus": 1, "against_voucher": self.name})):
