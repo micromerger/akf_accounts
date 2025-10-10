@@ -58,7 +58,6 @@ class XStockEntry(StockEntry):
 		self.set_material_request_status_per_outgoing_stock_entry()
 		self.update_stock_ledger_entry()
 		create_restricted_inventory_gl_entries(self)
-
 		create_asset_item_and_asset(self) #Mubarrim
 	
 	def make_gl_entries(self, gl_entries=None, from_repost=False): #Mubarrim
@@ -248,19 +247,19 @@ class XStockEntry(StockEntry):
 							custom_new = {row.custom_new}, 
 							custom_used = {row.custom_used},
 							
-							project = "{row.custom_project_id or ''}",
-							fund_class = "{row.custom_fund_class_id or ''}",
-							service_area = "{row.custom_service_area_id or ''}",
-							subservice_area = "{row.custom_subservice_area_id or ''}",
-							product = "{row.custom_product_id or ''}",
-							donor = "{row.custom_donor_id or ''}",			
-							donor_desk = "{row.custom_donor_desk_id or ''}",
-							donor_type = "{row.custom_donor_type_id or ''}",
-							donation_type = "{row.custom_intention_id or ''}",
+							project = "{row.project or ''}",
+							fund_class = "{row.fund_class or ''}",
+							service_area = "{row.service_area or ''}",
+							subservice_area = "{row.subservice_area or ''}",
+							product = "{row.product or ''}",
+							donor = "{row.donor or ''}",			
+							donor_desk = "{row.donor_desk or ''}",
+							donor_type = "{row.donor_type or ''}",
+							donation_type = "{row.donation_type or ''}",
 							cost_center = "{target_cost_center}",
-							transaction_type = "{row.custom_transaction_type_id or ''}",
+							transaction_type = "{row.transaction_type or ''}",
 							inventory_flag = "{row.inventory_flag or ''}",
-							asset_category = "{row.custom_asset_category_id or ''}"
+							asset_category = "{row.asset_category or ''}"
 
 						WHERE 
 							docstatus=1 
@@ -279,19 +278,19 @@ class XStockEntry(StockEntry):
 							
 							custom_department= "{self.custom_department or ''}",
 							
-							project = "{row.custom_project_id or ''}",
-							fund_class = "{row.custom_fund_class_id or ''}",
-							service_area = "{row.custom_service_area_id or ''}",
-							subservice_area = "{row.custom_subservice_area_id or ''}",
-							product = "{row.custom_product_id or ''}",
-							donor = "{row.custom_donor_id or ''}",			
-							donor_desk = "{row.custom_donor_desk_id or ''}",
-							donor_type = "{row.custom_donor_type_id or ''}",
-							donation_type = "{row.custom_intention_id or ''}",
+							project = "{row.project or ''}",
+							fund_class = "{row.fund_class or ''}",
+							service_area = "{row.service_area or ''}",
+							subservice_area = "{row.subservice_area or ''}",
+							product = "{row.product or ''}",
+							donor = "{row.donor or ''}",			
+							donor_desk = "{row.donor_desk or ''}",
+							donor_type = "{row.donor_type or ''}",
+							donation_type = "{row.donation_type or ''}",
 							cost_center = "{source_cost_center}",
-							transaction_type = "{row.custom_transaction_type_id or ''}",
+							transaction_type = "{row.transaction_type or ''}",
 							inventory_flag = "{row.inventory_flag or ''}",
-							asset_category = "{row.custom_asset_category_id or ''}"
+							asset_category = "{row.asset_category or ''}"
 							
 							
 						WHERE 
@@ -310,19 +309,19 @@ class XStockEntry(StockEntry):
 							
 							custom_department = "{self.custom_department or ''}",
 							
-							project = "{row.custom_project_id or ''}",
-							fund_class = "{row.custom_fund_class_id or ''}",
-							service_area = "{row.custom_service_area_id or ''}",
-							subservice_area = "{row.custom_subservice_area_id or ''}",
-							product = "{row.custom_product_id or ''}",
-							donor = "{row.custom_donor_id or ''}",			
-							donor_desk = "{row.custom_donor_desk_id or ''}",
-							donor_type = "{row.custom_donor_type_id or ''}",
-							donation_type = "{row.custom_intention_id or ''}",
+							project = "{row.project or ''}",
+							fund_class = "{row.fund_class or ''}",
+							service_area = "{row.service_area or ''}",
+							subservice_area = "{row.subservice_area or ''}",
+							product = "{row.product or ''}",
+							donor = "{row.donor or ''}",			
+							donor_desk = "{row.donor_desk or ''}",
+							donor_type = "{row.donor_type or ''}",
+							donation_type = "{row.donation_type or ''}",
 							cost_center = "{source_cost_center}",
-							transaction_type = "{row.custom_transaction_type_id or ''}",
+							transaction_type = "{row.transaction_type or ''}",
 							inventory_flag = "{row.inventory_flag or ''}",
-							asset_category = "{row.custom_asset_category_id or ''}"
+							asset_category = "{row.asset_category or ''}"
 							
 						WHERE 
 							docstatus=1 
@@ -343,19 +342,19 @@ class XStockEntry(StockEntry):
 							
 							custom_department='{self.custom_department or ''}',
 							
-							project = "{row.custom_project_id or ''}",
-							fund_class = "{row.custom_fund_class_id or ''}",
-							service_area = "{row.custom_service_area_id or ''}",
-							subservice_area = "{row.custom_subservice_area_id or ''}",
-							product = "{row.custom_product_id or ''}",
-							donor = "{row.custom_donor_id or ''}",			
-							donor_desk = "{row.custom_donor_desk_id or ''}",
-							donor_type = "{row.custom_donor_type_id or ''}",
-							donation_type = "{row.custom_intention_id or ''}",
+							project = "{row.project or ''}",
+							fund_class = "{row.fund_class or ''}",
+							service_area = "{row.service_area or ''}",
+							subservice_area = "{row.subservice_area or ''}",
+							product = "{row.product or ''}",
+							donor = "{row.donor or ''}",			
+							donor_desk = "{row.donor_desk or ''}",
+							donor_type = "{row.donor_type or ''}",
+							donation_type = "{row.donation_type or ''}",
 							cost_center = "{target_cost_center}",
-							transaction_type = "{row.custom_transaction_type_id or ''}",
+							transaction_type = "{row.transaction_type or ''}",
 							inventory_flag = "{row.inventory_flag or ''}",
-							asset_category = "{row.custom_asset_category_id or ''}"
+							asset_category = "{row.asset_category or ''}"
 						WHERE 
 							docstatus=1 
 							and voucher_detail_no = '{row.name}'

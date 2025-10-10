@@ -25,7 +25,8 @@ def make_stock_entry_for_in_kind_donation(self):
 			'donor': row.donor,			
 			'donor_desk': row.donor_desk,
 			'donor_type': row.donor_type,
-			'intention': row.intention,
+			# 'intention': row.intention,
+			'donation_type': row.intention,
 			'cost_center': row.cost_center,
 			'transaction_type': row.transaction_type,
 			'inventory_flag': row.inventory_flag or "Donated"

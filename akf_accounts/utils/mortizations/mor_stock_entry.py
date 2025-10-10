@@ -1,5 +1,5 @@
 import frappe
-from frappe.utils import get_link_to_form, fmt_money
+from frappe.utils import fmt_money
 from akf_accounts.akf_accounts.doctype.donation.donation import get_currency_args
 from erpnext.accounts.utils import get_company_default
 from akf_accounts.utils.accounts_defaults import (
@@ -180,20 +180,23 @@ def restricted_expense_account_gl_entry(args, row, amount, restricted_expense_ac
 	doc.submit()
 
 def update_accounting_dimensions(doc):
-	for row in doc.custom_program_details:
-		frappe.db.sql(f'''
-				Update `tabGL Entry`
-				Set 
-					cost_center='{row.pd_cost_center}',	
-					fund_class='{row.pd_fund_class}',
-					project='{row.pd_project}',
-					service_area='{row.pd_service_area}',
-					subservice_area='{row.pd_subservice_area}',
-					product='{row.pd_product}',
-					donor = '{row.pd_donor}'
-				Where
-					voucher_no='{doc.name}'
-				''')
+	if(doc.custom_program_details):
+		for row in doc.custom_program_details:
+			frappe.db.sql(f'''
+					Update `tabGL Entry`
+					Set 
+						cost_center='{row.pd_cost_center}',	
+						fund_class='{row.pd_fund_class}',
+						project='{row.pd_project}',
+						service_area='{row.pd_service_area}',
+						subservice_area='{row.pd_subservice_area}',
+						product='{row.pd_product}',
+						donor = '{row.pd_donor}'
+					Where
+						voucher_no='{doc.name}'
+					''')
+	# else:
+		
 
 def del_stock_gl_entries(doc, method=None):
 	self = doc

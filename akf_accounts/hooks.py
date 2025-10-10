@@ -185,8 +185,14 @@ doc_events = {
         ]
 	},
     "Stock Entry": {
-        "validate": "akf_accounts.utils.mortizations.mor_stock_entry.validate_donor_balance",
-        "on_submit": "akf_accounts.utils.mortizations.mor_stock_entry.make_mortizations_gl_entries",
+        "validate": [
+            "akf_accounts.utils.mortizations.mor_stock_entry.validate_donor_balance",
+            "akf_accounts.utils.stock_entry.restrict_single_in_kind_stock_entry.validate_stock_entry"
+        ],
+        "on_submit": [
+            "akf_accounts.utils.mortizations.mor_stock_entry.make_mortizations_gl_entries",
+            "akf_accounts.utils.stock_entry.gl_entry_dimensions.set_dimensions"
+                      ],
         "on_cancel": "akf_accounts.utils.mortizations.mor_stock_entry.del_stock_gl_entries",
 	},
     # "Purchase Order": {
