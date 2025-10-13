@@ -846,7 +846,7 @@ def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool, is
 				Select 
 					donor, 
      				idx, 
-					(outstanding_amount- bad_debt_amount) as remaining_amount
+					(outstanding_amount) as remaining_amount
      				-- (outstanding_amount-doubtful_debt_amount) as remaining_amount
 				From 
 					`tabPayment Detail` 
@@ -880,7 +880,7 @@ def get_outstanding(filters):
 	result = frappe.db.sql(""" 
 		Select 
 			outstanding_amount, 
-			doubtful_debt_amount,
+			(doubtful_debt_amount-bad_debt_amount) as doubtful_debt_amount,
 			bad_debt_amount,
 			(case when is_written_off=1 then (outstanding_amount - bad_debt_amount) else 0 end) remaining_amount
 			-- base_outstanding_amount
@@ -1342,7 +1342,7 @@ def get_donation_details(filters):
 		return frappe.db.sql("""
             Select 
             	donation_amount, 
-				(outstanding_amount-doubtful_debt_amount) as outstanding_amount,
+				(outstanding_amount-(doubtful_debt_amount-bad_debt_amount)) as outstanding_amount,
 				0 as doubtful_debt_amount, 
     			bad_debt_expense, 
        			provision_doubtful_debt

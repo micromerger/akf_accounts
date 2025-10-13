@@ -186,5 +186,5 @@ def delete_all_gl_entries(self):
 	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
 		return
 	if (hasattr(self, "custom_advance_payment_by_accounting_dimension")):
-		if(frappe.db.exists("GL Entry", {"voucher_no": self.name})):
-			frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
+		if(frappe.db.exists("GL Entry", {"against_voucher": self.name})):
+			frappe.db.sql("DELETE FROM `tabGL Entry` WHERE against_voucher = %s", self.name)

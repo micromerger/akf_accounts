@@ -1,8 +1,8 @@
 app_name = "akf_accounts"
 app_title = "AKF Accounts"
-app_publisher = "Nabeel Saleem"
-app_description = "Custom changes in accounts module"
-app_email = "nabeel.saleem333@gmail.com"
+app_publisher = "MicroMerger"
+app_description = "Donation management accounting."
+app_email = "pk.micromerger.com"
 app_license = "mit"
 # required_apps = []
 
@@ -187,7 +187,8 @@ doc_events = {
     "Stock Entry": {
         "validate": [
             "akf_accounts.utils.mortizations.mor_stock_entry.validate_donor_balance",
-            "akf_accounts.utils.stock_entry.restrict_single_in_kind_stock_entry.validate_stock_entry"
+            "akf_accounts.utils.stock_entry.restrict_single_in_kind_stock_entry.validate_stock_entry",
+            "akf_accounts.utils.stock_entry.serialized_account.get_serialized_receipt_difference_account"
         ],
         "on_submit": [
             "akf_accounts.utils.mortizations.mor_stock_entry.make_mortizations_gl_entries",
@@ -229,6 +230,9 @@ doc_events = {
 	},
     "Cost Center":{
         "validate": "akf_accounts.utils.cost_center.on_behalf_of.process_internal_branch_struct"
+    },
+    "Sponsorship": {
+        "on_submit": "akf_accounts.utils.sponsorship.donation.create_pledge_donation"
     }
     # "Tax Withholding Category": {
     #     "validate": "akf_accounts.utils.taxation.tax_withholding_category.set_sales_tax_and_province_rate",

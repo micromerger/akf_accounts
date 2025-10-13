@@ -16,7 +16,6 @@ def provision_doubtful_debt_func(self, args, values):
 			"party_type": "Donor",
 			"party": row.donor,
 			"voucher_detail_no": row.name,
-			
 			"fund_class": row.fund_class,		
 			# "project": row.project,
 			"cost_center": row.cost_center or self.donation_cost_center,
@@ -118,8 +117,8 @@ def bad_debt_written_off(self, args, values):
 		cdoc = frappe.get_doc(args)
 		cdoc.insert(ignore_permissions=True)
 		cdoc.submit()
-		print('------------------')
-		print(bad_debt_amount)
+		# print('------------------')
+		# print(bad_debt_amount)
 		set_payment_detail_bad_debt_amount(row, bad_debt_amount)
 	# frappe.throw('stop')
 	frappe.msgprint("Written Off recorded successfully.", alert=1)
@@ -130,7 +129,7 @@ def set_payment_detail_bad_debt_amount(row, bad_debt_amount):
 	old_bad_debt_amount = frappe.db.get_value("Payment Detail", name, "bad_debt_amount") or 0
 	total_bad_debt_amount = (old_bad_debt_amount + bad_debt_amount)
 
-	child_outstanding_amount = (row.outstanding_amount - total_bad_debt_amount) if(row.outstanding_amount > total_bad_debt_amount) else (row.donation_amount - total_bad_debt_amount)
+	child_outstanding_amount = (row.outstanding_amount - total_bad_debt_amount) if(row.outstanding_amount >= total_bad_debt_amount) else (row.donation_amount - total_bad_debt_amount)
 
 	frappe.db.set_value("Payment Detail", name, {
 		"is_written_off": 1,
@@ -139,7 +138,7 @@ def set_payment_detail_bad_debt_amount(row, bad_debt_amount):
     })
 	# Update donation
 	donation = frappe.db.get_value("Donation", row.parent,  ['outstanding_amount', 'total_donation'], as_dict=1)
-	total_outstanding_amount = (donation.outstanding_amount - total_bad_debt_amount) if(donation.outstanding_amount > total_bad_debt_amount) else ((donation.total_donation > total_bad_debt_amount))
+	total_outstanding_amount = (donation.outstanding_amount - total_bad_debt_amount) if(donation.outstanding_amount >= total_bad_debt_amount) else ((donation.total_donation > total_bad_debt_amount))
 	frappe.db.set_value("Donation", row.parent, {
 		"outstanding_amount": total_outstanding_amount
     })
@@ -163,39 +162,44 @@ def adjust_doubtful_debt(self):
 					"party_type": "Donor",
 					"party": data.donor,
 					"voucher_detail_no": data.name,
+					'against_voucher_type': self.doctype,
+					'against_voucher': self.name,
 					# Accounting Dimensions
 					"fund_class": data.fund_class,		
 					# "project": row.project,
-					"cost_center": data.cost_center or self.donation_cost_center,
+					"cost_center": frappe.db.get_value('Donation', data.parent, 'donation_cost_center'),
 					"service_area": data.pay_service_area,
 					"subservice_area": data.subservice_area,
 					"product": data.pay_product if(data.pay_product) else data.product,
 					"donor_desk": data.donor_desk,
 					"donation_type": data.donation_type
 				})
-				cargs = get_currency_args()
-				args.update(cargs)
 				# Final amount after doubtful debt
-				total_after_doubtful_debt = (row.total_amount - data.doubtful_debt_amount)
-				extra_amount =  (row.allocated_amount - total_after_doubtful_debt)
-				if(extra_amount>0):
-					# Doubtful debt
+				# total_after_doubtful_debt = (data.outstanding_amount - self.paid_amount)
+				# extra_amount =  (row.allocated_amount - total_after_doubtful_debt)
+				# frappe.throw(f"{extra_amount}")
+				if(data.outstanding_amount == 0):
+					reversal_amount = data.doubtful_debt_amount
+					# Bad debt
+					cargs = get_currency_args()
+					args.update(cargs)
 					args.update({
 						"account": data.bad_debt_expense,
-						"credit": extra_amount,
-						"credit_in_account_currency": extra_amount,
-						"credit_in_transaction_currency": extra_amount, 
+						"credit": reversal_amount,
+						"credit_in_account_currency": reversal_amount,
+						"credit_in_transaction_currency": reversal_amount, 
 					})
 					doc = frappe.get_doc(args)
 					doc.insert(ignore_permissions=True)
 					doc.submit()
-					
+					cargs = get_currency_args()
+					args.update(cargs)
 					# Provision debt
 					args.update({
 						"account": data.provision_doubtful_debt,
-						"debit": extra_amount,
-						"debit_in_account_currency": extra_amount,
-						"debit_in_transaction_currency": extra_amount, 
+						"debit": reversal_amount,
+						"debit_in_account_currency": reversal_amount,
+						"debit_in_transaction_currency": reversal_amount, 
 					})
 					doc = frappe.get_doc(args)
 					doc.insert(ignore_permissions=True)
