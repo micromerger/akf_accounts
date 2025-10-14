@@ -15,7 +15,7 @@ class Donation(Document):
 		self.validate_payment_details()
 		self.validate_deduction_percentages()
 		self.validate_pledge_contribution_type()
-		# self.validate_is_return()
+		self.validate_is_return()
 		self.set_deduction_breakeven()
 		self.update_status()
 	def before_submit(self):
@@ -153,9 +153,10 @@ class Donation(Document):
 				
 		# 31-12-2024 nabeel saleem
 		def validate_donor_currency(row):
-			if(not frappe.db.exists("Donor", {"name": row.donor, "default_currency": self.currency})):
-				donor = get_link_to_form("Donor", row.donor)
-				frappe.throw(f"<b>Row#{row.idx}</b> donor: {donor} currency is not {self.currency}.", title='Currency conflict')
+			if(row.donor):
+				if(not frappe.db.exists("Donor", {"name": row.donor, "default_currency": self.currency})):
+					donor = get_link_to_form("Donor", row.donor)
+					frappe.throw(f"<b>Row#{row.idx}</b> donor: {donor} currency is not {self.currency}.", title='Currency conflict')
 
 		if(self.donation_type=="Cash"):
 			deduction_breakeven = self.deduction_breakeven
@@ -402,7 +403,6 @@ class Donation(Document):
 						"party_type": "",
 						"party": "",
 						"voucher_detail_no": row.name,
-      
 						"donor": rowp.donor,
 						"donor_type": rowp.donor_type,
 						"donor_desk": rowp.donor_desk,
@@ -414,7 +414,7 @@ class Donation(Document):
 						"product": rowp.pay_product if(rowp.pay_product) else rowp.product,
 						# "project": row.project,
 						"cost_center": rowp.cost_center,
-      
+    
 						"account": rowp.equity_account,
 						"debit": row.base_net_amount,
 						"credit": 0,
@@ -838,7 +838,7 @@ def get_donors_list(donation_id, is_doubtful_debt: bool, is_written_off:bool, is
 	# 	conditions = " and ifnull(provision_doubtful_debt, '')=''  "
 	if(is_written_off):
 		# conditions = " and is_written_off=0 and ifnull(provision_doubtful_debt, '')!='' "
-		conditions = " and  doubtful_debt_amount>bad_debt_amount "
+		conditions = " and  doubtful_debt_amount>0 "
 	if(is_payment_entry):
 		pass
 		# conditions = " and is_written_off=0 "
@@ -880,9 +880,9 @@ def get_outstanding(filters):
 	result = frappe.db.sql(""" 
 		Select 
 			outstanding_amount, 
-			(doubtful_debt_amount-bad_debt_amount) as doubtful_debt_amount,
-			bad_debt_amount,
-			(case when is_written_off=1 then (outstanding_amount - bad_debt_amount) else 0 end) remaining_amount
+			doubtful_debt_amount,
+			bad_debt_amount
+			-- (case when is_written_off=1 then (outstanding_amount - bad_debt_amount) else 0 end) remaining_amount
 			-- base_outstanding_amount
 		From 
   			`tabPayment Detail` 
@@ -898,7 +898,7 @@ def get_outstanding(filters):
 			"outstanding_amount": result[0][0],
 			"doubtful_debt_amount": result[0][1],
 			'bad_debt_amount': result[0][2],
-			"remaining_amount": result[0][3],
+			# "remaining_amount": result[0][3],
 		})
 	return args
 
@@ -1342,7 +1342,7 @@ def get_donation_details(filters):
 		return frappe.db.sql("""
             Select 
             	donation_amount, 
-				(outstanding_amount-(doubtful_debt_amount-bad_debt_amount)) as outstanding_amount,
+				(outstanding_amount - doubtful_debt_amount) as outstanding_amount,
 				0 as doubtful_debt_amount, 
     			bad_debt_expense, 
        			provision_doubtful_debt
@@ -1354,7 +1354,7 @@ def get_donation_details(filters):
 		return frappe.db.sql(""" select 
                     donation_amount, 
                     outstanding_amount, 
-                    (doubtful_debt_amount - bad_debt_amount) AS doubtful_debt_amount, 
+                    doubtful_debt_amount, 
                     bad_debt_expense, 
                     provision_doubtful_debt
 			from `tabPayment Detail` 

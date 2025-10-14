@@ -390,6 +390,7 @@
   {
    "fieldname": "project_location_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Project Location"
   },
   {
@@ -756,7 +757,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-09 18:45:14.911893",
+ "modified": "2025-10-14 13:24:21.796528",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Payment Detail",

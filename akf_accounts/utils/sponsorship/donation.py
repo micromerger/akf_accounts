@@ -32,7 +32,8 @@ def create_pledge_donation(doc, method=None):
 	})
 
 	cdoc.insert(ignore_permissions=True)
-	self.donation = cdoc.name
+	frappe.db.set_value('Sponsorshp', self.name, 'donation', cdoc.name)
+	# self.donation = cdoc.name
 	self.reload()
 
 	frappe.msgprint('Sponsorshp pledege donation has been created successfully.', alert=True)

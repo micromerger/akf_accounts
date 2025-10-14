@@ -16,15 +16,18 @@ def provision_doubtful_debt_func(self, args, values):
 			"party_type": "Donor",
 			"party": row.donor,
 			"voucher_detail_no": row.name,
-			"fund_class": row.fund_class,		
 			# "project": row.project,
 			"cost_center": row.cost_center or self.donation_cost_center,
 			# Accounting Dimensions
+			"fund_class": row.fund_class,
 			"service_area": row.pay_service_area,
-			"subservice_area": row.subservice_area,
+			"subservice_area": row.pay_subservice_area,
 			"product": row.pay_product if(row.pay_product) else row.product,
-			"donor_desk": row.donor_desk,
-			"donation_type": row.donation_type
+			"donor": row.donor,		
+			"donor_type": row.donor_type,
+   			"donor_desk": row.donor_desk,
+			"donation_type": row.intention,
+			"transaction_type": row.transaction_type
 		})
 		# Bad debt expense (Debit Entry)		
 		cargs = get_currency_args()
@@ -56,7 +59,6 @@ def provision_doubtful_debt_func(self, args, values):
 		set_payment_detail_doubtful_debt(row.name, values)
 	frappe.msgprint("Doubtful Debt recorded successfully.", alert=1)
 
-
 def set_payment_detail_doubtful_debt(name, values):
 	old_doubtful_amount = frappe.db.get_value("Payment Detail", name, "doubtful_debt_amount") or 0
 	total_doubtful_amount = (old_doubtful_amount + values.doubtful_amount)
@@ -79,16 +81,18 @@ def bad_debt_written_off(self, args, values):
 			"party_type": "Donor",
 			"party": row.donor,
 			"voucher_detail_no": row.name,
-			
 			# Accounting Dimensions
-			"fund_class": row.fund_class,		
 			# "project": row.project,
 			"cost_center": row.cost_center or self.donation_cost_center,
+			"fund_class": row.fund_class,
 			"service_area": row.pay_service_area,
-			"subservice_area": row.subservice_area,
+			"subservice_area": row.pay_subservice_area,
 			"product": row.pay_product if(row.pay_product) else row.product,
+			"donor": row.donor,		
+			"donor_type": row.donor_type,
 			"donor_desk": row.donor_desk,
-			"donation_type": row.donation_type
+			"donation_type": row.intention,
+			"transaction_type": row.transaction_type
 		})
 		# Bad debt expense (Credit Entry)
 		cargs = get_currency_args()
@@ -129,7 +133,7 @@ def set_payment_detail_bad_debt_amount(row, bad_debt_amount):
 	old_bad_debt_amount = frappe.db.get_value("Payment Detail", name, "bad_debt_amount") or 0
 	total_bad_debt_amount = (old_bad_debt_amount + bad_debt_amount)
 
-	child_outstanding_amount = (row.outstanding_amount - total_bad_debt_amount) if(row.outstanding_amount >= total_bad_debt_amount) else (row.donation_amount - total_bad_debt_amount)
+	child_outstanding_amount = (row.outstanding_amount - bad_debt_amount) if(row.outstanding_amount >= total_bad_debt_amount) else (row.donation_amount - total_bad_debt_amount)
 
 	frappe.db.set_value("Payment Detail", name, {
 		"is_written_off": 1,
@@ -138,10 +142,13 @@ def set_payment_detail_bad_debt_amount(row, bad_debt_amount):
     })
 	# Update donation
 	donation = frappe.db.get_value("Donation", row.parent,  ['outstanding_amount', 'total_donation'], as_dict=1)
-	total_outstanding_amount = (donation.outstanding_amount - total_bad_debt_amount) if(donation.outstanding_amount >= total_bad_debt_amount) else ((donation.total_donation > total_bad_debt_amount))
+	total_outstanding_amount = (donation.outstanding_amount - bad_debt_amount) if(donation.outstanding_amount >= total_bad_debt_amount) else ((donation.total_donation > total_bad_debt_amount))
 	frappe.db.set_value("Donation", row.parent, {
-		"outstanding_amount": total_outstanding_amount
+		"outstanding_amount": total_outstanding_amount,
     })
+	frappe.db.set_value("Payment Detail", row.name, {
+		"doubtful_debt_amount": (row.doubtful_debt_amount - bad_debt_amount),
+	})
 
 # on payment entry submission
 def adjust_doubtful_debt(self):
@@ -165,14 +172,17 @@ def adjust_doubtful_debt(self):
 					'against_voucher_type': self.doctype,
 					'against_voucher': self.name,
 					# Accounting Dimensions
-					"fund_class": data.fund_class,		
 					# "project": row.project,
 					"cost_center": frappe.db.get_value('Donation', data.parent, 'donation_cost_center'),
+					"fund_class": data.fund_class,				
 					"service_area": data.pay_service_area,
-					"subservice_area": data.subservice_area,
+					"subservice_area": data.pay_subservice_area,
 					"product": data.pay_product if(data.pay_product) else data.product,
+					"donor": data.donor,		
+					"donor_type": data.donor_type,
 					"donor_desk": data.donor_desk,
-					"donation_type": data.donation_type
+					"donation_type": data.intention,
+					"transaction_type": data.transaction_type
 				})
 				# Final amount after doubtful debt
 				# total_after_doubtful_debt = (data.outstanding_amount - self.paid_amount)
@@ -204,5 +214,3 @@ def adjust_doubtful_debt(self):
 					doc = frappe.get_doc(args)
 					doc.insert(ignore_permissions=True)
 					doc.submit()
-
-			
