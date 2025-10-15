@@ -58,10 +58,7 @@ class Donation(Document):
 
 		def reset_mode_of_payment(row):
 			if(self.contribution_type == "Pledge"):
-				row.mode_of_payment = None
-				row.account_paid_to = None
-				row.transaction_no_cheque_no = ""
-				row.reference_date = None
+				return
 			elif(self.donor_identity in ["Merchant - Known", "Merchant - Unknown"]):
 				row.mode_of_payment = self.mode_of_payment
 				row.account_paid_to = self.account_paid_to
