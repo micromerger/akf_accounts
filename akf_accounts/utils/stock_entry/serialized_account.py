@@ -9,27 +9,31 @@ Process of add accounts detail while creating serial nos
 '''
 def add_serial_no_accounts(doc, method=None):
 	if(get_company_default(doc.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
-		if(
-			doc.docstatus==1 
-			and doc.stock_entry_type == 'Material Receipt'
-		):
-			for row in doc.items:
-				serial_no = frappe.db.get_value('Serial No', {'item_code': row.item_code, 'purchase_document_no': doc.name}, "name")	
-				if(serial_no):
-					equity_account = None
-					inventory_flag = None
-					execution_flag = False
-					if(doc.doctype == 'Stock Entry'):
-						equity_account = row.expense_account
-						inventory_flag = row.inventory_flag
-						execution_flag = True
-					elif(doc.doctype == 'Purchase Receipt'):
-						equity_account = frappe.db.get_value('Program Details', {'parent': doc.name}, 'encumbrance_material_request_account')
-						inventory_flag = "Purchased"
-						if(equity_account): 
-							execution_flag = True 
-					if(execution_flag):
-						filters = frappe._dic({
+		if(doc.doctype == 'Stock Entry'):
+			if(
+				doc.docstatus==1 
+				and doc.stock_entry_type == 'Material Receipt'
+			):
+				for row in doc.items:
+					serial_no = frappe.db.get_value('Serial No', {'item_code': row.item_code, 'purchase_document_no': doc.name}, "name")	
+					if(serial_no):
+						filters = frappe._dict({
+							"company": doc.company,
+							"name": doc.name,
+							"item_code": row.item_code,
+							"equity_account": row.expense_account,
+							"inventory_flag": row.inventory_flag,
+						})
+						update_serial_no_accounts(filters)
+				
+		elif(doc.doctype == 'Purchase Receipt'):
+			if(doc.custom_program_details):
+				equity_account = frappe.db.get_value('Program Details', {'parent': doc.name}, 'encumbrance_material_request_account')
+				inventory_flag = "Purchased"
+				for row in doc.items:
+					serial_no = frappe.db.get_value('Serial No', {'item_code': row.item_code, 'purchase_document_no': doc.name}, "name")	
+					if(serial_no):
+						filters = frappe._dict({
 							"company": doc.company,
 							"name": doc.name,
 							"item_code": row.item_code,
@@ -37,7 +41,6 @@ def add_serial_no_accounts(doc, method=None):
 							"inventory_flag": inventory_flag,
 						})
 						update_serial_no_accounts(filters)
-			doc.reload()
 
 def update_serial_no_accounts(filters):
 	default_income_account = get_default_income_account(filters.get("company"))
@@ -81,6 +84,7 @@ def make_gl_entry_of_serial_no_accounts(doc, method=None):
 
 				for entry in serail_doc.entries:
 					serial = frappe.db.get_value('Serial No', entry.serial_no, ['custom_equity_account', 'custom_income_account', 'purchase_document_no'], as_dict=1)
+					
 					if(serial):
 						if(hasattr(row, 'custom_serial_expense_account')):
 							serial_expense_account = serial.custom_equity_account
