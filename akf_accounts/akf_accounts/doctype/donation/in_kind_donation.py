@@ -1,5 +1,13 @@
 import frappe
 
+def calculate_in_kind_totals(self):
+	if(self.donation_type == "In Kind Donation"):
+		total_amount = 0
+		for row in self.items:
+			row.amount = (row.qty * row.basic_rate)
+			total_amount =  total_amount + row.amount
+		self.total_amount = total_amount
+
 # nabeel saleem, 22-08-2025
 def make_stock_entry_for_in_kind_donation(self):
 	args = frappe._dict({
@@ -11,7 +19,7 @@ def make_stock_entry_for_in_kind_donation(self):
 		'to_warehouse': self.warehouse,
 		'donation': self.name,
 		'items': [{
-			't_warehouse': self.warehouse,
+			't_warehouse': row.warehouse,
 			'item_code': row.item_code,
 			'qty': row.qty,
 			'basic_rate': row.basic_rate,

@@ -51,10 +51,10 @@
   "base_net_amount",
   "default_warehouse_section",
   "stock_entry_type",
-  "column_break_gxsi",
   "warehouse",
   "items_section",
   "items",
+  "total_amount",
   "more_info_tab",
   "status",
   "amended_from",
@@ -459,24 +459,26 @@
    "read_only": 1
   },
   {
-   "fieldname": "column_break_gxsi",
-   "fieldtype": "Column Break"
-  },
-  {
    "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
    "fieldname": "warehouse",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_preview": 1,
    "label": "Warehouse",
-   "mandatory_depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
    "options": "Warehouse"
+  },
+  {
+   "depends_on": "eval:doc.donation_type == \"In Kind Donation\"",
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-15 15:07:46.865730",
+ "modified": "2025-10-14 18:04:45.264250",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donation",
@@ -498,7 +500,6 @@
    "write": 1
   }
  ],
- "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [

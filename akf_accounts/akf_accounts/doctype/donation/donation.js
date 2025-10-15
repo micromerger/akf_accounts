@@ -213,6 +213,14 @@ frappe.ui.form.on('Deduction Breakeven', {
     }
 });
 
+frappe.ui.form.on('In Kind Donation', {
+    items_add: function (frm, cdt, cdn) {
+       let row = locals[cdt][cdn];
+       row.warehouse = frm.doc.warehouse;
+       frm.refresh_field("items");
+    }
+});
+
 /* CUSTOM BUTTONS ON TOP OF DOCTYPE */
 function set_custom_btns(frm) {
 
@@ -430,6 +438,15 @@ function set_queries_payment_details(frm) {
 }
 // 15-09-2025, Nabeel Saleem
 function set_queries_items(frm){
+    frm.fields_dict['items'].grid.get_field('warehouse').get_query = function (doc, cdt, cdn) {
+        return {
+            filters: {
+                is_group: 0,
+                is_rejected_warehouse: 0,
+                company: frm.doc.company
+            }
+        };
+    };
     frm.fields_dict['items'].grid.get_field('item_code').get_query = function (doc, cdt, cdn) {
         return {
             filters: {
@@ -1232,5 +1249,4 @@ function toggleModeOfPaymentRowWise(frm) {
     // Refresh the child table to apply the changes
     frm.refresh_field('payment_detail');
 }
-
 // new changes

@@ -59,6 +59,7 @@ class XStockEntry(StockEntry):
 		self.update_stock_ledger_entry()
 		create_restricted_inventory_gl_entries(self)
 		create_asset_item_and_asset(self) #Mubarrim
+		
 	
 	def make_gl_entries(self, gl_entries=None, from_repost=False): #Mubarrim
 		for item in self.items:

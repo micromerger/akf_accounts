@@ -187,13 +187,14 @@ doc_events = {
     "Stock Entry": {
         "validate": [
             "akf_accounts.utils.mortizations.mor_stock_entry.validate_donor_balance",
-            "akf_accounts.utils.stock_entry.restrict_single_in_kind_stock_entry.validate_stock_entry",
-            "akf_accounts.utils.stock_entry.serialized_account.get_serialized_receipt_difference_account"
+            "akf_accounts.utils.stock_entry.restrict_single_in_kind_stock_entry.validate_stock_entry",  
         ],
         "on_submit": [
             "akf_accounts.utils.mortizations.mor_stock_entry.make_mortizations_gl_entries",
-            "akf_accounts.utils.stock_entry.gl_entry_dimensions.set_dimensions"
-                      ],
+            "akf_accounts.utils.stock_entry.gl_entry_dimensions.set_dimensions",
+            "akf_accounts.utils.stock_entry.serialized_account.add_serial_no_accounts", 
+            "akf_accounts.utils.stock_entry.serialized_account.make_gl_entry_of_serial_no_accounts"
+        ],
         "on_cancel": "akf_accounts.utils.mortizations.mor_stock_entry.del_stock_gl_entries",
 	},
     # "Purchase Order": {
@@ -206,9 +207,11 @@ doc_events = {
             "akf_accounts.utils.financial_closure.confirmation",
             "akf_accounts.utils.purchase_receipt.donor_balance.validations"
         ],
-        "on_submit": ["akf_accounts.utils.financial_closure.confirmation",
+        "on_submit": [
+            "akf_accounts.utils.financial_closure.confirmation",
             "akf_accounts.utils.encumbrance.enc_purchase_receipt.update_grn_accounting_dimensions",
-            "akf_accounts.utils.purchase_receipt.stock_ledger_entry.update_stock_dimensions"
+            "akf_accounts.utils.purchase_receipt.stock_ledger_entry.update_stock_dimensions",
+            "akf_accounts.utils.stock_entry.serialized_account.add_serial_no_accounts", 
         ]
 	},
     "Purchase Invoice": {

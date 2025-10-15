@@ -6,6 +6,7 @@ from erpnext.setup.utils import get_exchange_rate
 from frappe.core.doctype.communication.email import make
 
 from akf_accounts.akf_accounts.doctype.donation.in_kind_donation import (
+    calculate_in_kind_totals,
 	make_stock_entry_for_in_kind_donation
 )
 
@@ -18,6 +19,8 @@ class Donation(Document):
 		self.validate_is_return()
 		self.set_deduction_breakeven()
 		self.update_status()
+		calculate_in_kind_totals(self)
+
 	def before_submit(self):
 		self.validate_is_return()
 
