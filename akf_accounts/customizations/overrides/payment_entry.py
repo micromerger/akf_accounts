@@ -437,6 +437,7 @@ class XPaymentEntry(AccountsController):
 		update_ref_details_only_for: list | None = None,
 		ref_exchange_rate: float | None = None,
 	) -> None:
+		
 		for d in self.get("references"):
 			if d.allocated_amount:
 				if update_ref_details_only_for and (
@@ -447,6 +448,7 @@ class XPaymentEntry(AccountsController):
 				ref_details = get_reference_details(
 					d.reference_doctype, d.reference_name, self.party_account_currency
 				)
+				
 				if ref_exchange_rate:
 					ref_details.update({"exchange_rate": ref_exchange_rate})
 
@@ -1220,20 +1222,22 @@ class XPaymentEntry(AccountsController):
 				exchange_rate = self.source_exchange_rate
 			elif self.payment_type == "Pay":
 				exchange_rate = self.target_exchange_rate
-
+			
 			base_allocated_amount += flt(
 				flt(d.allocated_amount) * flt(exchange_rate), self.precision("base_paid_amount")
 			)
 
 			# on rare case, when `exchange_rate` is unset, gain/loss amount is incorrectly calculated
 			# for base currency transactions
+			
 			if d.exchange_rate is None:
 				d.exchange_rate = 1
-
+			
 			allocated_amount_in_pe_exchange_rate = flt(
 				flt(d.allocated_amount) * flt(d.exchange_rate), self.precision("base_paid_amount")
 			)
 			d.exchange_gain_loss = base_allocated_amount - allocated_amount_in_pe_exchange_rate
+			
 		return base_allocated_amount
 
 	def set_total_allocated_amount(self):
@@ -2740,7 +2744,7 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 	company_currency = ref_doc.get("company_currency") or erpnext.get_company_currency(
 		ref_doc.company
 	)
-	# frappe.throw(f"{company_currency}")
+	
 	if reference_doctype == "Dunning":
 		total_amount = outstanding_amount = ref_doc.get("dunning_amount")
 		exchange_rate = 1
@@ -2753,7 +2757,12 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 				party_account_currency, company_currency, ref_doc.posting_date
 			)
 		else:
-			exchange_rate = 1
+			if(party_account_currency != company_currency):
+				exchange_rate = get_exchange_rate(
+					party_account_currency, company_currency, ref_doc.posting_date
+				)
+			else:
+				exchange_rate = 1
 			outstanding_amount = get_outstanding_on_journal_entry(reference_name)
 		
 	elif reference_doctype == "Journal Entry" and ref_doc.docstatus == 1:

@@ -24,7 +24,7 @@ def updating_outstanding_amount(self, row, cancelled):
 
 			else:
 				# outstanding_amount = 660,000 - 600,000
-				outstanding_amount = outstanding - paid_amount
+				outstanding_amount = outstanding - paid_amount if(outstanding >= paid_amount) else 0
 			
 			frappe.db.set_value("Payment Detail", payment_detail_id, 
 						"outstanding_amount", outstanding_amount)

@@ -220,7 +220,8 @@
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Cost Center"
+   "options": "Cost Center",
+   "reqd": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -450,6 +451,7 @@
    "fieldname": "default_currency",
    "fieldtype": "Link",
    "label": "Default Currency",
+   "mandatory_depends_on": "company",
    "options": "Currency"
   },
   {
@@ -461,6 +463,7 @@
    "fieldname": "default_account",
    "fieldtype": "Link",
    "label": "Default Account",
+   "mandatory_depends_on": "default_currency",
    "options": "Account"
   },
   {
@@ -770,7 +773,7 @@
    "link_fieldname": "parent_donor"
   }
  ],
- "modified": "2025-08-25 20:27:01.829016",
+ "modified": "2025-10-16 13:46:44.412782",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Donor",

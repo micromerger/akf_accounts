@@ -618,7 +618,7 @@ class Donation(Document):
 						"total_amount" : self.total_donation,
 						"outstanding_amount" : row.donation_amount,
 						"allocated_amount" : row.donation_amount,
-						"custom_donation_payment_detail": row.name,
+						"custom_donation_payment_detail": row.name
 				}]
 			})
 			# frappe.throw(frappe.as_json(args))
@@ -627,7 +627,7 @@ class Donation(Document):
 			else:
 				doc = frappe.get_doc(args)
 				doc.save(ignore_permissions=True)
-				doc.submit()
+				# doc.submit()
 
 				if(self.donor_identity == "Unknown"):
 					# set Payment Entry id in payment_detail child table.
@@ -640,7 +640,7 @@ class Donation(Document):
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
-			doc.submit()
+			# doc.submit()
 
 	def validate_is_return(self):
 		def stop_exceeding_donation_amount(row):

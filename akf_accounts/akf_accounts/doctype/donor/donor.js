@@ -387,6 +387,13 @@ dilaoges = {
                         d.fields_dict.default_account.value = account;
                         d.fields_dict.default_account.df.description = (account == "") ? "<b style='color:red;'>* Account not found.</b>" : "";
                         d.fields_dict.default_account.refresh();
+                    },
+                    get_query: function(){
+                        return {
+                            filters:{
+                                name: ['!=', frm.doc.default_currency]
+                            }
+                        }
                     }
                 },
                 {

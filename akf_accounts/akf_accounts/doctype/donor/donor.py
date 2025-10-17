@@ -3,12 +3,23 @@
 
 
 import frappe, re
-from frappe.contacts.address_and_contact import load_address_and_contact
-from frappe.model.document import Document
-from erpnext.accounts.utils import get_balance_on
-from frappe.model.mapper import get_mapped_doc
-from erpnext import get_default_company, get_default_cost_center, get_company_currency
-from frappe.utils import getdate, formatdate, get_link_to_form
+from frappe.contacts.address_and_contact import (
+    load_address_and_contact
+)
+from frappe.model.document import (
+    Document
+)
+from frappe.model.mapper import (
+    get_mapped_doc
+)
+from erpnext import (
+    get_default_cost_center, 
+    get_company_currency
+)
+
+from frappe.model.naming import (
+    make_autoname
+)
 
 from akf_accounts.akf_accounts.doctype.proscribed_person.proscribed_person import process_proscribed_person_detail
 
@@ -18,6 +29,12 @@ class Donor(Document):
 	def onload(self):
 		"""Load address and contacts in `__onload`"""
 		load_address_and_contact(self)
+
+	def autoname(self):
+		if(self.parent_donor and (not self.is_group)):
+			base_name = self.parent_donor
+			suffix = self.default_currency
+			self.name = f"{base_name}-{suffix}"
 
 	def validate(self):
 		from frappe.utils import validate_email_address
