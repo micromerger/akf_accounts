@@ -1,9 +1,57 @@
 import frappe
+import ast
 from frappe.utils import getdate
+
+
 @frappe.whitelist()
-def convert_unknown_to_known(source_name, target_doc=None):
-	args = frappe._dict(frappe.flags.args) # e.g; {"donor": donor_id, "series_no": 1}
-	return make_return_doc("Donation", source_name, target_doc, args)
+def convert_unknown_to_known(source_name, target_doc=None, args=None, donor=None, serial_no=None):
+	"""
+	Create a mapped return Donation where an Unknown donor is converted to Known.
+
+	This function can be called from Desk (which sets frappe.flags.args) or via RPC
+	where `args` is passed in the form dict. Accept both cases.
+	"""
+	# Try RPC-provided args first (may be a JSON/string or dict)
+	parsed_args = None
+	if args:
+		try:
+			if isinstance(args, str):
+				parsed_args = ast.literal_eval(args)
+			else:
+				parsed_args = args
+		except Exception:
+			# best-effort fallback
+			parsed_args = {}
+	# Next, try frappe.flags.args (used by Desk's open_mapped_doc)
+	if not parsed_args:
+		try:
+			parsed_args = frappe.flags.args
+		except Exception:
+			parsed_args = None
+	# Finally, check form dict for args key
+	if not parsed_args:
+		raw = frappe.form_dict.get("args") or frappe.form_dict.get("values")
+		if raw:
+			try:
+				if isinstance(raw, str):
+					parsed_args = ast.literal_eval(raw)
+				else:
+					parsed_args = raw
+			except Exception:
+				parsed_args = {}
+
+	# If donor/serial_no passed directly, prefer them (front-end RPCs often pass flat params)
+	if donor or serial_no:
+		parsed_args = parsed_args or {}
+		if donor:
+			parsed_args["donor"] = donor
+		if serial_no:
+			parsed_args["serial_no"] = serial_no
+
+	parsed_args = parsed_args or {}
+	parsed_args = frappe._dict(parsed_args)
+
+	return make_return_doc("Donation", source_name, target_doc, parsed_args)
 
 def make_return_doc(
 	doctype: str, source_name: str, target_doc=None, args=None, return_against_rejected_qty=False
