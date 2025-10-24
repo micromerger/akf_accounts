@@ -1,4 +1,8 @@
 import frappe, ast, json
+<<<<<<< Updated upstream
+=======
+from urllib.parse import parse_qsl
+>>>>>>> Stashed changes
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 from erpnext.accounts.utils import get_balance_on
@@ -16,7 +20,7 @@ class Donation(Document):
 		self.validate_payment_details()
 		self.validate_deduction_percentages()
 		self.validate_pledge_contribution_type()
-		self.validate_is_return()
+		# self.validate_is_return()
 		self.set_deduction_breakeven()
 		self.update_status()
 		calculate_in_kind_totals(self)
@@ -908,6 +912,7 @@ def pledge_payment_entry(doc, values):
 	from frappe.utils import getdate
 	curdate = getdate()
 
+<<<<<<< Updated upstream
 	# Accept either a JSON string, a Python literal string, or an already-parsed dict
 	def _parse_arg(val):
 		# If it's already a mapping-like object, return as-is
@@ -932,6 +937,60 @@ def pledge_payment_entry(doc, values):
 	# Wrap in frappe._dict for convenient attribute access
 	doc = frappe._dict(parsed_doc)
 	values = frappe._dict(parsed_values)
+=======
+	def _safe_parse(arg):
+		if not isinstance(arg, str):
+			return arg
+
+		try:
+			parsed = ast.literal_eval(arg)
+			if isinstance(parsed, (dict, list, tuple)):
+				return parsed
+		except Exception:
+			parsed = None
+
+		if parsed is None:
+			try:
+				parsed = json.loads(arg)
+				if isinstance(parsed, (dict, list, tuple)):
+					return parsed
+			except Exception:
+				parsed = None
+
+		try:
+			pairs = parse_qsl(arg, keep_blank_values=True)
+			if pairs:
+				parsed = {}
+				for k, v in pairs:
+					if v.isdigit():
+						parsed[k] = int(v)
+					else:
+						try:
+							parsed[k] = float(v)
+						except Exception:
+							parsed[k] = v
+				return parsed
+		except Exception:
+			pass
+
+		frappe.throw("Invalid payload for pledge_payment_entry: expected mapping (JSON/py-literal) or form-encoded string.")
+
+	def _to_mapping(parsed):
+		if isinstance(parsed, dict):
+			return parsed
+		if isinstance(parsed, (list, tuple)):
+			try:
+				return dict(parsed)
+			except Exception:
+				frappe.throw("Invalid payload for pledge_payment_entry: expected mapping (JSON/py-literal) or form-encoded string.")
+		frappe.throw("Invalid payload for pledge_payment_entry: expected mapping (JSON/py-literal) or form-encoded string.")
+
+	parsed_doc = _safe_parse(doc)
+	parsed_values = _safe_parse(values)
+
+	doc = frappe._dict(_to_mapping(parsed_doc))
+	values = frappe._dict(_to_mapping(parsed_values))
+>>>>>>> Stashed changes
 	row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
 
 	if(not row): frappe.throw(f"You're paying more than donation amount.")
@@ -1218,6 +1277,61 @@ from frappe.model.mapper import get_mapped_doc
 def make_donation_return(source_name, target_doc=None):
 	# from erpnext.controllers.sales_and_purchase_return import make_return_doc
 	return make_return_doc("Donation", source_name, target_doc)
+
+
+@frappe.whitelist()
+def create_and_insert_donation_return(source_name, preserved_payment_details=None):
+	"""
+	Map a Donation to its return (Credit Note), optionally restore preserved payment_detail fields,
+	mark it unknown_to_known and insert the document server-side.
+
+	Arguments:
+	- source_name: name of the Donation to return against
+	- preserved_payment_details: JSON-stringified list of dicts with fields to restore on each payment_detail row
+
+	Returns: name of created Donation (return document)
+	"""
+	import ast
+
+	# Create mapped document (in-memory)
+	mapped = make_return_doc(source_name)
+	if not mapped:
+		frappe.throw("Failed to map Donation to return document")
+
+	# Restore preserved payment detail fields if provided
+	if preserved_payment_details:
+		try:
+			preserved = ast.literal_eval(preserved_payment_details) if isinstance(preserved_payment_details, str) else preserved_payment_details
+		except Exception:
+			preserved = None
+
+		if preserved and isinstance(preserved, (list, tuple)):
+			try:
+				for idx, row in enumerate(mapped.payment_detail):
+					if idx < len(preserved):
+						orig = preserved[idx]
+						if isinstance(orig, dict):
+							for k, v in orig.items():
+								if v is not None and v != "":
+									row[k] = v
+			except Exception:
+				# Non-fatal: don't block creation if restore fails
+				frappe.log_error(f"Failed to restore preserved payment detail fields for return of {source_name}")
+
+	# Mark the mapped doc as unknown_to_known and an actual return
+	try:
+		mapped.unknown_to_known = 1
+	except Exception:
+		pass
+
+	# Insert on server (ignore permissions since this is an internal/controlled flow)
+	try:
+		mapped.insert(ignore_permissions=True)
+	except Exception as e:
+		frappe.log_error(message=str(e), title=f"Failed to insert mapped return for {source_name}")
+		raise
+
+	return mapped.name
 
 def make_return_doc(
 	doctype: str, source_name: str, target_doc=None, return_against_rejected_qty=False
