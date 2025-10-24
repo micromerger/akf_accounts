@@ -1,4 +1,4 @@
-import frappe, ast
+import frappe, ast, json
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 from erpnext.accounts.utils import get_balance_on
@@ -908,8 +908,30 @@ def pledge_payment_entry(doc, values):
 	from frappe.utils import getdate
 	curdate = getdate()
 
-	doc = frappe._dict(ast.literal_eval(doc))
-	values = frappe._dict(ast.literal_eval(values))
+	# Accept either a JSON string, a Python literal string, or an already-parsed dict
+	def _parse_arg(val):
+		# If it's already a mapping-like object, return as-is
+		if isinstance(val, (dict, frappe._dict)):
+			return val
+		# If it's a string, try JSON first (standard from JS), then fall back to ast.literal_eval
+		if isinstance(val, str):
+			try:
+				return json.loads(val)
+			except Exception:
+				try:
+					return ast.literal_eval(val)
+				except Exception:
+					# As a last resort, return the original string
+					return val
+		# Unknown type: return as-is
+		return val
+
+	parsed_doc = _parse_arg(doc)
+	parsed_values = _parse_arg(values)
+
+	# Wrap in frappe._dict for convenient attribute access
+	doc = frappe._dict(parsed_doc)
+	values = frappe._dict(parsed_values)
 	row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
 
 	if(not row): frappe.throw(f"You're paying more than donation amount.")
