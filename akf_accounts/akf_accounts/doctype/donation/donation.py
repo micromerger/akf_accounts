@@ -1,8 +1,4 @@
 import frappe, ast, json
-<<<<<<< Updated upstream
-=======
-from urllib.parse import parse_qsl
->>>>>>> Stashed changes
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 from erpnext.accounts.utils import get_balance_on
@@ -912,7 +908,6 @@ def pledge_payment_entry(doc, values):
 	from frappe.utils import getdate
 	curdate = getdate()
 
-<<<<<<< Updated upstream
 	# Accept either a JSON string, a Python literal string, or an already-parsed dict
 	def _parse_arg(val):
 		# If it's already a mapping-like object, return as-is
@@ -937,60 +932,6 @@ def pledge_payment_entry(doc, values):
 	# Wrap in frappe._dict for convenient attribute access
 	doc = frappe._dict(parsed_doc)
 	values = frappe._dict(parsed_values)
-=======
-	def _safe_parse(arg):
-		if not isinstance(arg, str):
-			return arg
-
-		try:
-			parsed = ast.literal_eval(arg)
-			if isinstance(parsed, (dict, list, tuple)):
-				return parsed
-		except Exception:
-			parsed = None
-
-		if parsed is None:
-			try:
-				parsed = json.loads(arg)
-				if isinstance(parsed, (dict, list, tuple)):
-					return parsed
-			except Exception:
-				parsed = None
-
-		try:
-			pairs = parse_qsl(arg, keep_blank_values=True)
-			if pairs:
-				parsed = {}
-				for k, v in pairs:
-					if v.isdigit():
-						parsed[k] = int(v)
-					else:
-						try:
-							parsed[k] = float(v)
-						except Exception:
-							parsed[k] = v
-				return parsed
-		except Exception:
-			pass
-
-		frappe.throw("Invalid payload for pledge_payment_entry: expected mapping (JSON/py-literal) or form-encoded string.")
-
-	def _to_mapping(parsed):
-		if isinstance(parsed, dict):
-			return parsed
-		if isinstance(parsed, (list, tuple)):
-			try:
-				return dict(parsed)
-			except Exception:
-				frappe.throw("Invalid payload for pledge_payment_entry: expected mapping (JSON/py-literal) or form-encoded string.")
-		frappe.throw("Invalid payload for pledge_payment_entry: expected mapping (JSON/py-literal) or form-encoded string.")
-
-	parsed_doc = _safe_parse(doc)
-	parsed_values = _safe_parse(values)
-
-	doc = frappe._dict(_to_mapping(parsed_doc))
-	values = frappe._dict(_to_mapping(parsed_values))
->>>>>>> Stashed changes
 	row = frappe.db.get_value('Payment Detail', {'parent': doc.name, 'donor': values.donor_id, "idx": values.serial_no}, ['*'], as_dict=1)
 
 	if(not row): frappe.throw(f"You're paying more than donation amount.")
