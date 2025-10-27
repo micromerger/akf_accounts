@@ -16,11 +16,13 @@ class XStockEntry(StockEntry):
 
 	def validate(self):
 		super(XStockEntry, self).validate()
+		
 		self.validate_difference_account()
 		self.set_warehouse_cost_centers()
 		self.set_total_quantity_count()
 		self.set_actual_quantity_before_submission()
 		self.stock_between_third_party_warehouse() #Mubarrim
+		self.validate_dimensional_qty()
 
 	def validate_difference_account(self):
 		if(self.stock_entry_type in ["Inventory to Asset", "Material Receipt"]):
@@ -51,7 +53,65 @@ class XStockEntry(StockEntry):
 			for item in self.items:
 				if(item.custom_source_warehouse_tpt or item.custom_target_warehouse_tpt):
 					frappe.throw("Not allowed for Third Party Warehouse")
-						   
+	
+	def validate_dimensional_qty(self):
+		def get_conditions(row):
+			conditions = f" and item_code='{row.item_code}'"
+			conditions += f" and warehouse = '{row.s_warehouse}' " if (row.s_warehouse) else " and warehouse IS NULL "
+			conditions += f" and cost_center = '{row.cost_center}' " if (row.cost_center) else " and custom_cost_center IS NULL "
+			
+			conditions += f" and custom_new = {row.custom_new} " if (row.custom_new) else " and custom_new = 0 "
+			conditions += f" and custom_used = {row.custom_used} " if (row.custom_used) else " and custom_used = 0 "
+			
+			conditions += f" and project = '{row.project}' " if (row.project and row.inventory_flag=='Purchased') else " and ifnull(project,'')='' "
+			conditions += f" and fund_class = '{row.fund_class}' " if (row.fund_class) else " and fund_class IS NULL "
+			conditions += f" and service_area = '{row.service_area}' " if (row.service_area) else " and service_area IS NULL "
+			conditions += f" and subservice_area = '{row.subservice_area}' " if (row.subservice_area) else " and subservice_area IS NULL "
+			conditions += f" and product = '{row.product}' " if (row.product) else " and ifnull(product,'')='' "
+
+			conditions += f" and donation_type = '{row.donation_type}' " if (row.donation_type) else " and ifnull(donation_type,'')='' "
+			conditions += f" and transaction_type = '{row.transaction_type}' " if (row.transaction_type) else " and ifnull(transaction_type,'')='' "
+
+			conditions += f" and inventory_flag = '{row.inventory_flag}' " if (row.inventory_flag) else " and inventory_flag = 'Normal' "
+			# conditions += f" and inventory_scenario = '{row.inventory_scenario}' " if (row.inventory_scenario) else " and inventory_scenario = 'Normal' "
+			# frappe.throw(f"""
+			# 			SELECT 
+			# 				ifnull(SUM(actual_qty),0) as donated_qty, item_code
+			# 			FROM 
+			# 				`tabStock Ledger Entry`
+			# 			WHERE
+			# 				docstatus=1 {conditions}
+			# 		""")
+			return conditions
+		
+		if ((self.purpose == "Material Issue") or (self.purpose == "Material Transfer")):
+			for row in self.items:
+				conditions = get_conditions(row)
+				query = f"""
+						SELECT 
+							ifnull(SUM(actual_qty),0) as donated_qty, item_code
+						FROM 
+							`tabStock Ledger Entry`
+						WHERE
+							docstatus=1 {conditions}
+					"""
+				try:
+					donated_invetory = frappe.db.sql(
+						query,
+						as_dict=True,
+					)
+				except Exception as e:
+					frappe.throw(f"Error executing query: {e}")
+
+				for di in donated_invetory:
+					if di.donated_qty >= row.qty:
+						pass
+					else:
+						frappe.throw(
+					f"<b>Row#{row.idx};</b> Insufficient qty for item <b>{row.item_code}</b>, "
+					f"requested qty: <b>{row.qty}</b>, available qty: <b>{di.donated_qty}</b>"
+					,title="Insufficient Qty")
+
 	def on_submit(self):
 		super(XStockEntry, self).on_submit()
 		self.calculate_per_installed_for_delivery_note()
@@ -60,15 +120,15 @@ class XStockEntry(StockEntry):
 		create_restricted_inventory_gl_entries(self)
 		create_asset_item_and_asset(self) #Mubarrim
 		
-	
+
 	def make_gl_entries(self, gl_entries=None, from_repost=False): #Mubarrim
 		for item in self.items:
 			if item.custom_source_warehouse_tpt == "For Third Party" or item.custom_target_warehouse_tpt == "For Third Party":
 				# frappe.msgprint("GL Entry skipped for this Stock Entry as it contains Third Party Warehouse.")
 				return  # Skip GL Entry creation
-	
+
 		super().make_gl_entries(gl_entries, from_repost)
-	
+
 	def calculate_per_installed_for_delivery_note(self):
 		if (not self.custom_delivery_note):
 			return
@@ -444,7 +504,7 @@ class XStockEntry(StockEntry):
 			"""
 			)
 
-	
+
 
 	# or (self.purpose == "Material Transfer" and self.outgoing_stock_entry)
 	def validate_qty(self):

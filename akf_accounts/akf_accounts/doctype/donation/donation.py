@@ -640,7 +640,7 @@ class Donation(Document):
 			})
 			doc = frappe.get_doc(args)
 			doc.save(ignore_permissions=True)
-			# doc.submit()
+			doc.submit()
 
 	def validate_is_return(self):
 		def stop_exceeding_donation_amount(row):

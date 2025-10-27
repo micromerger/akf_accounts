@@ -81,7 +81,6 @@ def restricted_income_account_gl_entry(args, row, amount, default_income):
 		"cost_center" : row.pd_cost_center,
 		"transaction_type" : row.pd_transaction_type,
 		
-   
 		'credit': amount,
 		'credit_in_account_currency': amount,
 		'transaction_currency': row.currency,

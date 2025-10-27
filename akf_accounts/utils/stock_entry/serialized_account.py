@@ -1,7 +1,7 @@
 
 import frappe
 from erpnext.accounts.utils import (
-    get_company_default
+	get_company_default
 )
 
 '''
@@ -72,74 +72,56 @@ def make_gl_entry_of_serial_no_accounts(doc, method=None):
 		doc.docstatus==1 
 		and doc.stock_entry_type in ['Material Transfer', 'Material Issue', 'Inventory to Asset', 'Inventory Consumption - Restricted']
 	):
-		
+		return
 		for row in doc.items:
-			serial_batch_bundle = frappe.db.get_value('Serial and Batch Bundle', {'item_code': row.item_code, 'voucher_no': doc.name},'name')
-			if(serial_batch_bundle):
+			serial_and_batch_bundle = frappe.db.get_value('Serial and Batch Bundle',{'voucher_no':  doc.name}, 'name') if(not row.serial_and_batch_bundle) else None
+			
+			if(serial_and_batch_bundle):
+				data = frappe.db.sql(f'''
+					Select sn.custom_equity_account, sn.custom_income_account, sum(sb.incoming_rate) as total_amount, sum(sb.qty) total_qty, sn.purchase_document_no
+					From `tabSerial and Batch Entry`  sb inner join `tabSerial No` sn on (sb.serial_no=sn.name)
+					Where 
+						sb.docstatus = 1
+						and ifnull(sn.custom_equity_account,'')!=''
+						and ifnull(sn.custom_income_account,'')!=''
+						and sb.parent = '{serial_and_batch_bundle}'
+					Group by
+						sn.custom_equity_account, sn.custom_income_account, sb.incoming_rate, sn.purchase_document_no
+				''', as_dict=1)
 				
-				serail_doc = frappe.get_doc('Serial and Batch Bundle', serial_batch_bundle)
-				serial_expense_account = None
-				serial_income_account = None
-				purchase_document_no = None
-
-				for entry in serail_doc.entries:
-					serial = frappe.db.get_value('Serial No', entry.serial_no, ['custom_equity_account', 'custom_income_account', 'purchase_document_no'], as_dict=1)
+				for d in data:
+					args = get_gl_structure(doc)
 					
-					if(serial):
-						if(hasattr(row, 'custom_serial_expense_account')):
-							serial_expense_account = serial.custom_equity_account
-						if(hasattr(row, 'custom_serial_income_account')):
-							serial_income_account = serial.custom_income_account
-						
-						purchase_document_no = serial.purchase_document_no
+					# debit equity account
+					cargs = get_currency_args()
+					args.update(cargs)
+					args.update({
+						'remarks': 'accounts reversal.',
+						'cost_center': row.cost_center,
+						'debit': d.total_amount,
+						'debit_in_account_currency': d.total_amount,
+						'debit_in_transaction_currency': d.total_amount,
+						'account': d.custom_equity_account
+					})
+					edoc = frappe.get_doc(args)
+					edoc.insert(ignore_permissions=True)
+					edoc.submit()
+					
+					# credit income account
+					cargs = get_currency_args()
+					args.update(cargs)
+					args.update({
+						'remarks': 'accounts reversal.',
+						'cost_center': row.cost_center,
+						'credit': d.total_amount,
+						'credit_in_account_currency': d.total_amount,
+						'credit_in_transaction_currency': d.total_amount,
+						'account': d.custom_income_account
+					})
+					idoc = frappe.get_doc(args)
+					idoc.insert(ignore_permissions=True)
+					idoc.submit()
 				
-				dimensions = frappe.db.get_value('Stock Ledger Entry', {'voucher_no': purchase_document_no, 'warehouse': row.s_warehouse}, 
-                        ['fund_class', 'service_area', 'subservice_area', 'product', 'cost_center', 'project', 'donor', 'donor_type', 'donor_desk', 'donation_type', 'transaction_type', 'inventory_flag'], 
-                as_dict=1)
-
-				args = get_gl_structure(doc)
-				args.update(dimensions)
-				# Serial Income Account [Cr]
-				cargs = get_currency_args()
-				args.update(cargs)
-				args.update({
-					'account': serial_income_account,
-					'against': f"{serial_income_account}",
-					"credit": row.amount,
-					"credit_in_account_currency": row.amount,
-					"credit_in_transaction_currency": row.amount
-				})
-				gl_doc = frappe.get_doc(args)
-				gl_doc.flags.ignore_permissions = True
-				gl_doc.insert()
-				gl_doc.submit()
-
-				# serial expense account
-				cargs = get_currency_args()
-				args.update(cargs)
-				args.update({
-					'account': serial_expense_account,
-					'against': f"{serial_expense_account}",
-					"debit": row.amount,
-					"debit_in_account_currency": row.amount,
-					"debit_in_transaction_currency": row.amount
-				})
-				gl_doc = frappe.get_doc(args)
-				gl_doc.flags.ignore_permissions = True
-				gl_doc.insert()
-				gl_doc.submit()
-				
-
-				frappe.db.set_value('Stock Ledger Entry', {'voucher_no': doc.name}, dimensions)
-				frappe.db.set_value('GL Entry', {'voucher_no': doc.name}, dimensions)
-
-				# update stock entry details table name items
-				dimensions.update({
-					'custom_serial_income_account': serial_income_account,
-					'custom_serial_expense_account': serial_expense_account
-				})
-				# print(dimensions)
-				frappe.db.set_value('Stock Entry Detail', row.name, dimensions)
 
 def get_gl_structure(doc):
 	return frappe._dict({
@@ -160,7 +142,7 @@ def get_gl_structure(doc):
 		})
 
 def get_currency_args():
-	return {
+	return frappe._dict({
 		# Company Currency
 		"debit": 0,
 		"credit": 0,
@@ -170,4 +152,4 @@ def get_currency_args():
 		# Transaction Currency
 		"debit_in_transaction_currency": 0,
 		"credit_in_transaction_currency": 0
-	}
+	})

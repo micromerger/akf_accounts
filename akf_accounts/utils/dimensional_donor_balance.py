@@ -20,8 +20,16 @@ def get_donor_balance(filters=None):
 
 	response = frappe.db.sql(""" 
  		Select 
-   			cost_center, account, donor, 
-			donor_type, donor_desk, (donation_type) as intention, transaction_type,
+   			cost_center, account, donor,
+			project,
+			fund_class,
+			service_area,
+			subservice_area,
+			product,
+			donor_type, 
+   			donor_desk, 
+      		(donation_type) as intention, 
+        	transaction_type,
 			(select donor_name from `tabDonor` where name=gl.donor limit 1) as donor_name,
 			sum(credit-debit) as balance
 

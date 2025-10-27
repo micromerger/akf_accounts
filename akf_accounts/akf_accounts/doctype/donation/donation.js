@@ -44,6 +44,9 @@ frappe.ui.form.on('Donation', {
     },
     subservice_area: function (frm) {
     },
+    posting_date: function(frm){
+        frm.events.currency(frm);
+    },
     currency: function (frm) {
         frappe.call({
             method: "erpnext.setup.utils.get_exchange_rate",

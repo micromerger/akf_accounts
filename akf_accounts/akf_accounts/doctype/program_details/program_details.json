@@ -190,8 +190,7 @@
    "fieldname": "pd_intention",
    "fieldtype": "Link",
    "label": "Intention",
-   "options": "Donation Type",
-   "read_only": 1
+   "options": "Donation Type"
   },
   {
    "fieldname": "pd_transaction_type",
@@ -220,7 +219,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-28 12:40:22.646970",
+ "modified": "2025-10-27 17:58:04.746636",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Program Details",

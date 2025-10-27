@@ -59,7 +59,10 @@ doctype_js = {
         "public/js/customizations/project/enc_project.js",
         "public/js/customizations/project/project_financial_dashboard.js",
     ],
-    "Stock Entry": "public/js/customizations/material_request_get_items_from.js"
+    "Stock Entry": [
+        "public/js/customizations/material_request_get_items_from.js",
+        "public/js/customizations/stock_entry_with_dimensions.js",
+    ]
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}

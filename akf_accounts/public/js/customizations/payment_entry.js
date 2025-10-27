@@ -822,5 +822,6 @@ frappe.ui.form.on('Payment Entry', {
 		frm.events.get_outstanding_invoices = get_outstanding_invoices_custom;
 		frm.events.get_outstanding_orders = get_outstanding_orders_custom;
 		frm.events.get_outstanding_documents = get_outstanding_documents_custom;
+		frm.events.paid_from_account_currency(frm);
 	}
 });
