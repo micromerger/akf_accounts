@@ -644,24 +644,40 @@ class Donation(Document):
 
 	def validate_is_return(self):
 		def stop_exceeding_donation_amount(row):
-			result = frappe.db.sql(f"""
-				select donation_amount 
-				from `tabPayment Detail` 
-				where 
-					docstatus=1
-					and donor='{row.donor}'
-					and pay_service_area='{row.pay_service_area}'
-					and pay_subservice_area='{row.pay_subservice_area}'
-					and pay_product='{row.pay_product}'
-					and fund_class='{row.fund_class}'
-					and random_id = '{row.random_id}'
-					and parent= '{self.return_against}'
-			""")
+			# For Unknown->Known (reverse donor) we cannot match by donor because the donor changes.
+			# Use parent and random_id (and keep other dimensional matches) to fetch the original amount.
+			if self.unknown_to_known:
+				result = frappe.db.sql(f"""
+					select donation_amount 
+					from `tabPayment Detail` 
+					where 
+						docstatus=1
+						and pay_service_area='{row.pay_service_area}'
+						and pay_subservice_area='{row.pay_subservice_area}'
+						and pay_product='{row.pay_product}'
+						and fund_class='{row.fund_class}'
+						and random_id = '{row.random_id}'
+						and parent= '{self.return_against}'
+				""")
+			else:
+				result = frappe.db.sql(f"""
+					select donation_amount 
+					from `tabPayment Detail` 
+					where 
+						docstatus=1
+						and donor='{row.donor}'
+						and pay_service_area='{row.pay_service_area}'
+						and pay_subservice_area='{row.pay_subservice_area}'
+						and pay_product='{row.pay_product}'
+						and fund_class='{row.fund_class}'
+						and random_id = '{row.random_id}'
+						and parent= '{self.return_against}'
+				""")
 			# and project='{row.project}'
 			if(result):
 				donation_amount = result[0][0]
 				if(row.donation_amount>donation_amount):
-					frappe.throw(f" <b>Row #{row.idx}: </b> [{row.donor_name}]<br>, donation return amount is exceeding the actual donation.", title='Return Donation')
+					frappe.throw(f" <b>Row #{row.idx}: </b> [{row.donor_name}]<br> Donation return amount is exceeding the actual donation.", title='Return Donation')
 		
 		if(self.is_return): 
 			# if(len(self.payment_detail)>1):

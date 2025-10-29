@@ -72,7 +72,6 @@ def make_gl_entry_of_serial_no_accounts(doc, method=None):
 		doc.docstatus==1 
 		and doc.stock_entry_type in ['Material Transfer', 'Material Issue', 'Inventory to Asset', 'Inventory Consumption - Restricted']
 	):
-		return
 		for row in doc.items:
 			serial_and_batch_bundle = frappe.db.get_value('Serial and Batch Bundle',{'voucher_no':  doc.name}, 'name') if(not row.serial_and_batch_bundle) else None
 			

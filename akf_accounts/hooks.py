@@ -62,6 +62,9 @@ doctype_js = {
     "Stock Entry": [
         "public/js/customizations/material_request_get_items_from.js",
         "public/js/customizations/stock_entry_with_dimensions.js",
+    ],
+    "Asset Category": [
+        "public/js/customizations/asset_category.js"
     ]
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -158,7 +161,6 @@ override_doctype_class = {
     "Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
     "Asset": "akf_accounts.customizations.overrides.cdoctype.asset.Asset",
     # "Asset Movement": "akf_accounts.customizations.overrides.cdoctype.asset_movement.AssetMovement"
-   
 }
 # Document Events
 # ---------------
@@ -195,8 +197,8 @@ doc_events = {
         "on_submit": [
             "akf_accounts.utils.mortizations.mor_stock_entry.make_mortizations_gl_entries",
             "akf_accounts.utils.stock_entry.gl_entry_dimensions.set_dimensions",
-            "akf_accounts.utils.stock_entry.serialized_account.add_serial_no_accounts", 
-            "akf_accounts.utils.stock_entry.serialized_account.make_gl_entry_of_serial_no_accounts"
+            # "akf_accounts.utils.stock_entry.serialized_account.add_serial_no_accounts", 
+            # "akf_accounts.utils.stock_entry.serialized_account.make_gl_entry_of_serial_no_accounts"
         ],
         "on_cancel": "akf_accounts.utils.mortizations.mor_stock_entry.del_stock_gl_entries",
 	},
@@ -214,7 +216,7 @@ doc_events = {
             "akf_accounts.utils.financial_closure.confirmation",
             "akf_accounts.utils.encumbrance.enc_purchase_receipt.update_grn_accounting_dimensions",
             "akf_accounts.utils.purchase_receipt.stock_ledger_entry.update_stock_dimensions",
-            "akf_accounts.utils.stock_entry.serialized_account.add_serial_no_accounts", 
+            # "akf_accounts.utils.stock_entry.serialized_account.add_serial_no_accounts", 
         ]
 	},
     "Purchase Invoice": {
@@ -257,7 +259,7 @@ doc_events = {
 # ---------------
 scheduler_events = {
 
-      "cron": {
+    "cron": {
         "*/5 * * * *": [
              "akf_accounts.customizations.extends.depreciation.post_depreciation_entries",
         ],      
