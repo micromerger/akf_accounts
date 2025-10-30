@@ -34,8 +34,6 @@ from erpnext.assets.doctype.asset_depreciation_schedule.asset_depreciation_sched
 
 # bench --site erp.stage.alkhidmat.org execute erpnext.assets.doctype.asset.depreciation.post_depreciation_entries
 def custom_post_depreciation_entries(date=None):
-	print('----------------------')
-	print('custom')
 	# Return if automatic booking of asset depreciation is disabled
 	if not cint(
 		frappe.db.get_value("Accounts Settings", None, "book_asset_depreciation_entry_automatically")
@@ -44,7 +42,7 @@ def custom_post_depreciation_entries(date=None):
 
 	if not date:
 		date = today()
-	date = "2027-10-28"
+	
 	failed_asset_names = []
 	error_log_names = []
 
@@ -496,9 +494,9 @@ def get_comma_separated_links(names, doctype):
 
 
 @frappe.whitelist()
-def scrap_asset(asset_name):
+def custom_scrap_asset(asset_name):
 	asset = frappe.get_doc("Asset", asset_name)
-
+	
 	if asset.docstatus != 1:
 		frappe.throw(_("Asset {0} must be submitted").format(asset.name))
 	elif asset.status in ("Cancelled", "Sold", "Scrapped", "Capitalized", "Decapitalized"):
@@ -526,7 +524,9 @@ def scrap_asset(asset_name):
 	je.company = asset.company
 	je.remark = "Scrap Entry for asset {0}".format(asset_name)
 
-	for entry in get_gl_entries_on_asset_disposal(asset, date):
+	asset.status = "Scrapped" # Nabeel added line on 30-10-2025
+
+	for entry in custom_get_gl_entries_on_asset_disposal(asset, date):
 		entry.update({"reference_type": "Asset", "reference_name": asset_name})
 		je.append("accounts", entry)
 
@@ -732,12 +732,12 @@ def get_gl_entries_on_asset_regain(
 	return gl_entries
 
 
-def get_gl_entries_on_asset_disposal(
-	asset, selling_amount=0, finance_book=None, voucher_type=None, voucher_no=None, date=None
+def custom_get_gl_entries_on_asset_disposal(
+	asset, selling_amount=0, finance_book=None, voucher_type=None, voucher_no=None, date=None, custom_fund_account_for_disposal=None
 ):
 	if not date:
 		date = getdate()
-
+	
 	(
 		fixed_asset_account,
 		asset,
@@ -747,7 +747,7 @@ def get_gl_entries_on_asset_disposal(
 		disposal_account,
 		value_after_depreciation,
 	) = get_asset_details(asset, finance_book)
-
+	
 	gl_entries = [
 		asset.get_gl_dict(
 			{
@@ -760,7 +760,7 @@ def get_gl_entries_on_asset_disposal(
 			item=asset,
 		),
 	]
-
+	
 	if accumulated_depr_amount:
 		gl_entries.append(
 			asset.get_gl_dict(
@@ -774,13 +774,19 @@ def get_gl_entries_on_asset_disposal(
 				item=asset,
 			),
 		)
-
+	if(custom_fund_account_for_disposal):
+		addition_in_entries_using_value_after_depreciation(asset, gl_entries, value_after_depreciation, depreciation_cost_center, date, custom_fund_account_for_disposal)
+	
 	profit_amount = flt(selling_amount) - flt(value_after_depreciation)
 	if profit_amount:
+		# Nabeel add these lines on 30-10-2025
+		if(asset.status == 'Scrapped'): 
+			disposal_account = get_company_default_designated_asset_fund_account(asset.company)
+
 		get_profit_gl_entries(
 			asset, profit_amount, gl_entries, disposal_account, depreciation_cost_center, date
 		)
-
+	
 	if voucher_type and voucher_no:
 		for entry in gl_entries:
 			entry["voucher_type"] = voucher_type
@@ -888,15 +894,27 @@ def get_value_after_depreciation_on_disposal_date(asset, disposal_date, finance_
 
 
 # Nabeel created on 29-10-2025
-def get_asset_designated_fund_account(company, asset_category):
-	return frappe.db.get_value('Asset Category Account', {'company_name': company, 'parent': asset_category}, 'custom_designated_asset_fund_account')
-	"""if(not account):
-		frappe.throw(
-      		f"Please set `<b>Designated Asset Fund Account (dr)</b>` of asset category <b>{asset_category}</b>. ", 
-        	title="Missing Information"
-        )
-	return account"""
+def get_asset_designated_fund_account(company, asset_category, show_exception=False):
+	account = frappe.db.get_value('Asset Category Account', {'company_name': company, 'parent': asset_category}, 'custom_designated_asset_fund_account')
+	if(account):
+		return account
 
+	if(show_exception):
+		frappe.throw(
+			f"Please set `<b>Designated Asset Fund Account</b>` of asset category <b>{asset_category}</b>. ", 
+			title="Missing Information"
+		)
+# if(asset.status== 'Scrapped'):
+def get_company_default_designated_asset_fund_account(company):
+	account = frappe.db.get_value('Company', company, 'custom_default_designated_asset_fund_account')
+	if(account):
+		return account
+	else:
+		frappe.throw(
+			f"Please set `<b>Default Designated Asset Fund Account</b>` in company <b>{company}</b>. ", 
+			title="Missing Information"
+		)
+    
 # Nabeel created on 29-10-2025
 def get_asset_income_account(company, asset_category):
 	return frappe.db.get_value('Asset Category Account', {'company_name': company, 'parent': asset_category}, 'custom_income_account')
@@ -906,3 +924,31 @@ def get_asset_income_account(company, asset_category):
         	title="Missing Information"
         )
 	return account"""
+
+# Nabeel created on 30-10-2025
+def addition_in_entries_using_value_after_depreciation(asset, gl_entries, value_after_depreciation, depreciation_cost_center, date, custom_fund_account_for_disposal):
+	designated_asset_fund_account = get_asset_designated_fund_account(asset.company, asset.asset_category, show_exception=True)
+	gl_entries.append(
+			asset.get_gl_dict(
+				{
+					"account": designated_asset_fund_account,
+					"debit_in_account_currency": value_after_depreciation,
+					"debit": value_after_depreciation,
+					"cost_center": depreciation_cost_center,
+					"posting_date": date,
+				},
+				item=asset,
+			),
+		)
+	gl_entries.append(
+			asset.get_gl_dict(
+				{
+					"account": custom_fund_account_for_disposal,
+					"credit_in_account_currency": value_after_depreciation,
+					"credit": value_after_depreciation,
+					"cost_center": depreciation_cost_center,
+					"posting_date": date,
+				},
+				item=asset,
+			),
+		)

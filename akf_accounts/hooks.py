@@ -65,6 +65,9 @@ doctype_js = {
     ],
     "Asset Category": [
         "public/js/customizations/asset_category.js"
+    ],
+    "Sales Invoice": [
+        "public/js/customizations/sales_invoice/sales_invoice_utils.js"
     ]
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -157,7 +160,7 @@ override_doctype_class = {
     "Stock Entry": "akf_accounts.customizations.extends.xstock_entry.XStockEntry",
 	# "Purchase Receipt" : "akf_accounts.customizations.overrides.cdoctype.purchase_receipt.PurchaseReceipt",
     "Purchase Invoice" : "akf_accounts.customizations.overrides.cdoctype.purchase_invoice.PurchaseInvoice",
-    # "Sales Invoice": "akf_accounts.customizations.extends.xsales_invoice.XSalesInvoice",
+    "Sales Invoice": "akf_accounts.customizations.overrides.cdoctype.sales_invoice.SalesInvoice",
     "Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
     "Asset": "akf_accounts.customizations.overrides.cdoctype.asset.Asset",
     # "Asset Movement": "akf_accounts.customizations.overrides.cdoctype.asset_movement.AssetMovement"
@@ -241,6 +244,9 @@ doc_events = {
     },
     "Sponsorship": {
         "on_submit": "akf_accounts.utils.sponsorship.donation.create_pledge_donation"
+    },
+    "Sales Invoice": {
+        "validate": "akf_accounts.document_events.sales_invoice.validate.asset.set_asset_dimensions_in_items_table"
     }
     # "Tax Withholding Category": {
     #     "validate": "akf_accounts.utils.taxation.tax_withholding_category.set_sales_tax_and_province_rate",
