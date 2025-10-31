@@ -1,0 +1,349 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-30 15:35:16.366408",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "invoice_id",
+  "item",
+  "column_break_vkqm",
+  "amount",
+  "wip_account",
+  "accounting_dimensions_section",
+  "donor_desk",
+  "fund_class",
+  "service_area",
+  "subservice_area",
+  "product",
+  "cost_center",
+  "transaction_type",
+  "inventory_scenario",
+  "column_break_nxpr",
+  "project",
+  "task",
+  "asset_category",
+  "donor_type",
+  "donation_type",
+  "donor",
+  "reverse_donor",
+  "inventory_flag",
+  "rejected_inventory_flag",
+  "column_break_bftk",
+  "from_inventory_flag",
+  "from_inventory_donor",
+  "from_inventory_product",
+  "from_inventory_project",
+  "from_inventory_intention",
+  "from_inventory_donor_desk",
+  "from_inventory_donor_type",
+  "from_inventory_fund_class",
+  "column_break_riep",
+  "from_inventory_cost_center",
+  "from_inventory_service_area",
+  "from_inventory_asset_category",
+  "from_inventory_subservice_area",
+  "from_inventory_transaction_type",
+  "from_product",
+  "from_service_area",
+  "from_subservice_area"
+ ],
+ "fields": [
+  {
+   "fieldname": "invoice_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Invoice Id",
+   "options": "Purchase Invoice"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount"
+  },
+  {
+   "fieldname": "wip_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "WIP Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_vkqm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "accounting_dimensions_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting Dimensions"
+  },
+  {
+   "fieldname": "donor_desk",
+   "fieldtype": "Link",
+   "label": "Donor Desk",
+   "options": "Donor Desk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transaction_type",
+   "fieldtype": "Link",
+   "label": "Transaction Type",
+   "options": "Transaction Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fund_class",
+   "fieldtype": "Link",
+   "label": "Fund Class",
+   "options": "Fund Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "service_area",
+   "fieldtype": "Link",
+   "label": "Service Area",
+   "options": "Service Area",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subservice_area",
+   "fieldtype": "Link",
+   "label": "Subservice Area",
+   "options": "Subservice Area",
+   "read_only": 1
+  },
+  {
+   "fieldname": "product",
+   "fieldtype": "Link",
+   "label": "Product",
+   "options": "Product",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "read_only": 1
+  },
+  {
+   "fieldname": "inventory_scenario",
+   "fieldtype": "Link",
+   "label": "Inventory Scenario",
+   "options": "Inventory Scenario",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_nxpr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fieldname": "donor_type",
+   "fieldtype": "Link",
+   "label": "Donor Type",
+   "options": "Donor Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "donation_type",
+   "fieldtype": "Link",
+   "label": "Donation Type",
+   "options": "Donation Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "asset_category",
+   "fieldtype": "Link",
+   "label": "Asset Category",
+   "options": "Asset Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Task",
+   "options": "Task",
+   "read_only": 1
+  },
+  {
+   "fieldname": "donor",
+   "fieldtype": "Link",
+   "label": "Donor",
+   "options": "Donor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reverse_donor",
+   "fieldtype": "Link",
+   "label": "Reverse Donor",
+   "options": "Reverse Donor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "inventory_flag",
+   "fieldtype": "Link",
+   "label": "Inventory Flag",
+   "options": "Inventory Flag",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_inventory_flag",
+   "fieldtype": "Link",
+   "label": "Rejected Inventory Flag",
+   "options": "Inventory Flag",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_bftk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_riep",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_inventory_flag",
+   "fieldtype": "Link",
+   "label": "Source Inventory Flag",
+   "options": "Inventory Flag",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_donor",
+   "fieldtype": "Link",
+   "label": "Source Inventory Donor",
+   "options": "Donor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_product",
+   "fieldtype": "Link",
+   "label": "Source Inventory Product",
+   "options": "Product",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_project",
+   "fieldtype": "Link",
+   "label": "Source Inventory Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_intention",
+   "fieldtype": "Link",
+   "label": "Source Inventory Intention",
+   "options": "Donation Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_donor_desk",
+   "fieldtype": "Link",
+   "label": "Source Inventory Donor Desk",
+   "options": "Donor Desk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_donor_type",
+   "fieldtype": "Link",
+   "label": "Source Inventory Donor Type",
+   "options": "Donor Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_fund_class",
+   "fieldtype": "Link",
+   "label": "Source Inventory Fund Class",
+   "options": "Fund Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_cost_center",
+   "fieldtype": "Link",
+   "label": "Source Inventory Cost Center",
+   "options": "Cost Center",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_service_area",
+   "fieldtype": "Link",
+   "label": "Source Inventory Service Area",
+   "options": "Service Area",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_asset_category",
+   "fieldtype": "Link",
+   "label": "Source Inventory Asset Category",
+   "options": "Asset Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_subservice_area",
+   "fieldtype": "Link",
+   "label": "Source Inventory Subservice Area",
+   "options": "Subservice Area",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_inventory_transaction_type",
+   "fieldtype": "Link",
+   "label": "Source Inventory Transaction Type",
+   "options": "Transaction Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_product",
+   "fieldtype": "Link",
+   "label": "Source Product",
+   "options": "Product",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_service_area",
+   "fieldtype": "Link",
+   "label": "Source Service Area",
+   "options": "Service Area",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_subservice_area",
+   "fieldtype": "Link",
+   "label": "Source Subservice Area",
+   "options": "Subservice Area",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-31 15:14:54.326527",
+ "modified_by": "Administrator",
+ "module": "AKF Accounts",
+ "name": "Purchase Invoice Items",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

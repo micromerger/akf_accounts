@@ -136,6 +136,9 @@ class Asset(AccountsController):
 		self.total_asset_cost = self.gross_purchase_amount
 		self.status = self.get_status()
 
+	def validate(self):
+		self.set_wip_status() # Mubashir Bahsir 29/10/25
+
 	def on_submit(self):
 		self.validate_in_use_date()
 		self.make_asset_movement()
@@ -728,6 +731,13 @@ class Asset(AccountsController):
 			make_gl_entries(gl_entries)
 			self.db_set("booked_fixed_asset", 1)
 
+	# Mubashir Bahsir 29/10/25 Start
+	def set_wip_status(self):
+		if self.is_composite_asset and self.custom_work_in_progress and self.status == "Draft":
+			self.status = "Work In Progress"
+			frappe.msgprint(_("Asset status set to Work In Progress"))
+	# Mubashir Bahsir 29/10/25 End
+
 	@frappe.whitelist()
 	def get_depreciation_rate(self, args, on_validate=False):
 		if isinstance(args, str):
@@ -1235,3 +1245,5 @@ def add_reference_in_jv_on_split(entry_name, new_asset_name, old_asset_name, dep
 	journal_entry.make_gl_entries(1)
 	journal_entry.docstatus = 1
 	journal_entry.make_gl_entries()
+
+

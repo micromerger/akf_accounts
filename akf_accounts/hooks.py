@@ -59,6 +59,7 @@ doctype_js = {
         "public/js/customizations/project/enc_project.js",
         "public/js/customizations/project/project_financial_dashboard.js",
     ],
+<<<<<<< Updated upstream
     "Stock Entry": [
         "public/js/customizations/material_request_get_items_from.js",
         "public/js/customizations/stock_entry_with_dimensions.js",
@@ -69,6 +70,10 @@ doctype_js = {
     "Sales Invoice": [
         "public/js/customizations/sales_invoice/sales_invoice_utils.js"
     ]
+=======
+    "Stock Entry": "public/js/customizations/material_request_get_items_from.js",
+    "Asset Capitalization": "public/js/customizations/asset_capitalization_x.js" # Mubashir 31-10-2025
+>>>>>>> Stashed changes
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -164,6 +169,11 @@ override_doctype_class = {
     "Payment Entry": "akf_accounts.customizations.overrides.payment_entry.XPaymentEntry",
     "Asset": "akf_accounts.customizations.overrides.cdoctype.asset.Asset",
     # "Asset Movement": "akf_accounts.customizations.overrides.cdoctype.asset_movement.AssetMovement"
+<<<<<<< Updated upstream
+=======
+    "Asset Capitalization": "akf_accounts.customizations.extends.asset_capitalization_x.XAssetCapitalization" # Mubashir 31-10-2025
+   
+>>>>>>> Stashed changes
 }
 # Document Events
 # ---------------
