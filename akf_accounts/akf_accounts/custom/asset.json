@@ -87,11 +87,7 @@
    "hide_border": 0,
    "hide_days": 0,
    "hide_seconds": 0,
-<<<<<<< Updated upstream
-   "idx": 0,
-=======
    "idx": 61,
->>>>>>> Stashed changes
    "ignore_user_permissions": 0,
    "ignore_xss_filter": 0,
    "in_global_search": 0,
@@ -153,24 +149,15 @@
    "hide_border": 0,
    "hide_days": 0,
    "hide_seconds": 0,
-<<<<<<< Updated upstream
-   "idx": 0,
-=======
    "idx": 11,
->>>>>>> Stashed changes
    "ignore_user_permissions": 0,
    "ignore_xss_filter": 0,
    "in_global_search": 0,
    "in_list_view": 0,
    "in_preview": 0,
    "in_standard_filter": 0,
-<<<<<<< Updated upstream
    "insert_after": "accounting_dimensions_section",
    "is_system_generated": 1,
-=======
-   "insert_after": "custom_work_in_progress",
-   "is_system_generated": 0,
->>>>>>> Stashed changes
    "is_virtual": 0,
    "label": "Donor Desk",
    "length": 0,
@@ -224,11 +211,7 @@
    "hide_border": 0,
    "hide_days": 0,
    "hide_seconds": 0,
-<<<<<<< Updated upstream
-   "idx": 0,
-=======
    "idx": 60,
->>>>>>> Stashed changes
    "ignore_user_permissions": 0,
    "ignore_xss_filter": 0,
    "in_global_search": 0,
@@ -290,11 +273,7 @@
    "hide_border": 0,
    "hide_days": 0,
    "hide_seconds": 0,
-<<<<<<< Updated upstream
-   "idx": 0,
-=======
    "idx": 62,
->>>>>>> Stashed changes
    "ignore_user_permissions": 0,
    "ignore_xss_filter": 0,
    "in_global_search": 0,
@@ -356,11 +335,7 @@
    "hide_border": 0,
    "hide_days": 0,
    "hide_seconds": 0,
-<<<<<<< Updated upstream
-   "idx": 0,
-=======
    "idx": 24,
->>>>>>> Stashed changes
    "ignore_user_permissions": 0,
    "ignore_xss_filter": 0,
    "in_global_search": 0,
@@ -422,11 +397,7 @@
    "hide_border": 0,
    "hide_days": 0,
    "hide_seconds": 0,
-<<<<<<< Updated upstream
-   "idx": 5,
-=======
    "idx": 26,
->>>>>>> Stashed changes
    "ignore_user_permissions": 0,
    "ignore_xss_filter": 0,
    "in_global_search": 0,
@@ -488,11 +459,7 @@
    "hide_border": 0,
    "hide_days": 0,
    "hide_seconds": 0,
-<<<<<<< Updated upstream
-   "idx": 59,
-=======
    "idx": 20,
->>>>>>> Stashed changes
    "ignore_user_permissions": 0,
    "ignore_xss_filter": 0,
    "in_global_search": 0,
@@ -554,11 +521,7 @@
    "hide_border": 0,
    "hide_days": 0,
    "hide_seconds": 0,
-<<<<<<< Updated upstream
-   "idx": 58,
-=======
    "idx": 59,
->>>>>>> Stashed changes
    "ignore_user_permissions": 0,
    "ignore_xss_filter": 0,
    "in_global_search": 0,
@@ -668,9 +631,6 @@
    "collapsible": 0,
    "collapsible_depends_on": null,
    "columns": 0,
-<<<<<<< Updated upstream
-   "creation": "2024-08-22 16:10:46.411571",
-=======
    "creation": "2025-10-29 17:24:02.009834",
    "default": "0",
    "depends_on": "eval:doc.is_composite_asset",
@@ -736,7 +696,6 @@
    "collapsible_depends_on": null,
    "columns": 0,
    "creation": "2025-07-09 11:06:31.477563",
->>>>>>> Stashed changes
    "default": null,
    "depends_on": null,
    "description": null,
@@ -922,9 +881,6 @@
    "collapsible": 0,
    "collapsible_depends_on": null,
    "columns": 0,
-<<<<<<< Updated upstream
-   "creation": "2024-07-31 21:12:02.690485",
-=======
    "creation": "2025-09-22 19:49:59.562866",
    "default": null,
    "depends_on": null,
@@ -990,7 +946,6 @@
    "collapsible_depends_on": null,
    "columns": 0,
    "creation": "2025-06-20 12:15:56.537235",
->>>>>>> Stashed changes
    "default": null,
    "depends_on": null,
    "description": null,
@@ -1827,17 +1782,6 @@
    "creation": "2022-01-18 02:26:55.975005",
    "custom": 0,
    "docstatus": 0,
-<<<<<<< Updated upstream
-   "group": "Maintenance",
-   "hidden": 0,
-   "idx": 1,
-   "is_child_table": 0,
-   "link_doctype": "Asset Maintenance",
-   "link_fieldname": "asset_name",
-   "modified": "2025-09-05 18:49:44.338305",
-   "modified_by": "Administrator",
-   "name": "1554bf4ba3",
-=======
    "group": "Repair",
    "hidden": 0,
    "idx": 2,
@@ -1867,7 +1811,6 @@
    "modified": "2025-09-16 15:44:46.567728",
    "modified_by": "Administrator",
    "name": "v1ha35hm3u",
->>>>>>> Stashed changes
    "owner": "Administrator",
    "parent": "Asset",
    "parent_doctype": null,
@@ -1883,19 +1826,11 @@
    "hidden": 0,
    "idx": 6,
    "is_child_table": 0,
-<<<<<<< Updated upstream
-   "link_doctype": "Asset Activity",
-   "link_fieldname": "asset",
-   "modified": "2025-09-05 18:49:44.338305",
-   "modified_by": "Administrator",
-   "name": "3c563ad11c",
-=======
    "link_doctype": "Journal Entry",
    "link_fieldname": "reference_name",
    "modified": "2025-09-16 15:44:46.567728",
    "modified_by": "Administrator",
    "name": "v1hd3nk0km",
->>>>>>> Stashed changes
    "owner": "Administrator",
    "parent": "Asset",
    "parent_doctype": null,
@@ -1907,17 +1842,6 @@
    "creation": "2022-01-18 02:26:55.975005",
    "custom": 0,
    "docstatus": 0,
-<<<<<<< Updated upstream
-   "group": "Depreciation",
-   "hidden": 0,
-   "idx": 4,
-   "is_child_table": 0,
-   "link_doctype": "Asset Depreciation Schedule",
-   "link_fieldname": "asset",
-   "modified": "2025-09-05 18:49:44.338305",
-   "modified_by": "Administrator",
-   "name": "990e6d90bd",
-=======
    "group": "Asset Capitalization",
    "hidden": 0,
    "idx": 7,
@@ -1927,7 +1851,6 @@
    "modified": "2025-09-16 15:44:46.567728",
    "modified_by": "Administrator",
    "name": "v1hds1scb1",
->>>>>>> Stashed changes
    "owner": "Administrator",
    "parent": "Asset",
    "parent_doctype": null,
@@ -1945,15 +1868,9 @@
    "is_child_table": 0,
    "link_doctype": "Asset Depreciation Schedule",
    "link_fieldname": "asset",
-<<<<<<< Updated upstream
-   "modified": "2025-09-05 18:49:44.338305",
-   "modified_by": "Administrator",
-   "name": "ccb409b4bd",
-=======
    "modified": "2025-09-16 15:44:46.567728",
    "modified_by": "Administrator",
    "name": "v1hnk4j3fn",
->>>>>>> Stashed changes
    "owner": "Administrator",
    "parent": "Asset",
    "parent_doctype": null,
@@ -1971,15 +1888,9 @@
    "is_child_table": 0,
    "link_doctype": "Asset Value Adjustment",
    "link_fieldname": "asset",
-<<<<<<< Updated upstream
-   "modified": "2025-09-05 18:49:44.338305",
-   "modified_by": "Administrator",
-   "name": "e1d5c30259",
-=======
    "modified": "2025-09-16 15:44:46.567728",
    "modified_by": "Administrator",
    "name": "v1hrotp2em",
->>>>>>> Stashed changes
    "owner": "Administrator",
    "parent": "Asset",
    "parent_doctype": null,
@@ -1995,47 +1906,16 @@
    "hidden": 0,
    "idx": 1,
    "is_child_table": 0,
-<<<<<<< Updated upstream
-   "link_doctype": "Journal Entry",
-   "link_fieldname": "reference_name",
-   "modified": "2025-09-05 18:49:44.338305",
-   "modified_by": "Administrator",
-   "name": "f28bd1b95b",
-=======
    "link_doctype": "Asset Maintenance",
    "link_fieldname": "asset_name",
    "modified": "2025-09-16 15:44:46.567728",
    "modified_by": "Administrator",
    "name": "v1hta0k2jr",
->>>>>>> Stashed changes
    "owner": "Administrator",
    "parent": "Asset",
    "parent_doctype": null,
    "parentfield": "links",
    "parenttype": "DocType",
-<<<<<<< Updated upstream
-   "table_fieldname": "accounts"
-  },
-  {
-   "creation": "2022-01-18 02:26:55.975005",
-   "custom": 0,
-   "docstatus": 0,
-   "group": "Asset Capitalization",
-   "hidden": 0,
-   "idx": 7,
-   "is_child_table": 0,
-   "link_doctype": "Asset Capitalization",
-   "link_fieldname": "target_asset",
-   "modified": "2025-09-05 18:49:44.338305",
-   "modified_by": "Administrator",
-   "name": "f43b756687",
-   "owner": "Administrator",
-   "parent": "Asset",
-   "parent_doctype": null,
-   "parentfield": "links",
-   "parenttype": "DocType",
-=======
->>>>>>> Stashed changes
    "table_fieldname": null
   }
  ],
@@ -2045,11 +1925,7 @@
    "_comments": null,
    "_liked_by": null,
    "_user_tags": null,
-<<<<<<< Updated upstream
-   "creation": "2025-10-30 17:01:35.429186",
-=======
    "creation": "2025-10-29 17:25:15.863588",
->>>>>>> Stashed changes
    "default_value": null,
    "doc_type": "Asset",
    "docstatus": 0,
@@ -2057,11 +1933,7 @@
    "field_name": null,
    "idx": 0,
    "is_system_generated": 0,
-<<<<<<< Updated upstream
-   "modified": "2025-10-30 17:01:35.429186",
-=======
    "modified": "2025-10-29 17:25:15.863588",
->>>>>>> Stashed changes
    "modified_by": "Administrator",
    "module": null,
    "name": "Asset-main-field_order",
@@ -2069,11 +1941,7 @@
    "property": "field_order",
    "property_type": "Data",
    "row_name": null,
-<<<<<<< Updated upstream
-   "value": "[\"company\", \"item_code\", \"item_name\", \"custom_type_of_asset\", \"custom_against_stock_entry\", \"asset_owner\", \"asset_owner_company\", \"is_existing_asset\", \"is_composite_asset\", \"custom_asset_specification\", \"supplier\", \"customer\", \"image\", \"journal_entry_for_scrap\", \"column_break_3\", \"naming_series\", \"asset_name\", \"asset_category\", \"custom_source_of_asset_acquistion\", \"location\", \"split_from\", \"custodian\", \"custom_issued_to\", \"department\", \"custom_reason_for_asset_scrap\", \"disposal_date\", \"accounting_dimensions_section\", \"cost_center\", \"fund_class\", \"service_area\", \"program\", \"subservice_area\", \"product\", \"donation_type\", \"transaction_type\", \"dimension_col_break\", \"donor\", \"donor_type\", \"donor_desk\", \"reverse_donor\", \"inventory_scenario\", \"inventory_flag\", \"task\", \"purchase_details_section\", \"purchase_receipt\", \"purchase_invoice\", \"available_for_use_date\", \"total_asset_cost\", \"additional_asset_cost\", \"column_break_23\", \"gross_purchase_amount\", \"asset_quantity\", \"purchase_date\", \"section_break_23\", \"calculate_depreciation\", \"custom_total_accumulated_depreciation\", \"custom_asset_worth\", \"custom_asset_current_worth\", \"custom_current_asset_worth\", \"column_break_33\", \"opening_accumulated_depreciation\", \"number_of_depreciations_booked\", \"is_fully_depreciated\", \"section_break_36\", \"finance_books\", \"section_break_33\", \"depreciation_method\", \"value_after_depreciation\", \"total_number_of_depreciations\", \"column_break_24\", \"frequency_of_depreciation\", \"next_depreciation_date\", \"depreciation_schedule_sb\", \"depreciation_schedule_view\", \"insurance_details\", \"policy_number\", \"insurer\", \"insured_value\", \"column_break_48\", \"insurance_start_date\", \"insurance_end_date\", \"comprehensive_insurance\", \"section_break_31\", \"maintenance_required\", \"other_details\", \"status\", \"booked_fixed_asset\", \"column_break_51\", \"purchase_receipt_amount\", \"default_finance_book\", \"depr_entry_posting_status\", \"amended_from\", \"capitalized_in\"]"
-=======
    "value": "[\"company\", \"item_code\", \"item_name\", \"custom_type_of_asset\", \"custom_against_stock_entry\", \"asset_owner\", \"asset_owner_company\", \"is_existing_asset\", \"is_composite_asset\", \"custom_work_in_progress\", \"custom_asset_specification\", \"supplier\", \"customer\", \"image\", \"journal_entry_for_scrap\", \"column_break_3\", \"naming_series\", \"asset_name\", \"asset_category\", \"custom_source_of_asset_acquistion\", \"location\", \"split_from\", \"custodian\", \"custom_issued_to\", \"department\", \"custom_reason_for_asset_scrap\", \"disposal_date\", \"accounting_dimensions_section\", \"transaction_type\", \"donor_desk\", \"fund_class\", \"service_area\", \"inventory_scenario\", \"subservice_area\", \"program\", \"cost_center\", \"dimension_col_break\", \"donor_type\", \"donation_type\", \"donor\", \"reverse_donor\", \"inventory_flag\", \"product\", \"task\", \"purchase_details_section\", \"purchase_receipt\", \"purchase_receipt_item\", \"purchase_invoice\", \"purchase_invoice_item\", \"available_for_use_date\", \"total_asset_cost\", \"additional_asset_cost\", \"column_break_23\", \"gross_purchase_amount\", \"asset_quantity\", \"purchase_date\", \"section_break_23\", \"calculate_depreciation\", \"custom_total_accumulated_depreciation\", \"custom_asset_worth\", \"custom_asset_current_worth\", \"custom_current_asset_worth\", \"column_break_33\", \"opening_accumulated_depreciation\", \"opening_number_of_booked_depreciations\", \"is_fully_depreciated\", \"section_break_36\", \"finance_books\", \"section_break_33\", \"depreciation_method\", \"value_after_depreciation\", \"total_number_of_depreciations\", \"column_break_24\", \"frequency_of_depreciation\", \"next_depreciation_date\", \"depreciation_schedule_sb\", \"depreciation_schedule_view\", \"insurance_details\", \"policy_number\", \"insurer\", \"insured_value\", \"column_break_48\", \"insurance_start_date\", \"insurance_end_date\", \"comprehensive_insurance\", \"section_break_31\", \"maintenance_required\", \"other_details\", \"status\", \"booked_fixed_asset\", \"column_break_51\", \"purchase_amount\", \"default_finance_book\", \"depr_entry_posting_status\", \"amended_from\"]"
->>>>>>> Stashed changes
   },
   {
    "_assign": null,
