@@ -28,26 +28,7 @@
   "donation_type",
   "donor",
   "reverse_donor",
-  "inventory_flag",
-  "rejected_inventory_flag",
-  "column_break_bftk",
-  "from_inventory_flag",
-  "from_inventory_donor",
-  "from_inventory_product",
-  "from_inventory_project",
-  "from_inventory_intention",
-  "from_inventory_donor_desk",
-  "from_inventory_donor_type",
-  "from_inventory_fund_class",
-  "column_break_riep",
-  "from_inventory_cost_center",
-  "from_inventory_service_area",
-  "from_inventory_asset_category",
-  "from_inventory_subservice_area",
-  "from_inventory_transaction_type",
-  "from_product",
-  "from_service_area",
-  "from_subservice_area"
+  "inventory_flag"
  ],
  "fields": [
   {
@@ -203,140 +184,13 @@
    "label": "Inventory Flag",
    "options": "Inventory Flag",
    "read_only": 1
-  },
-  {
-   "fieldname": "rejected_inventory_flag",
-   "fieldtype": "Link",
-   "label": "Rejected Inventory Flag",
-   "options": "Inventory Flag",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_bftk",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "from_inventory_flag",
-   "fieldtype": "Link",
-   "label": "Source Inventory Flag",
-   "options": "Inventory Flag",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_donor",
-   "fieldtype": "Link",
-   "label": "Source Inventory Donor",
-   "options": "Donor",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_product",
-   "fieldtype": "Link",
-   "label": "Source Inventory Product",
-   "options": "Product",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_project",
-   "fieldtype": "Link",
-   "label": "Source Inventory Project",
-   "options": "Project",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_intention",
-   "fieldtype": "Link",
-   "label": "Source Inventory Intention",
-   "options": "Donation Type",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_donor_desk",
-   "fieldtype": "Link",
-   "label": "Source Inventory Donor Desk",
-   "options": "Donor Desk",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_donor_type",
-   "fieldtype": "Link",
-   "label": "Source Inventory Donor Type",
-   "options": "Donor Type",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_fund_class",
-   "fieldtype": "Link",
-   "label": "Source Inventory Fund Class",
-   "options": "Fund Class",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_riep",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "from_inventory_cost_center",
-   "fieldtype": "Link",
-   "label": "Source Inventory Cost Center",
-   "options": "Cost Center",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_service_area",
-   "fieldtype": "Link",
-   "label": "Source Inventory Service Area",
-   "options": "Service Area",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_asset_category",
-   "fieldtype": "Link",
-   "label": "Source Inventory Asset Category",
-   "options": "Asset Category",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_subservice_area",
-   "fieldtype": "Link",
-   "label": "Source Inventory Subservice Area",
-   "options": "Subservice Area",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_inventory_transaction_type",
-   "fieldtype": "Link",
-   "label": "Source Inventory Transaction Type",
-   "options": "Transaction Type",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_product",
-   "fieldtype": "Link",
-   "label": "Source Product",
-   "options": "Product",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_service_area",
-   "fieldtype": "Link",
-   "label": "Source Service Area",
-   "options": "Service Area",
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_subservice_area",
-   "fieldtype": "Link",
-   "label": "Source Subservice Area",
-   "options": "Subservice Area",
-   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-31 15:16:13.433098",
+ "modified": "2025-10-31 16:45:16.258668",
  "modified_by": "Administrator",
  "module": "AKF Accounts",
  "name": "Stock Entry Items",
