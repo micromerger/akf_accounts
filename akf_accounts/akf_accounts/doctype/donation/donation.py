@@ -627,7 +627,7 @@ class Donation(Document):
 			else:
 				doc = frappe.get_doc(args)
 				doc.save(ignore_permissions=True)
-				# doc.submit()
+				doc.submit()
 
 				if(self.donor_identity == "Unknown"):
 					# set Payment Entry id in payment_detail child table.

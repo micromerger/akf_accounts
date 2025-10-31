@@ -2393,7 +2393,8 @@ def get_tax_payer_and_section_information(d):
 			From 
 				`tabPayment Ledger Entry`
 			Where 
-				voucher_no='{d.voucher_no}'
+				docstatus=1
+				and voucher_no='{d.voucher_no}'
 		''', as_dict=1):
 		print(row)
 		d.update({

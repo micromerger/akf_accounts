@@ -460,7 +460,7 @@ def submit_sales_tax_provision_gl_entry(self, method=None):
 	supplier_account = get_supplier_account(self.custom_supplier)
 	temp_tax_wh_payable_account = get_tax_wh_payable_account(self.company)
 	tax_amount = [d.tax_amount for d in self.taxes if(d.description == self.custom_tax_withholding_category_st)][0] or 0.0
-	
+	frappe.throw(f"{tax_amount}")
 	'''args.update({
 		"party_type": "Supplier",
 		"party": self.custom_supplier,
@@ -530,7 +530,9 @@ def make_sales_tax_provision_journal_entry(self, supplier_account, temp_tax_wh_p
 		}
 		doc = frappe.get_doc(args)
 		doc.insert(ignore_permissions=True)
-		doc.submit()
+		doc.submit()	
+		
+	
 		frappe.db.set_value("Payment Entry", self.name, "custom_journal_entry_st", doc.name)
 	_create_()
 '''
